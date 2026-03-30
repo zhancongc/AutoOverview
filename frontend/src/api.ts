@@ -3,12 +3,30 @@ import type {
   GenerateResponse,
   RecordsResponse,
   ReviewRecord,
-  ThreeCirclesResponse
+  ThreeCirclesResponse,
+  ClassifyTopicResponse,
+  SmartAnalyzeResponse
 } from './types';
 
 const API_BASE = '/api';
 
 export const api = {
+  // 智能分析（推荐）
+  async smartAnalyze(topic: string): Promise<SmartAnalyzeResponse> {
+    const response = await axios.post(`${API_BASE}/smart-analyze`, null, {
+      params: { topic }
+    });
+    return response.data;
+  },
+
+  // 题目分类
+  async classifyTopic(topic: string): Promise<ClassifyTopicResponse> {
+    const response = await axios.post(`${API_BASE}/classify-topic`, null, {
+      params: { topic }
+    });
+    return response.data;
+  },
+
   // 普通综述生成
   async generateReview(
     topic: string,

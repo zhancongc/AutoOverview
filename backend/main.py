@@ -16,6 +16,7 @@ from services.paper_search import PaperSearchService
 from services.paper_filter import PaperFilterService
 from services.review_generator import ReviewGeneratorService
 from services.topic_analyzer import ThreeCirclesReviewGenerator
+from services.hybrid_classifier import FrameworkGenerator
 
 load_dotenv()
 
@@ -240,6 +241,99 @@ async def health_check():
 
 
 # ==================== 三圈文献分析接口 ====================
+
+@app.post("/api/classify-topic")
+async def classify_topic(topic: str):
+    """
+    题目分类接口（使用大模型）
+
+    自动识别题目类型（应用型/评价型/理论型/实证型）
+    并生成对应的综述框架
+    """
+    import sys
+    import time
+
+    print(f"[API] 收到分类请求: {topic}")
+    start = time.time()
+
+    try:
+        from services.hybrid_classifier import FrameworkGenerator
+
+        gen = FrameworkGenerator()
+        result = await gen.generate_framework(topic)
+
+        elapsed = time.time() - start
+        print(f"[API] 大模型分类成功，耗时 {elapsed:.2f}秒，类型: {result['type']}")
+
+        return {
+            "success": True,
+            "message": "题目分类完成",
+            "data": result
+        }
+    except Exception as e:
+        elapsed = time.time() - start
+        print(f"[DEBUG] 大模型分类错误 (耗时{elapsed:.2f}秒): {e}")
+        import traceback
+        traceback.print_exc()
+        # 出错时使用规则引擎回退
+        from services.topic_classifier import FrameworkGenerator as FallbackGenerator
+        fallback = FallbackGenerator()
+        result = fallback.generate_framework(topic)
+        result['classification_reason'] += f'（大模型错误，使用规则引擎）'
+        return {
+            "success": True,
+            "message": "题目分类完成（使用规则引擎）",
+            "data": result
+        }
+
+
+@app.post("/api/smart-analyze")
+async def smart_analyze(topic: str):
+    """
+    智能分析接口（使用大模型）
+
+    根据题目类型自动选择合适的分析方法
+    - 应用型：三圈交集分析
+    - 评价型：金字塔式分析
+    - 其他：通用分析
+    """
+    try:
+        from services.hybrid_classifier import FrameworkGenerator
+        gen = FrameworkGenerator()
+        framework = await gen.generate_framework(topic)
+
+        # 根据类型选择分析方法
+        if framework['type'] == 'application':
+            # 应用型使用三圈分析
+            result = await three_circles_generator.generate(topic)
+            result['framework_type'] = 'three-circles'
+        elif framework['type'] == 'evaluation':
+            # 评价型使用金字塔式分析
+            result = {
+                'analysis': framework,
+                'circles': [],
+                'review_framework': framework['framework']
+            }
+            result['framework_type'] = 'pyramid'
+        else:
+            # 其他类型使用框架分析
+            result = {
+                'analysis': framework,
+                'circles': [],
+                'review_framework': framework['framework']
+            }
+            result['framework_type'] = 'general'
+
+        return {
+            "success": True,
+            "message": "智能分析完成",
+            "data": result
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ==================== 三圈文献分析接口（保留原有功能） ====================
 
 @app.post("/api/analyze-three-circles")
 async def analyze_three_circles(topic: str):

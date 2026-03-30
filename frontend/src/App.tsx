@@ -5,10 +5,10 @@ import type {
   Paper,
   Statistics,
   ReviewRecord,
-  ThreeCirclesAnalysis,
+  TopicClassification,
+  ReviewFramework,
   CircleSummary,
-  GapAnalysis,
-  ReviewFramework
+  GapAnalysis
 } from './types'
 import './App.css'
 
@@ -23,18 +23,14 @@ function App() {
   const [activeTab, setActiveTab] = useState<'review' | 'papers' | 'history' | 'analysis'>('review')
   const [currentRecordId, setCurrentRecordId] = useState<number | null>(null)
 
-  // 三圈分析数据
-  const [threeCirclesAnalysis, setThreeCirclesAnalysis] = useState<ThreeCirclesAnalysis | null>(null)
-  const [circles, setCircles] = useState<CircleSummary[]>([])
-  const [gapAnalysis, setGapAnalysis] = useState<GapAnalysis | null>(null)
+  // 分析数据
+  const [classification, setClassification] = useState<TopicClassification | null>(null)
   const [framework, setFramework] = useState<ReviewFramework | null>(null)
+  const [frameworkType, setFrameworkType] = useState<string>('')
 
   // 历史记录
   const [records, setRecords] = useState<ReviewRecord[]>([])
   const [loadingHistory, setLoadingHistory] = useState(false)
-
-  // 生成模式
-  const [generateMode, setGenerateMode] = useState<'standard' | 'three-circles'>('three-circles')
 
   // 加载历史记录
   useEffect(() => {
@@ -64,30 +60,23 @@ function App() {
     setAnalyzing(true)
     setError('')
     setActiveTab('analysis')
+    setClassification(null)
+    setFramework(null)
 
     try {
-      const response = await api.analyzeThreeCircles(topic)
+      const response = await api.smartAnalyze(topic)
       if (response.success && response.data) {
-        setThreeCirclesAnalysis(response.data.analysis)
-        setCircles([
-          {
-            circle: 'A',
-            name: response.data.review_framework.sections[0].title,
-            count: response.data.review_framework.sections[0].paper_count
-          },
-          {
-            circle: 'B',
-            name: response.data.review_framework.sections[1].title,
-            count: response.data.review_framework.sections[1].paper_count
-          },
-          {
-            circle: 'C',
-            name: response.data.review_framework.sections[2].title,
-            count: response.data.review_framework.sections[2].paper_count
-          }
-        ])
-        setGapAnalysis(response.data.gap_analysis)
-        setFramework(response.data.review_framework)
+        const data = response.data
+
+        setFrameworkType(data.framework_type || '')
+
+        if (data.analysis) {
+          setClassification(data.analysis as unknown as TopicClassification)
+        }
+
+        if (data.review_framework) {
+          setFramework(data.review_framework)
+        }
       }
     } catch (err) {
       setError('分析失败，请检查后端服务')
@@ -111,15 +100,10 @@ function App() {
     setActiveTab('review')
 
     try {
+      // 根据框架类型选择生成方式
       let response
-      if (generateMode === 'three-circles') {
+      if (frameworkType === 'three-circles' || classification?.type === 'application') {
         response = await api.generateThreeCirclesReview(topic)
-        if (response.success && response.data) {
-          if (response.data.analysis) setThreeCirclesAnalysis(response.data.analysis)
-          if (response.data.circles) setCircles(response.data.circles)
-          if (response.data.gap_analysis) setGapAnalysis(response.data.gap_analysis)
-          if (response.data.framework) setFramework(response.data.framework)
-        }
       } else {
         response = await api.generateReview(topic)
       }
@@ -184,54 +168,56 @@ function App() {
     })
   }
 
+  const getFrameworkIcon = (structure: string) => {
+    if (structure.includes('三圈')) return '🔀'
+    if (structure.includes('金字塔')) return '🔺'
+    if (structure.includes('溯源')) return '📚'
+    if (structure.includes('问题')) return '❓'
+    return '📄'
+  }
+
+  const getTypeColor = (type: string) => {
+    const colors: Record<string, string> = {
+      'application': '#667eea',
+      'evaluation': '#f5576c',
+      'theoretical': '#4facfe',
+      'empirical': '#43e97b',
+      'general': '#999'
+    }
+    return colors[type] || '#999'
+  }
+
   return (
     <div className="app">
       <header className="header">
         <h1>论文综述生成器</h1>
-        <p>输入论文题目，基于「三圈交集」方法构建文献体系并生成综述</p>
+        <p>智能识别题目类型，自动构建匹配的文献体系与综述框架</p>
       </header>
 
       <main className="main">
-        <div className="mode-selector">
-          <button
-            className={`mode-btn ${generateMode === 'three-circles' ? 'active' : ''}`}
-            onClick={() => setGenerateMode('three-circles')}
-          >
-            三圈分析模式（推荐）
-          </button>
-          <button
-            className={`mode-btn ${generateMode === 'standard' ? 'active' : ''}`}
-            onClick={() => setGenerateMode('standard')}
-          >
-            标准模式
-          </button>
-        </div>
-
         <div className="input-section">
           <input
             type="text"
             value={topic}
             onChange={(e) => setTopic(e.target.value)}
-            placeholder="请输入论文题目，例如：基于DMAIC的智能座舱软件持续交付流程优化研究"
+            placeholder="请输入论文题目，例如：制造型企业质量管理成熟度评价研究"
             className="topic-input"
             onKeyDown={(e) => e.key === 'Enter' && handleGenerate()}
             disabled={loading || analyzing}
           />
-          {generateMode === 'three-circles' && (
-            <button
-              onClick={handleAnalyze}
-              disabled={analyzing || loading || !topic.trim()}
-              className="analyze-btn"
-            >
-              {analyzing ? '分析中...' : '先分析题目'}
-            </button>
-          )}
+          <button
+            onClick={handleAnalyze}
+            disabled={analyzing || loading || !topic.trim()}
+            className="analyze-btn"
+          >
+            {analyzing ? '分析中...' : '🔍 智能分析'}
+          </button>
           <button
             onClick={handleGenerate}
             disabled={loading || analyzing || !topic.trim()}
             className="generate-btn"
           >
-            {loading ? '生成中...' : '生成综述'}
+            {loading ? '生成中...' : '✨ 生成综述'}
           </button>
         </div>
 
@@ -244,7 +230,7 @@ function App() {
         {(loading || analyzing) && (
           <div className="loading">
             <div className="spinner"></div>
-            <p>{analyzing ? '正在分析题目结构...' : '正在检索文献并生成综述，请稍候...'}</p>
+            <p>{analyzing ? '正在分析题目类型...' : '正在检索文献并生成综述，请稍候...'}</p>
           </div>
         )}
 
@@ -269,15 +255,15 @@ function App() {
           </div>
         )}
 
-        {(review || threeCirclesAnalysis || records.length > 0) && (
+        {(review || classification || records.length > 0) && (
           <div className="results">
             <div className="tabs">
-              {threeCirclesAnalysis && (
+              {classification && (
                 <button
                   className={`tab ${activeTab === 'analysis' ? 'active' : ''}`}
                   onClick={() => setActiveTab('analysis')}
                 >
-                  三圈分析
+                  分析框架
                 </button>
               )}
               <button
@@ -303,76 +289,55 @@ function App() {
             </div>
 
             <div className="tab-content">
-              {activeTab === 'analysis' && threeCirclesAnalysis ? (
+              {activeTab === 'analysis' && classification ? (
                 <div className="analysis-content">
+                  {/* 题目分类 */}
                   <div className="analysis-section">
-                    <h2>📊 题目解析</h2>
-                    <div className="analysis-grid">
-                      <div className="analysis-card circle-a">
-                        <div className="circle-label">圈 A：研究对象</div>
-                        <div className="circle-value">{threeCirclesAnalysis.domain}</div>
+                    <h2>📋 题目分类</h2>
+                    <div className="classification-card">
+                      <div
+                        className="type-badge"
+                        style={{ backgroundColor: getTypeColor(classification.type) }}
+                      >
+                        {classification.type_name}
                       </div>
-                      <div className="analysis-card circle-b">
-                        <div className="circle-label">圈 B：优化目标</div>
-                        <div className="circle-value">{threeCirclesAnalysis.optimization}</div>
-                      </div>
-                      <div className="analysis-card circle-c">
-                        <div className="circle-label">圈 C：方法论</div>
-                        <div className="circle-value">{threeCirclesAnalysis.methodology}</div>
-                      </div>
+                      <p className="classification-reason">{classification.classification_reason}</p>
                     </div>
                   </div>
 
-                  {circles.length > 0 && (
+                  {/* 框架信息 */}
+                  {framework && (
                     <div className="analysis-section">
-                      <h2>🔍 三圈文献检索</h2>
-                      <div className="circles-list">
-                        {circles.map((circle) => (
-                          <div key={circle.circle} className={`circle-item circle-${circle.circle.toLowerCase()}`}>
-                            <div className="circle-header">
-                              <span className="circle-badge">{circle.circle}</span>
-                              <span className="circle-name">{circle.name}</span>
-                            </div>
-                            <div className="circle-count">检索到 {circle.count} 篇相关文献</div>
+                      <h2>
+                        {getFrameworkIcon(framework.structure)} {framework.structure}框架
+                      </h2>
+                      <p className="framework-description">{framework.description}</p>
+
+                      <div className="framework-sections">
+                        {framework.sections.map((section, index) => (
+                          <div key={index} className="framework-section-item">
+                            <h4>{section.title}</h4>
+                            <p className="section-desc">{section.description}</p>
+                            <ul className="section-points">
+                              {section.key_points.map((point, i) => (
+                                <li key={i}>{point}</li>
+                              ))}
+                            </ul>
                           </div>
                         ))}
                       </div>
                     </div>
                   )}
 
-                  {gapAnalysis && (
+                  {/* 检索策略 */}
+                  {classification.search_queries && classification.search_queries.length > 0 && (
                     <div className="analysis-section">
-                      <h2>🎯 研究缺口分析</h2>
-                      <div className="gap-card">
-                        <div className="gap-description">{gapAnalysis.gap_description}</div>
-                        <div className="gap-opportunity">
-                          <strong>研究机会：</strong>{gapAnalysis.research_opportunity}
-                        </div>
-                        <div className="gap-suggestions">
-                          <strong>建议方向：</strong>
-                          <ul>
-                            {gapAnalysis.suggestions.map((s, i) => (
-                              <li key={i}>{s}</li>
-                            ))}
-                          </ul>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {framework && (
-                    <div className="analysis-section">
-                      <h2>📝 综述框架</h2>
-                      <div className="framework-list">
-                        {framework.sections.map((section, index) => (
-                          <div key={index} className="framework-item">
-                            <h4>{section.title}</h4>
-                            <p className="framework-desc">{section.description}</p>
-                            <ul className="framework-points">
-                              {section.key_points.map((point, i) => (
-                                <li key={i}>{point}</li>
-                              ))}
-                            </ul>
+                      <h2>🔍 文献检索策略</h2>
+                      <div className="search-queries">
+                        {classification.search_queries.map((query, index) => (
+                          <div key={index} className="query-item">
+                            <span className="query-section">{query.section}</span>
+                            <span className="query-text">{query.query}</span>
                           </div>
                         ))}
                       </div>
@@ -461,7 +426,7 @@ function App() {
                 </div>
               ) : (
                 <div className="empty-state">
-                  {threeCirclesAnalysis ? '点击「生成综述」开始生成' : '请先分析题目或生成综述'}
+                  {classification ? '点击「生成综述」开始生成' : '请先分析题目或直接生成综述'}
                 </div>
               )}
             </div>

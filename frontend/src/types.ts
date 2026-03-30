@@ -51,6 +51,8 @@ export interface GenerateResponse {
     framework?: ReviewFramework;
     circles?: CircleSummary[];
     gap_analysis?: GapAnalysis;
+    // 框架类型
+    framework_type?: string;
   };
 }
 
@@ -91,23 +93,13 @@ export interface GapAnalysis {
 }
 
 export interface ReviewFramework {
-  introduction: {
-    title: string;
-    content: string;
-  };
+  structure: string;
+  description: string;
   sections: Array<{
-    circle: string;
     title: string;
     description: string;
-    paper_count: number;
     key_points: string[];
   }>;
-  gap_analysis: {
-    title: string;
-    gap: string;
-    opportunity: string;
-    suggestions: string[];
-  };
 }
 
 export interface ThreeCirclesResponse {
@@ -118,5 +110,37 @@ export interface ThreeCirclesResponse {
     circles: CircleResult[];
     gap_analysis: GapAnalysis;
     review_framework: ReviewFramework;
+  };
+}
+
+// 题目分类相关类型
+export type TopicType = 'application' | 'evaluation' | 'theoretical' | 'empirical' | 'general';
+
+export interface TopicClassification {
+  title: string;
+  type: TopicType;
+  type_name: string;
+  classification_reason: string;
+  framework: ReviewFramework;
+  search_queries: Array<{
+    query: string;
+    section: string;
+  }>;
+}
+
+export interface ClassifyTopicResponse {
+  success: boolean;
+  message: string;
+  data?: TopicClassification;
+}
+
+export interface SmartAnalyzeResponse {
+  success: boolean;
+  message: string;
+  data?: {
+    analysis?: TopicClassification;
+    circles?: CircleResult[];
+    review_framework?: ReviewFramework;
+    framework_type: string;
   };
 }
