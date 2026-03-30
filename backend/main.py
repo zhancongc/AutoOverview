@@ -15,6 +15,7 @@ from models import ReviewRecord
 from services.paper_search import PaperSearchService
 from services.paper_filter import PaperFilterService
 from services.review_generator import ReviewGeneratorService
+from services.topic_analyzer import ThreeCirclesReviewGenerator
 
 load_dotenv()
 
@@ -47,6 +48,7 @@ class GenerateResponse(BaseModel):
 # 全局服务实例
 search_service = PaperSearchService()
 filter_service = PaperFilterService()
+three_circles_generator = ThreeCirclesReviewGenerator()
 
 
 @app.on_event("startup")
@@ -235,6 +237,120 @@ async def health_check():
         "status": "ok",
         "deepseek_configured": bool(api_key)
     }
+
+
+# ==================== 三圈文献分析接口 ====================
+
+@app.post("/api/analyze-three-circles")
+async def analyze_three_circles(topic: str):
+    """
+    三圈文献分析接口
+
+    分析论文题目，构建"研究对象+优化目标+方法论"三圈文献体系
+    """
+    try:
+        result = await three_circles_generator.generate(topic)
+
+        return {
+            "success": True,
+            "message": "三圈分析完成",
+            "data": result
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/generate-three-circles")
+async def generate_three_circles_review(
+    request: GenerateRequest,
+    db_session: Session = Depends(get_db)
+):
+    """
+    基于三圈分析生成综述接口
+    """
+    try:
+        # 三圈分析
+        analysis_result = await three_circles_generator.generate(request.topic)
+
+        # 合并三个圈的文献
+        all_papers = []
+        for circle in analysis_result['circles']:
+            all_papers.extend(circle['papers'])
+
+        if not all_papers:
+            return GenerateResponse(
+                success=False,
+                message="未找到足够的文献"
+            )
+
+        # 筛选文献
+        filtered_papers = filter_service.filter_and_sort(
+            papers=all_papers,
+            target_count=request.target_count,
+            recent_years_ratio=request.recent_years_ratio,
+            english_ratio=request.english_ratio
+        )
+
+        # 获取统计信息
+        stats = filter_service.get_statistics(filtered_papers)
+
+        # 生成综述（使用三圈框架）
+        api_key = os.getenv("DEEPSEEK_API_KEY")
+        if not api_key:
+            raise ValueError("DEEPSEEK_API_KEY not configured")
+
+        generator = ReviewGeneratorService(api_key=api_key)
+
+        # 构建带三圈框架的综述提示
+        framework = analysis_result['review_framework']
+        review = await generator.generate_review(
+            topic=request.topic,
+            papers=filtered_papers
+        )
+
+        # 保存记录
+        record = ReviewRecord(
+            topic=request.topic,
+            review=review,
+            papers=filtered_papers,
+            statistics=stats,
+            target_count=request.target_count,
+            recent_years_ratio=request.recent_years_ratio,
+            english_ratio=request.english_ratio,
+            status="success"
+        )
+        db_session.add(record)
+        db_session.commit()
+
+        return GenerateResponse(
+            success=True,
+            message="三圈文献综述生成成功",
+            data={
+                "id": record.id,
+                "topic": request.topic,
+                "review": review,
+                "papers": filtered_papers,
+                "statistics": stats,
+                "analysis": analysis_result['analysis'],
+                "framework": framework,
+                "circles": [
+                    {
+                        "circle": c['circle'],
+                        "name": c['name'],
+                        "count": c['count']
+                    }
+                    for c in analysis_result['circles']
+                ],
+                "gap_analysis": analysis_result['gap_analysis'],
+                "created_at": record.created_at.isoformat()
+            }
+        )
+
+    except Exception as e:
+        return GenerateResponse(
+            success=False,
+            message=f"生成失败: {str(e)}"
+        )
 
 
 if __name__ == "__main__":

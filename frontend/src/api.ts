@@ -1,9 +1,15 @@
 import axios from 'axios';
-import type { GenerateResponse, RecordsResponse, ReviewRecord } from './types';
+import type {
+  GenerateResponse,
+  RecordsResponse,
+  ReviewRecord,
+  ThreeCirclesResponse
+} from './types';
 
 const API_BASE = '/api';
 
 export const api = {
+  // 普通综述生成
   async generateReview(
     topic: string,
     options: {
@@ -21,6 +27,33 @@ export const api = {
     return response.data;
   },
 
+  // 三圈分析
+  async analyzeThreeCircles(topic: string): Promise<ThreeCirclesResponse> {
+    const response = await axios.post(`${API_BASE}/analyze-three-circles`, null, {
+      params: { topic }
+    });
+    return response.data;
+  },
+
+  // 三圈综述生成
+  async generateThreeCirclesReview(
+    topic: string,
+    options: {
+      targetCount?: number;
+      recentYearsRatio?: number;
+      englishRatio?: number;
+    } = {}
+  ): Promise<GenerateResponse> {
+    const response = await axios.post(`${API_BASE}/generate-three-circles`, {
+      topic,
+      target_count: options.targetCount ?? 50,
+      recent_years_ratio: options.recentYearsRatio ?? 0.5,
+      english_ratio: options.englishRatio ?? 0.3
+    });
+    return response.data;
+  },
+
+  // 历史记录
   async getRecords(skip: number = 0, limit: number = 20): Promise<RecordsResponse> {
     const response = await axios.get(`${API_BASE}/records`, {
       params: { skip, limit }
@@ -38,6 +71,7 @@ export const api = {
     return response.data;
   },
 
+  // 健康检查
   async checkHealth(): Promise<{ status: string; deepseek_configured: boolean }> {
     const response = await axios.get(`${API_BASE}/health`);
     return response.data;

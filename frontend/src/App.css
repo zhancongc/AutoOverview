@@ -29,6 +29,36 @@
   padding: 2rem 1rem;
 }
 
+.mode-selector {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  justify-content: center;
+}
+
+.mode-btn {
+  padding: 0.6rem 1.25rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #666;
+  background: white;
+  border: 2px solid #e0e0e0;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.mode-btn:hover {
+  border-color: #667eea;
+  color: #667eea;
+}
+
+.mode-btn.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-color: transparent;
+}
+
 .input-section {
   display: flex;
   gap: 1rem;
@@ -51,6 +81,32 @@
 
 .topic-input:disabled {
   background: #f5f5f5;
+}
+
+.analyze-btn {
+  padding: 1rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #667eea;
+  background: white;
+  border: 2px solid #667eea;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.analyze-btn:hover:not(:disabled) {
+  background: #667eea;
+  color: white;
+}
+
+.analyze-btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.analyze-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .generate-btn {
@@ -416,4 +472,208 @@
     flex-direction: column;
     gap: 0.25rem;
   }
+
+  .mode-selector {
+    flex-direction: column;
+  }
+
+  .analysis-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ==================== 三圈分析样式 ==================== */
+
+.analysis-content {
+  padding: 0;
+}
+
+.analysis-section {
+  padding: 1.5rem;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.analysis-section:last-child {
+  border-bottom: none;
+}
+
+.analysis-section h2 {
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+  color: #333;
+}
+
+.analysis-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+.analysis-card {
+  padding: 1.25rem;
+  border-radius: 12px;
+  text-align: center;
+}
+
+.circle-a .analysis-card {
+  background: linear-gradient(135deg, #667eea22 0%, #764ba222 100%);
+  border: 2px solid #667eea;
+}
+
+.circle-b .analysis-card {
+  background: linear-gradient(135deg, #f093fb22 0%, #f5576c22 100%);
+  border: 2px solid #f5576c;
+}
+
+.circle-c .analysis-card {
+  background: linear-gradient(135deg, #4facfe22 0%, #00f2fe22 100%);
+  border: 2px solid #4facfe;
+}
+
+.circle-label {
+  font-size: 0.85rem;
+  color: #666;
+  margin-bottom: 0.5rem;
+}
+
+.circle-value {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #333;
+}
+
+.circles-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.circle-item {
+  padding: 1rem 1.25rem;
+  border-radius: 10px;
+  border-left: 4px solid;
+}
+
+.circle-a .circle-item {
+  background: #f8f9ff;
+  border-left-color: #667eea;
+}
+
+.circle-b .circle-item {
+  background: #fff8f8;
+  border-left-color: #f5576c;
+}
+
+.circle-c .circle-item {
+  background: #f0f9ff;
+  border-left-color: #4facfe;
+}
+
+.circle-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.circle-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: #333;
+  color: white;
+  border-radius: 50%;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.circle-name {
+  font-weight: 600;
+  color: #222;
+}
+
+.circle-count {
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.gap-card {
+  background: #fffbeb;
+  border: 2px solid #f59e0b;
+  border-radius: 12px;
+  padding: 1.25rem;
+}
+
+.gap-description {
+  font-size: 1rem;
+  color: #92400e;
+  margin-bottom: 1rem;
+  line-height: 1.6;
+}
+
+.gap-opportunity {
+  background: white;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  font-size: 0.95rem;
+  color: #333;
+}
+
+.gap-suggestions {
+  background: white;
+  padding: 1rem;
+  border-radius: 8px;
+  font-size: 0.95rem;
+}
+
+.gap-suggestions strong {
+  color: #92400e;
+}
+
+.gap-suggestions ul {
+  margin: 0.75rem 0 0 1.25rem;
+}
+
+.gap-suggestions li {
+  margin-bottom: 0.5rem;
+  color: #555;
+}
+
+.framework-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.framework-item {
+  background: #f8f9fa;
+  border-radius: 10px;
+  padding: 1.25rem;
+}
+
+.framework-item h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #222;
+  margin-bottom: 0.5rem;
+}
+
+.framework-desc {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 0.75rem;
+}
+
+.framework-points {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.framework-points li {
+  font-size: 0.85rem;
+  color: #555;
+  margin-bottom: 0.4rem;
 }
