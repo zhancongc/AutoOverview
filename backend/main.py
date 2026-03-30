@@ -91,94 +91,6 @@ async def search_papers(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/api/generate", response_model=GenerateResponse)
-async def generate_review(
-    request: GenerateRequest,
-    db_session: Session = Depends(get_db)
-):
-    """生成文献综述接口"""
-    record = ReviewRecord(
-        topic=request.topic,
-        review="",
-        papers=[],
-        statistics={},
-        target_count=request.target_count,
-        recent_years_ratio=request.recent_years_ratio,
-        english_ratio=request.english_ratio,
-        status="processing"
-    )
-    db_session.add(record)
-    db_session.commit()
-
-    try:
-        # 1. 搜索文献
-        papers = await search_service.search_papers(
-            query=request.topic,
-            years_ago=10,
-            limit=200
-        )
-
-        if not papers:
-            record.status = "failed"
-            record.error_message = f'未找到关于「{request.topic}」的相关文献'
-            db_session.commit()
-            return GenerateResponse(
-                success=False,
-                message=record.error_message
-            )
-
-        # 2. 筛选文献
-        filtered_papers = filter_service.filter_and_sort(
-            papers=papers,
-            target_count=request.target_count,
-            recent_years_ratio=request.recent_years_ratio,
-            english_ratio=request.english_ratio
-        )
-
-        # 3. 获取统计信息
-        stats = filter_service.get_statistics(filtered_papers)
-
-        # 4. 生成综述
-        api_key = os.getenv("DEEPSEEK_API_KEY")
-        if not api_key:
-            raise ValueError("DEEPSEEK_API_KEY not configured")
-
-        generator = ReviewGeneratorService(api_key=api_key)
-        review = await generator.generate_review(
-            topic=request.topic,
-            papers=filtered_papers
-        )
-
-        # 5. 保存记录
-        record.review = review
-        record.papers = filtered_papers
-        record.statistics = stats
-        record.status = "success"
-        db_session.commit()
-
-        return GenerateResponse(
-            success=True,
-            message="文献综述生成成功",
-            data={
-                "id": record.id,
-                "topic": request.topic,
-                "review": review,
-                "papers": filtered_papers,
-                "statistics": stats,
-                "created_at": record.created_at.isoformat()
-            }
-        )
-
-    except Exception as e:
-        record.status = "failed"
-        record.error_message = str(e)
-        db_session.commit()
-        return GenerateResponse(
-            success=False,
-            message=f"生成失败: {str(e)}"
-        )
-
-
 @app.post("/api/smart-generate")
 async def smart_generate_review(
     request: GenerateRequest,
@@ -272,7 +184,7 @@ async def smart_generate_review(
         # 4. 筛选文献（使用关键词进行相关性评分）
         filtered_papers = filter_service.filter_and_sort(
             papers=all_papers,
-           ars=target_count,
+            target_count=request.target_count,
             recent_years_ratio=request.recent_years_ratio,
             english_ratio=request.english_ratio,
             topic_keywords=topic_keywords
