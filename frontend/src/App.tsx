@@ -65,22 +65,26 @@ function App() {
 
     try {
       const response = await api.smartAnalyze(topic)
+      console.log('[App] Smart analyze response:', response)
       if (response.success && response.data) {
         const data = response.data
+        console.log('[App] Analysis data:', data)
 
         setFrameworkType(data.framework_type || '')
 
         if (data.analysis) {
+          console.log('[App] Setting classification:', data.analysis)
           setClassification(data.analysis as unknown as TopicClassification)
         }
 
         if (data.review_framework) {
+          console.log('[App] Setting framework:', data.review_framework)
           setFramework(data.review_framework)
         }
       }
     } catch (err) {
       setError('分析失败，请检查后端服务')
-      console.error(err)
+      console.error('[App] Analyze error:', err)
     } finally {
       setAnalyzing(false)
     }
@@ -157,6 +161,48 @@ function App() {
     }
   }
 
+  const handleExportDocx = async () => {
+    if (!review || !statistics) {
+      setError('请先生成综述')
+      return
+    }
+
+    try {
+      const blob = await api.exportReview(topic, review, papers, statistics)
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${topic.replace(/[\/\\:]/g, '-')}.docx`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    } catch (err) {
+      setError('导出失败')
+      console.error('导出失败:', err)
+    }
+  }
+
+  const handleExportRecord = async (id: number, event: React.MouseEvent) => {
+    event.stopPropagation()
+    try {
+      const blob = await api.exportRecord(id)
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      const record = records.find(r => r.id === id)
+      const filename = record ? record.topic.replace(/[\/\\:]/g, '-') : 'review'
+      a.download = `${filename}.docx`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    } catch (err) {
+      setError('导出失败')
+      console.error('导出失败:', err)
+    }
+  }
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
     return date.toLocaleString('zh-CN', {
@@ -219,6 +265,14 @@ function App() {
           >
             {loading ? '生成中...' : '✨ 生成综述'}
           </button>
+          {review && statistics && (
+            <button
+              onClick={handleExportDocx}
+              className="export-btn"
+            >
+              📥 导出Word
+            </button>
+          )}
         </div>
 
         {error && (
@@ -297,11 +351,11 @@ function App() {
                     <div className="classification-card">
                       <div
                         className="type-badge"
-                        style={{ backgroundColor: getTypeColor(classification.type) }}
+                        style={{ backgroundColor: getTypeColor(classification.type || 'general') }}
                       >
-                        {classification.type_name}
+                        {classification.type_name || '未知类型'}
                       </div>
-                      <p className="classification-reason">{classification.classification_reason}</p>
+                      <p className="classification-reason">{classification.classification_reason || ''}</p>
                     </div>
                   </div>
 
@@ -309,17 +363,17 @@ function App() {
                   {framework && (
                     <div className="analysis-section">
                       <h2>
-                        {getFrameworkIcon(framework.structure)} {framework.structure}框架
+                        {getFrameworkIcon(framework.structure || '')} {framework.structure || '框架'}框架
                       </h2>
-                      <p className="framework-description">{framework.description}</p>
+                      <p className="framework-description">{framework.description || ''}</p>
 
                       <div className="framework-sections">
-                        {framework.sections.map((section, index) => (
+                        {(framework.sections || []).map((section: any, index: number) => (
                           <div key={index} className="framework-section-item">
                             <h4>{section.title}</h4>
                             <p className="section-desc">{section.description}</p>
                             <ul className="section-points">
-                              {section.key_points.map((point, i) => (
+                              {(section.key_points || []).map((point: string, i: number) => (
                                 <li key={i}>{point}</li>
                               ))}
                             </ul>
@@ -334,7 +388,7 @@ function App() {
                     <div className="analysis-section">
                       <h2>🔍 文献检索策略</h2>
                       <div className="search-queries">
-                        {classification.search_queries.map((query, index) => (
+                        {classification.search_queries.map((query: any, index: number) => (
                           <div key={index} className="query-item">
                             <span className="query-section">{query.section}</span>
                             <span className="query-text">{query.query}</span>
@@ -360,12 +414,20 @@ function App() {
                         >
                           <div className="record-header">
                             <h3 className="record-topic">{record.topic}</h3>
-                            <button
-                              className="delete-btn"
-                              onClick={(e) => handleDeleteRecord(record.id, e)}
-                            >
-                              删除
-                            </button>
+                            <div className="record-actions">
+                              <button
+                                className="export-btn"
+                                onClick={(e) => handleExportRecord(record.id, e)}
+                              >
+                                📥 导出
+                              </button>
+                              <button
+                                className="delete-btn"
+                                onClick={(e) => handleDeleteRecord(record.id, e)}
+                              >
+                                删除
+                              </button>
+                            </div>
                           </div>
                           <div className="record-meta">
                             <span className="record-date">{formatDate(record.created_at)}</span>

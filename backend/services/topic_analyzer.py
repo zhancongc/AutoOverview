@@ -132,26 +132,93 @@ class TopicAnalyzer:
         domain = analysis['domain']
         optimization = analysis['optimization']
 
-        return [
-            {
+        # 构建更聚焦的搜索查询
+        queries = []
+
+        # 圈A：研究对象（应用场景）
+        if domain and domain != "通用":
+            # 针对具体领域进行多角度搜索
+            queries.append({
                 'circle': 'A',
-                'name': f'{domain}研究现状',
-                'query': f'{domain} 软件 工程',
-                'description': f'证明{domain}的重要性和特殊性'
-            },
-            {
+                'name': f'{domain}应用现状',
+                'query': f'{domain} 软件 项目',
+                'description': f'分析{domain}在软件项目中的应用现状'
+            })
+            queries.append({
+                'circle': 'A',
+                'name': f'{domain}实施挑战',
+                'query': f'{domain} 软件 挑战 问题',
+                'description': f'识别{domain}在实施中面临的挑战'
+            })
+        else:
+            # 如果没有明确领域，搜索软件外包相关
+            queries.append({
+                'circle': 'A',
+                'name': '软件外包研究现状',
+                'query': '软件外包 项目管理 研究',
+                'description': '分析软件外包项目管理的研究现状'
+            })
+
+        # 圈B：优化目标
+        if optimization and optimization != "通用":
+            # 针对优化目标进行搜索
+            queries.append({
                 'circle': 'B',
-                'name': f'{optimization}现状与痛点',
-                'query': f'{optimization} 软件 质量管理',
-                'description': f'证明{optimization}的现状与痛点'
-            },
-            {
-                'circle': 'C',
-                'name': f'{methodology}方法应用',
-                'query': f'{methodology} 软件 流程优化',
-                'description': f'证明{methodology}的可行性及在软件领域的应用'
-            }
-        ]
+                'name': f'{optimization}方法研究',
+                'query': f'{optimization} 软件 方法 模型',
+                'description': f'梳理{optimization}的主要方法与模型'
+            })
+            queries.append({
+                'circle': 'B',
+                'name': f'{optimization}问题与挑战',
+                'query': f'{optimization} 痛点 改进',
+                'description': f'分析{optimization}领域存在的问题'
+            })
+
+        # 圈C：方法论
+        if methodology and methodology != "通用":
+            # 针对方法论进行搜索
+            if 'QFD' in methodology or '质量功能展开' in methodology:
+                queries.append({
+                    'circle': 'C',
+                    'name': 'QFD应用研究',
+                    'query': 'QFD 软件 项目',
+                    'description': '分析QFD在软件项目中的应用'
+                })
+            if 'FMEA' in methodology or '失效模式' in methodology:
+                queries.append({
+                    'circle': 'C',
+                    'name': 'FMEA应用研究',
+                    'query': 'FMEA 软件 质量',
+                    'description': '分析FMEA在软件质量管理中的应用'
+                })
+            # 如果包含其他方法论
+            if 'DMAIC' in methodology or '六西格玛' in methodology:
+                queries.append({
+                    'circle': 'C',
+                    'name': 'DMAIC应用研究',
+                    'query': 'DMAIC 软件 项目',
+                    'description': '分析DMAIC在软件项目中的应用'
+                })
+            # 通用方法搜索
+            if methodology not in ['QFD', 'FMEA', 'DMAIC', '六西格玛']:
+                queries.append({
+                    'circle': 'C',
+                    'name': f'{methodology}方法应用',
+                    'query': f'{methodology} 软件 质量管理',
+                    'description': f'分析{methodology}在质量管理中的应用'
+                })
+
+        # 如果查询太少，补充一些通用相关查询
+        if len(queries) < 3:
+            queries.append({
+                'circle': 'D',
+                'name': '软件质量管理综述',
+                'query': '软件质量管理 综述',
+                'description': '软件质量管理的综述性研究'
+            })
+
+        return queries
 
     async def search_three_circles(self, title: str) -> Dict:
         """
@@ -172,10 +239,15 @@ class TopicAnalyzer:
         # 并行检索三个圈的文献
         results = []
         for query_info in queries:
+            # 根据查询的精确度调整搜索参数
+            # 更精确的查询减少限制，更泛泛的查询增加限制
+            query_precision = self._estimate_query_precision(query_info['query'])
+            limit = min(30 + query_precision * 20, 100)  # 30-100 篇
+
             papers = await self.search_service.search_papers(
                 query=query_info['query'],
                 years_ago=10,
-                limit=50
+                limit=limit
             )
             results.append({
                 **query_info,
@@ -191,6 +263,27 @@ class TopicAnalyzer:
             'circles': results,
             'gap_analysis': gap_analysis
         }
+
+    def _estimate_query_precision(self, query: str) -> int:
+        """
+        估算查询的精确度（1-5）
+
+        精确度越高，说明查询越具体，返回结果越相关可能
+        """
+        query_lower = query.lower()
+        precision = 1
+
+        # 包含多个关键词说明更精确
+        keywords = ['软件', '质量', '管理', '项目', 'qfd', 'fmea', 'dmaic',
+                   '外包', '缺陷', '风险', '测试', '持续交付']
+        keyword_count = sum(1 for kw in keywords if kw in query_lower)
+        precision += min(keyword_count, 3)
+
+        # 包含缩写说明更精确
+        if any(abbrev in query_lower for abbrev in ['qfd', 'fmea', 'dmaic']):
+            precision += 1
+
+        return min(precision, 5)
 
     def _analyze_gap(self, analysis: Dict, circle_results: List[Dict]) -> Dict:
         """分析研究缺口"""

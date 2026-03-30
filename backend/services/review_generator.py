@@ -44,14 +44,16 @@ class ReviewGeneratorService:
 2. 主体部分（按主题或时间线组织，分析研究进展）
 3. 结论（总结现有研究的不足和未来方向）
 
-写作要求：
+写作要求（重要）：
 - 使用学术化语言
-- 每个重要观点都要引用文献
-- 引用格式：[序号]，对应参考文献列表
+- 每个重要观点、研究结论或数据引用，都必须在句末添加对应的参考文献序号
+- 引用格式：[序号]，例如，"这一观点得到了多项研究的支持[1][2][3]"
+- 确保正文中至少引用 5 篇不同的文献，不要只引用同一篇
 - 分析要深入，不能简单罗列
 - 字数：2000-3000字
 
-输出格式：Markdown"""
+输出格式：Markdown
+注意：不要在输出中包含"参考文献"部分或参考文献列表，只需输出正文内容。"""
 
         user_prompt = f"""请撰写关于"{topic}"的文献综述。
 
@@ -72,6 +74,9 @@ class ReviewGeneratorService:
             )
 
             content = response.choices[0].message.content
+
+            # 移除 AI 可能已经生成的参考文献部分
+            content = self._remove_existing_references(content)
 
             # 附加参考文献列表
             references = self._format_references(papers)
@@ -113,7 +118,25 @@ class ReviewGeneratorService:
 
             ref = f"[{i}] {authors}. {paper.get('title', '')}. {paper.get('year', '')}.{doi_suffix}"
             references.append(ref)
-        return "\n".join(references)
+        return "\n\n".join(references)
+
+    def _remove_existing_references(self, content: str) -> str:
+        """移除 AI 可能已经生成的参考文献部分"""
+        lines = content.split('\n')
+        result = []
+
+        # 查找参考文献标题的位置
+        ref_section_start = -1
+        for i, line in enumerate(lines):
+            if line.strip().startswith('## 参考文献') or line.strip().startswith('### 参考文献') or line.strip().startswith('# 参考文献'):
+                ref_section_start = i
+                break
+
+        if ref_section_start == -1:
+            return content  # 没有找到参考文献部分，返回原内容
+
+        # 返回参考文献部分之前的内容
+        return '\n'.join(lines[:ref_section_start]).strip()
 
     def _generate_fallback_review(self, topic: str, papers: List[Dict]) -> str:
         """生成备用综述（当 API 调用失败时）"""

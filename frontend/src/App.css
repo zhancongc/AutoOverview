@@ -336,6 +336,29 @@
   color: white;
 }
 
+.export-btn {
+  padding: 0.3rem 0.75rem;
+  font-size: 0.85rem;
+  color: #28a745;
+  background: white;
+  border: 1px solid #28a745;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-right: 0.5rem;
+}
+
+.export-btn:hover {
+  background: #28a745;
+  color: white;
+}
+
+.record-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .record-meta {
   display: flex;
   gap: 1rem;
@@ -471,6 +494,10 @@
   .paper-meta {
     flex-direction: column;
     gap: 0.25rem;
+  }
+
+  .export-btn {
+    width: 100%;
   }
 
   .mode-selector {

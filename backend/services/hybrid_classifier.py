@@ -4,17 +4,7 @@
 - 再用大模型智能分类其他题目
 """
 import re
-from enum import Enum
-from services.llm_classifier import LLTopicClassifier
-
-
-class TopicType(Enum):
-    """题目类型枚举"""
-    APPLICATION = "application"
-    EVALUATION = "evaluation"
-    THEORETICAL = "theoretical"
-    EMPIRICAL = "empirical"
-    GENERAL = "general"
+from services.llm_classifier import LLTopicClassifier, TopicType
 
 
 class HybridTopicClassifier:
@@ -61,7 +51,72 @@ class HybridTopicClassifier:
             return pattern_result
 
         # 第二步：大模型分类
-        return await self.llm_classifier.classify(title)
+        try:
+            return await self.llm_classifier.classify(title)
+        except Exception as e:
+            print(f"[HybridClassifier] 大模型分类失败: {e}")
+            # 使用规则引擎作为回退
+            return self._fallback_classification(title)
+
+    def _fallback_classification(self, title: str):
+        """回退分类：使用简单规则"""
+        title_lower = title.lower()
+
+        if any(kw in title for kw in ['成熟度', '评价', '评估', '指标体系']):
+            return (
+                TopicType.EVALUATION,
+                '识别到评价型关键词（规则回退）',
+                {
+                    'method': 'fallback',
+                    'confidence': 'low',
+                    'key_elements': {
+                        'research_object': title.split('成熟度')[0].split('评价')[0].strip(),
+                        'optimization_goal': None,
+                        'methodology': None
+                    }
+                }
+            )
+        if any(kw in title for kw in ['基于', '优化', '改进', '应用']):
+            return (
+                TopicType.APPLICATION,
+                '识别到应用型关键词（规则回退）',
+                {
+                    'method': 'fallback',
+                    'confidence': 'low',
+                    'key_elements': {
+                        'research_object': None,
+                        'optimization_goal': None,
+                        'methodology': None
+                    }
+                }
+            )
+        if any(kw in title for kw in ['影响', '效应', '关系', '相关']):
+            return (
+                TopicType.EMPIRICAL,
+                '识别到实证型关键词（规则回退）',
+                {
+                    'method': 'fallback',
+                    'confidence': 'low',
+                    'key_elements': {
+                        'variables': {
+                            'independent': None,
+                            'dependent': None
+                        }
+                    }
+                }
+            )
+        if any(kw in title for kw in ['理论', '机理', '综述', '进展']):
+            return (
+                TopicType.THEORETICAL,
+                '识别到理论型关键词（规则回退）',
+                {'method': 'fallback', 'confidence': 'low'}
+            )
+
+        return (
+            TopicType.GENERAL,
+            '无法识别，使用通用类型（规则回退）',
+            {'method': 'fallback', 'confidence': 'low'}
+        )
 
     def _pattern_classify(self, title: str):
         """
@@ -76,7 +131,19 @@ class HybridTopicClassifier:
             return (
                 TopicType.EMPIRICAL,
                 f'【模式识别】题目同时包含「基于XX模型」和「影响/效应」，判定为实证型（核心是检验影响关系，模型是工具）',
-                {'method': 'pattern', 'pattern': 'empirical_with_model'}
+                {
+                    'method': 'pattern',
+                    'pattern': 'empirical_with_model',
+                    'key_elements': {
+                        'research_object': '研究对象',
+                        'optimization_goal': '优化目标',
+                        'methodology': '模型方法'
+                    },
+                    'variables': {
+                        'independent': '模型方法',
+                        'dependent': '影响'
+                    }
+                }
             )
 
         # 规则2：成熟度/评价对...的影响 → 实证型
@@ -84,15 +151,39 @@ class HybridTopicClassifier:
             return (
                 TopicType.EMPIRICAL,
                 f'【模式识别】题目同时包含「成熟度/评价」和「对...的影响」，判定为实证型（核心是检验影响关系，成熟度是自变量）',
-                {'method': 'pattern', 'pattern': 'empirical_with_maturity'}
+                {
+                    'method': 'pattern',
+                    'pattern': 'empirical_with_maturity',
+                    'key_elements': {
+                        'research_object': '研究对象',
+                        'optimization_goal': '成熟度评价',
+                        'methodology': '评价方法'
+                    },
+                    'variables': {
+                        'independent': '成熟度',
+                        'dependent': '研究对象'
+                    }
+                }
             )
 
         # 规则3：评价与提升/优化 → 评价型
         if self.EVALUATION_WITH_IMPROVEMENT_PATTERN.search(title):
+            import re
+            obj_match = re.search(r'(.+?)(?:成熟度|评价|评估|体系)', title)
+            obj = obj_match.group(1) if obj_match else '研究对象'
+
             return (
                 TopicType.EVALUATION,
                 f'【模式识别】题目同时包含「评价」和「提升/优化」，判定为评价型（核心是构建评价体系，提升是应用延伸）',
-                {'method': 'pattern', 'pattern': 'evaluation_with_improvement'}
+                {
+                    'method': 'pattern',
+                    'pattern': 'evaluation_with_improvement',
+                    'key_elements': {
+                        'research_object': obj,
+                        'optimization_goal': '提升优化',
+                        'methodology': '评价方法'
+                    }
+                }
             )
 
         # 规则4：直接的X对Y影响 → 实证型
@@ -103,7 +194,19 @@ class HybridTopicClassifier:
             return (
                 TopicType.EMPIRICAL,
                 f'【模式识别】题目结构为「{iv}对{dv}的影响」，判定为实证型（核心是检验影响关系）',
-                {'method': 'pattern', 'pattern': 'direct_influence', 'variables': {'independent': iv, 'dependent': dv}}
+                {
+                    'method': 'pattern',
+                    'pattern': 'direct_influence',
+                    'key_elements': {
+                        'research_object': iv,
+                        'optimization_goal': dv,
+                        'methodology': '分析方法'
+                    },
+                    'variables': {
+                        'independent': iv,
+                        'dependent': dv
+                    }
+                }
             )
 
         # 没有匹配到模式，返回 None 让大模型处理
@@ -160,8 +263,20 @@ class FrameworkGenerator:
 
         return framework
 
-    def _get_type_name(self, topic_type: TopicType) -> str:
+    def _get_type_name(self, topic_type) -> str:
         """获取类型名称"""
+        # 如果传入的是字符串值，直接映射
+        if isinstance(topic_type, str):
+            names = {
+                "application": "应用型/解决方案型",
+                "evaluation": "评价型/体系构建型",
+                "theoretical": "理论型/研究型",
+                "empirical": "实证型",
+                "general": "通用型"
+            }
+            return names.get(topic_type, "未知类型")
+
+        # 如果是枚举类型
         names = {
             TopicType.APPLICATION: "应用型/解决方案型",
             TopicType.EVALUATION: "评价型/体系构建型",

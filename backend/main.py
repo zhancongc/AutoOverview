@@ -17,6 +17,7 @@ from services.paper_filter import PaperFilterService
 from services.review_generator import ReviewGeneratorService
 from services.topic_analyzer import ThreeCirclesReviewGenerator
 from services.hybrid_classifier import FrameworkGenerator
+from services.docx_generator import DocxGenerator
 
 load_dotenv()
 
@@ -178,6 +179,150 @@ async def generate_review(
         )
 
 
+@app.post("/api/smart-generate")
+async def smart_generate_review(
+    request: GenerateRequest,
+    db_session: Session = Depends(get_db)
+):
+    """
+    智能生成文献综述（基于智能分析结果进行聚焦搜索）
+    """
+    record = ReviewRecord(
+        topic=request.topic,
+        review="",
+        papers=[],
+        statistics={},
+        target_count=request.target_count,
+        recent_years_ratio=request.recent_years_ratio,
+        english_ratio=request.english_ratio,
+        status="processing"
+    )
+    db_session.add(record)
+    db_session.commit()
+
+    try:
+        # 1. 智能分析题目，获取搜索策略
+        from services.hybrid_classifier import FrameworkGenerator
+        gen = FrameworkGenerator()
+        framework = await gen.generate_framework(request.topic)
+
+        # 2. 根据分析结果生成搜索关键词
+        all_papers = []
+        search_queries = []
+
+        if framework.get('search_queries'):
+            # 使用智能分析生成的搜索查询
+            search_queries = framework.get('search_queries', [])
+            print(f"[SmartGenerate] 使用智能分析生成的搜索查询: {len(search_queries)} 个")
+
+            # 并发搜索
+            for query_info in search_queries[:5]:  # 最多搜索 5 个查询
+                query = query_info.get('query', request.topic)
+                papers = await search_service.search_papers(
+                    query=query,
+                    years_ago=10,
+                    limit=50  # 每个查询最多 50 篇
+                )
+                print(f"[SmartGenerate] 查询 '{query}' 找到 {len(papers)} 篇")
+                all_papers.extend(papers)
+
+        # 如果搜索到的文献太少，使用主题进行补充搜索
+        if len(all_papers) < 20:
+            print(f"[SmartGenerate] 文献数量不足，使用主题补充搜索")
+            additional_papers = await search_service.search_papers(
+                query=request.topic,
+                years_ago=10,
+                limit=100
+            )
+            all_papers.extend(additional_papers)
+
+        # 去重
+        seen_ids = set()
+        unique_papers = []
+        for paper in all_papers:
+            paper_id = paper.get("id")
+            if paper_id not in seen_ids:
+                seen_ids.add(paper_id)
+                unique_papers.append(paper)
+
+        all_papers = unique_papers
+        print(f"[SmartGenerate] 去重后共 {len(all_papers)} 篇文献")
+
+        if not all_papers:
+            record.status = "failed"
+            record.error_message = f'未找到关于「{request.topic}」的相关文献'
+            db_session.commit()
+            return GenerateResponse(
+                success=False,
+                message=record.error_message
+            )
+
+        # 3. 提取主题关键词用于相关性评分
+        topic_keywords = []
+        key_elements = framework.get('key_elements', {})
+        for key, value in key_elements.items():
+            if value and isinstance(value, str):
+                topic_keywords.extend(value.split())
+                if value == key_elements.get('methodology'):
+                    # 处理缩写
+                    for kw in ['QFD', 'FMEA', 'DMAIC', 'AHP']:
+                        if kw in value:
+                            topic_keywords.append(kw)
+
+        # 4. 筛选文献（使用关键词进行相关性评分）
+        filtered_papers = filter_service.filter_and_sort(
+            papers=all_papers,
+           ars=target_count,
+            recent_years_ratio=request.recent_years_ratio,
+            english_ratio=request.english_ratio,
+            topic_keywords=topic_keywords
+        )
+
+        # 5. 获取统计信息
+        stats = filter_service.get_statistics(filtered_papers)
+
+        # 6. 生成综述
+        api_key = os.getenv("DEEPSEEK_API_KEY")
+        if not api_key:
+            raise ValueError("DEEPSEEK_API_KEY not configured")
+
+        generator = ReviewGeneratorService(api_key=api_key)
+        review = await generator.generate_review(
+            topic=request.topic,
+            papers=filtered_papers
+        )
+
+        # 7. 保存记录
+        record.review = review
+        record.papers = filtered_papers
+        record.statistics = stats
+        record.status = "success"
+        db_session.commit()
+
+        return GenerateResponse(
+            success=True,
+            message="文献综述生成成功",
+            data={
+                "id": record.id,
+                "topic": request.topic,
+                "review": review,
+                "papers": filtered_papers,
+                "statistics": stats,
+                "analysis": framework,
+                "created_at": record.created_at.isoformat()
+            }
+        )
+
+    except Exception as e:
+        record.status = "failed"
+        record.error_message = str(e)
+        db_session.commit()
+        return GenerateResponse(
+            success=False,
+            message=f"生成失败: {str(e)}"
+        )
+
+
 @app.get("/api/records")
 async def get_records(
     skip: int = 0,
@@ -232,6 +377,87 @@ async def delete_record(
     db_session.commit()
 
     return {"success": True, "message": "删除成功"}
+
+
+@app.post("/api/records/{record_id}/export")
+async def export_record_docx(
+    record_id: int,
+    db_session: Session = Depends(get_db)
+):
+    """
+    导出文献记录为 Word 文档
+
+    返回 .docx 文件的二进制数据
+    """
+    record = db_session.query(ReviewRecord).filter(
+        ReviewRecord.id == record_id
+    ).first()
+
+    if not record:
+        raise HTTPException(status_code=404, detail="记录不存在")
+
+    try:
+        generator = DocxGenerator()
+        docx_bytes = generator.generate_review_docx(
+            topic=record.topic,
+            review=record.review,
+            papers=record.papers,
+            statistics=record.statistics
+        )
+
+        from fastapi.responses import Response
+
+        # 生成安全的文件名
+        safe_topic = record.topic.replace('/', '-').replace('\\', '-').replace(':', '-')
+        filename = f"{safe_topic}.docx"
+
+        return Response(
+            content=docx_bytes,
+            media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            headers={
+                "Content-Disposition": f'attachment; filename="{filename}"'
+            }
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"导出失败: {str(e)}")
+
+
+@app.post("/api/export")
+async def export_review_docx(
+    topic: str,
+    review: str,
+    papers: List[Dict],
+    statistics: Optional[Dict] = None
+):
+    """
+    导出文献综述为 Word 文档
+
+    接收直接传入的数据并返回 .docx 文件
+    """
+    try:
+        generator = DocxGenerator()
+        docx_bytes = generator.generate_review_docx(
+            topic=topic,
+            review=review,
+            papers=papers,
+            statistics=statistics
+        )
+
+        from fastapi.responses import Response
+
+        # 生成安全的文件名
+        safe_topic = topic.replace('/', '-').replace('\\', '-').replace(':', '-')
+        filename = f"{safe_topic}.docx"
+
+        return Response(
+            content=docx_bytes,
+            media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            headers={
+                "Content-Disposition": f'attachment; filename="{filename}"'
+            }
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"导出失败: {str(e)}")
 
 
 @app.get("/api/health")
@@ -309,24 +535,41 @@ async def smart_analyze(request: TopicRequest):
         # 根据类型选择分析方法
         if framework['type'] == 'application':
             # 应用型使用三圈分析
-            result = await three_circles_generator.generate(request.topic)
-            result['framework_type'] = 'three-circles'
+            circles_result = await three_circles_generator.generate(request.topic)
+
+            # 清理 papers 数据，只保留摘要信息
+            circles = []
+            for circle in circles_result.get('circles', []):
+                circles.append({
+                    'circle': circle['circle'],
+                    'name': circle['name'],
+                    'query': circle['query'],
+                    'description': circle['description'],
+                    'count': circle['count']
+                })
+
+            result = {
+                'analysis': framework,  # 使用正确的分类数据结构
+                'circles': circles,
+                'review_framework': framework.get('framework'),
+                'framework_type': 'three-circles'
+            }
         elif framework['type'] == 'evaluation':
             # 评价型使用金字塔式分析
             result = {
                 'analysis': framework,
                 'circles': [],
-                'review_framework': framework['framework']
+                'review_framework': framework.get('framework'),
+                'framework_type': 'pyramid'
             }
-            result['framework_type'] = 'pyramid'
         else:
             # 其他类型使用框架分析
             result = {
                 'analysis': framework,
                 'circles': [],
-                'review_framework': framework['framework']
+                'review_framework': framework.get('framework'),
+                'framework_type': framework.get('type', 'general')
             }
-            result['framework_type'] = 'general'
 
         return {
             "success": True,
@@ -334,6 +577,8 @@ async def smart_analyze(request: TopicRequest):
             "data": result
         }
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
 
