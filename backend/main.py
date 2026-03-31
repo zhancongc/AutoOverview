@@ -13,7 +13,7 @@ from urllib.parse import quote
 
 from database import db, get_db
 from models import ReviewRecord
-from services.paper_search import PaperSearchService
+from services.scholarflux_wrapper import ScholarFlux
 from services.paper_filter import PaperFilterService
 from services.review_generator import ReviewGeneratorService
 from services.topic_analyzer import ThreeCirclesReviewGenerator
@@ -52,7 +52,7 @@ class ExportRequest(BaseModel):
     record_id: int
 
 # 全局服务实例
-search_service = PaperSearchService()
+search_service = ScholarFlux()
 filter_service = PaperFilterService()
 three_circles_generator = ThreeCirclesReviewGenerator()
 
@@ -484,6 +484,43 @@ async def smart_generate_review(
             success=False,
             message=f"生成失败: {str(e)}"
         )
+
+def _extract_relevance_keywords(framework: dict) -> List[str]:
+    """
+    从框架分析中提取相关性关键词
+
+    Args:
+        framework: 智能分析生成的框架
+
+    Returns:
+        相关性关键词列表
+    """
+    keywords = []
+
+    # 从 key_elements 中提取
+    key_elements = framework.get('key_elements', {})
+    for key, value in key_elements.items():
+        if value and isinstance(value, str):
+            # 添加原始值
+            keywords.append(value)
+            # 添加拆分后的关键词
+            keywords.extend(value.split())
+
+    # 从 variables 中提取（实证型）
+    variables = key_elements.get('variables', {})
+    if variables:
+        iv = variables.get('independent')
+        dv = variables.get('dependent')
+        if iv:
+            keywords.append(iv)
+            keywords.extend(iv.split('、'))  # 处理中文顿号
+        if dv:
+            keywords.append(dv)
+
+    # 移除空值和重复
+    keywords = list(set(k for k in keywords if k and k.strip()))
+
+    return keywords
 
 if __name__ == "__main__":
     import uvicorn

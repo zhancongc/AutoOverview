@@ -499,12 +499,142 @@ class FrameworkGenerator:
 
         queries = []
         if iv and dv:
+            # 中文查询
             queries.append({'query': f'{iv} 测量 量表', 'section': f'{iv}的理论基础与测量'})
             queries.append({'query': f'{dv} 测量 量表', 'section': f'{dv}的理论基础与测量'})
             queries.append({'query': f'{iv} {dv} 影响', 'section': '影响机制'})
             queries.append({'query': f'{iv} {dv} 中介 调节', 'section': '影响机制'})
 
+            # 英文查询（翻译关键词）
+            iv_en = self._translate_keyword(iv)
+            dv_en = self._translate_keyword(dv)
+
+            if iv_en or dv_en:
+                # 组合英文查询
+                en_parts = []
+                if iv_en:
+                    en_parts.extend([f'{iv_en} measurement', f'{iv_en} scale'])
+                if dv_en:
+                    en_parts.extend([f'{dv_en} measurement', f'{dv_en} scale'])
+                if iv_en and dv_en:
+                    en_parts.extend([
+                        f'{iv_en} {dv_en}',
+                        f'{iv_en} effect on {dv_en}',
+                        f'determinants of {dv_en}'
+                    ])
+
+                # 添加英文查询（每个查询单独一条）
+                for en_query in en_parts[:5]:  # 最多5个英文查询
+                    queries.append({'query': en_query, 'section': 'English literature search'})
+
         return queries
+
+    def _translate_keyword(self, chinese_keyword: str) -> str:
+        """
+        将中文关键词翻译为英文术语
+
+        Args:
+            chinese_keyword: 中文关键词
+
+        Returns:
+            英文翻译（如果找到匹配），否则返回空字符串
+        """
+        # 关键词翻译映射表
+        translations = {
+            # 媒体与传播
+            '媒体关注度': 'media coverage',
+            '媒体报道': 'media coverage',
+            '新闻关注': 'news coverage',
+            '舆情': 'public opinion',
+
+            # 投资者情绪相关
+            '投资者情绪': 'investor sentiment',
+            '投资者情绪': 'investor sentiment',
+            '市场情绪': 'market sentiment',
+            '情绪': 'sentiment',
+
+            # 分析师预测相关
+            '分析师盈利预测': 'analyst earnings forecast',
+            '分析师预测': 'analyst forecast',
+            '盈利预测': 'earnings forecast',
+            '盈利预测准确性': 'forecast accuracy',
+            '分析师盈利预测准确性': 'analyst forecast accuracy',
+            '预测准确性': 'forecast accuracy',
+
+            # 行为金融学
+            '行为金融学': 'behavioral finance',
+            '行为金融': 'behavioral finance',
+
+            # 公司治理
+            '公司治理': 'corporate governance',
+            '股权结构': 'ownership structure',
+            '董事会': 'board of directors',
+            '高管薪酬': 'executive compensation',
+
+            # 创新
+            '技术创新': 'technological innovation',
+            '研发投入': 'R&D investment',
+            '创新绩效': 'innovation performance',
+
+            # 环境
+            '环境信息披露': 'environmental disclosure',
+            '企业社会责任': 'corporate social responsibility',
+            'ESG': 'ESG',
+
+            # 质量管理
+            '质量管理': 'quality management',
+            '质量控制': 'quality control',
+            '质量保证': 'quality assurance',
+            'QFD': 'QFD',
+            'FMEA': 'FMEA',
+
+            # 外包
+            '软件外包': 'software outsourcing',
+            '外包': 'outsourcing',
+
+            # 风险管理
+            '风险管理': 'risk management',
+            '风险控制': 'risk control',
+
+            # 财务
+            '财务绩效': 'financial performance',
+            '企业绩效': 'firm performance',
+            '经营绩效': 'operating performance',
+
+            # 数字化
+            '数字化转型': 'digital transformation',
+            '数字化': 'digitalization',
+
+            # 通用
+            '影响因素': 'determinants',
+            '影响': 'impact',
+            '效应': 'effect',
+            '作用': 'role',
+            '关系': 'relationship',
+        }
+
+        # 尝试精确匹配
+        if chinese_keyword in translations:
+            return translations[chinese_keyword]
+
+        # 尝试部分匹配（处理复合关键词）
+        for zh, en in translations.items():
+            if zh in chinese_keyword:
+                # 返回找到的翻译，或者组合翻译
+                return en
+
+        # 如果包含多个关键词，尝试拆分翻译
+        keywords_to_translate = []
+        remaining = chinese_keyword
+        for zh, en in sorted(translations.items(), key=lambda x: len(x[0]), reverse=True):
+            if zh in remaining:
+                keywords_to_translate.append(en)
+                remaining = remaining.replace(zh, ' ')
+
+        if keywords_to_translate:
+            return ' '.join(keywords_to_translate)
+
+        return ''
 
     def _theoretical_framework(self, title: str) -> dict:
         """理论型综述框架 - 溯源式"""
