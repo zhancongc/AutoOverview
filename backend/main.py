@@ -338,7 +338,7 @@ async def smart_generate_review(
     db_session: Session = Depends(get_db)
 ):
     """
-    智能生成文献综述（基于智能分析结果进行聚焦搜索）
+    智能生成文献综述（基于智能分析结果进行聚焦搜索，带验证反馈循环）
     """
     # 创建记录
     record = record_service.create_record(
@@ -349,44 +349,42 @@ async def smart_generate_review(
         english_ratio=request.english_ratio
     )
 
+    validator = ReferenceValidator()
+
     try:
         # 1. 智能分析题目，获取搜索策略
         from services.hybrid_classifier import FrameworkGenerator
         gen = FrameworkGenerator()
         framework = await gen.generate_framework(request.topic, enable_llm_validation=True)
 
-        # 2. 根据分析结果生成搜索关键词
+        # 2. 初始文献搜索
         all_papers = []
-        search_queries = []
-        search_queries_results = []  # 记录每个查询的搜索结果
+        search_queries_results = []
 
-        if framework.get('search_queries'):
-            # 使用智能分析生成的搜索查询
-            search_queries = framework.get('search_queries', [])
+        search_queries = framework.get('search_queries', [])
+        if search_queries:
             print(f"[SmartGenerate] 使用智能分析生成的搜索查询: {len(search_queries)} 个")
 
             # 并发搜索
-            for query_info in search_queries[:5]:  # 最多搜索 5 个查询
+            for query_info in search_queries[:5]:
                 query = query_info.get('query', request.topic)
                 section = query_info.get('section', '通用')
                 papers = await search_service.search_papers(
                     query=query,
                     years_ago=10,
-                    limit=50  # 每个查询最多 50 篇
+                    limit=50
                 )
                 print(f"[SmartGenerate] 查询 '{query}' 找到 {len(papers)} 篇")
 
-                # 记录每个查询的搜索结果
                 search_queries_results.append({
                     'query': query,
                     'section': section,
                     'papers': papers,
-                    'citedCount': 0  # 稍后更新
+                    'citedCount': 0
                 })
-
                 all_papers.extend(papers)
 
-        # 如果搜索到的文献太少，使用主题进行补充搜索
+        # 补充搜索（如果文献太少）
         if len(all_papers) < 20:
             print(f"[SmartGenerate] 文献数量不足，使用主题补充搜索")
             additional_papers = await search_service.search_papers(
@@ -404,7 +402,6 @@ async def smart_generate_review(
             if paper_id not in seen_ids:
                 seen_ids.add(paper_id)
                 unique_papers.append(paper)
-
         all_papers = unique_papers
         print(f"[SmartGenerate] 去重后共 {len(all_papers)} 篇文献")
 
@@ -419,21 +416,72 @@ async def smart_generate_review(
                 message=record.error_message
             )
 
-        # 3. 提取主题关键词用于相关性评分
+        # 3. 提取主题关键词
         topic_keywords = gen.extract_relevance_keywords(framework)
 
-        # 4. 筛选文献（使用关键词进行相关性评分）
-        # 搜索更多文献以确保有足够的引用
-        search_count = max(request.target_count * 2, 100)  # 搜索2倍目标数量，最少100篇
-        filtered_papers = filter_service.filter_and_sort(
-            papers=all_papers,
-            target_count=search_count,
-            recent_years_ratio=request.recent_years_ratio,
-            english_ratio=request.english_ratio,
-            topic_keywords=topic_keywords
-        )
+        # 4. 筛选文献（带验证反馈循环）
+        filtered_papers = None
+        pool_validation_passed = False
+        retry_count = 0
+        max_retries = 1
 
-        # 5. 生成综述（返回综述内容和实际被引用的文献）
+        # 初始筛选参数
+        search_years_ago = 10
+        search_limit_factor = 2
+
+        while retry_count <= max_retries:
+            search_count = max(request.target_count * search_limit_factor, 100)
+
+            filtered_papers = filter_service.filter_and_sort(
+                papers=all_papers,
+                target_count=search_count,
+                recent_years_ratio=request.recent_years_ratio,
+                english_ratio=request.english_ratio,
+                topic_keywords=topic_keywords
+            )
+
+            print(f"[SmartGenerate] 筛选后文献: {len(filtered_papers)} 篇")
+
+            # 验证文献池质量
+            pool_validation = validator.validate_paper_pool(
+                papers=filtered_papers,
+                min_count=100,
+                min_recent_ratio=request.recent_years_ratio,
+                min_english_ratio=request.english_ratio
+            )
+
+            if pool_validation["passed"]:
+                pool_validation_passed = True
+                print(f"[SmartGenerate] 文献池验证通过")
+                break
+            else:
+                print(f"[SmartGenerate] 文献池验证未通过: {pool_validation['warnings']}")
+                if retry_count < max_retries:
+                    print(f"[SmartGenerate] 扩大搜索范围重试...")
+                    # 扩大搜索范围
+                    search_years_ago = 15  # 增加年份范围
+                    search_limit_factor = 3  # 增加数量
+
+                    # 重新搜索（扩大范围）
+                    additional_papers = await search_service.search_papers(
+                        query=request.topic,
+                        years_ago=search_years_ago,
+                        limit=150
+                    )
+                    # 去重并添加
+                    for paper in additional_papers:
+                        paper_id = paper.get("id")
+                        if paper_id not in seen_ids:
+                            seen_ids.add(paper_id)
+                            all_papers.append(paper)
+                    print(f"[SmartGenerate] 扩大搜索后共 {len(all_papers)} 篇文献")
+
+                retry_count += 1
+
+        if not pool_validation_passed:
+            print(f"[SmartGenerate] 文献池验证最终未通过，标记警告但继续生成")
+
+        # 5. 生成综述
         api_key = os.getenv("DEEPSEEK_API_KEY")
         if not api_key:
             raise ValueError("DEEPSEEK_API_KEY not configured")
@@ -444,7 +492,29 @@ async def smart_generate_review(
             papers=filtered_papers
         )
 
-        # 6. 基于实际被引用的文献计算统计信息
+        # 6. 验证并修正引用顺序
+        content, _ = validator._split_review_and_references(review)
+        cited_indices = validator._extract_cited_indices(content)
+
+        if cited_indices:
+            order_validation = validator.validate_citation_order(content, cited_indices)
+            if not order_validation["passed"]:
+                print(f"[SmartGenerate] 引用顺序有问题，尝试修正: {order_validation['message']}")
+
+                # 重新编号引用
+                from services.review_generator import ReviewGeneratorService
+                renumbered_content, renumbered_papers = generator._renumber_citations_by_appearance(
+                    content, cited_papers, cited_indices
+                )
+
+                # 重新格式化参考文献
+                references = generator._format_references(renumbered_papers)
+                review = f"{renumbered_content}\n\n## 参考文献\n\n{references}"
+                cited_papers = renumbered_papers
+
+                print(f"[SmartGenerate] 引用顺序已修正")
+
+        # 7. 计算统计信息
         stats = filter_service.get_statistics(cited_papers)
 
         # 计算每个搜索查询的被引用论文数量
@@ -452,11 +522,16 @@ async def smart_generate_review(
         for query_result in search_queries_results:
             cited_count = sum(1 for p in query_result['papers'] if p.get('id') in cited_paper_ids)
             query_result['citedCount'] = cited_count
-            # 标记每篇论文是否被引用
             for paper in query_result['papers']:
                 paper['cited'] = paper.get('id') in cited_paper_ids
 
-        # 7. 保存记录
+        # 8. 最终验证
+        final_validation = validator.validate_review(
+            review=review,
+            papers=cited_papers
+        )
+
+        # 9. 保存记录
         record = record_service.update_success(
             db_session=db_session,
             record=record,
@@ -465,16 +540,9 @@ async def smart_generate_review(
             statistics=stats
         )
 
-        # 8. 验证参考文献质量
-        validator = ReferenceValidator()
-        validation_result = validator.validate_review(
-            review=review,
-            papers=cited_papers
-        )
-
         return GenerateResponse(
             success=True,
-            message="文献综述生成成功",
+            message="文献综述生成成功" if final_validation["passed"] else "文献综述生成完成（部分指标未达标）",
             data={
                 "id": record.id,
                 "topic": request.topic,
@@ -483,7 +551,8 @@ async def smart_generate_review(
                 "statistics": stats,
                 "analysis": framework,
                 "search_queries_results": search_queries_results,
-                "validation": validation_result,
+                "pool_validation_passed": pool_validation_passed,
+                "validation": final_validation,
                 "created_at": record.created_at.isoformat()
             }
         )

@@ -285,6 +285,58 @@ class ReferenceValidator:
 
         return result
 
+    def validate_paper_pool(
+        self,
+        papers: List[Dict],
+        min_count: int = 100,
+        min_recent_ratio: float = 0.5,
+        min_english_ratio: float = 0.3
+    ) -> Dict:
+        """
+        验证文献池质量（用于筛选后、生成综述前的验证）
+
+        Args:
+            papers: 文献列表
+            min_count: 最少文献数量
+            min_recent_ratio: 最小近5年占比
+            min_english_ratio: 最小英文文献占比
+
+        Returns:
+            验证结果
+        """
+        result = {
+            "passed": True,
+            "warnings": [],
+            "details": {}
+        }
+
+        # 检查数量
+        count_passed = len(papers) >= min_count
+        result["details"]["count"] = {
+            "passed": count_passed,
+            "actual": len(papers),
+            "required": min_count
+        }
+        if not count_passed:
+            result["passed"] = False
+            result["warnings"].append(f"文献数量不足：{len(papers)}篇（要求>= {min_count}篇）")
+
+        # 检查近5年占比
+        recent_result = self.validate_recent_ratio(papers, min_recent_ratio)
+        result["details"]["recent_ratio"] = recent_result
+        if not recent_result["passed"]:
+            result["passed"] = False
+            result["warnings"].append(recent_result["message"])
+
+        # 检查英文文献占比
+        english_result = self.validate_english_ratio(papers, min_english_ratio)
+        result["details"]["english_ratio"] = english_result
+        if not english_result["passed"]:
+            result["passed"] = False
+            result["warnings"].append(english_result["message"])
+
+        return result
+
     def _split_review_and_references(self, review: str) -> Tuple[str, str]:
         """
         分离综述正文和参考文献部分
