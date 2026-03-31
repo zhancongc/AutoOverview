@@ -116,6 +116,9 @@ export interface ThreeCirclesResponse {
 // 题目分类相关类型
 export type TopicType = 'application' | 'evaluation' | 'theoretical' | 'empirical' | 'general';
 
+// 标签页类型
+export type TabType = 'review' | 'papers' | 'history' | 'analysis';
+
 export interface TopicClassification {
   title: string;
   type: TopicType;
