@@ -286,8 +286,21 @@ class ScholarFlux:
                 active_apis = []
         elif use_all_sources:
             # 英文查询使用所有可用数据源（除了 AMiner）
+            # OpenAlex 优先，Semantic Scholar 作为补充
             print(f"[ScholarFlux] 英文查询，使用多数据源: {query}")
-            active_apis = [api for api in self.apis if api.is_available and not api.is_chinese]
+
+            # 优先使用 OpenAlex
+            openalex_api = next((api for api in self.apis if api.is_available and api.name == "openalex"), None)
+
+            if openalex_api:
+                # OpenAlex 可用，只使用 OpenAlex（避免 Semantic Scholar 的 429 限制）
+                active_apis = [openalex_api]
+                print(f"[ScholarFlux] 优先使用 OpenAlex（避免 Semantic Scholar 限流）")
+            else:
+                # OpenAlex 不可用，使用其他非中文 API
+                active_apis = [api for api in self.apis if api.is_available and not api.is_chinese]
+                if not active_apis:
+                    active_apis = [api for api in self.apis if api.is_available]
         else:
             # 英文查询只使用非中文数据源
             active_apis = [api for api in self.apis if api.is_available and not api.is_chinese]
@@ -299,6 +312,10 @@ class ScholarFlux:
         if not active_apis:
             print("[ScholarFlux] 所有数据源不可用")
             return []
+
+        # 显示正在使用的数据源
+        api_names = [api.name for api in active_apis]
+        print(f"[ScholarFlux] 使用数据源: {', '.join(api_names)}")
 
         # 并行搜索所有选中的数据源
         tasks = []
