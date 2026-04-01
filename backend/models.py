@@ -31,12 +31,12 @@ class PaperMetadata(Base):
     created_at = Column(DateTime, default=datetime.now, comment="首次入库时间")
     updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now, comment="更新时间")
 
-    # 索引
+    # 索引（移除title索引以避免长度限制问题，title搜索使用LIKE查询）
     __table_args__ = (
-        Index('idx_title', 'title'),
         Index('idx_year', 'year'),
         Index('idx_source', 'source'),
         Index('idx_created_at', 'created_at'),
+        Index('idx_is_english', 'is_english'),
     )
 
     def to_dict(self):
