@@ -699,6 +699,9 @@ class FrameworkGenerator:
 
         queries = []
 
+        # 检测题目中是否包含英文术语
+        has_english_terms = self._contains_english_terms(obj) or self._contains_english_terms(method)
+
         # 判断研究对象类型，生成相应的关键词
         obj_type = self._classify_object_type(obj)
 
@@ -707,7 +710,18 @@ class FrameworkGenerator:
 
         # 1. 研究对象分析 - 根据对象类型生成不同的关键词
         if obj:
-            # 只搜索核心关键词，不添加通用词
+            # 判断是否应该搜索英文文献
+            if has_english_terms or self._should_search_english(obj):
+                # 生成英文搜索查询
+                en_query = self._translate_to_english(obj)
+                if en_query:
+                    queries.append({
+                        'query': en_query,
+                        'section': '研究对象分析',
+                        'lang': 'en'  # 英文查询
+                    })
+
+            # 中文查询
             queries.append({
                 'query': obj,
                 'section': '研究对象分析',
@@ -746,14 +760,25 @@ class FrameworkGenerator:
 
             # 检查方法是否为英文缩写
             if self._is_english_acronym(method_clean):
-                # 英文缩写（如 QFD、FMEA）：使用组合搜索
-                # 传递两个关键词，让 AMiner Pro 同时使用 title + keyword
+                # 英文缩写（如 QFD、FMEA、Agent）：生成英文查询
+                # 英文组合查询
+                en_obj = self._translate_to_english(obj)
+                if en_obj:
+                    queries.append({
+                        'query': f'{method_clean} {en_obj}',
+                        'section': '方法论应用',
+                        'lang': 'en',
+                        'keywords': [en_obj, method_clean],
+                        'search_mode': 'title_keyword'
+                    })
+
+                # 中文组合查询
                 queries.append({
                     'query': f'{method_clean} {obj}',
                     'section': '方法论应用',
                     'lang': 'zh',
-                    'keywords': [obj, method_clean],  # 传递两个关键词
-                    'search_mode': 'title_keyword'  # 标识使用组合搜索
+                    'keywords': [obj, method_clean],
+                    'search_mode': 'title_keyword'
                 })
             else:
                 # 中文方法名
@@ -772,6 +797,86 @@ class FrameworkGenerator:
                     })
 
         return queries
+
+    def _contains_english_terms(self, text: str) -> bool:
+        """检测文本中是否包含英文术语"""
+        if not text:
+            return False
+        # 检测是否包含英文单词（不含中文）
+        import re
+        # 提取英文单词
+        english_words = re.findall(r'[A-Za-z]{2,}', text)
+        return len(english_words) > 0
+
+    def _should_search_english(self, obj: str) -> bool:
+        """判断是否应该搜索英文文献"""
+        # 常见的应该搜索英文的术语
+        english_related_terms = {
+            'Agent', 'agent', 'AI', '人工智能',
+            'FMEA', 'QFD', 'AHP', 'DMAIC', 'SWOT',
+            'Machine Learning', '机器学习',
+            'Deep Learning', '深度学习',
+            'Software', '软件',
+            'Development', '开发',
+            'Project', '项目',
+            'Management', '管理',
+            'Risk', '风险',
+            'Data', '数据'
+        }
+
+        for term in english_related_terms:
+            if term.lower() in obj.lower():
+                return True
+        return False
+
+    def _translate_to_english(self, chinese_text: str) -> str:
+        """将中文术语翻译为英文（简单映射）"""
+        # 常见术语映射表（按优先级排序，完整短语在前）
+        translations = {
+            # 完整短语优先
+            'Agent开发项目': 'Agent-based Software Development',
+            '智能体开发项目': 'Agent-based Software Development',
+            '软件开发项目': 'Software Development Project',
+            '开发项目': 'Development Project',
+            '项目风险管理': 'Project Risk Management',
+            '失效模式与影响分析': 'FMEA',
+            # 单个术语
+            'Agent': 'Agent',
+            '智能体': 'Agent',
+            '代理': 'Agent',
+            'FMEA': 'FMEA',
+            '失效模式': 'Failure Mode and Effects Analysis',
+            'QFD': 'QFD',
+            '质量功能展开': 'Quality Function Deployment',
+            '风险管理': 'Risk Management',
+            '软件': 'Software',
+            '开发': 'Development',
+            '项目': 'Project',
+            '质量管理': 'Quality Management',
+            '机器学习': 'Machine Learning',
+            '深度学习': 'Deep Learning',
+            '人工智能': 'Artificial Intelligence',
+            '优化': 'Optimization',
+            '改进': 'Improvement',
+            '应用': 'Application',
+        }
+
+        # 先尝试完整短语匹配
+        for cn, en in translations.items():
+            if cn == chinese_text:
+                return en
+
+        # 部分匹配替换
+        result = chinese_text
+        for cn, en in translations.items():
+            if cn in result:
+                result = result.replace(cn, en)
+
+        # 如果包含英文，直接返回
+        if self._contains_english_terms(result):
+            return result
+
+        return result if result != chinese_text else None
 
     def _is_english_acronym(self, text: str) -> bool:
         """判断是否为英文缩写（全大写字母）"""
