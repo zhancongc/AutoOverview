@@ -785,16 +785,16 @@ class FrameworkGenerator:
         # 根据类型生成框架
         if topic_type == TopicType.APPLICATION:
             framework['framework'] = self._application_framework(title, details.get('key_elements', {}))
-            framework['search_queries'] = self._application_queries(title, details.get('key_elements', {}))
+            framework['search_queries'] = await self._application_queries(title, details.get('key_elements', {}))
         elif topic_type == TopicType.EVALUATION:
             framework['framework'] = self._evaluation_framework(title, details.get('key_elements', {}))
-            framework['search_queries'] = self._evaluation_queries(title, details.get('key_elements', {}))
+            framework['search_queries'] = await self._evaluation_queries(title, details.get('key_elements', {}))
         elif topic_type == TopicType.THEORETICAL:
             framework['framework'] = self._theoretical_framework(title)
             framework['search_queries'] = self._theoretical_queries(title)
         elif topic_type == TopicType.EMPIRICAL:
             framework['framework'] = self._empirical_framework(title, details.get('key_elements', {}))
-            framework['search_queries'] = self._empirical_queries(title, details.get('key_elements', {}))
+            framework['search_queries'] = await self._empirical_queries(title, details.get('key_elements', {}))
         else:
             framework['framework'] = self._general_framework(title)
             framework['search_queries'] = self._general_queries(title)
@@ -855,24 +855,47 @@ class FrameworkGenerator:
             ]
         }
 
-    def _application_queries(self, title: str, elements: dict) -> list:
-        """应用型检索查询 - 生成更精准的搜索关键词"""
+    async def _application_queries(self, title: str, elements: dict) -> list:
+        """
+        应用型检索查询 - 使用LLM动态生成更精准的搜索关键词
+
+        策略：
+        1. 使用LLM动态生成相关关键词，替代硬编码
+        2. 研究对象分析 - 分别搜索中英文
+        3. 优化目标现状 - 只组合核心关键词
+        4. 方法论应用 - 根据方法类型处理
+
+        Returns:
+            查询列表
+        """
         obj = elements.get("research_object", "")
         goal = elements.get("optimization_goal", "")
         method = elements.get("methodology", "")
 
         queries = []
 
+        # 使用LLM动态生成关键词
+        print(f"[HybridClassifier] 使用LLM动态生成搜索关键词...")
+        dynamic_keywords = await self._generate_dynamic_keywords(
+            title=title,
+            research_object=obj,
+            optimization_goal=goal,
+            methodology=method
+        )
+
+        # 提取生成的关键词
+        object_keywords = dynamic_keywords.get('object_keywords', [])
+        goal_keywords = dynamic_keywords.get('goal_keywords', [])
+        method_keywords = dynamic_keywords.get('method_keywords', [])
+        avoid_domains = dynamic_keywords.get('avoid_domains', [])
+
         # 检测题目中是否包含英文术语
         has_english_terms = self._contains_english_terms(obj) or self._contains_english_terms(method)
-
-        # 判断研究对象类型，生成相应的关键词
-        obj_type = self._classify_object_type(obj)
 
         # 通用关键词列表（不单独搜索）
         generic_keywords = {'研究进展', '问题', '应用', '质量改进', '优化', '改进', '分析', '方法', '技术'}
 
-        # 1. 研究对象分析 - 根据对象类型生成不同的关键词
+        # 1. 研究对象分析 - 使用动态生成的关键词
         if obj:
             # 判断是否应该搜索英文文献
             if has_english_terms or self._should_search_english(obj):
@@ -912,18 +935,33 @@ class FrameworkGenerator:
                         'lang': 'zh'
                     })
 
-            # 根据对象类型添加特定关键词
-            obj_keywords = self._get_object_analysis_keywords(obj, obj_type)
-            if obj_keywords:
+            # 使用动态生成的对象关键词（过滤掉避免领域的词）
+            for obj_kw in object_keywords[:3]:  # 最多3个关键词
+                # 检查是否在避免领域中
+                should_skip = False
+                for avoid_domain in avoid_domains:
+                    if avoid_domain.lower() in obj_kw.lower():
+                        print(f"[HybridClassifier] 跳过关键词 '{obj_kw}'（属于避免领域: {avoid_domain}）")
+                        should_skip = True
+                        break
+
+                if not should_skip and obj_kw != obj:
+                    queries.append({
+                        'query': f'{obj} {obj_kw}',
+                        'section': '研究对象分析',
+                        'lang': 'zh'
+                    })
+
+        # 2. 优化目标现状 - 使用动态生成的目标关键词
+        if obj and goal_keywords:
+            for goal_kw in goal_keywords[:2]:  # 最多2个关键词
                 queries.append({
-                    'query': f'{obj} {obj_keywords}',
-                    'section': '研究对象分析',
+                    'query': f'{obj} {goal_kw}',
+                    'section': '优化目标现状',
                     'lang': 'zh'
                 })
-
-        # 2. 优化目标现状 - 只组合核心关键词
-        if obj and goal:
-            # 检查 goal 是否为通用词
+        elif obj and goal:
+            # 回退到原逻辑
             if goal not in generic_keywords:
                 queries.append({
                     'query': f'{obj} {goal}',
@@ -931,21 +969,19 @@ class FrameworkGenerator:
                     'lang': 'zh'
                 })
             else:
-                # goal 是通用词，只搜索 obj
                 queries.append({
                     'query': obj,
                     'section': '优化目标现状',
                     'lang': 'zh'
                 })
 
-        # 3. 方法论应用 - 根据方法类型处理
+        # 3. 方法论应用 - 使用动态生成的方法关键词
         if method and obj:
             method_clean = self._clean_methodology_name(method)
 
             # 检查方法是否为英文缩写
             if self._is_english_acronym(method_clean):
                 # 英文缩写（如 QFD、FMEA、Agent）：生成英文查询
-                # 英文组合查询
                 en_obj = self._translate_to_english(obj)
                 if en_obj:
                     queries.append({
@@ -965,20 +1001,30 @@ class FrameworkGenerator:
                     'search_mode': 'title_keyword'
                 })
             else:
-                # 中文方法名
-                app_keywords = self._get_application_keywords(obj_type)
-                if app_keywords and app_keywords not in generic_keywords:
+                # 使用动态生成的方法关键词
+                for method_kw in method_keywords[:2]:  # 最多2个关键词
                     queries.append({
-                        'query': f'{method_clean} {obj} {app_keywords}',
+                        'query': f'{method_clean} {obj} {method_kw}',
                         'section': '方法论应用',
                         'lang': 'zh'
                     })
-                else:
-                    queries.append({
-                        'query': f'{method_clean} {obj}',
-                        'section': '方法论应用',
-                        'lang': 'zh'
-                    })
+
+                # 如果没有动态关键词，回退到原逻辑
+                if not method_keywords:
+                    obj_type = self._classify_object_type(obj)
+                    app_keywords = self._get_application_keywords(obj_type)
+                    if app_keywords and app_keywords not in generic_keywords:
+                        queries.append({
+                            'query': f'{method_clean} {obj} {app_keywords}',
+                            'section': '方法论应用',
+                            'lang': 'zh'
+                        })
+                    else:
+                        queries.append({
+                            'query': f'{method_clean} {obj}',
+                            'section': '方法论应用',
+                            'lang': 'zh'
+                        })
 
         return queries
 
@@ -1189,6 +1235,162 @@ class FrameworkGenerator:
         method = ' '.join(method.split())
 
         return method
+
+    async def _generate_dynamic_keywords(
+        self,
+        title: str,
+        research_object: str = None,
+        optimization_goal: str = None,
+        methodology: str = None
+    ) -> dict:
+        """
+        使用LLM动态生成相关的搜索关键词
+
+        Args:
+            title: 论文题目
+            research_object: 研究对象
+            optimization_goal: 优化目标
+            methodology: 方法论
+
+        Returns:
+            {
+                'object_keywords': [],  # 研究对象相关关键词
+                'goal_keywords': [],     # 优化目标相关关键词
+                'method_keywords': [],   # 方法论相关关键词
+                'avoid_domains': []     # 需要避免的领域
+            }
+        """
+        if not self.client:
+            print("[HybridClassifier] LLM未配置，使用默认关键词")
+            return self._get_default_keywords(title, research_object, optimization_goal, methodology)
+
+        prompt = f"""论文题目：{title}
+
+研究要素：
+- 研究对象：{research_object or '未知'}
+- 优化目标：{optimization_goal or '未知'}
+- 方法论：{methodology or '未知'}
+
+请分析以上论文题目，生成适合文献搜索的关键词。
+
+要求：
+1. **研究对象关键词**（4-6个）：与研究对象直接相关的术语
+2. **优化目标关键词**（2-3个）：与优化目标相关的术语
+3. **方法论关键词**（2-3个）：与方法论相关的术语
+4. **需要避免的领域**（如果适用）：说明这个题目不属于哪些领域
+
+**注意事项**：
+- 关键词应该具体、准确，避免过于宽泛
+- 如果研究对象是"项目"或"系统"，不要混入制造、工艺等不相关的术语
+- 对于软件开发/项目管理类题目，避免使用"制造工艺"、"生产流程"等制造领域术语
+- 对于AI/机器学习类题目，避免使用传统制造领域的术语
+
+**输出格式（JSON）**：
+```json
+{{
+  "object_keywords": ["关键词1", "关键词2", ...],
+  "goal_keywords": ["关键词1", "关键词2", ...],
+  "method_keywords": ["关键词1", "关键词2", ...],
+  "avoid_domains": ["领域1", "领域2", ...]
+}}
+```
+"""
+
+        try:
+            response = await self.client.chat.completions.create(
+                model="deepseek-chat",
+                messages=[
+                    {"role": "system", "content": "你是一个学术文献检索专家，擅长生成准确的搜索关键词。"},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.3,
+                max_tokens=800,
+                response_format={"type": "json_object"}
+            )
+
+            result = response.choices[0].message.content.strip()
+            print(f"[HybridClassifier] LLM动态关键词生成结果: {result}")
+
+            # 解析JSON结果
+            import json
+            keywords_data = json.loads(result)
+
+            # 验证和清理返回的数据
+            cleaned_data = {
+                'object_keywords': keywords_data.get('object_keywords', [])[:8],
+                'goal_keywords': keywords_data.get('goal_keywords', [])[:5],
+                'method_keywords': keywords_data.get('method_keywords', [])[:5],
+                'avoid_domains': keywords_data.get('avoid_domains', [])
+            }
+
+            print(f"[HybridClassifier] 清洗后的关键词:")
+            print(f"  对象关键词: {cleaned_data['object_keywords']}")
+            print(f"  目标关键词: {cleaned_data['goal_keywords']}")
+            print(f"  方法关键词: {cleaned_data['method_keywords']}")
+            print(f"  避免领域: {cleaned_data['avoid_domains']}")
+
+            return cleaned_data
+
+        except Exception as e:
+            print(f"[HybridClassifier] LLM动态关键词生成失败: {e}，使用默认关键词")
+            import traceback
+            traceback.print_exc()
+            return self._get_default_keywords(title, research_object, optimization_goal, methodology)
+
+    def _get_default_keywords(
+        self,
+        title: str,
+        research_object: str = None,
+        optimization_goal: str = None,
+        methodology: str = None
+    ) -> dict:
+        """
+        获取默认关键词（回退方案）
+
+        Args:
+            title: 论文题目
+            research_object: 研究对象
+            optimization_goal: 优化目标
+            methodology: 方法论
+
+        Returns:
+            默认关键词字典
+        """
+        # 简单的默认关键词生成逻辑
+        object_keywords = []
+        goal_keywords = []
+        method_keywords = []
+        avoid_domains = []
+
+        if research_object:
+            # 基础关键词：直接使用研究对象
+            object_keywords.append(research_object)
+
+            # 检测领域并添加相关关键词
+            obj_lower = research_object.lower()
+
+            # 软件开发/项目领域
+            if any(kw in obj_lower for kw in ['软件', '开发', '系统', '平台', 'agent', '智能体', '项目']):
+                object_keywords.extend(['开发', '设计', '实现', '架构'])
+                avoid_domains.extend(['制造', '工艺', '生产', '装配'])
+
+            # 数据/AI领域
+            if any(kw in obj_lower for kw in ['数据', '算法', '模型', '学习', '智能']):
+                object_keywords.extend(['模型', '算法', '数据'])
+                avoid_domains.extend(['制造工艺', '生产流程'])
+
+        if optimization_goal:
+            goal_keywords.append(optimization_goal)
+
+        if methodology:
+            method_keywords.append(methodology)
+
+        return {
+            'object_keywords': object_keywords[:8],
+            'goal_keywords': goal_keywords[:5],
+            'method_keywords': method_keywords[:5],
+            'avoid_domains': avoid_domains
+        }
 
     def _evaluation_framework(self, title: str, elements: dict) -> dict:
         """评价型综述框架 - 金字塔式"""
