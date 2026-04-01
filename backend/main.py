@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 from typing import List, Dict, Optional
 from sqlalchemy.orm import Session
 import os
+import asyncio
 from dotenv import load_dotenv
 from datetime import datetime
 from urllib.parse import quote
@@ -22,6 +23,8 @@ from services.hybrid_classifier import FrameworkGenerator
 from services.docx_generator import DocxGenerator
 from services.reference_validator import ReferenceValidator
 from services.review_record_service import ReviewRecordService
+from services.task_manager import TaskManager, TaskStatus, task_manager
+from services.review_task_executor import ReviewTaskExecutor
 from config import Config, UserConfig
 
 load_dotenv()
@@ -439,15 +442,110 @@ async def analyze_three_circles(request: TopicRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# ==================== 智能生成综述接口 ====================
+# ==================== 智能生成综述接口（异步任务模式）====================
 
-@app.post("/api/smart-generate")
-async def smart_generate_review(
+class TaskSubmitResponse(BaseModel):
+    """任务提交响应"""
+    success: bool
+    message: str
+    data: Optional[Dict] = None
+
+@app.post("/api/smart-generate", response_model=TaskSubmitResponse)
+async def submit_review_task(
+    request: GenerateRequest,
+    background_tasks: BackgroundTasks,
+    db_session: Session = Depends(get_db)
+):
+    """
+    提交综述生成任务（异步模式）
+
+    立即返回任务ID，前端使用 /api/tasks/{task_id} 轮询结果
+    """
+    # 检查API配置
+    api_key = os.getenv("DEEPSEEK_API_KEY")
+    if not api_key:
+        return TaskSubmitResponse(
+            success=False,
+            message="API配置错误：DEEPSEEK_API_KEY not configured"
+        )
+
+    try:
+        # 创建任务
+        task = task_manager.create_task(
+            topic=request.topic,
+            params={
+                "target_count": request.target_count,
+                "recent_years_ratio": request.recent_years_ratio,
+                "english_ratio": request.english_ratio,
+                "search_years": request.search_years,
+                "max_search_queries": request.max_search_queries,
+            }
+        )
+
+        # 启动后台任务
+        async def run_task():
+            executor = ReviewTaskExecutor()
+            await executor.execute_task(task.task_id, db_session)
+
+        # 使用 asyncio.create_task 而不是 BackgroundTasks
+        asyncio.create_task(run_task())
+
+        return TaskSubmitResponse(
+            success=True,
+            message="任务已提交，请使用任务ID查询进度",
+            data={
+                "task_id": task.task_id,
+                "topic": request.topic,
+                "status": TaskStatus.PENDING.value,
+                "poll_url": f"/api/tasks/{task.task_id}"
+            }
+        )
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return TaskSubmitResponse(
+            success=False,
+            message=f"任务提交失败: {str(e)}"
+        )
+
+
+@app.get("/api/tasks/{task_id}")
+async def get_task_status(task_id: str):
+    """
+    获取任务状态和结果
+
+    前端轮询此接口获取任务进度和结果
+    """
+    task = task_manager.get_task(task_id)
+
+    if not task:
+        raise HTTPException(status_code=404, detail="任务不存在")
+
+    response_data = task.to_dict()
+
+    # 如果任务完成，添加结果数据
+    if task.status == TaskStatus.COMPLETED and task.result:
+        response_data["result"] = task.result
+
+    return {
+        "success": True,
+        "data": response_data
+    }
+
+
+# ==================== 智能生成综述接口（同步模式，保留兼容）====================
+
+@app.post("/api/smart-generate-sync")
+async def smart_generate_review_sync(
     request: GenerateRequest,
     db_session: Session = Depends(get_db)
 ):
     """
-    智能生成文献综述（生成后验证被引用文献质量，不达标则扩大候选池重试）
+    智能生成文献综述（同步模式，兼容旧版）
+
+    注意：此接口为同步模式，处理时间长可能导致超时。
+    推荐使用 POST /api/smart-generate 异步接口。
     """
     # 创建记录
     record = record_service.create_record(
