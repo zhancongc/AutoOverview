@@ -577,10 +577,11 @@ async def smart_generate_review(
                 min_ratio=request.recent_years_ratio
             )
 
-            # 验证英文占比
+            # 验证英文占比（30%-70%范围）
             english_validation = validator.validate_english_ratio(
                 papers=cited_papers,
-                min_ratio=request.english_ratio
+                min_ratio=request.english_ratio,
+                max_ratio=0.7  # 外文文献不超过70%
             )
 
             # 检查是否全部通过
@@ -592,7 +593,7 @@ async def smart_generate_review(
 
             print(f"[SmartGenerate] 引用数量: {count_validation['actual']}/{count_validation['required']}, "
                   f"近5年: {recent_validation['actual']}%/{recent_validation['required']}%, "
-                  f"英文: {english_validation['actual']}%/{english_validation['required']}%")
+                  f"英文: {english_validation['actual']}%（要求{english_validation['required_min']}-{english_validation['required_max']}%）")
 
             if all_passed:
                 validation_passed = True

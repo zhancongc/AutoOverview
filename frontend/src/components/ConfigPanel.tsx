@@ -74,7 +74,7 @@ export function ConfigPanel({
           </label>
           <input
             type="range"
-            min="0.1"
+            min="0.5"
             max="1.0"
             step="0.1"
             value={recentYearsRatio}
@@ -83,9 +83,10 @@ export function ConfigPanel({
             className="config-slider"
           />
           <div className="config-range-labels">
-            <span>10%</span>
+            <span>50%</span>
             <span>100%</span>
           </div>
+          <small className="config-hint">要求：不低于50%</small>
         </div>
 
         <div className="config-item">
@@ -95,8 +96,8 @@ export function ConfigPanel({
           </label>
           <input
             type="range"
-            min="0.1"
-            max="1.0"
+            min="0.3"
+            max="0.7"
             step="0.1"
             value={englishRatio}
             onChange={(e) => onEnglishRatioChange(parseFloat(e.target.value))}
@@ -104,9 +105,10 @@ export function ConfigPanel({
             className="config-slider"
           />
           <div className="config-range-labels">
-            <span>10%</span>
-            <span>100%</span>
+            <span>30%</span>
+            <span>70%</span>
           </div>
+          <small className="config-hint">要求：30%-70%之间</small>
         </div>
       </div>
 

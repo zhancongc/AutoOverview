@@ -162,14 +162,16 @@ class ReferenceValidator:
     def validate_english_ratio(
         self,
         papers: List[Dict],
-        min_ratio: float = 0.3
+        min_ratio: float = 0.3,
+        max_ratio: float = 0.7
     ) -> Dict:
         """
-        验证英文文献占比
+        验证英文文献占比（必须在指定范围内）
 
         Args:
             papers: 参考文献列表
-            min_ratio: 最小占比要求
+            min_ratio: 最小占比要求（默认30%）
+            max_ratio: 最大占比要求（默认70%）
 
         Returns:
             验证结果
@@ -178,26 +180,34 @@ class ReferenceValidator:
             return {
                 "passed": False,
                 "actual": 0,
-                "required": min_ratio * 100,
+                "required_min": min_ratio * 100,
+                "required_max": max_ratio * 100,
                 "message": "文献列表为空"
             }
 
         english_count = sum(1 for p in papers if p.get("is_english", False))
         actual_ratio = english_count / len(papers)
 
+        # 检查是否在范围内 [min_ratio, max_ratio]
+        passed = min_ratio <= actual_ratio <= max_ratio
+
         result = {
-            "passed": actual_ratio >= min_ratio,
+            "passed": passed,
             "actual": round(actual_ratio * 100, 1),
-            "required": min_ratio * 100,
+            "required_min": min_ratio * 100,
+            "required_max": max_ratio * 100,
             "english_count": english_count,
             "total_count": len(papers),
             "message": ""
         }
 
-        if result["passed"]:
-            result["message"] = f"英文文献占比达标：{result['actual']}%（要求>= {result['required']}%）"
+        if passed:
+            result["message"] = f"英文文献占比达标：{result['actual']}%（要求{result['required_min']}%-{result['required_max']}%）"
         else:
-            result["message"] = f"英文文献占比不足：{result['actual']}%（要求>= {result['required']}%）"
+            if actual_ratio < min_ratio:
+                result["message"] = f"英文文献占比过低：{result['actual']}%（要求>= {result['required_min']}%）"
+            else:
+                result["message"] = f"英文文献占比过高：{result['actual']}%（要求<= {result['required_max']}%）"
 
         return result
 
