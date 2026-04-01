@@ -183,6 +183,170 @@ class HybridTopicClassifier:
             traceback.print_exc()
             return None
 
+    async def validate_and_fix_search_queries(
+        self,
+        title: str,
+        queries: List[Dict],
+        max_retries: int = 1
+    ) -> List[Dict]:
+        """
+        使用LLM验证搜索关键词是否合理，并修复不相关的关键词
+
+        Args:
+            title: 论文题目
+            queries: 搜索查询列表
+            max_retries: 最大重试次数
+
+        Returns:
+            修复后的搜索查询列表
+        """
+        if not self.client:
+            print("[HybridClassifier] LLM未配置，跳过搜索关键词验证")
+            return queries
+
+        # 提取所有查询的query部分
+        query_list = [q['query'] for q in queries]
+
+        prompt = f"""论文题目：{title}
+
+当前生成的搜索关键词：
+{chr(10).join(f'{i+1}. {q}' for i, q in enumerate(query_list))}
+
+请判断以上搜索关键词是否与论文主题相关。
+
+具体要求：
+1. 判断每个关键词是否相关
+2. 对于不相关的关键词，说明为什么（例如：属于不同领域、概念不符等）
+3. 如果有关键词不相关，请提供更合适的关键词建议
+
+格式要求：
+- 如果所有关键词都相关，只回答"全部相关"
+- 如果有不相关的关键词，按格式回答：
+  "关键词X不相关：原因。建议改为：新关键词1、新关键词2"
+"""
+
+        try:
+            response = await self.client.chat.completions.create(
+                model="deepseek-chat",
+                messages=[
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.3,
+                max_tokens=500
+            )
+
+            result = response.choices[0].message.content.strip()
+            print(f"[HybridClassifier] LLM关键词验证结果: {result}")
+
+            if result == "全部相关":
+                return queries
+
+            # 解析LLM的修改建议
+            fixed_queries = []
+            queries_to_fix = []
+
+            # 检查每个查询
+            for i, query_info in enumerate(queries):
+                query = query_info['query']
+
+                # 检查LLM是否认为这个查询不相关
+                is_relevant = True
+                fix_reason = None
+
+                # 查找是否提到这个关键词不相关
+                for line in result.split('\n'):
+                    if f'关键词{i+1}' in line or query in line:
+                        if '不相关' in line or '无关' in line:
+                            is_relevant = False
+                            fix_reason = line
+                            break
+
+                if is_relevant:
+                    fixed_queries.append(query_info)
+                else:
+                    queries_to_fix.append({
+                        'index': i,
+                        'query': query,
+                        'reason': fix_reason
+                    })
+
+            # 如果有不相关的查询，尝试修复
+            if queries_to_fix:
+                print(f"[HybridClassifier] 发现 {len(queries_to_fix)} 个不相关的关键词，尝试修复...")
+
+                # 生成修复prompt
+                fix_prompt = f"""论文题目：{title}
+
+以下搜索关键词与论文主题不相关：
+{chr(10).join(f"- {q['query']}: {q['reason']}' for q in queries_to_fix)}
+
+请为每个不相关的关键词提供2-3个更合适的替代关键词，要求：
+1. 与论文主题高度相关
+2. 包含论文的核心概念（研究对象、优化目标、方法论）
+3. 既有中文关键词也有英文关键词
+
+格式要求：
+关键词1：替代1、替代2、替代3
+关键词2：替代1、替代2、替代3
+...
+"""
+
+                try:
+                    fix_response = await self.client.chat.completions.create(
+                        model="deepseek-chat",
+                        messages=[
+                            {"role": "user", "content": fix_prompt}
+                        ],
+                        temperature=0.5,
+                        max_tokens=800
+                    )
+
+                    fix_result = fix_response.choices[0].message.content.strip()
+                    print(f"[HybridClassifier] LLM修复建议: {fix_result}")
+
+                    # 解析修复建议并添加新查询
+                    lines = fix_result.split('\n')
+                    for i, query_to_fix in enumerate(queries_to_fix):
+                        # 找到对应的修复建议
+                        for line in lines:
+                            if f'关键词{i+1}' in line or query_to_fix['query'] in line:
+                                # 提取替代关键词
+                                if '替代' in line or ':' in line:
+                                    # 分割替代关键词
+                                    parts = line.split(':')[1] if ':' in line else line.split('：')[1] if '：' in line else line
+                                    alternatives = [alt.strip() for alt in parts.replace('替代', ',').split('、') if alt.strip()]
+                                    alternatives = [alt for alt in alternatives if alt and alt != '、']
+
+                                    # 为每个替代关键词创建查询
+                                    original_query = next((q for q in queries if q['query'] == query_to_fix['query']), None)
+                                    if original_query:
+                                        for alt in alternatives[:3]:  # 最多3个替代
+                                            # 判断语言
+                                            is_english = self._contains_english_terms(alt)
+                                            fixed_queries.append({
+                                                'query': alt,
+                                                'section': original_query.get('section', '关键词修复'),
+                                                'lang': 'en' if is_english else 'zh'
+                                            })
+                                            print(f"[HybridClassifier] 修复关键词: {query_to_fix['query']} → {alt}")
+                                break
+
+                except Exception as e:
+                    print(f"[HybridClassifier] LLM修复失败: {e}，保留原查询")
+                    # 修复失败，保留原查询
+                    for query_to_fix in queries_to_fix:
+                        original_query = next((q for q in queries if q['query'] == query_to_fix['query']), None)
+                        if original_query:
+                            fixed_queries.append(original_query)
+
+            return fixed_queries
+
+        except Exception as e:
+            print(f"[HybridClassifier] LLM关键词验证出错: {e}，使用原查询")
+            import traceback
+            traceback.print_exc()
+            return queries
+
     def _rule_based_classify(self, title: str) -> tuple:
         """
         基于规则的分类器
@@ -721,12 +885,32 @@ class FrameworkGenerator:
                         'lang': 'en'  # 英文查询
                     })
 
+                    # 如果研究对象包含Agent相关术语，添加同义词搜索
+                    agent_synonyms = self._get_agent_synonyms(obj)
+                    for synonym in agent_synonyms:
+                        if synonym.lower() != en_query.lower():
+                            queries.append({
+                                'query': synonym,
+                                'section': '研究对象分析',
+                                'lang': 'en'
+                            })
+
             # 中文查询
             queries.append({
                 'query': obj,
                 'section': '研究对象分析',
                 'lang': 'zh'
             })
+
+            # 如果研究对象包含Agent相关术语，添加中文同义词搜索
+            agent_synonyms_zh = self._get_agent_synonyms_chinese(obj)
+            for synonym in agent_synonyms_zh:
+                if synonym != obj:
+                    queries.append({
+                        'query': synonym,
+                        'section': '研究对象分析',
+                        'lang': 'zh'
+                    })
 
             # 根据对象类型添加特定关键词
             obj_keywords = self._get_object_analysis_keywords(obj, obj_type)
@@ -840,19 +1024,26 @@ class FrameworkGenerator:
             # 完整短语优先
             'Agent开发项目': 'Agent Development Project',
             '智能体开发项目': 'Agent Development Project',
+            '多智能体系统开发项目': 'Multi-Agent System Development Project',
             '软件开发项目': 'Software Development Project',
             '开发项目': 'Development Project',
             '项目风险管理': 'Project Risk Management',
             '失效模式与影响分析': 'FMEA',
-            # 单个术语
+            # Agent 相关术语（同义词）
             'Agent': 'Agent',
             '智能体': 'Agent',
             '代理': 'Agent',
+            '多智能体': 'Multi-Agent',
+            '多智能体系统': 'Multi-Agent System',
+            '智能代理': 'Intelligent Agent',
+            '软件代理': 'Software Agent',
+            # 方法论
             'FMEA': 'FMEA',
             '失效模式': 'Failure Mode and Effects Analysis',
             'QFD': 'QFD',
             '质量功能展开': 'Quality Function Deployment',
             '风险管理': 'Risk Management',
+            # 通用术语
             '软件': 'Software',
             '开发': 'Development',
             '项目': 'Project',
@@ -927,6 +1118,55 @@ class FrameworkGenerator:
             return '应用 优化改进'
         else:  # hardware
             return '应用 质量改进'
+
+    def _get_agent_synonyms(self, obj: str) -> List[str]:
+        """
+        获取Agent相关的英文同义词
+
+        Args:
+            obj: 研究对象
+
+        Returns:
+            英文同义词列表
+        """
+        synonyms = []
+        obj_lower = obj.lower()
+
+        # 如果研究对象包含agent相关术语
+        if any(term in obj_lower for term in ['agent', '智能体', '代理']):
+            synonyms.extend([
+                'Multi-Agent System',
+                'Intelligent Agent',
+                'Software Agent',
+                'Autonomous Agent',
+                'Agent-Based System'
+            ])
+
+        return synonyms
+
+    def _get_agent_synonyms_chinese(self, obj: str) -> List[str]:
+        """
+        获取Agent相关的中文同义词
+
+        Args:
+            obj: 研究对象
+
+        Returns:
+            中文同义词列表
+        """
+        synonyms = []
+
+        # 如果研究对象包含agent相关术语
+        if any(term in obj for term in ['Agent', '智能体', '代理']):
+            synonyms.extend([
+                '多智能体系统',
+                '智能代理',
+                '软件代理',
+                '自主智能体',
+                '基于智能体的系统'
+            ])
+
+        return synonyms
 
     def _clean_methodology_name(self, method: str) -> str:
         """

@@ -562,7 +562,14 @@ class AMinerSearchService:
 
                 # 检查是否还有更多结果
                 total = result.get('total', 0)
-                if total == 0 or (page + 1) * size >= total:
+                # 如果总数小于等于当前页的大小，说明已经是全部结果了
+                if total == 0:
+                    break
+                # 如果本页返回的items少于size，可能是最后一页
+                if len(items) < size:
+                    break
+                # 如果已经达到总数
+                if (page + 1) * size >= total:
                     break
 
                 page += 1
@@ -664,7 +671,14 @@ class AMinerSearchService:
 
                     # 检查是否还有更多结果
                     total = result.get('total', 0)
-                    if total == 0 or (page + 1) * size >= total:
+                    # 如果总数小于等于当前页的大小，说明已经是全部结果了
+                    if total == 0:
+                        break
+                    # 如果本页返回的items少于size，可能是最后一页
+                    if len(items) < size:
+                        break
+                    # 如果已经达到总数
+                    if (page + 1) * size >= total:
                         break
 
                     page += 1

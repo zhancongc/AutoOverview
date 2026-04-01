@@ -160,10 +160,10 @@ class PaperMetadataDAO:
         limit: int = 100
     ) -> List[PaperMetadata]:
         """
-        搜索论文
+        搜索论文（支持模糊搜索和多关键词）
 
         Args:
-            keyword: 标题关键词
+            keyword: 标题关键词（支持多个词，空格分隔）
             year: 指定年份
             min_year: 最小年份
             max_year: 最大年份
@@ -174,10 +174,21 @@ class PaperMetadataDAO:
         Returns:
             论文列表
         """
+        from sqlalchemy import or_
+
         query = self.session.query(PaperMetadata)
 
         if keyword:
-            query = query.filter(PaperMetadata.title.like(f"%{keyword}%"))
+            # 处理多关键词搜索
+            # 如果keyword包含空格，拆分成多个词进行OR搜索
+            keywords = keyword.split()
+            if len(keywords) > 1:
+                # 多关键词：使用OR连接多个LIKE条件
+                conditions = [PaperMetadata.title.like(f"%{kw}%") for kw in keywords]
+                query = query.filter(or_(*conditions))
+            else:
+                # 单关键词：直接LIKE搜索
+                query = query.filter(PaperMetadata.title.like(f"%{keyword}%"))
 
         if year:
             query = query.filter(PaperMetadata.year == year)

@@ -483,6 +483,20 @@ async def smart_generate_review(
         search_queries_results = []
 
         search_queries = framework.get('search_queries', [])
+
+        # 使用LLM验证和修复搜索关键词
+        if search_queries:
+            try:
+                from services.hybrid_classifier import HybridTopicClassifier
+                classifier = HybridTopicClassifier()
+                search_queries = await classifier.validate_and_fix_search_queries(
+                    title=request.topic,
+                    queries=search_queries
+                )
+                print(f"[SmartGenerate] LLM验证后的搜索查询: {len(search_queries)} 个")
+            except Exception as e:
+                print(f"[SmartGenerate] LLM关键词验证失败: {e}，使用原查询")
+
         if search_queries:
             print(f"[SmartGenerate] 使用智能分析生成的搜索查询: {len(search_queries)} 个")
             print(f"[SmartGenerate] 用户配置: search_years={request.search_years}, max_queries={request.max_search_queries}")
