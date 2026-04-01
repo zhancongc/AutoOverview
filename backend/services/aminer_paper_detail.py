@@ -49,40 +49,54 @@ class AMinerPaperDetailService:
 
         # 尝试多个可能的接口
         endpoints = [
-            f"/paper/info",
-            f"/paper/get",
-            f"/search"
+            ("POST", "/paper/info", {"ids": [paper_id]}),  # paper/info 使用 POST + ids 数组
+            ("GET", "/paper/get", {"id": paper_id}),
+            ("GET", "/search", {"query": paper_id, "size": 1})
         ]
 
-        for endpoint in endpoints:
+        for method, endpoint, payload in endpoints:
             try:
-                # 对于 search 接口，使用 ID 搜索
-                if endpoint == "/search":
-                    params = {'query': paper_id, 'size': 1}
+                if method == "POST":
+                    # POST 请求，使用 json 参数
+                    response = await self.client.post(
+                        f"{self.BASE_URL}{endpoint}",
+                        json=payload
+                    )
                 else:
-                    params = {'id': paper_id}
+                    # GET 请求，使用 params 参数
+                    response = await self.client.get(
+                        f"{self.BASE_URL}{endpoint}",
+                        params=payload
+                    )
 
-                response = await self.client.get(
-                    f"{self.BASE_URL}{endpoint}",
-                    params=params
-                )
                 response.raise_for_status()
                 data = response.json()
 
                 if data.get('success', False):
-                    item = data.get('data', data.get('item', {}))
-                    if item and isinstance(item, dict):
+                    # paper/info 返回 data 是数组
+                    result_data = data.get('data', data.get('item', {}))
+                    if isinstance(result_data, list) and len(result_data) > 0:
+                        item = result_data[0]
+                    elif isinstance(result_data, dict):
+                        item = result_data
+                    else:
+                        continue
+
+                    if item:
                         # 提取有用信息
                         return self._extract_detail_info(item)
                 else:
                     # 尝试直接从响应中提取
                     if 'data' in data:
-                        return self._extract_detail_info(data['data'])
+                        result_data = data['data']
+                        if isinstance(result_data, list) and len(result_data) > 0:
+                            return self._extract_detail_info(result_data[0])
+                        return self._extract_detail_info(result_data)
                     elif 'item' in data:
                         return self._extract_detail_info(data['item'])
 
             except Exception as e:
-                print(f"[AMinerDetail] {endpoint} 失败: {e}")
+                print(f"[AMinerDetail] {method} {endpoint} 失败: {e}")
                 continue
 
         return None
@@ -91,25 +105,39 @@ class AMinerPaperDetailService:
         """从论文数据中提取详细信息"""
         info = {}
 
-        # 提取作者
+        # 提取作者（根据API文档：authors 是数组，每个元素有 name 和 name_zh 字段）
         if 'authors' in item:
             author_list = item['authors']
-            if isinstance(author_list, list):
-                authors = [a.get('name', str(a)) if isinstance(a, dict) else str(a) for a in author_list if a]
+            if isinstance(author_list, list) and len(author_list) > 0:
+                # 优先使用 name_zh（中文名），其次使用 name
+                authors = []
+                for a in author_list:
+                    if a and isinstance(a, dict):
+                        name = a.get('name_zh') or a.get('name')
+                        if name:
+                            authors.append(name)
                 if authors:
                     info['authors'] = authors
+                    print(f"[AMinerDetail] 提取到作者: {authors}")
 
         # 提取 DOI
         if 'doi' in item and item['doi']:
             info['doi'] = item['doi']
 
-        # 提取期刊信息
-        if 'venue_name' in item and item['venue_name']:
+        # 提取期刊信息（根据API文档：raw 字段是期刊名称）
+        if 'raw' in item and item['raw']:
+            info['venue_name'] = item['raw']
+        elif 'venue_name' in item and item['venue_name']:
             info['venue_name'] = item['venue_name']
 
         if 'year' in item and item['year']:
             info['year'] = item['year']
 
+        # 提取卷号
+        if 'issue' in item and item['issue']:
+            info['issue'] = item['issue']
+
+        print(f"[AMinerDetail] 提取的论文信息: {info}")
         return info
 
     async def enrich_papers(self, papers: list, max_concurrent: int = 5) -> list:
@@ -167,6 +195,12 @@ class AMinerPaperDetailService:
                 papers[index].update(detail)
 
         return papers
+
+    async def close(self):
+        """关闭 HTTP 客户端"""
+        if self.client:
+            await self.client.aclose()
+            self.client = None
 
 
 # 全局实例

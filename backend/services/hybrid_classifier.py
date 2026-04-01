@@ -838,8 +838,8 @@ class FrameworkGenerator:
         # 常见术语映射表（按优先级排序，完整短语在前）
         translations = {
             # 完整短语优先
-            'Agent开发项目': 'Agent-based Software Development',
-            '智能体开发项目': 'Agent-based Software Development',
+            'Agent开发项目': 'Agent Development Project',
+            '智能体开发项目': 'Agent Development Project',
             '软件开发项目': 'Software Development Project',
             '开发项目': 'Development Project',
             '项目风险管理': 'Project Risk Management',

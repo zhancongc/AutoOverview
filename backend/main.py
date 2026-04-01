@@ -602,13 +602,40 @@ async def smart_generate_review(
             else:
                 if retry_count < max_retries:
                     print(f"[SmartGenerate] 被引用文献验证未通过，扩大候选池重试...")
-                    # 扩大候选池 - 使用 search 而不是 search_papers
-                    additional_papers = await search_service.search(
-                        query=request.topic,
-                        years_ago=15,  # 扩大年份范围
-                        limit=150,
-                        use_all_sources=True  # 使用所有数据源
-                    )
+
+                    # 根据验证失败原因，针对性扩大候选池
+                    actual_english_ratio = english_validation["actual"] / 100
+
+                    # 如果英文文献过多，专门搜索中文文献
+                    if actual_english_ratio > 0.7:
+                        print(f"[SmartGenerate] 英文文献过多({english_validation['actual']}%)，专门搜索中文文献...")
+                        additional_papers = await search_service.search(
+                            query=request.topic,
+                            years_ago=15,
+                            limit=150,
+                            lang="zh",  # 只搜索中文文献
+                            use_all_sources=True
+                        )
+                    # 如果英文文献过少，专门搜索英文文献
+                    elif actual_english_ratio < 0.3:
+                        print(f"[SmartGenerate] 英文文献过少({english_validation['actual']}%)，专门搜索英文文献...")
+                        additional_papers = await search_service.search(
+                            query=request.topic,
+                            years_ago=15,
+                            limit=150,
+                            lang="en",  # 只搜索英文文献
+                            use_all_sources=True
+                        )
+                    else:
+                        # 其他情况（数量不足或年份不足），扩大搜索范围
+                        print(f"[SmartGenerate] 扩大搜索范围（更多年份和数据源）...")
+                        additional_papers = await search_service.search(
+                            query=request.topic,
+                            years_ago=15,  # 扩大年份范围
+                            limit=150,
+                            use_all_sources=True  # 使用所有数据源
+                        )
+
                     # 去重并添加到候选池
                     for paper in additional_papers:
                         paper_id = paper.get("id")

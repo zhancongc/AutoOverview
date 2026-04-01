@@ -58,14 +58,16 @@ class PaperFilterService:
 
         selected = set()
         result = []
+        english_count = 0  # 跟踪已选择的英文论文数量
 
         # 优先选择：近5年 + 英文（高相关性）
         for paper in recent_papers:
-            if paper.get("is_english") and len(result) < target_count:
+            if paper.get("is_english") and len(result) < target_count and english_count < english_needed:
                 paper_id = paper.get("id")
                 if paper_id not in selected:
                     selected.add(paper_id)
                     result.append(paper)
+                    english_count += 1
 
         # 补充：近5年 + 非英文
         for paper in recent_papers:
@@ -77,11 +79,12 @@ class PaperFilterService:
 
         # 补充：5年前 + 英文
         for paper in old_papers:
-            if paper.get("is_english") and len(result) < target_count:
+            if paper.get("is_english") and len(result) < target_count and english_count < english_needed:
                 paper_id = paper.get("id")
                 if paper_id not in selected:
                     selected.add(paper_id)
                     result.append(paper)
+                    english_count += 1
 
         # 补充：5年前 + 非英文
         for paper in old_papers:
