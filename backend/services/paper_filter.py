@@ -129,21 +129,27 @@ class PaperFilterService:
         if topic_keywords:
             title_lower = paper.get("title", "").lower()
             abstract_lower = paper.get("abstract", "").lower()
-            keywords = " ".join(topic_keywords).lower()
 
             # 标题中的关键词匹配（每匹配一个加 10 分）
             for kw in topic_keywords:
-                if kw.lower() in title_lower:
+                if kw is None:
+                    continue  # 跳过 None 值
+                kw_lower = kw.lower()
+                if kw_lower in title_lower:
                     score += 15  # 标题匹配权重更高
-                elif kw.lower() in abstract_lower:
+                elif kw_lower in abstract_lower:
                     score += 5   # 摘要匹配权重较低
 
             # 检查概念标签
             concepts = paper.get("concepts", [])
             for concept in concepts:
-                if any(kw.lower() in concept.lower() for kw in topic_keywords):
-                    score += 3
-                    break  # 每个概念只计算一次
+                if concept is None:
+                    continue  # 跳过 None 值
+                concept_lower = concept.lower()
+                for kw in topic_keywords:
+                    if kw is not None and kw.lower() in concept_lower:
+                        score += 3
+                        break  # 每个概念只计算一次
 
         # 新近论文加分
         current_year = datetime.now().year

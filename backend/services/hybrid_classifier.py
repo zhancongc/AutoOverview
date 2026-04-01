@@ -810,6 +810,9 @@ class FrameworkGenerator:
 
     def _should_search_english(self, obj: str) -> bool:
         """判断是否应该搜索英文文献"""
+        if not obj:
+            return False  # 如果 obj 是 None，返回 False
+
         # 常见的应该搜索英文的术语
         english_related_terms = {
             'Agent', 'agent', 'AI', '人工智能',
@@ -824,8 +827,9 @@ class FrameworkGenerator:
             'Data', '数据'
         }
 
+        obj_lower = obj.lower()
         for term in english_related_terms:
-            if term.lower() in obj.lower():
+            if term.lower() in obj_lower:
                 return True
         return False
 
