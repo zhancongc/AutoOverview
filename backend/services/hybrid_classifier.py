@@ -755,17 +755,41 @@ class FrameworkGenerator:
 
     def __init__(self):
         self.classifier = HybridTopicClassifier()
+        self.term_service = None
+        # 尝试加载术语库服务
+        try:
+            from services.academic_term_service import AcademicTermService
+            self.term_service = AcademicTermService()
+            print("[FrameworkGenerator] 术语库服务已加载")
+        except Exception as e:
+            print(f"[FrameworkGenerator] 术语库服务加载失败: {e}")
+
+    def _get_keywords_from_term_library(self, text: str) -> List[str]:
+        """从术语库获取关键词"""
+        if not self.term_service:
+            return []
+        try:
+            return self.term_service.search_keywords_from_topic(text)
+        except Exception as e:
+            print(f"[FrameworkGenerator] 术语库查询失败: {e}")
+            return []
 
     async def generate_framework(self, title: str, enable_llm_validation: bool = False) -> dict:
         """
-        根据题目类型生成综述框架
+        根据题目类型生成综述框架（增强版）
 
         Args:
             title: 论文题目
             enable_llm_validation: 是否启用LLM验证（默认False）
 
         Returns:
-            综述框架
+            综述框架，包含：
+            - title: 题目
+            - type: 类型
+            - outline: 完整大纲（引言、主体章节、结论）
+            - section_keywords: 每个章节的搜索关键词
+            - search_queries: 搜索查询列表
+            - specificity_guidance: 场景特异性指导
         """
         topic_type, reason, details = await self.classifier.classify(title, enable_llm_validation)
 
@@ -779,15 +803,11 @@ class FrameworkGenerator:
             'reasoning': details.get('reasoning', {}),
             'llm_validated': details.get('llm_validated', False),
             'llm_optimized': details.get('llm_optimized', False),
-            'framework': None,
-            'search_queries': [],
-            'specificity_guidance': {}  # 场景特异性指导
         }
 
         # 根据类型生成框架
         if topic_type == TopicType.APPLICATION:
             framework['framework'] = self._application_framework(title, details.get('key_elements', {}))
-            # _application_queries 返回元组 (查询列表, 场景特异性指导)
             queries_result = await self._application_queries(title, details.get('key_elements', {}))
             if isinstance(queries_result, tuple) and len(queries_result) == 2:
                 framework['search_queries'] = queries_result[0]
@@ -806,6 +826,17 @@ class FrameworkGenerator:
         else:
             framework['framework'] = self._general_framework(title)
             framework['search_queries'] = self._general_queries(title)
+
+        # === 新增：生成章节级别的搜索关键词 ===
+        framework['section_keywords'] = self._generate_section_keywords(
+            title,
+            framework.get('framework', {}),
+            framework.get('key_elements', {}),
+            framework.get('search_queries', [])
+        )
+
+        # === 新增：生成完整大纲结构 ===
+        framework['outline'] = self._generate_complete_outline(framework.get('framework', {}))
 
         return framework
 
@@ -2036,5 +2067,153 @@ class FrameworkGenerator:
 
         # 移除空值和重复
         keywords = list(set(k for k in keywords if k and k.strip()))
+
+        return keywords
+
+    def _generate_section_keywords(self, title: str, framework: dict, key_elements: dict, search_queries: list) -> dict:
+        """
+        为每个章节生成专门的搜索关键词
+
+        Args:
+            title: 论文题目
+            framework: 框架结构
+            key_elements: 关键元素
+            search_queries: 搜索查询列表
+
+        Returns:
+            章节关键词字典 {章节标题: [关键词列表]}
+        """
+        section_keywords = {}
+        sections = framework.get('sections', [])
+
+        # 从术语库获取主题关键词
+        topic_keywords = self._get_keywords_from_term_library(title)
+
+        for section in sections:
+            section_title = section.get('title', '')
+            section_desc = section.get('description', '')
+            key_points = section.get('key_points', [])
+
+            # 1. 从章节标题和描述中提取关键词
+            keywords = []
+
+            # 添加章节标题的关键词
+            if section_title:
+                keywords.extend(self._extract_keywords_from_text(section_title))
+
+            # 添加章节描述的关键词
+            if section_desc:
+                keywords.extend(self._extract_keywords_from_text(section_desc))
+
+            # 2. 添加主题相关关键词（从术语库）
+            if topic_keywords:
+                keywords.extend(topic_keywords[:5])  # 取前5个最相关的
+
+            # 3. 从关键元素中提取相关关键词
+            for key, value in key_elements.items():
+                if value and isinstance(value, str):
+                    # 检查是否与章节相关
+                    section_text = f"{section_title} {section_desc}".lower()
+                    if any(kw in section_text for kw in value.split()):
+                        keywords.append(value)
+                        keywords.extend(value.split())
+
+            # 4. 去重并过滤
+            keywords = list(set(k for k in keywords if k and len(k) > 1))
+
+            section_keywords[section_title] = keywords
+
+        # 为引言和结论也添加关键词
+        section_keywords['引言'] = self._generate_introduction_keywords(title, key_elements, topic_keywords)
+        section_keywords['结论'] = self._generate_conclusion_keywords(title, key_elements, topic_keywords)
+
+        return section_keywords
+
+    def _generate_complete_outline(self, framework: dict) -> dict:
+        """
+        生成完整的大纲结构
+
+        Args:
+            framework: 框架结构
+
+        Returns:
+            完整大纲字典
+        """
+        sections = framework.get('sections', [])
+
+        outline = {
+            'introduction': {
+                'title': '引言',
+                'description': '介绍研究背景、意义和现状',
+                'key_points': [
+                    '研究背景和意义',
+                    '当前研究现状',
+                    '存在的主要问题',
+                    '本综述的结构安排'
+                ]
+            },
+            'body_sections': [],
+            'conclusion': {
+                'title': '结论',
+                'description': '总结主要发现、指出研究不足、展望未来方向',
+                'key_points': [
+                    '主要研究共识',
+                    '研究分歧和不足',
+                    '未来研究方向'
+                ]
+            }
+        }
+
+        # 添加主体章节
+        for section in sections:
+            outline['body_sections'].append({
+                'title': section.get('title', ''),
+                'description': section.get('description', ''),
+                'key_points': section.get('key_points', [])
+            })
+
+        return outline
+
+    def _generate_introduction_keywords(self, title: str, key_elements: dict, topic_keywords: list) -> list:
+        """生成引言部分的搜索关键词"""
+        keywords = []
+
+        # 添加主题关键词
+        keywords.extend(topic_keywords[:10])
+
+        # 添加关键元素
+        for key, value in key_elements.items():
+            if value and isinstance(value, str):
+                keywords.append(value)
+
+        # 添加通用引言关键词
+        keywords.extend(['研究现状', '发展现状', '背景', '意义', '挑战'])
+
+        return list(set(k for k in keywords if k and len(k) > 1))
+
+    def _generate_conclusion_keywords(self, title: str, key_elements: dict, topic_keywords: list) -> list:
+        """生成结论部分的搜索关键词"""
+        keywords = []
+
+        # 添加主题关键词
+        keywords.extend(topic_keywords[:5])
+
+        # 添加通用结论关键词
+        keywords.extend(['未来方向', '研究不足', '展望', '发展趋势', '挑战'])
+
+        return list(set(k for k in keywords if k and len(k) > 1))
+
+    def _extract_keywords_from_text(self, text: str) -> list:
+        """从文本中提取关键词"""
+        import re
+        keywords = []
+
+        # 提取中文词汇（2-6个字）
+        chinese_words = re.findall(r'[\u4e00-\u9fff]{2,6}', text)
+        keywords.extend(chinese_words)
+
+        # 提取英文单词
+        english_words = re.findall(r'[a-zA-Z]{2,}', text)
+        keywords.extend(english_words)
 
         return keywords
