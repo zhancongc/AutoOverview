@@ -260,17 +260,28 @@ class ReviewTaskExecutor:
             if not api_key:
                 raise Exception("DEEPSEEK_API_KEY not configured")
 
-            # === 预选文献：从筛选后的文献中选出最相关的60篇 ===
-            # 按相关性评分排序，取前60篇作为生成时的候选池
-            target_generate_count = min(60, len(filtered_papers))
-            preselected_papers = sorted(
-                filtered_papers,
-                key=lambda p: p.get('relevance_score', 0),
-                reverse=True
-            )[:target_generate_count]
+            # === 预选文献：从筛选后的文献池中智能预选60篇 ===
+            # 要求：
+            # 1. 从100篇文献池中
+            # 2. 捞30篇以上的英文文献
+            # 3. 捞50%以上的近5年文献（30篇）
+            # 4. 总共输出60篇
+
+            preselected_papers = self._preselect_papers_with_requirements(
+                papers=filtered_papers,
+                target_count=60,
+                min_english=30,
+                min_recent_ratio=0.5
+            )
 
             print(f"[TaskExecutor] 预选文献: {len(filtered_papers)} → {len(preselected_papers)} 篇")
-            print(f"[TaskExecutor] 引用边界明确: 1-{len(preselected_papers)}")
+
+            # 验证预选结果
+            preselect_stats = self.filter_service.get_statistics(preselected_papers)
+            print(f"[TaskExecutor] 预选结果: 总数={preselect_stats['total']}, "
+                  f"英文={preselect_stats['english']}, "
+                  f"近5年={preselect_stats['recent_count']}, "
+                  f"比例={preselect_stats['recent_ratio']:.2%}")
 
             task_manager.update_task_status(
                 task_id,
@@ -936,5 +947,128 @@ class ReviewTaskExecutor:
                 errors.append(f"第{i}行: 缺少文献类型标识")
 
         return errors
+
+    def _preselect_papers_with_requirements(
+        self,
+        papers: list,
+        target_count: int = 60,
+        min_english: int = 30,
+        min_recent_ratio: float = 0.5
+    ) -> list:
+        """
+        智能预选文献，满足特定要求
+
+        要求：
+        1. 总数 = target_count
+        2. 英文文献 >= min_english
+        3. 近5年文献 >= target_count * min_recent_ratio
+
+        Args:
+            papers: 筛选后的文献池
+            target_count: 目标数量（默认60）
+            min_english: 最少英文文献数（默认30）
+            min_recent_ratio: 近5年文献最少比例（默认0.5）
+
+        Returns:
+            预选后的文献列表
+        """
+        if len(papers) <= target_count:
+            print(f"[预选] 文献池数量不足({len(papers)})，返回全部文献")
+            return papers
+
+        from datetime import datetime
+        current_year = datetime.now().year
+        recent_threshold = current_year - 5
+        min_recent_count = int(target_count * min_recent_ratio)
+
+        # 分类文献
+        english_papers = []
+        chinese_papers = []
+        recent_papers = []
+        old_papers = []
+
+        for paper in papers:
+            is_english = paper.get('is_english', False)
+            year = paper.get('year')
+            is_recent = year is not None and year >= recent_threshold
+
+            if is_english:
+                english_papers.append(paper)
+            else:
+                chinese_papers.append(paper)
+
+            if is_recent:
+                recent_papers.append(paper)
+            else:
+                old_papers.append(paper)
+
+        print(f"[预选] 文献池分类: 英文={len(english_papers)}, 中文={len(chinese_papers)}, "
+              f"近5年={len(recent_papers)}, 5年前={len(old_papers)}")
+
+        # 按相关性评分排序各类文献
+        english_papers.sort(key=lambda p: p.get('relevance_score', 0), reverse=True)
+        chinese_papers.sort(key=lambda p: p.get('relevance_score', 0), reverse=True)
+        recent_papers.sort(key=lambda p: p.get('relevance_score', 0), reverse=True)
+        old_papers.sort(key=lambda p: p.get('relevance_score', 0), reverse=True)
+
+        selected = set()
+        result = []
+
+        # === 策略1：优先满足英文文献要求 ===
+        english_needed = min(min_english, len(english_papers))
+        for paper in english_papers[:english_needed]:
+            paper_id = paper.get('id')
+            if paper_id not in selected:
+                selected.add(paper_id)
+                result.append(paper)
+
+        print(f"[预选] 已选择英文文献: {len([p for p in result if p.get('is_english')])}/{min_english}")
+
+        # === 策略2：优先满足近5年文献要求 ===
+        recent_needed = min_recent_count
+        for paper in recent_papers:
+            if len(result) >= target_count:
+                break
+            paper_id = paper.get('id')
+            if paper_id not in selected:
+                selected.add(paper_id)
+                result.append(paper)
+
+        current_recent_count = sum(1 for p in result if p.get('year', 0) >= recent_threshold)
+        print(f"[预选] 已选择近5年文献: {current_recent_count}/{min_recent_count}")
+
+        # === 策略3：补充剩余文献到目标数量 ===
+        if len(result) < target_count:
+            # 从所有文献中按相关性排序补充
+            all_remaining = []
+            for paper in papers:
+                paper_id = paper.get('id')
+                if paper_id not in selected:
+                    all_remaining.append(paper)
+
+            all_remaining.sort(key=lambda p: p.get('relevance_score', 0), reverse=True)
+
+            for paper in all_remaining:
+                if len(result) >= target_count:
+                    break
+                paper_id = paper.get('id')
+                if paper_id not in selected:
+                    selected.add(paper_id)
+                    result.append(paper)
+
+        # === 最终验证和调整 ===
+        final_stats = self.filter_service.get_statistics(result)
+        print(f"[预选] 最终结果: 总数={len(result)}, 英文={final_stats['english']}, "
+              f"近5年={final_stats['recent_count']} ({final_stats['recent_ratio']:.2%})")
+
+        # 如果英文文献仍然不足，放宽要求
+        if final_stats['english'] < min_english:
+            print(f"[预选] 警告: 英文文献不足({final_stats['english']} < {min_english})")
+
+        # 如果近5年文献仍然不足，放宽要求
+        if final_stats['recent_count'] < min_recent_count:
+            print(f"[预选] 警告: 近5年文献不足({final_stats['recent_count']} < {min_recent_count})")
+
+        return result
 
 
