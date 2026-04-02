@@ -39,6 +39,18 @@ class ReviewTaskExecutor:
             print(f"[TaskExecutor] 任务不存在: {task_id}")
             return
 
+        # 尝试获取执行槽位（并发控制）
+        acquired = await task_manager.acquire_slot(task_id)
+        if not acquired:
+            # 无法获取槽位，等待当前任务完成后再重试
+            print(f"[TaskExecutor] 无法获取执行槽位，任务 {task_id} 将等待")
+            task_manager.update_task_status(
+                task_id,
+                TaskStatus.PENDING,
+                progress={"step": "waiting", "message": "等待可用执行槽位..."}
+            )
+            return
+
         params = task.params
         topic = task.topic
 
@@ -213,7 +225,7 @@ class ReviewTaskExecutor:
             task_manager.update_task_status(
                 task_id,
                 TaskStatus.PROCESSING,
-                progress={"step": "generating", "message": "正在生成综述..."}
+                progress={"step": "preselecting", "message": "正在预选高相关文献..."}
             )
 
             api_key = os.getenv("DEEPSEEK_API_KEY")
@@ -222,11 +234,29 @@ class ReviewTaskExecutor:
             if not api_key:
                 raise Exception("DEEPSEEK_API_KEY not configured")
 
+            # === 预选文献：从筛选后的文献中选出最相关的60篇 ===
+            # 按相关性评分排序，取前60篇作为生成时的候选池
+            target_generate_count = min(60, len(filtered_papers))
+            preselected_papers = sorted(
+                filtered_papers,
+                key=lambda p: p.get('relevance_score', 0),
+                reverse=True
+            )[:target_generate_count]
+
+            print(f"[TaskExecutor] 预选文献: {len(filtered_papers)} → {len(preselected_papers)} 篇")
+            print(f"[TaskExecutor] 引用边界明确: 1-{len(preselected_papers)}")
+
+            task_manager.update_task_status(
+                task_id,
+                TaskStatus.PROCESSING,
+                progress={"step": "generating", "message": f"正在生成综述 (候选文献: {len(preselected_papers)}篇)..."}
+            )
+
             generator = ReviewGeneratorService(api_key=api_key, aminer_token=aminer_token)
 
             review, cited_papers = await generator.generate_review(
                 topic=topic,
-                papers=filtered_papers,
+                papers=preselected_papers,
                 specificity_guidance=specificity_guidance
             )
 
@@ -331,6 +361,10 @@ class ReviewTaskExecutor:
         except Exception as e:
             import traceback
             traceback.print_exc()
+
+            # 确保槽位被释放（如果还没被释放）
+            if task_id in task_manager._running_tasks:
+                task_manager.release_slot(task_id)
 
             task_manager.update_task_status(
                 task_id,

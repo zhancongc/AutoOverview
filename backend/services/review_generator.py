@@ -334,6 +334,11 @@ class ReviewGeneratorService:
 - 推荐引用：{key_papers[:5] if key_papers else '根据内容选择'}
 - 本部分引用 5-8 篇即可
 
+⚠️ **引用边界严格限制**：
+- 只能使用编号在 [1] 到 [{len(papers)}] 范围内的文献
+- 绝对禁止使用 [{len(papers)+1}] 或更大的编号
+- 如果发现没有相关文献，宁可少引用也不要超出范围
+
 **重要提醒**：
 - 只引用与主题"{topic}"直接相关的文献
 - 不要引用其他领域（如气候、蛋白质结构等）的文献
@@ -343,10 +348,16 @@ class ReviewGeneratorService:
 
         user_prompt = f"""主题：{focus}
 
-**⚠️ 重要提示**：
-- 📚 本次可用文献总数：{len(papers)} 篇
-- 🔢 本部分可引用文献编号：1-{min(len(papers), 20)}
-- ❌ 严禁使用超出 {len(papers)} 的引用编号
+{'='*60}
+⚠️ 引用边界明确提示
+{'='*60}
+📚 本次可用文献总数：{len(papers)} 篇
+🔢 可引用文献编号范围：[1] 到 [{len(papers)}]
+❌ 绝对禁止使用编号 [{len(papers)+1}] 或更大的编号
+✅ 只能使用上方列出的文献编号
+
+如果需要引用文献，请从编号 [1] 到 [{len(papers)}] 中选择！
+{'='*60}
 
 可用文献（显示前{min(len(papers), 20)}篇）：
 
@@ -391,6 +402,11 @@ class ReviewGeneratorService:
 - 每个主题引用 8-12 篇
 - 每篇文献不超过2次
 
+⚠️ **引用边界严格限制**：
+- 只能使用编号在 [1] 到 [{len(papers)}] 范围内的文献
+- 绝对禁止使用 [{len(papers)+1}] 或更大的编号
+- 如果发现没有相关文献，宁可少引用也不要超出范围
+
 **重要：输出格式要求**
 - 每个主题必须使用二级标题（## 标题）
 - 标题必须与下方给出的主题标题完全一致
@@ -409,10 +425,16 @@ class ReviewGeneratorService:
 需要生成的主体部分（必须按以下顺序生成，标题完全一致）：
 {sections_info}
 
-**⚠️ 重要提示**：
-- 📚 本次可用文献总数：{len(papers)} 篇
-- 🔢 可用文献编号范围：1-{len(papers)}
-- ❌ 严禁使用超出 {len(papers)} 的引用编号
+{'='*60}
+⚠️ 引用边界明确提示
+{'='*60}
+📚 本次可用文献总数：{len(papers)} 篇
+🔢 可引用文献编号范围：[1] 到 [{len(papers)}]
+❌ 绝对禁止使用编号 [{len(papers)+1}] 或更大的编号
+✅ 只能使用上方列出的文献编号
+
+如果需要引用文献，请从编号 [1] 到 [{len(papers)}] 中选择！
+{'='*60}
 
 可用文献（共{len(papers)}篇）：
 {papers_info}
@@ -577,6 +599,11 @@ class ReviewGeneratorService:
 - 推荐引用：{key_papers[:10] if key_papers else '根据内容选择'}
 - 本部分引用 8-12 篇
 
+⚠️ **引用边界严格限制**：
+- 只能使用编号在 [1] 到 [{len(papers)}] 范围内的文献
+- 绝对禁止使用 [{len(papers)+1}] 或更大的编号
+- 如果发现没有相关文献，宁可少引用也不要超出范围
+
 **重要**：
 - 必须使用二级标题（## {title}）
 - 标题必须完全一致
@@ -593,10 +620,16 @@ class ReviewGeneratorService:
 写作重点：{focus}
 对比要点：{', '.join(comparison_points) if comparison_points else '根据内容确定'}
 
-**⚠️ 重要提示**：
-- 📚 本次可用文献总数：{len(papers)} 篇
-- 🔢 本部分可引用文献编号：1-{min(len(papers), 30)}
-- ❌ 严禁使用超出 {len(papers)} 的引用编号
+{'='*60}
+⚠️ 引用边界明确提示
+{'='*60}
+📚 本次可用文献总数：{len(papers)} 篇
+🔢 可引用文献编号范围：[1] 到 [{len(papers)}]
+❌ 绝对禁止使用编号 [{len(papers)+1}] 或更大的编号
+✅ 只能使用上方列出的文献编号
+
+如果需要引用文献，请从编号 [1] 到 [{len(papers)}] 中选择！
+{'='*60}
 
 可用文献（显示前{min(len(papers), 30)}篇）：
 
@@ -890,15 +923,25 @@ class ReviewGeneratorService:
 
 **当前状态**：已引用 {len(cited_indices)} 篇，目标 {target_count} 篇
 
+⚠️ **引用边界严格限制**：
+- 只能使用编号在 [1] 到 [{len(papers)}] 范围内的文献
+- 绝对禁止使用 [{len(papers)+1}] 或更大的编号
+- 如果发现没有相关文献，宁可少引用也不要超出范围
+
 **可补充的文献**（按被引量排序，显示前20篇）：
 {chr(10).join(additional_papers[:20])}
 
-**⚠️ 重要限制**：
-- 📚 可用文献总数：{len(papers)} 篇
-- 🔢 可用文献编号范围：1-{len(papers)}
-- 📌 当前已使用的最大编号：{max(cited_indices) if cited_indices else 0}
-- ❌ 严禁使用超出 {len(papers)} 的引用编号（如 [{len(papers)+1}]、[{len(papers)+2}] 等）
-- ✅ 只能使用上方列出的文献编号
+{'='*60}
+⚠️ 引用边界明确提示
+{'='*60}
+📚 可用文献总数：{len(papers)} 篇
+🔢 可引用文献编号范围：[1] 到 [{len(papers)}]
+📌 当前已使用的最大编号：{max(cited_indices) if cited_indices else 0}
+❌ 绝对禁止使用编号 [{len(papers)+1}] 或更大的编号
+✅ 只能使用上方列出的文献编号
+
+如果需要引用文献，请从编号 [1] 到 [{len(papers)}] 中选择！
+{'='*60}
 
 **补充要求**：
 1. 只引用与主题"{topic}"直接相关的文献
@@ -1039,7 +1082,12 @@ class ReviewGeneratorService:
         topic: str
     ) -> str:
         """
-        替换超出范围的引用为相似的未引用文献
+        替换超出范围的引用为相似的未引用文献（增强版）
+
+        改进点：
+        1. 综合考虑被引量和相关性评分
+        2. 优先选择标题中包含主题关键词的文献
+        3. 提供更详细的替换日志
 
         Args:
             content: 综述内容
@@ -1059,21 +1107,60 @@ class ReviewGeneratorService:
         if not invalid_indices:
             return content
 
-        # 按被引量排序未引用的文献
-        uncited_sorted = sorted(
-            uncited_indices,
-            key=lambda i: papers[i - 1].get('cited_by_count', 0) if isinstance(papers[i - 1], dict) else getattr(papers[i - 1], 'cited_by_count', 0),
-            reverse=True
-        )
+        # 提取主题关键词（用于相关性判断）
+        topic_keywords = self._extract_topic_keywords_with_library(topic)
+        topic_lower = topic.lower()
+
+        # 计算每篇未引用文献的综合评分
+        uncited_scores = []
+        for idx in uncited_indices:
+            paper = papers[idx - 1]
+            if isinstance(paper, dict):
+                title = paper.get('title', '')
+                citations = paper.get('cited_by_count', 0)
+                relevance = paper.get('relevance_score', 0)
+            else:
+                title = getattr(paper, 'title', '')
+                citations = getattr(paper, 'cited_by_count', 0)
+                relevance = getattr(paper, 'relevance_score', 0)
+
+            title_lower = title.lower() if title else ''
+
+            # 综合评分 = 被引量权重 + 相关性权重 + 关键词匹配权重
+            score = 0
+
+            # 1. 被引量评分（0-30分）
+            score += min(citations / 5, 30)
+
+            # 2. 预计算的相关性评分（0-50分）
+            score += min(relevance, 50)
+
+            # 3. 标题关键词匹配奖励（0-20分）
+            keyword_matches = sum(1 for kw in topic_keywords if kw in title_lower)
+            score += keyword_matches * 5
+
+            # 4. 主题词直接匹配奖励
+            if topic_lower in title_lower:
+                score += 15
+
+            uncited_scores.append((idx, score, title[:50] if title else ''))
+
+        # 按综合评分排序
+        uncited_sorted = sorted(uncited_scores, key=lambda x: x[1], reverse=True)
+
+        print(f"[引用修复] 未引用文献按综合评分排序:")
+        for idx, score, title in uncited_sorted[:5]:
+            print(f"  [{idx}] 评分:{score:.1f} - {title}...")
 
         # 创建替换映射
         replacement_map = {}
         for i, invalid_idx in enumerate(sorted(invalid_indices)):
             if i < len(uncited_sorted):
-                replacement_map[invalid_idx] = uncited_sorted[i]
-                paper = papers[uncited_sorted[i] - 1]
-                title = paper.get('title', '')[:50] if isinstance(paper, dict) else getattr(paper, 'title', '')[:50]
-                print(f"[引用修复] 替换 [{invalid_idx}] → [{uncited_sorted[i]}]: {title}...")
+                new_idx = uncited_sorted[i][0]
+                replacement_map[invalid_idx] = new_idx
+                title = uncited_sorted[i][2]
+                score = uncited_sorted[i][1]
+                print(f"[引用修复] [{invalid_idx}] → [{new_idx}] (评分:{score:.1f}): {title}...")
 
         # 执行替换
         def replace_citation(match):
@@ -1092,12 +1179,9 @@ class ReviewGeneratorService:
         result = re.sub(r'\[\s*\]', '', result)
 
         replaced_count = len(replacement_map)
-        print(f"[引用修复] 成功替换 {replaced_count}/{len(invalid_indices)} 个超出范围的引用")
+        print(f"[引用修复] ✓ 成功替换 {replaced_count}/{len(invalid_indices)} 个超出范围的引用")
 
         return result
-        import re
-        citations = re.findall(r'\[(\d+)\]', content)
-        return set(int(c) for c in citations)
 
     def _renumber_citations_by_appearance(self, content: str, cited_papers: List[Dict], cited_indices: set) -> tuple:
         import re
