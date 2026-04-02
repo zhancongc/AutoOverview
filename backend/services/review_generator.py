@@ -324,15 +324,21 @@ class ReviewGeneratorService:
 {specificity_section}
 
 **写作要求**：
-1. 介绍研究背景和意义（200-300字）
+1. 介绍研究背景和意义（300-400字）
 2. 说明当前研究现状
 3. 指出研究的必要性和挑战
 4. 自然过渡到主体内容
 
-**引用要求**：
-- 使用文献编号，如 [1]、[2]
-- 推荐引用：{key_papers[:5] if key_papers else '根据内容选择'}
-- 本部分引用 5-8 篇即可
+**语言要求**：
+- 只使用中文撰写
+- 禁止中英文混用
+- 专业术语可使用英文，但句子必须用中文表达
+
+**⚠️ 引用数量强制要求**：
+- 本部分必须引用至少 10-15 篇文献
+- 使用文献编号，如 [1]、[2]、[3]
+- 每个论点至少引用 2-3 篇文献支持
+- 推荐引用：{key_papers[:10] if key_papers else '1-20'}
 
 ⚠️ **引用边界严格限制**：
 - 只能使用编号在 [1] 到 [{len(papers)}] 范围内的文献
@@ -341,7 +347,7 @@ class ReviewGeneratorService:
 
 **重要提醒**：
 - 只引用与主题"{topic}"直接相关的文献
-- 不要引用其他领域（如气候、蛋白质结构等）的文献
+- 不要引用其他领域（如气候、空气质量、蛋白质结构等）的文献
 - 引用的文献必须与主题有明确的关联性
 
 输出：Markdown（## 引言）"""
@@ -398,9 +404,16 @@ class ReviewGeneratorService:
 2. **明确指出分歧**：当研究结论不一致时，要明确指出并分析原因
 3. **使用对比表格**：对于关键对比，使用 Markdown 表格呈现
 
-**引用要求**：
-- 每个主题引用 8-12 篇
+**语言要求**：
+- 只使用中文撰写
+- 禁止中英文混用
+- 专业术语可使用英文，但句子必须用中文表达
+
+**⚠️ 引用数量强制要求**：
+- 每个主题必须引用至少 15-20 篇文献
 - 每篇文献不超过2次
+- 每个论点至少引用 2-3 篇文献支持
+- 使用文献编号，如 [1]、[2]、[3]
 
 ⚠️ **引用边界严格限制**：
 - 只能使用编号在 [1] 到 [{len(papers)}] 范围内的文献
@@ -417,7 +430,7 @@ class ReviewGeneratorService:
 **文献相关性提醒**：
 - 主题是：{topic}
 - 只引用与"{topic}"直接相关的文献
-- 不要引用其他领域的文献（如蛋白质折叠、气候模型等）
+- 不要引用其他领域的文献（如空气质量预测、蛋白质折叠、气候模型等）
 - 确保每篇引用的文献都与主题有明确的关联"""
 
             user_prompt = f"""主题：{topic}
@@ -546,11 +559,24 @@ class ReviewGeneratorService:
 {specificity_section}
 
 **写作要求**：
-1. 总结主要研究共识（200字左右）
+1. 总结主要研究共识（300-400字）
 2. 指出研究分歧和不足
 3. 提出未来研究方向
 
-**引用要求**：结论部分引用要少，3-5篇即可
+**语言要求**：
+- 只使用中文撰写
+- 禁止中英文混用
+- 专业术语可使用英文，但句子必须用中文表达
+
+**⚠️ 引用数量强制要求**：
+- 本部分必须引用至少 8-10 篇文献
+- 使用文献编号，如 [1]、[2]、[3]
+- 每个论点至少引用 1-2 篇文献支持
+
+⚠️ **引用边界严格限制**：
+- 只能使用编号在 [1] 到 [{len(papers)}] 范围内的文献
+- 绝对禁止使用 [{len(papers)+1}] 或更大的编号
+- 如果发现没有相关文献，宁可少引用也不要超出范围
 
 **重要提醒**：
 - 只输出结论部分的内容，不要添加参考文献列表
@@ -594,10 +620,16 @@ class ReviewGeneratorService:
 2. 构建文献矩阵对比分析
 3. 引用相关文献支持观点
 
-**引用要求**：
-- 使用文献编号，如 [1]、[2]
-- 推荐引用：{key_papers[:10] if key_papers else '根据内容选择'}
-- 本部分引用 8-12 篇
+**语言要求**：
+- 只使用中文撰写
+- 禁止中英文混用
+- 专业术语可使用英文，但句子必须用中文表达
+
+**⚠️ 引用数量强制要求**：
+- 本部分必须引用至少 15-20 篇文献
+- 使用文献编号，如 [1]、[2]、[3]
+- 每个论点至少引用 2-3 篇文献支持
+- 推荐引用：{key_papers[:15] if key_papers else '1-30'}
 
 ⚠️ **引用边界严格限制**：
 - 只能使用编号在 [1] 到 [{len(papers)}] 范围内的文献
@@ -612,7 +644,7 @@ class ReviewGeneratorService:
 **文献相关性提醒**：
 - 综述主题是：{topic}
 - 只引用与"{topic}"直接相关的文献
-- 不要引用其他领域的文献"""
+- 不要引用其他领域的文献（如空气质量预测、蛋白质折叠、气候模型等）"""
 
         user_prompt = f"""主题：{topic}
 
@@ -1152,15 +1184,22 @@ class ReviewGeneratorService:
         for idx, score, title in uncited_sorted[:5]:
             print(f"  [{idx}] 评分:{score:.1f} - {title}...")
 
-        # 创建替换映射
+        # 创建替换映射（只使用相关的文献）
         replacement_map = {}
         for i, invalid_idx in enumerate(sorted(invalid_indices)):
-            if i < len(uncited_sorted):
-                new_idx = uncited_sorted[i][0]
-                replacement_map[invalid_idx] = new_idx
-                title = uncited_sorted[i][2]
-                score = uncited_sorted[i][1]
-                print(f"[引用修复] [{invalid_idx}] → [{new_idx}] (评分:{score:.1f}): {title}...")
+            # 从排序后的未引用文献中查找相关的文献
+            for candidate_idx, candidate_score, candidate_title in uncited_sorted:
+                # 检查候选文献是否与主题相关
+                paper = papers[candidate_idx - 1]
+                if self._is_paper_relevant(paper if isinstance(paper, dict) else self._paper_to_dict(paper), topic_keywords):
+                    # 使用相关的文献进行替换
+                    replacement_map[invalid_idx] = candidate_idx
+                    print(f"[引用修复] [{invalid_idx}] → [{candidate_idx}] (评分:{candidate_score:.1f}): {candidate_title}...")
+                    break
+            else:
+                # 如果没有找到相关的文献，跳过这个替换
+                print(f"[引用修复] [{invalid_idx}] 无法找到相关文献进行替换，将删除")
+                continue
 
         # 执行替换
         def replace_citation(match):
@@ -1623,6 +1662,7 @@ class ReviewGeneratorService:
             '心理治疗', ' psychotherapy', '焦虑症', ' anxiety disorder',
             # 气象/气候
             '气象', ' weather forecast', '气候变化', ' climate change', '天气预报',
+            '空气质量', ' air quality', '空气污染', ' air pollution', 'pm2.5',
             # 金融/股票
             '股票市场', ' stock market', '金融衍生品', ' financial derivative',
             '投资回报', ' investment return', '证券', ' security',
@@ -1647,18 +1687,19 @@ class ReviewGeneratorService:
         ]
 
         soft_irrelevant_count = sum(1 for kw in soft_irrelevant_keywords if kw in title or kw in venue)
-        if soft_irrelevant_count > 0 and total_score < 2:
-            # 如果有软性不相关关键词且总分较低，认为不相关
+        if soft_irrelevant_count > 0 and total_score < 1:
+            # 如果有软性不相关关键词且总分极低，认为不相关
             print(f"[相关性检查] ✗ 软不相关: {soft_irrelevant_count}个软性关键词，总分{total_score}")
             return False
 
         # === 最终决策 ===
-        # 至少需要2分才认为相关
-        if total_score >= 2:
+        # 至少需要1分才认为相关（降低阈值）
+        if total_score >= 1:
             return True
 
         # 如果标题完全没有任何关键词匹配，且不是太短的标题，认为不相关
-        if title_keyword_matches == 0 and len(title) > 30:
+        # 但放宽条件：只有在标题很长（>50字符）且完全没有匹配时才过滤
+        if title_keyword_matches == 0 and len(title) > 50:
             print(f"[相关性检查] ✗ 标题无关键词匹配: {title[:40]}...")
             return False
 
