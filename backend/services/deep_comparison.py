@@ -207,7 +207,7 @@ class DeepComparisonAnalyzer:
         papers_info = []
         for i, paper in enumerate(papers[:6], 1):  # 最多6篇
             title = paper.get("title", "")
-            abstract = paper.get("abstract", "")[:300]
+            abstract = (paper.get("abstract") or "")[:300]
             year = paper.get("year", "Unknown")
             papers_info.append(f"{i}. {title} ({year})\n   摘要: {abstract}\n")
 
@@ -269,11 +269,11 @@ class DeepComparisonAnalyzer:
                 content.append("### 观点对比\n")
                 content.append(f"**近期研究（2020年后）**：")
                 for p in recent_papers[:2]:
-                    title = p.get("title", "")[:60]
+                    title = (p.get("title") or "")[:60]
                     content.append(f"- {title}...")
                 content.append(f"\n**早期研究（2020年前）**：")
                 for p in older_papers[:2]:
-                    title = p.get("title", "")[:60]
+                    title = (p.get("title") or "")[:60]
                     content.append(f"- {title}...")
 
                 content.append("\n### 分歧原因分析\n")

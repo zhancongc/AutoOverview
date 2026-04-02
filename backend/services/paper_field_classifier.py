@@ -535,7 +535,7 @@ class EnhancedPaperFilterService:
             if filtered_papers:
                 print(f"[EnhancedFilter] 章节'{section_name}'过滤了{len(filtered_papers)}篇不相关论文")
                 for p in filtered_papers[:3]:
-                    print(f"  - {p.get('title', '')[:50]}... ({p.get('_filter_reason', '')})")
+                    print(f"  - {(p.get('title') or '')[:50]}... ({p.get('_filter_reason', '')})")
 
             papers_to_sort = allowed_papers
         else:

@@ -512,7 +512,7 @@ class ReviewGeneratorServiceV2:
             if hasattr(paper, 'title'):
                 title = paper.title[:80]
             else:
-                title = paper.get('title', '')[:80]
+                title = (paper.get('title') or '')[:80]
             brief.append(f"[{i}] {title}")
         return "\n".join(brief)
 

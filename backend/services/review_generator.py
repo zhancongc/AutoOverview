@@ -769,7 +769,7 @@ class ReviewGeneratorService:
                 title = paper.title[:60]
                 year = paper.year if hasattr(paper, 'year') else 'N/A'
             else:
-                title = paper.get('title', '')[:60]
+                title = (paper.get('title') or '')[:60]
                 year = paper.get('year', 'N/A')
             brief.append(f"[{i}] {title} ({year})")
         return "\n".join(brief)
@@ -863,7 +863,7 @@ class ReviewGeneratorService:
             if hasattr(paper, 'title'):
                 title = paper.title[:80]
             else:
-                title = paper.get('title', '')[:80]
+                title = (paper.get('title') or '')[:80]
             brief.append(f"[{i}] {title}")
         return "\n".join(brief)
 
@@ -944,7 +944,7 @@ class ReviewGeneratorService:
             if len(authors_list) > 3:
                 authors += " 等"
             year = paper.get('year', 'n.d.')
-            additional_papers.append(f"[{idx}] {paper.get('title', '')[:60]}... - {authors} ({year})")
+            additional_papers.append(f"[{idx}] {(paper.get('title') or '')[:60]}... - {authors} ({year})")
 
         # 计算需要显示的内容长度（尽可能显示更多）
         content_preview = content if len(content) <= 6000 else content[:6000]
@@ -1498,9 +1498,9 @@ class ReviewGeneratorService:
                 filtered_papers.append(paper)
             else:
                 removed_count += 1
-                title = paper.get('title', '')[:60]
+                title = (paper.get('title') or '')[:60]
                 # 记录移除原因
-                venue = paper.get('venue_name', '')[:30]
+                venue = (paper.get('venue_name') or '')[:30]
                 key_info = f"{title}... ({venue})"
                 if key_info not in removal_reasons:
                     removal_reasons[key_info] = 1

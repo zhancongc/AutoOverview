@@ -48,7 +48,7 @@ class ViewpointExtractor:
         papers_summary = []
         for i, paper in enumerate(papers[:20], 1):  # 最多处理20篇
             title = paper.get("title", "")
-            abstract = paper.get("abstract", "")[:300]  # 限制摘要长度
+            abstract = (paper.get("abstract") or "")[:300]  # 限制摘要长度
             year = paper.get("year", "Unknown")
             papers_summary.append(f"{i}. {title} ({year})\n   摘要: {abstract}\n")
 
@@ -165,10 +165,10 @@ class ControversyAnalyzer:
         viewpoints_text = []
         for i, vp in enumerate(viewpoints[:15], 1):  # 最多处理15个观点
             viewpoints_text.append(
-                f"论文{i}: {vp.get('title', '')[:50]}...\n"
-                f"  观点: {vp.get('viewpoint', '')[:150]}\n"
-                f"  方法: {vp.get('methodology', '未说明')}\n"
-                f"  结论: {vp.get('conclusion', '')[:100]}\n"
+                f"论文{i}: {(vp.get('title') or '')[:50]}...\n"
+                f"  观点: {(vp.get('viewpoint') or '')[:150]}\n"
+                f"  方法: {vp.get('methodology') or '未说明'}\n"
+                f"  结论: {(vp.get('conclusion') or '')[:100]}\n"
             )
 
         section_context = f"在'{section_name}'方面" if section_name else ""

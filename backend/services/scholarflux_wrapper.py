@@ -641,7 +641,7 @@ async def test_scholarflux_v2():
 
         print(f"\n找到 {len(papers_en)} 篇英文论文:")
         for i, paper in enumerate(papers_en[:5], 1):
-            title = paper.get('title', 'N/A')[:60]
+            title = (paper.get('title') or 'N/A')[:60]
             source = paper.get('source', 'N/A')
             year = paper.get('year', 'N/A')
             citations = paper.get('cited_by_count', 0)
@@ -660,7 +660,7 @@ async def test_scholarflux_v2():
 
         print(f"\n找到 {len(papers_zh)} 篇中文相关论文:")
         for i, paper in enumerate(papers_zh[:5], 1):
-            title = paper.get('title', 'N/A')[:60]
+            title = (paper.get('title') or 'N/A')[:60]
             source = paper.get('source', 'N/A')
             year = paper.get('year', 'N/A')
             is_en = "英文" if paper.get('is_english', True) else "中文"
