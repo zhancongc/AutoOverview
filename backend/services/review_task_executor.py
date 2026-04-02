@@ -4,6 +4,7 @@
 """
 import os
 from typing import Dict
+from datetime import datetime
 from sqlalchemy.orm import Session
 
 from services.task_manager import TaskManager, TaskStatus, task_manager
@@ -262,9 +263,10 @@ class ReviewTaskExecutor:
         按小节搜索文献（新流程阶段3）
 
         流程：
-        1. 按小节的关键词分别搜索
-        2. 小节内部去重
-        3. 小节间去重，保留文献数量少的小节的文献
+        1. 优先从数据库搜索
+        2. 数据库不足时使用API补充
+        3. 小节内部去重
+        4. 小节间去重，保留文献数量少的小节的文献
 
         Args:
             topic: 论文主题
@@ -284,7 +286,7 @@ class ReviewTaskExecutor:
             }
         """
         print("=" * 80)
-        print("[阶段3] 按小节搜索文献")
+        print("[阶段3] 按小节搜索文献（优先数据库）")
         print("=" * 80)
 
         # 获取小节关键词
@@ -296,6 +298,10 @@ class ReviewTaskExecutor:
         for title in section_titles:
             keywords = section_keywords.get(title, [])
             print(f"  - {title}: {len(keywords)} 个关键词")
+
+        # 获取数据库session
+        from database import get_db_session
+        db_session = next(get_db_session())
 
         # 按小节搜索文献（先不去重，收集所有文献）
         raw_papers_by_section = {}
@@ -322,22 +328,53 @@ class ReviewTaskExecutor:
                     progress={"step": "searching", "message": f"正在搜索 {section_title}: {keyword}..."}
                 )
 
-                papers = await self.search_service.search(
-                    query=keyword,
-                    years_ago=params.get('search_years', 10),
-                    limit=30,
-                    use_all_sources=True
+                # === 步骤1: 优先从数据库搜索 ===
+                from services.paper_metadata_dao import PaperMetadataDAO
+                dao = PaperMetadataDAO(db_session)
+
+                db_papers = dao.search_papers(
+                    keyword=keyword,
+                    min_year=datetime.now().year - params.get('search_years', 10),
+                    limit=50
                 )
 
-                # 小节内部去重
-                for paper in papers:
+                # 转换为字典格式
+                db_papers_dict = [p.to_paper_dict() for p in db_papers]
+
+                print(f"[阶段3] 数据库搜索 '{keyword}': 找到 {len(db_papers_dict)} 篇")
+
+                # 添加数据库搜索结果
+                for paper in db_papers_dict:
                     paper_id = paper.get("id")
-                    if paper_id not in section_seen_ids:
+                    if paper_id and paper_id not in section_seen_ids:
                         section_seen_ids.add(paper_id)
                         section_papers.append(paper)
 
+                # === 步骤2: 如果数据库搜索结果不足，使用API补充 ===
+                if len(db_papers_dict) < 20:  # 如果数据库搜索结果少于20篇
+                    print(f"[阶段3] 数据库结果不足，使用API补充搜索...")
+
+                    api_papers = await self.search_service.search(
+                        query=keyword,
+                        years_ago=params.get('search_years', 10),
+                        limit=30,
+                        use_all_sources=True
+                    )
+
+                    # 添加API搜索结果（去重）
+                    for paper in api_papers:
+                        paper_id = paper.get("id")
+                        if paper_id and paper_id not in section_seen_ids:
+                            section_seen_ids.add(paper_id)
+                            section_papers.append(paper)
+
+                    print(f"[阶段3] API补充 '{keyword}': 新增 {len(api_papers)} 篇")
+
             print(f"[阶段3] 小节 '{section_title}' 搜索到 {len(section_papers)} 篇文献（去重后）")
             raw_papers_by_section[section_title] = section_papers
+
+        # 关闭数据库session
+        db_session.close()
 
         # 小节间去重，保留文献数量少的小节的文献
         print(f"\n[阶段3] 小节间去重（保留文献数量少的小节的文献）...")
