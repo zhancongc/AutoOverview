@@ -289,7 +289,7 @@ class ReviewTaskExecutor:
             # 验证预选结果
             preselect_stats = self.filter_service.get_statistics(preselected_papers)
             print(f"[TaskExecutor] 预选结果: 总数={preselect_stats['total']}, "
-                  f"英文={preselect_stats['english']}, "
+                  f"英文={preselect_stats['english_count']}, "
                   f"近5年={preselect_stats['recent_count']}, "
                   f"比例={preselect_stats['recent_ratio']:.2%}")
 
