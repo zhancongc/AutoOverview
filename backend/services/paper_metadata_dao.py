@@ -45,11 +45,17 @@ class PaperMetadataDAO:
             existing.concepts = paper.get("concepts", existing.concepts)
             existing.venue_name = paper.get("venue_name", existing.venue_name)
             existing.issue = paper.get("issue", existing.issue)
-            existing.source = source
+
+            # 合并来源信息
+            existing_sources = existing.source if isinstance(existing.source, list) else [existing.source]
+            new_sources = source if isinstance(source, list) else [source]
+            merged_sources = list(set(existing_sources + new_sources))
+            existing.source = merged_sources
+
             existing.url = paper.get("url", existing.url)
             existing.updated_at = datetime.now()
             self.session.commit()
-            print(f"[PaperMetadataDAO] 更新论文: {paper_id} - {existing.title[:50]}")
+            print(f"[PaperMetadataDAO] 更新论文: {paper_id} - 来源: {merged_sources}")
             return existing
         else:
             # 创建新记录
@@ -62,16 +68,16 @@ class PaperMetadataDAO:
                 cited_by_count=paper.get("cited_by_count", 0),
                 is_english=paper.get("is_english", True),
                 type=paper.get("type", ""),
-                doi=paper.get("doi", ""),
-                concepts=paper.get("concepts", []),
-                venue_name=paper.get("venue_name"),
-                issue=paper.get("issue"),
-                source=source,
-                url=paper.get("url")
+                doi = paper.get("doi", ""),
+                concepts = paper.get("concepts", []),
+                venue_name = paper.get("venue_name"),
+                issue = paper.get("issue"),
+                source=source if isinstance(source, list) else [source],
+                url = paper.get("url")
             )
             self.session.add(paper_metadata)
             self.session.commit()
-            print(f"[PaperMetadataDAO] 新增论文: {paper_id} - {paper_metadata.title[:50]}")
+            print(f"[PaperMetadataDAO] 新增论文: {paper_id} - 来源: {source}")
             return paper_metadata
 
     def save_papers(self, papers: List[Dict], source: str = "unknown") -> int:
@@ -106,7 +112,11 @@ class PaperMetadataDAO:
                     existing.concepts = paper.get("concepts", existing.concepts)
                     existing.venue_name = paper.get("venue_name", existing.venue_name)
                     existing.issue = paper.get("issue", existing.issue)
-                    existing.source = source
+                    # 合并来源信息
+                    existing_sources = existing.source if isinstance(existing.source, list) else [existing.source]
+                    new_sources = source if isinstance(source, list) else [source]
+                    merged_sources = list(set(existing_sources + new_sources))
+                    existing.source = merged_sources
                     existing.url = paper.get("url", existing.url)
                     existing.updated_at = datetime.now()
                 else:
@@ -124,7 +134,7 @@ class PaperMetadataDAO:
                         concepts=paper.get("concepts", []),
                         venue_name=paper.get("venue_name"),
                         issue=paper.get("issue"),
-                        source=source,
+                        source=source if isinstance(source, list) else [source],
                         url=paper.get("url")
                     )
                     self.session.add(paper_metadata)

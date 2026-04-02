@@ -24,7 +24,7 @@ class PaperMetadata(Base):
     concepts = Column(JSON, nullable=True, comment="概念标签JSON")
     venue_name = Column(String(500), nullable=True, comment="期刊/会议名称")
     issue = Column(String(50), nullable=True, comment="卷号")
-    source = Column(String(50), nullable=False, comment="数据源（aminer/openalex/semantic_scholar）")
+    source = Column(JSON, nullable=False, comment="数据源列表，如 ['openalex', 'semantic_scholar']")
     url = Column(String(1000), nullable=True, comment="论文链接")
 
     # 时间戳
@@ -53,7 +53,7 @@ class PaperMetadata(Base):
             "concepts": self.concepts,
             "venue_name": self.venue_name,
             "issue": self.issue,
-            "source": self.source,
+            "source": self.source if isinstance(self.source, list) else [self.source],
             "url": self.url,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None
@@ -74,7 +74,7 @@ class PaperMetadata(Base):
             "concepts": self.concepts if isinstance(self.concepts, list) else [],
             "venue_name": self.venue_name,
             "issue": self.issue,
-            "source": self.source,
+            "source": self.source if isinstance(self.source, list) else [self.source],
             "url": self.url
         }
 
@@ -117,3 +117,59 @@ class ReviewRecord(Base):
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None
         }
+
+
+class AcademicTerm(Base):
+    """学术术语表"""
+    __tablename__ = "academic_terms"
+
+    id = Column(Integer, primary_key=True, autoincrement=True, comment="术语ID")
+
+    # 中文术语（主要标识）
+    chinese_term = Column(String(200), nullable=False, unique=True, comment="中文术语")
+
+    # 英文术语（多个，用JSON存储）
+    english_terms = Column(JSON, nullable=False, comment="英文术语列表，如 ['lstm', 'long short-term memory']")
+
+    # 分类信息
+    category = Column(String(50), nullable=False, comment="分类：dl/nlp/bio/medical/general等")
+    subcategory = Column(String(50), nullable=True, comment="子分类：如dl下的cnn/rnn等")
+
+    # 别名（同义词）
+    aliases = Column(JSON, nullable=True, comment="别名列表，包括中英文同义词")
+
+    # 描述和用法
+    description = Column(Text, nullable=True, comment="术语描述")
+    usage_examples = Column(JSON, nullable=True, comment="使用示例")
+
+    # 元数据
+    is_active = Column(Boolean, default=True, comment="是否启用")
+    priority = Column(Integer, default=0, comment="优先级（用于排序）")
+
+    # 时间戳
+    created_at = Column(DateTime, default=datetime.now, comment="创建时间")
+    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now, comment="更新时间")
+
+    # 索引
+    __table_args__ = (
+        Index('idx_category', 'category'),
+        Index('idx_is_active', 'is_active'),
+        Index('idx_chinese_term', 'chinese_term'),
+    )
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "chinese_term": self.chinese_term,
+            "english_terms": self.english_terms,
+            "category": self.category,
+            "subcategory": self.subcategory,
+            "aliases": self.aliases or [],
+            "description": self.description,
+            "usage_examples": self.usage_examples or [],
+            "is_active": self.is_active,
+            "priority": self.priority,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None
+        }
+

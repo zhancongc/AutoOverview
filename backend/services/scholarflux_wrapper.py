@@ -218,16 +218,21 @@ class ScholarFlux:
 
         # ===== 数据源 4: Semantic Scholar =====
         if os.getenv('SEMANTIC_SCHOLAR_ENABLED', 'false').lower() == 'true':
+            semantic_key = os.getenv('SEMANTIC_SCHOLAR_API_KEY')
             try:
-                semantic_service = SemanticScholarService()
-                rate_limit = float(os.getenv('SEMANTIC_SCHOLAR_RATE_LIMIT', '0.1'))
+                semantic_service = SemanticScholarService(api_key=semantic_key)
+                rate_limit = float(os.getenv('SEMANTIC_SCHOLAR_RATE_LIMIT', '1.0'))
                 self.apis.append(ScholarAPI(
                     name="semantic_scholar",
                     service=semantic_service,
                     rate_limit=rate_limit,
                     is_chinese=False
                 ))
-                print("[ScholarFlux] ✓ Semantic Scholar 已加载（补充数据源）")
+                if semantic_key:
+                    print("[ScholarFlux] ✓ Semantic Scholar 已加载（使用 API Key，速率限制: 1 req/s）")
+                else:
+                    print("[ScholarFlux] ✓ Semantic Scholar 已加载（无 API Key，速率限制: 0.1 req/s）")
+                    print("          提示: 配置 SEMANTIC_SCHOLAR_API_KEY 可获得更高速率限制")
             except Exception as e:
                 print(f"[ScholarFlux] ✗ Semantic Scholar 初始化失败: {e}")
         else:
@@ -423,7 +428,7 @@ class ScholarFlux:
         # 收集结果
         all_papers = []
         source_counts = {}  # 记录每个数据源返回的数量
-        source_mapping = {}  # 记录每篇论文的来源
+        source_mapping = {}  # 记录每篇论文的来源列表
 
         for i, result in enumerate(results):
             if isinstance(result, Exception):
@@ -437,10 +442,12 @@ class ScholarFlux:
             for paper in result:
                 paper_id = paper.get("id")
                 if paper_id:
-                    # 记录来源（优先记录第一个来源）
+                    # 累积来源记录（而不是只记录第一个）
                     if paper_id not in source_mapping:
-                        source_mapping[paper_id] = source
-                paper.setdefault('source', source)
+                        source_mapping[paper_id] = []
+                    if source not in source_mapping[paper_id]:
+                        source_mapping[paper_id].append(source)
+                paper.setdefault('source', [source])  # 临时设置为列表
             all_papers.extend(result)
 
         # 显示各数据源结果统计
@@ -468,7 +475,7 @@ class ScholarFlux:
         # 限制返回数量
         final_papers = sorted_papers[:limit]
 
-        # 确保每篇论文都有正确的来源标记
+        # 确保每篇论文都有完整的来源列表
         for paper in final_papers:
             paper_id = paper.get("id")
             if paper_id and paper_id in source_mapping:
