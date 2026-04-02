@@ -13,12 +13,12 @@ class SemanticScholarService:
 
     BASE_URL = "https://api.semanticscholar.org/graph/v1"
 
-    def __init__(self):
+    def __init__(self, api_key: str = None):
         self.client = httpx.AsyncClient(timeout=30.0)
         # Semantic Scholar API key is optional but increases rate limits
-        self.api_key = None
-        # 速率限制：免费API每分钟5次请求，设置15秒间隔更安全
-        self.request_delay = 15  # 秒
+        self.api_key = api_key
+        # 速率限制：有API Key时每秒1次，无API Key时每10秒1次
+        self.request_delay = 1.0 if api_key else 10.0  # 秒
         self.last_request_time = None
         # 重试配置
         self.max_retries = 3  # 最大重试次数

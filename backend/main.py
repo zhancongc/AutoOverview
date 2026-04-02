@@ -3,6 +3,7 @@ FastAPI 主应用
 """
 from fastapi import FastAPI, HTTPException, Depends, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
 from pydantic import BaseModel, Field
 from typing import List, Dict, Optional
 from sqlalchemy.orm import Session
@@ -29,7 +30,24 @@ from config import Config, UserConfig
 
 load_dotenv()
 
-app = FastAPI(title="论文综述生成器 API")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """应用生命周期管理"""
+    # 启动时执行
+    db.connect()
+    # 创建数据库表
+    from models import Base
+    db.create_tables()
+    print("[Startup] 数据库表已创建/更新")
+    yield
+    # 关闭时执行
+    print("[Shutdown] 应用关闭")
+
+app = FastAPI(
+    title="论文综述生成器 API",
+    lifespan=lifespan
+)
 
 # CORS 配置
 app.add_middleware(
@@ -71,15 +89,6 @@ search_service = SmartPaperSearchService(scholarflux, get_db)
 filter_service = PaperFilterService()
 three_circles_generator = ThreeCirclesReviewGenerator()
 record_service = ReviewRecordService()
-
-@app.on_event("startup")
-async def startup_event():
-    """应用启动时初始化数据库连接"""
-    db.connect()
-    # 创建数据库表
-    from models import Base
-    db.create_tables()
-    print("[Startup] 数据库表已创建/更新")
 
 @app.get("/")
 async def root():
@@ -484,8 +493,10 @@ async def submit_review_task(
 
         # 启动后台任务
         async def run_task():
+            # 在后台任务中创建新的 session，不使用请求级别的 session
             executor = ReviewTaskExecutor()
-            await executor.execute_task(task.task_id, db_session)
+            with next(db.get_session()) as task_session:
+                await executor.execute_task(task.task_id, task_session)
 
         # 使用 asyncio.create_task 而不是 BackgroundTasks
         asyncio.create_task(run_task())
@@ -602,4 +613,31 @@ async def check_citation_order(request: CheckCitationOrderRequest):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    # 启用热重载，修改代码后自动重启服务
+    # reload=True 时必须使用字符串格式的应用路径
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+
+@app.get("/api/tasks/status")
+async def get_tasks_status():
+    """
+    获取任务系统状态
+
+    返回当前运行中的任务数量、最大并发数等信息
+    """
+    try:
+        running_count = task_manager.get_running_count()
+        max_concurrent = task_manager.max_concurrent_tasks
+
+        return {
+            "success": True,
+            "data": {
+                "running_tasks": running_count,
+                "max_concurrent_tasks": max_concurrent,
+                "available_slots": max_concurrent - running_count,
+                "total_tasks": len(task_manager._tasks)
+            }
+        }
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))

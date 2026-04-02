@@ -1,11 +1,12 @@
 """
 异步任务管理服务
 支持任务提交、状态查询、结果获取
+支持并发限制，防止资源耗尽
 """
 import asyncio
 import uuid
 from datetime import datetime
-from typing import Dict, Optional, Any
+from typing import Dict, Optional, Any, Set
 from enum import Enum
 
 
@@ -53,10 +54,66 @@ class TaskManager:
     _instance = None
     _tasks: Dict[str, Task] = {}
 
+    # 并发控制
+    _max_concurrent_tasks = 3  # 最大并发任务数
+    _running_tasks: Set[str] = set()
+    _task_semaphore: asyncio.Semaphore = None
+
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super().__new__(cls)
+            cls._task_semaphore = asyncio.Semaphore(cls._max_concurrent_tasks)
+            print(f"[TaskManager] 初始化，最大并发任务数: {cls._max_concurrent_tasks}")
         return cls._instance
+
+    @property
+    def max_concurrent_tasks(self) -> int:
+        """获取最大并发任务数"""
+        return self._max_concurrent_tasks
+
+    @max_concurrent_tasks.setter
+    def max_concurrent_tasks(self, value: int):
+        """设置最大并发任务数"""
+        if value < 1:
+            raise ValueError("max_concurrent_tasks must be at least 1")
+        old_value = self._max_concurrent_tasks
+        self._max_concurrent_tasks = value
+        # 重新创建信号量
+        self._task_semaphore = asyncio.Semaphore(value)
+        print(f"[TaskManager] 最大并发任务数: {old_value} → {value}")
+
+    async def acquire_slot(self, task_id: str) -> bool:
+        """
+        获取任务执行槽位
+
+        Returns:
+            True 如果成功获取槽位，False 如果已达到最大并发数
+        """
+        if task_id in self._running_tasks:
+            print(f"[TaskManager] 任务 {task_id} 已在运行中")
+            return True
+
+        # 尝试获取信号量
+        acquired = await self._task_semaphore.acquire()
+
+        if acquired:
+            self._running_tasks.add(task_id)
+            print(f"[TaskManager] 任务 {task_id} 获取执行槽位 (运行中: {len(self._running_tasks)}/{self._max_concurrent_tasks})")
+            return True
+        else:
+            print(f"[TaskManager] 任务 {task_id} 等待槽位 (已达最大并发数: {self._max_concurrent_tasks})")
+            return False
+
+    def release_slot(self, task_id: str):
+        """释放任务执行槽位"""
+        if task_id in self._running_tasks:
+            self._running_tasks.remove(task_id)
+            self._task_semaphore.release()
+            print(f"[TaskManager] 任务 {task_id} 释放槽位 (运行中: {len(self._running_tasks)}/{self._max_concurrent_tasks})")
+
+    def get_running_count(self) -> int:
+        """获取当前运行中的任务数"""
+        return len(self._running_tasks)
 
     def create_task(self, topic: str, params: Dict) -> Task:
         """创建新任务"""
@@ -89,6 +146,8 @@ class TaskManager:
 
         if status in [TaskStatus.COMPLETED, TaskStatus.FAILED]:
             task.completed_at = datetime.now()
+            # 释放执行槽位
+            self.release_slot(task_id)
 
         if result is not None:
             task.result = result

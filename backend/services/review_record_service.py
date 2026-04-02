@@ -74,6 +74,8 @@ class ReviewRecordService:
         Returns:
             更新后的记录对象
         """
+        # 使用 merge 确保 record 在当前 session 中
+        record = db_session.merge(record)
         record.review = review
         record.papers = papers
         record.statistics = statistics
@@ -100,6 +102,8 @@ class ReviewRecordService:
         Returns:
             更新后的记录对象
         """
+        # 使用 merge 确保 record 在当前 session 中
+        record = db_session.merge(record)
         record.status = "failed"
         record.error_message = error_message
         db_session.commit()
