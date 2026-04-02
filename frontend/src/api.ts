@@ -10,6 +10,34 @@ import type {
 
 const API_BASE = '/api';
 
+// 异步任务类型
+export interface TaskSubmitResponse {
+  success: boolean;
+  message: string;
+  data?: {
+    task_id: string;
+    topic: string;
+    status: string;
+    poll_url: string;
+  };
+}
+
+export interface TaskInfo {
+  task_id: string;
+  topic: string;
+  status: 'pending' | 'processing' | 'completed' | 'failed';
+  created_at: string;
+  started_at?: string;
+  completed_at?: string;
+  error?: string;
+  progress?: {
+    step: string;
+    message: string;
+  };
+  result?: any;
+  has_result: boolean;
+}
+
 export const api = {
   // 智能分析（推荐）
   async smartAnalyze(topic: string): Promise<SmartAnalyzeResponse> {
@@ -41,8 +69,8 @@ export const api = {
     return response.data;
   },
 
-  // 智能生成综述（推荐）
-  async smartGenerate(
+  // 智能生成综述（异步模式）
+  async submitReviewTask(
     topic: string,
     options: {
       targetCount?: number;
@@ -51,7 +79,7 @@ export const api = {
       searchYears?: number;
       maxSearchQueries?: number;
     } = {}
-  ): Promise<GenerateResponse> {
+  ): Promise<TaskSubmitResponse> {
     const response = await axios.post(`${API_BASE}/smart-generate`, {
       topic,
       target_count: options.targetCount ?? 50,
@@ -60,6 +88,12 @@ export const api = {
       search_years: options.searchYears ?? 10,
       max_search_queries: options.maxSearchQueries ?? 8
     });
+    return response.data;
+  },
+
+  // 获取任务状态
+  async getTaskStatus(taskId: string): Promise<{ success: boolean; data: TaskInfo }> {
+    const response = await axios.get(`${API_BASE}/tasks/${taskId}`);
     return response.data;
   },
 

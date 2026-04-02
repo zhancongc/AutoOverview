@@ -20,7 +20,8 @@ class ReviewGeneratorService:
         self,
         topic: str,
         papers: List[Dict],
-        model: str = "deepseek-chat"
+        model: str = "deepseek-chat",
+        specificity_guidance: dict = None
     ) -> tuple:
         """
         生成文献综述
@@ -29,6 +30,7 @@ class ReviewGeneratorService:
             topic: 论文主题
             papers: 文献列表
             model: 模型名称
+            specificity_guidance: 场景特异性指导（可选）
 
         Returns:
             (综述内容, 实际被引用的文献列表)
@@ -36,11 +38,32 @@ class ReviewGeneratorService:
         # 构建文献引用信息
         papers_info = self._format_papers_for_prompt(papers)
 
+        # 构建场景特异性指导
+        specificity_section = ""
+        if specificity_guidance:
+            core_scenario = specificity_guidance.get('core_scene', '')
+            research_field = specificity_guidance.get('research_field', '')
+            main_technology = specificity_guidance.get('main_technology', '')
+            scene_specificity = specificity_guidance.get('scene_specificity', '')
+            review_requirement = specificity_guidance.get('review_requirement', '')
+            lack_research_statement = specificity_guidance.get('lack_research_statement', '')
+
+            specificity_section = f"""
+
+【场景特异性指导】
+- 核心场景实体：{core_scenario}
+- 研究领域：{research_field}
+- 主要技术：{main_technology}
+- 场景特殊性：{scene_specificity}
+- 写作要求：{review_requirement}
+- 缺乏文献处理：{lack_research_statement}
+"""
+
         # 构建提示词
-        system_prompt = """你是一位学术写作专家，擅长撰写高质量的文献综述，特别擅长构建"文献矩阵"进行对比分析。
+        system_prompt = f"""你是一位学术写作专家，擅长撰写高质量的文献综述，特别擅长构建"文献矩阵"进行对比分析。
 
 请根据提供的文献列表，撰写一篇结构完整、内容深入的文献综述。
-
+{specificity_section}
 综述结构要求：
 1. 引言（介绍研究背景和意义）
 2. 主体部分（按主题组织，构建文献矩阵进行对比分析）
@@ -56,7 +79,7 @@ class ReviewGeneratorService:
 - 引用分布：避免重复引用同一篇文献，**每篇文献引用次数严格不超过2次**
 
 【对比分析要求 - 核心重点】
-- **不要简单列举**：避免"A认为...B认为...C认为..."的流水账式罗列
+- **不要简单列举**：避免避免"A认为...B认为...C认为..."的流水账式罗列
 - **构建文献矩阵**：在每个主题下，对比不同研究的观点、方法、结论
 - **明确指出分歧**：当研究结论不一致时，要明确指出并分析可能的原因
 - **分析原因**：探讨分歧产生的可能原因（如样本差异、方法差异、时间差异、情境差异等）
@@ -69,7 +92,7 @@ class ReviewGeneratorService:
   在媒体关注度对盈余管理的影响上，现有研究存在显著分歧。张三(2019)[5]认为媒体关注度能够发挥监督职能，有效抑制盈余管理行为；而李四(2020)[8]则指出在特定的业绩压力下，高媒体关注度反而可能诱发企业进行应计盈余管理；王五(2021)[12]的研究进一步揭示了其中的调节机制，发现媒体关注度的效应取决于公司治理水平，治理良好的企业中媒体监督作用更为显著。这种分歧可能源于研究样本的企业生命周期差异以及盈余管理度量方式的不同。
 
 ✅ 正确写法（多维对比）：
-  关于QFD在质量管理中的应用效果，现有研究呈现出不同的视角。从产品质量提升角度看，XX(2018)[3]、XX(2019)[5]的研究表明QFD能显著提高产品满意度；而从成本效益角度分析，YY(2020)[8]则指出QFD实施过程中的时间成本可能抵消其收益；ZZ(2022)[15]综合两种观点，提出在项目规模适中时QFD的净效益最大。
+  关于QFD在质量管理中的应用效果，现有研究呈现出呈现出不同的视角。从产品质量提升角度看，XX(2018)[3]、XX(2019)[5]的研究表明QFD能显著提高产品满意度；而从成本效益角度分析，YY(2020)[8]则指出QFD实施过程中的时间成本可能抵消其收益；ZZ(2022)[15]综合两种观点，提出在项目规模适中时QFD的净效益最大。
 
 【写作深度要求】
 - 分析要深入，不能简单罗列

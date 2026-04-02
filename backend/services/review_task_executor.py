@@ -67,6 +67,9 @@ class ReviewTaskExecutor:
             gen = FrameworkGenerator()
             framework = await gen.generate_framework(topic, enable_llm_validation=True)
 
+            # 提取场景特异性指导
+            specificity_guidance = framework.get('specificity_guidance', {})
+
             # 2. 初始文献搜索
             all_papers = []
             search_queries_results = []
@@ -213,7 +216,8 @@ class ReviewTaskExecutor:
 
             review, cited_papers = await generator.generate_review(
                 topic=topic,
-                papers=filtered_papers
+                papers=filtered_papers,
+                specificity_guidance=specificity_guidance
             )
 
             # 5. 验证和修复

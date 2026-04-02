@@ -780,13 +780,20 @@ class FrameworkGenerator:
             'llm_validated': details.get('llm_validated', False),
             'llm_optimized': details.get('llm_optimized', False),
             'framework': None,
-            'search_queries': []
+            'search_queries': [],
+            'specificity_guidance': {}  # 场景特异性指导
         }
 
         # 根据类型生成框架
         if topic_type == TopicType.APPLICATION:
             framework['framework'] = self._application_framework(title, details.get('key_elements', {}))
-            framework['search_queries'] = await self._application_queries(title, details.get('key_elements', {}))
+            # _application_queries 返回元组 (查询列表, 场景特异性指导)
+            queries_result = await self._application_queries(title, details.get('key_elements', {}))
+            if isinstance(queries_result, tuple) and len(queries_result) == 2:
+                framework['search_queries'] = queries_result[0]
+                framework['specificity_guidance'] = queries_result[1]
+            else:
+                framework['search_queries'] = queries_result
         elif topic_type == TopicType.EVALUATION:
             framework['framework'] = self._evaluation_framework(title, details.get('key_elements', {}))
             framework['search_queries'] = self._evaluation_queries(title, details.get('key_elements', {}))
@@ -856,7 +863,7 @@ class FrameworkGenerator:
             ]
         }
 
-    async def _application_queries(self, title: str, elements: dict) -> list:
+    async def _application_queries(self, title: str, elements: dict) -> tuple:
         """
         应用型检索查询 - 使用LLM动态生成更精准的搜索关键词
 
@@ -867,7 +874,7 @@ class FrameworkGenerator:
         4. 方法论应用 - 根据方法类型处理
 
         Returns:
-            查询列表
+            (查询列表, 场景特异性指导字典)
         """
         obj = elements.get("research_object", "")
         goal = elements.get("optimization_goal", "")
@@ -1010,7 +1017,7 @@ class FrameworkGenerator:
                         'lang': 'zh'
                     })
 
-                # 如果没有动态关键词，回退到原逻辑
+                # 如果没有没有动态关键词，回退到原逻辑
                 if not method_keywords:
                     obj_type = self._classify_object_type(obj)
                     app_keywords = self._get_application_keywords(obj_type)
@@ -1027,7 +1034,9 @@ class FrameworkGenerator:
                             'lang': 'zh'
                         })
 
-        return queries
+        # 返回查询列表和场景特异性指导
+        specificity_guidance = dynamic_keywords.get('specificity_guidance', {})
+        return queries, specificity_guidance
 
     def _contains_english_terms(self, text: str) -> bool:
         """检测文本中是否包含英文术语"""
@@ -1245,7 +1254,7 @@ class FrameworkGenerator:
         methodology: str = None
     ) -> dict:
         """
-        使用LLM动态生成相关的搜索关键词
+        使用LLM动态生成相关的搜索关键词和场景特异性指导
 
         Args:
             title: 论文题目
@@ -1255,10 +1264,11 @@ class FrameworkGenerator:
 
         Returns:
             {
-                'object_keywords': [],  # 研究对象相关关键词
-                'goal_keywords': [],     # 优化目标相关关键词
-                'method_keywords': [],   # 方法论相关关键词
-                'avoid_domains': []     # 需要避免的领域
+                'object_keywords': [],      # 研究对象相关关键词
+                'goal_keywords': [],         # 优化目标相关关键词
+                'method_keywords': [],       # 方法论相关关键词
+                'avoid_domains': [],         # 需要避免的领域
+                'specificity_guidance': {}    # 场景特异性指导
             }
         """
         if not self.classifier.client:
@@ -1272,13 +1282,14 @@ class FrameworkGenerator:
 - 优化目标：{optimization_goal or '未知'}
 - 方法论：{methodology or '未知'}
 
-请分析以上论文题目，生成适合文献搜索的关键词。
+请分析题目：{title}
 
 要求：
 1. **研究对象关键词**（4-6个）：与研究对象直接相关的术语
 2. **优化目标关键词**（2-3个）：与优化目标相关的术语
 3. **方法论关键词**（2-3个）：与方法论相关的术语
 4. **需要避免的领域**（如果适用）：说明这个题目不属于哪些领域
+5. **场景特异性指导**：该场景的特殊性（对比通用场景）有哪些？在综述中，每节必须至少有一段专门讨论该场景的特殊性。如果找不到直接相关文献，应明确说明"目前缺乏针对该场景的研究，以下文献主要来自相关领域"，不得强行关联。
 
 **注意事项**：
 - 关键词应该具体、准确，避免过于宽泛
@@ -1292,7 +1303,15 @@ class FrameworkGenerator:
   "object_keywords": ["关键词1", "关键词2", ...],
   "goal_keywords": ["关键词1", "关键词2", ...],
   "method_keywords": ["关键词1", "关键词2", ...],
-  "avoid_domains": ["领域1", "领域2", ...]
+  "avoid_domains": ["领域1", "领域2", ...],
+  "specificity_guidance": {{
+    "core_scenario": "核心场景实体（如：太阳能仓储工具柜）",
+    "research_field": "研究领域（如：智能供能策略）",
+    "main_technology": "主要技术（如：iTransformer）",
+    "scene_specificity": "该场景的特殊性（对比通用场景）有哪些？",
+    "review_requirement": "在综述中，每节必须至少有一段专门讨论该场景的特殊性。",
+    "lack_research_statement": "如果找不到直接相关文献，应明确说明'目前缺乏针对该场景的研究，以下文献主要来自相关领域'，不得强行关联。"
+  }}
 }}
 ```
 """
@@ -1321,7 +1340,8 @@ class FrameworkGenerator:
                 'object_keywords': keywords_data.get('object_keywords', [])[:8],
                 'goal_keywords': keywords_data.get('goal_keywords', [])[:5],
                 'method_keywords': keywords_data.get('method_keywords', [])[:5],
-                'avoid_domains': keywords_data.get('avoid_domains', [])
+                'avoid_domains': keywords_data.get('avoid_domains', []),
+                'specificity_guidance': keywords_data.get('specificity_guidance', {})
             }
 
             print(f"[HybridClassifier] 清洗后的关键词:")
@@ -1329,6 +1349,7 @@ class FrameworkGenerator:
             print(f"  目标关键词: {cleaned_data['goal_keywords']}")
             print(f"  方法关键词: {cleaned_data['method_keywords']}")
             print(f"  避免领域: {cleaned_data['avoid_domains']}")
+            print(f"  场景特异性指导: {cleaned_data['specificity_guidance']}")
 
             return cleaned_data
 
@@ -1355,7 +1376,7 @@ class FrameworkGenerator:
             methodology: 方法论
 
         Returns:
-            默认关键词字典
+            默认关键词字典（包含场景特异性指导）
         """
         # 简单的默认关键词生成逻辑
         object_keywords = []
@@ -1386,11 +1407,22 @@ class FrameworkGenerator:
         if methodology:
             method_keywords.append(methodology)
 
+        # 构建默认的场景特异性指导
+        specificity_guidance = {
+            'core_scenario': research_object or '未知场景',
+            'research_field': optimization_goal or '未知领域',
+            'main_technology': methodology or '未知技术',
+            'scene_specificity': f'该场景针对{research_object}进行{optimization_goal}，具有其独特的应用环境和技术要求。',
+            'review_requirement': '在综述中，每节必须至少有一段专门讨论该场景的特殊性。',
+            'lack_research_statement': "如果找不到直接相关文献，应明确说明'目前缺乏针对该场景的研究，以下文献主要来自相关领域'，不得强行关联。"
+        }
+
         return {
             'object_keywords': object_keywords[:8],
             'goal_keywords': goal_keywords[:5],
             'method_keywords': method_keywords[:5],
-            'avoid_domains': avoid_domains
+            'avoid_domains': avoid_domains,
+            'specificity_guidance': specificity_guidance
         }
 
     def _evaluation_framework(self, title: str, elements: dict) -> dict:

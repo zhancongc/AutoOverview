@@ -28,6 +28,11 @@ function App() {
   const [activeTab, setActiveTab] = useState<TabType>('review')
   const [currentRecordId, setCurrentRecordId] = useState<number | null>(null)
 
+  // 异步任务状态
+  const [taskId, setTaskId] = useState<string | null>(null)
+  const [taskProgress, setTaskProgress] = useState('')
+  const [taskStatus, setTaskStatus] = useState<'idle' | 'polling' | 'completed' | 'failed'>('idle')
+
   // 配置参数
   const [targetCount, setTargetCount] = useState(50)
   const [recentYearsRatio, setRecentYearsRatio] = useState(0.5)
@@ -114,38 +119,91 @@ function App() {
     setReview('')
     setPapers([])
     setStatistics(null)
+    setTaskStatus('polling')
+    setTaskProgress('正在提交任务...')
 
     try {
-      const response = await api.smartGenerate(topic, {
-      targetCount,
-      recentYearsRatio,
-      englishRatio,
-      searchYears,
-      maxSearchQueries
-    })
-      if (response.success && response.data) {
-        const data = response.data
-        setReview(data.review)
-        setPapers(data.papers)
-        setStatistics(data.statistics)
+      // 1. 提交任务
+      const submitResponse = await api.submitReviewTask(topic, {
+        targetCount,
+        recentYearsRatio,
+        englishRatio,
+        searchYears,
+        maxSearchQueries
+      })
 
-        if (data.id) {
-          setCurrentRecordId(data.id)
-        }
-
-        // 更新搜索查询的被引用论文数量
-        if (data.search_queries_results) {
-          setSearchQueries(data.search_queries_results)
-        }
-
-        loadRecords()
-      } else {
-        setError(response.message)
+      if (!submitResponse.success || !submitResponse.data?.task_id) {
+        setError(submitResponse.message || '任务提交失败')
+        setTaskStatus('failed')
+        setLoading(false)
+        return
       }
+
+      const currentTaskId = submitResponse.data.task_id
+      setTaskId(currentTaskId)
+
+      // 2. 轮询任务状态
+      const pollInterval = setInterval(async () => {
+        try {
+          const statusResponse = await api.getTaskStatus(currentTaskId)
+
+          if (!statusResponse.success) {
+            setError('查询任务状态失败')
+            setTaskStatus('failed')
+            clearInterval(pollInterval)
+            setLoading(false)
+            return
+          }
+
+          const taskInfo = statusResponse.data
+
+          // 更新进度
+          if (taskInfo.progress?.message) {
+            setTaskProgress(taskInfo.progress.message)
+          } else {
+            setTaskProgress(`任务状态: ${taskInfo.status}`)
+          }
+
+          // 检查是否完成
+          if (taskInfo.status === 'completed' && taskInfo.result) {
+            clearInterval(pollInterval)
+            setTaskStatus('completed')
+
+            const data = taskInfo.result
+            setReview(data.review)
+            setPapers(data.papers)
+            setStatistics(data.statistics)
+
+            if (data.id) {
+              setCurrentRecordId(data.id)
+            }
+
+            // 更新搜索查询的被引用论文数量
+            if (data.search_queries_results) {
+              setSearchQueries(data.search_queries_results)
+            }
+
+            loadRecords()
+            setLoading(false)
+          } else if (taskInfo.status === 'failed') {
+            clearInterval(pollInterval)
+            setTaskStatus('failed')
+            setError(taskInfo.error || '任务执行失败')
+            setLoading(false)
+          }
+        } catch (err) {
+          clearInterval(pollInterval)
+          setTaskStatus('failed')
+          setError('查询任务状态出错')
+          setLoading(false)
+          console.error(err)
+        }
+      }, 10000) // 每10秒轮询一次
+
     } catch (err) {
-      setError('生成失败，请检查后端服务是否正常运行')
+      setTaskStatus('failed')
+      setError('提交任务失败，请检查后端服务是否正常运行')
       console.error(err)
-    } finally {
       setLoading(false)
     }
   }
