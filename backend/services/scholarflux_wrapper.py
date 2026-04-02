@@ -15,7 +15,7 @@ from contextlib import contextmanager
 
 from .paper_search import PaperSearchService
 from .semantic_scholar_search import SemanticScholarService
-# AMiner 已禁用 - from .aminer_search import AMinerSearchService
+from .aminer_search import AMinerSearchService
 from .datacite_search import DataCiteSearchService
 from .crossref_search import CrossrefSearchService
 from .chinese_doi_search import ChineseDoiSearchService
@@ -78,13 +78,29 @@ class ScholarAPI:
         try:
             await self.rate_limiter.acquire()
 
-            # 统一接口调用
-            papers = await self.service.search_papers(
-                query=query,
-                years_ago=years_ago,
-                limit=limit,
-                min_citations=min_citations
-            )
+            # AMiner 使用不同的接口（需要关键词列表）
+            if self.name == "aminer":
+                # 将查询字符串分割成关键词列表
+                keywords = [k.strip() for k in query.split() if k.strip() and len(k) > 1]
+
+                # 如果分割后没有有效关键词，使用整个查询
+                if not keywords:
+                    keywords = [query]
+
+                papers = await self.service.search_papers(
+                    keywords=keywords,
+                    year_start=datetime.now().year - years_ago,
+                    year_end=datetime.now().year,
+                    max_results=limit
+                )
+            else:
+                # 其他 API 使用标准接口
+                papers = await self.service.search_papers(
+                    query=query,
+                    years_ago=years_ago,
+                    limit=limit,
+                    min_citations=min_citations
+                )
 
             # 添加数据源标记
             for paper in papers:
@@ -108,9 +124,9 @@ class ScholarFlux:
     - OpenAlex: 英文文献（主要数据源）
     - Crossref: 期刊/会议论文（引用数据准确）
     - DataCite: 研究数据集（补充）
+    - AMiner: 中文文献（需要 AMINER_API_TOKEN）
 
     已禁用：
-    - AMiner: 按用户要求禁用
     - Semantic Scholar: 限流太严格（每10秒1次）
     - 中文 DOI: 需要 API 密钥
 
@@ -213,20 +229,26 @@ class ScholarFlux:
         #     print(f"[ScholarFlux] ✗ 中文 DOI 初始化失败: {e}")
         print("[ScholarFlux] ○ 中文 DOI 已禁用（需要 API 密钥）")
 
-        # ===== AMiner 已禁用 =====
-        print("[ScholarFlux] ○ AMiner 已禁用（按用户要求）")
-        # 取消注释以下代码可重新启用 AMiner
-        # aminer_token = os.getenv('AMINER_API_TOKEN')
-        # if aminer_token:
-        #     from .aminer_search import AMinerSearchService
-        #     aminer_service = AMinerSearchService(api_token=aminer_token)
-        #     self.apis.append(ScholarAPI(
-        #         name="aminer",
-        #         service=aminer_service,
-        #         rate_limit=1.0,
-        #         is_chinese=True
-        #     ))
-        #     print("[ScholarFlux] ✓ AMiner 已加载")
+        # ===== 数据源: AMiner =====
+        # 特点：中文文献丰富、学术社交网络
+        aminer_token = os.getenv('AMINER_API_TOKEN')
+        if aminer_token:
+            try:
+                aminer_service = AMinerSearchService(api_token=aminer_token)
+                self.aminer_api = ScholarAPI(
+                    name="aminer",
+                    service=aminer_service,
+                    rate_limit=1.0,  # AMiner 限制较严格
+                    is_chinese=True
+                )
+                self.apis.append(self.aminer_api)
+                print("[ScholarFlux] ✓ AMiner 已加载（中文文献）")
+            except Exception as e:
+                print(f"[ScholarFlux] ✗ AMiner 初始化失败: {e}")
+                self.aminer_api = None
+        else:
+            print("[ScholarFlux] ○ AMiner 未配置（设置 AMINER_API_TOKEN 环境变量）")
+            self.aminer_api = None
 
         print("=" * 80)
         print(f"[ScholarFlux] 初始化完成，已加载 {len(self.apis)} 个数据源")
