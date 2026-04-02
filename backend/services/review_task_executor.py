@@ -1068,12 +1068,12 @@ class ReviewTaskExecutor:
 
         # === 最终验证和调整 ===
         final_stats = self.filter_service.get_statistics(result)
-        print(f"[预选] 最终结果: 总数={len(result)}, 英文={final_stats['english']}, "
+        print(f"[预选] 最终结果: 总数={len(result)}, 英文={final_stats['english_count']}, "
               f"近5年={final_stats['recent_count']} ({final_stats['recent_ratio']:.2%})")
 
         # 如果英文文献仍然不足，放宽要求
-        if final_stats['english'] < min_english:
-            print(f"[预选] 警告: 英文文献不足({final_stats['english']} < {min_english})")
+        if final_stats['english_count'] < min_english:
+            print(f"[预选] 警告: 英文文献不足({final_stats['english_count']} < {min_english})")
 
         # 如果近5年文献仍然不足，放宽要求
         if final_stats['recent_count'] < min_recent_count:
