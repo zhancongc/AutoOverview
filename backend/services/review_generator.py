@@ -316,8 +316,8 @@ class ReviewGeneratorService:
         key_papers = intro_outline.get('key_papers', [])
         focus = intro_outline.get('focus', '介绍研究背景和意义')
 
-        # 只传递前20篇论文的简要信息
-        papers_brief = self._format_papers_compact(papers[:20])
+        # 传递所有论文的简要信息（增强版包含摘要，便于LLM理解论文内容）
+        papers_brief = self._format_papers_compact(papers)
 
         system_prompt = f"""你是学术写作专家，擅长撰写文献综述的引言部分。
 
@@ -591,6 +591,18 @@ class ReviewGeneratorService:
 
 写作重点：{focus}
 
+{'='*60}
+⚠️ 引用边界明确提示
+{'='*60}
+📚 本次可用文献总数：{len(papers)} 篇
+🔢 可引用文献编号范围：[1] 到 [{len(papers)}]
+❌ 绝对禁止使用编号 [{len(papers)+1}] 或更大的编号
+✅ 只能使用上方列出的文献编号
+
+可用文献（共{len(papers)}篇）：
+{self._format_papers_compact(papers)}
+{'='*60}
+
 请生成结论部分："""
 
         return await self._call_llm(system_prompt, user_prompt, model, max_tokens=1200)
@@ -762,16 +774,38 @@ class ReviewGeneratorService:
         return response.choices[0].message.content
 
     def _format_papers_compact(self, papers: List) -> str:
-        """格式化论文简要信息（节省 token）"""
+        """格式化论文简要信息（平衡 token 使用和信息量）"""
         brief = []
         for i, paper in enumerate(papers, 1):
+            # 处理 PaperMetadata 对象或字典
             if hasattr(paper, 'title'):
-                title = paper.title[:60]
+                title = paper.title
+                authors_list = paper.authors if paper.authors else []
                 year = paper.year if hasattr(paper, 'year') else 'N/A'
+                abstract = paper.abstract if hasattr(paper, 'abstract') else ''
             else:
-                title = (paper.get('title') or '')[:60]
+                title = paper.get('title', '')
+                authors_list = paper.get("authors", [])
                 year = paper.get('year', 'N/A')
-            brief.append(f"[{i}] {title} ({year})")
+                abstract = paper.get('abstract', '')
+
+            # 格式化作者（最多2个）
+            authors = ", ".join(authors_list[:2]) if authors_list else ""
+
+            # 截断标题和摘要
+            title_short = (title or '')[:80]
+            abstract_short = (abstract or '')[:150]
+
+            # 构建格式化的论文信息
+            paper_info = f"[{i}] {title_short}"
+            if authors:
+                paper_info += f" - {authors}"
+            if year and year != 'N/A':
+                paper_info += f" ({year})"
+            if abstract_short:
+                paper_info += f"\n    {abstract_short}..."
+
+            brief.append(paper_info)
         return "\n".join(brief)
 
     def _format_sections_info(self, sections: List[Dict]) -> str:
