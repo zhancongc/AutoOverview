@@ -261,17 +261,27 @@ class ReviewTaskExecutor:
                 raise Exception("DEEPSEEK_API_KEY not configured")
 
             # === 预选文献：从筛选后的文献池中智能预选60篇 ===
-            # 要求：
+            # 要求（在范围内随机）：
             # 1. 从100篇文献池中
-            # 2. 捞30篇以上的英文文献
-            # 3. 捞50%以上的近5年文献（30篇）
+            # 2. 英文文献：30%～45%（约18～27篇）
+            # 3. 近5年文献：50%～80%（约30～48篇）
             # 4. 总共输出60篇
+
+            import random
+            english_ratio = random.uniform(0.30, 0.45)  # 英文文献比例：30%～45%
+            recent_ratio = random.uniform(0.50, 0.80)  # 近5年文献比例：50%～80%
+
+            min_english = int(60 * english_ratio)
+            min_recent_count = int(60 * recent_ratio)
+
+            print(f"[预选] 本次随机目标: 英文比例={english_ratio:.2%} ({min_english}篇), "
+                  f"近5年比例={recent_ratio:.2%} ({min_recent_count}篇)")
 
             preselected_papers = self._preselect_papers_with_requirements(
                 papers=filtered_papers,
                 target_count=60,
-                min_english=30,
-                min_recent_ratio=0.5
+                min_english=min_english,
+                min_recent_ratio=recent_ratio
             )
 
             print(f"[TaskExecutor] 预选文献: {len(filtered_papers)} → {len(preselected_papers)} 篇")
