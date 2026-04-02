@@ -184,6 +184,182 @@ class ReviewGeneratorService:
 
         return final_review, cited_papers
 
+    async def generate_review_by_sections(
+        self,
+        topic: str,
+        framework: dict,
+        papers_by_section: dict,
+        all_papers: List[Dict],
+        model: str = "deepseek-chat",
+        specificity_guidance: dict = None
+    ) -> Tuple[str, List[Dict]]:
+        """
+        按小节生成综述（新流程阶段5）
+
+        流程：
+        1. 为每个小节生成内容，传递对应小节的文献
+        2. 整合所有小节内容
+        3. 验证和修复引用
+
+        Args:
+            topic: 论文主题
+            framework: 框架信息（包含大纲）
+            papers_by_section: 按小节分组的文献
+            all_papers: 所有文献（用于引用编号）
+            model: 模型名称
+            specificity_guidance: 场景特异性指导
+
+        Returns:
+            (综述内容, 实际被引用的文献列表)
+        """
+        print("=" * 80)
+        print("[阶段5] 按小节生成综述")
+        print("=" * 80)
+
+        specificity_section = self._format_specificity_guidance(specificity_guidance)
+
+        # 获取大纲
+        outline_sections = framework.get('framework', {})
+
+        # 为每个小节生成内容
+        section_contents = []
+        all_cited_indices = set()
+
+        for section_title, section_outline in outline_sections.items():
+            # 获取该小节的文献
+            section_papers = papers_by_section.get(section_title, [])
+
+            print(f"\n[阶段5] 生成小节: {section_title}")
+            print(f"  - 该小节文献数: {len(section_papers)}")
+
+            if not section_papers:
+                print(f"  - 警告: 小节 '{section_title}' 没有文献，跳过")
+                continue
+
+            # 格式化该小节的文献
+            papers_info = self._format_papers_compact(section_papers)
+
+            # 生成该小节的内容
+            section_content = await self._generate_section_content(
+                topic=topic,
+                section_title=section_title,
+                section_outline=section_outline,
+                section_papers=section_papers,
+                all_papers=all_papers,
+                specificity_section=specificity_section,
+                model=model
+            )
+
+            section_contents.append(section_content)
+
+            # 提取该小节的引用
+            section_cited_indices = self._extract_cited_indices(section_content)
+            all_cited_indices.update(section_cited_indices)
+            print(f"  - 该小节引用: {len(section_cited_indices)} 篇")
+
+        # 合并所有小节内容
+        content_draft = "\n\n".join(section_contents)
+
+        # 验证和修复引用
+        print(f"\n[阶段5] 验证和修复引用...")
+        cited_indices = sorted(list(all_cited_indices))
+        unique_cited = len(cited_indices)
+        print(f"  - 总引用: {unique_cited} 篇")
+
+        # 按出现顺序重新编号
+        valid_cited_indices = {i for i in cited_indices if 1 <= i <= len(all_papers)}
+        cited_papers = [self._paper_to_dict(all_papers[i - 1]) for i in valid_cited_indices]
+
+        # 重新编号引用
+        content, cited_papers = self._renumber_citations_by_appearance(
+            content_draft, cited_papers, valid_cited_indices
+        )
+
+        # 限制每篇文献引用次数
+        content = self._limit_citation_count_v2(content, cited_papers, max_count=2)
+        content = self._sort_and_merge_citations(content)
+
+        print(f"[阶段5] ✓ 综述生成完成，引用 {len(cited_papers)} 篇")
+        print("=" * 80)
+
+        return content, cited_papers
+
+    async def _generate_section_content(
+        self,
+        topic: str,
+        section_title: str,
+        section_outline: dict,
+        section_papers: List[Dict],
+        all_papers: List[Dict],
+        specificity_section: str,
+        model: str
+    ) -> str:
+        """为单个小节生成内容"""
+        focus = section_outline.get('focus', f'{section_title}相关内容')
+        key_points = section_outline.get('key_points', [])
+        comparison_points = section_outline.get('comparison_points', [])
+
+        # 格式化该小节的文献
+        papers_info = self._format_papers_compact(section_papers)
+
+        system_prompt = f"""你是学术写作专家，擅长撰写文献综述。
+
+{specificity_section}
+
+**写作要求**：
+1. 围绕主题"{section_title}"展开
+2. 重点：{focus}
+3. 使用对比分析，指出不同研究的观点、方法、结论
+4. 明确指出研究分歧和不足
+
+**语言要求**：
+- 只使用中文撰写
+- 禁止中英文混用
+- 专业术语可使用英文
+
+**⚠️ 引用数量强制要求**：
+- 本部分必须引用至少 10-15 篇文献
+- 每篇文献不超过2次
+- 每个论点至少引用 2-3 篇文献支持
+- 使用文献编号，如 [1]、[2]、[3]
+
+⚠️ **引用边界严格限制**：
+- 只能使用编号在 [1] 到 [{len(all_papers)}] 范围内的文献
+- 绝对禁止使用 [{len(all_papers)+1}] 或更大的编号
+- 如果发现没有相关文献，宁可少引用也不要超出范围
+
+**文献相关性提醒**：
+- 只引用与"{topic}"和"{section_title}"直接相关的文献
+- 确保每篇引用的文献都与主题有明确的关联性
+
+输出：Markdown（## {section_title}）"""
+
+        user_prompt = f"""主题：{topic}
+
+本节重点：{focus}
+
+关键要点：
+{chr(10).join([f"- {p}" for p in key_points]) if key_points else '根据内容确定'}
+
+对比要点：
+{chr(10).join([f"- {p}" for p in comparison_points]) if comparison_points else '根据内容确定'}
+
+{'='*60}
+⚠️ 引用边界明确提示
+{'='*60}
+📚 本节可用文献数：{len(section_papers)} 篇
+🔢 全部文献编号范围：[1] 到 [{len(all_papers)}]
+❌ 绝对禁止使用编号 [{len(all_papers)+1}] 或更大的编号
+
+本节可用文献：
+{papers_info}
+{'='*60}
+
+请生成 ## {section_title} 部分的内容："""
+
+        content = await self._call_llm(system_prompt, user_prompt, model, max_tokens=2000)
+        return f"## {section_title}\n\n{content}"
+
     # ==================== 第1步：生成大纲 ====================
 
     async def _step1_generate_outline(
