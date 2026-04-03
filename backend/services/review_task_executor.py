@@ -117,10 +117,32 @@ class ReviewTaskExecutor:
                 for kw in keywords:
                     search_queries.append({'query': kw, 'lang': 'mixed'})
 
+            # === 阶段2: 搜索词优化 ===
+            task_manager.update_task_status(
+                task_id,
+                TaskStatus.PROCESSING,
+                progress={"step": "optimizing_keywords", "message": "正在优化搜索关键词..."}
+            )
+
+            print("\n" + "=" * 80)
+            print("[阶段2] 搜索词优化")
+            print("=" * 80)
+
+            # 优化搜索词：根据数据源和学术用语库扩展
+            optimized_queries = await self._optimize_search_queries(
+                search_queries=search_queries,
+                topic=topic,
+                section_keywords=section_keywords
+            )
+
+            print(f"[阶段2] 搜索词优化完成:")
+            print(f"  - 原始搜索词: {len(search_queries)} 个")
+            print(f"  - 优化后搜索词: {len(optimized_queries)} 个")
+
             # === 阶段3: 按小节搜索文献 ===
             search_result = await self._search_literature_by_sections(
                 topic=topic,
-                search_queries=search_queries,
+                optimized_queries=optimized_queries,
                 params=params,
                 framework=framework,
                 task_id=task_id
@@ -263,7 +285,7 @@ class ReviewTaskExecutor:
     async def _search_literature_by_sections(
         self,
         topic: str,
-        search_queries: list,
+        optimized_queries: list,
         params: dict,
         framework: dict,
         task_id: str
@@ -273,13 +295,14 @@ class ReviewTaskExecutor:
 
         流程：
         1. 优先从数据库搜索
-        2. 数据库不足时使用API补充
+        2. 数据库不足时使用API补充（根据数据源使用优化后的查询）
         3. 小节内部去重
         4. 小节间去重，保留文献数量少的小节的文献
+        5. 文献数量不足时继续搜索
 
         Args:
             topic: 论文主题
-            search_queries: 搜索查询列表
+            optimized_queries: 优化后的搜索查询列表（包含source、lang等信息）
             params: 参数配置
             framework: 框架信息
             task_id: 任务ID
@@ -295,7 +318,7 @@ class ReviewTaskExecutor:
             }
         """
         print("=" * 80)
-        print("[阶段3] 按小节搜索文献（优先数据库）")
+        print("[阶段3] 按小节搜索文献（使用优化后的搜索词）")
         print("=" * 80)
 
         # 获取小节关键词
@@ -353,16 +376,54 @@ class ReviewTaskExecutor:
                     continue
 
                 print(f"[阶段3] 正在搜索小节: {section_title}")
+                print(f"[阶段3] 该小节关键词: {keywords}")
 
                 section_papers = []
                 section_seen_ids = set()  # 小节内部去重
 
-                # 为每个关键词搜索
-                for keyword in keywords[:5]:  # 每个小节最多5个关键词
+                # === 使用优化后的查询进行搜索 ===
+                # 为每个关键词找到对应的优化查询
+                section_optimized_queries = []
+                for keyword in keywords:
+                    # 找到所有与这个关键词相关的优化查询
+                    related_queries = [
+                        q for q in optimized_queries
+                        if q.get('original_query') == keyword or
+                        q.get('query') == keyword or
+                        keyword.lower() in q.get('query', '').lower()
+                    ]
+                    section_optimized_queries.extend(related_queries)
+
+                # 如果没有找到优化的查询，使用原始关键词
+                if not section_optimized_queries:
+                    for keyword in keywords:
+                        section_optimized_queries.append({
+                            'query': keyword,
+                            'lang': 'mixed',
+                            'source': 'all'
+                        })
+
+                print(f"[阶段3] 该小节优化查询数: {len(section_optimized_queries)}")
+
+                # 去重优化查询
+                seen_queries = set()
+                unique_optimized_queries = []
+                for q in section_optimized_queries:
+                    query_key = (q['query'], q.get('source', 'all'))
+                    if query_key not in seen_queries:
+                        seen_queries.add(query_key)
+                        unique_optimized_queries.append(q)
+
+                # 为每个优化查询进行搜索
+                for i, opt_query in enumerate(unique_optimized_queries[:10]):  # 最多10个查询
+                    query = opt_query['query']
+                    lang = opt_query.get('lang', 'mixed')
+                    source = opt_query.get('source', 'all')
+
                     task_manager.update_task_status(
                         task_id,
                         TaskStatus.PROCESSING,
-                        progress={"step": "searching", "message": f"正在搜索 {section_title}: {keyword}..."}
+                        progress={"step": "searching", "message": f"正在搜索 {section_title}: {query} ({lang}, {source})..."}
                     )
 
                     # === 步骤1: 优先从数据库搜索 ===
@@ -370,7 +431,7 @@ class ReviewTaskExecutor:
                     dao = PaperMetadataDAO(db_session)
 
                     db_papers = dao.search_papers(
-                        keyword=keyword,
+                        keyword=query,
                         min_year=datetime.now().year - params.get('search_years', 10),
                         limit=50
                     )
@@ -378,7 +439,7 @@ class ReviewTaskExecutor:
                     # 转换为字典格式
                     db_papers_dict = [p.to_paper_dict() for p in db_papers]
 
-                    print(f"[阶段3] 数据库搜索 '{keyword}': 找到 {len(db_papers_dict)} 篇")
+                    print(f"[阶段3] 数据库搜索 '{query}' ({lang}, {source}): 找到 {len(db_papers_dict)} 篇")
 
                     # 添加数据库搜索结果
                     for paper in db_papers_dict:
@@ -391,11 +452,13 @@ class ReviewTaskExecutor:
                     if len(db_papers_dict) < 20:  # 如果数据库搜索结果少于20篇
                         print(f"[阶段3] 数据库结果不足，使用API补充搜索...")
 
-                        api_papers = await self.search_service.search(
-                            query=keyword,
+                        # 根据数据源类型调用不同的API
+                        api_papers = await self._search_with_source(
+                            query=query,
+                            lang=lang,
+                            source=source,
                             years_ago=params.get('search_years', 10),
-                            limit=30,
-                            use_all_sources=True
+                            limit=30
                         )
 
                         # 添加API搜索结果（去重）
@@ -1134,5 +1197,267 @@ class ReviewTaskExecutor:
         # 提取2-4个字的中文词汇
         words = re.findall(r'[\u4e00-\u9fff]{2,4}', text)
         return words
+
+    async def _optimize_search_queries(
+        self,
+        search_queries: list,
+        topic: str,
+        section_keywords: dict
+    ) -> list:
+        """
+        优化搜索查询
+
+        优化策略：
+        1. 根据数据源类型使用不同语言：
+           - OPENALEX、CROSSREF、DATACITE：用英文搜索
+           - AMINER、SEMANTIC_SCHOLAR、CHINESE_DOI：用中文搜索
+        2. 根据学术用语库扩展同义词、近义词
+
+        Args:
+            search_queries: 原始搜索查询列表
+            topic: 论文主题
+            section_keywords: 按章节分组的关键词
+
+        Returns:
+            优化后的搜索查询列表
+        """
+        optimized = []
+
+        # 数据源语言映射
+        english_sources = ['openalex', 'crossref', 'datacite']
+        chinese_sources = ['aminer', 'semantic_scholar', 'chinese_doi']
+
+        # 获取学术用语库的同义词
+        synonym_keywords = await self._get_synonyms_from_term_library(topic)
+
+        print(f"[搜索词优化] 从术语库获取到 {len(synonym_keywords)} 个同义词/近义词")
+
+        # 为每个原始查询生成优化版本
+        for query_item in search_queries:
+            query = query_item.get('query', '')
+
+            # 为英文数据源生成英文查询
+            for source in english_sources:
+                # 尝试英文查询
+                english_query = self._to_english_query(query)
+                if english_query:
+                    optimized.append({
+                        'query': english_query,
+                        'lang': 'en',
+                        'source': source,
+                        'original_query': query
+                    })
+
+            # 为中文数据源生成中文查询
+            for source in chinese_sources:
+                # 尝试中文查询
+                chinese_query = self._to_chinese_query(query)
+                if chinese_query:
+                    optimized.append({
+                        'query': chinese_query,
+                        'lang': 'zh',
+                        'source': source,
+                        'original_query': query
+                    })
+
+        # 添加术语库扩展的查询
+        for synonym in synonym_keywords:
+            for source in english_sources:
+                optimized.append({
+                    'query': synonym,
+                    'lang': 'en',
+                    'source': source,
+                    'is_synonym': True
+                })
+
+            # 对于中文同义词，也要添加到中文数据源
+            if self._contains_chinese(synonym):
+                for source in chinese_sources:
+                    optimized.append({
+                        'query': synonym,
+                        'lang': 'zh',
+                        'source': source,
+                        'is_synonym': True
+                    })
+
+        # 去重
+        seen = set()
+        unique_optimized = []
+        for item in optimized:
+            key = (item['query'], item['source'])
+            if key not in seen:
+                seen.add(key)
+                unique_optimized.append(item)
+
+        print(f"[搜索词优化] 生成 {len(unique_optimized)} 个优化查询")
+        print(f"[搜索词优化] 英文数据源查询: {sum(1 for q in unique_optimized if q.get('lang') == 'en')} 个")
+        print(f"[搜索词优化] 中文数据源查询: {sum(1 for q in unique_optimized if q.get('lang') == 'zh')} 个")
+        print(f"[搜索词优化] 术语库扩展查询: {sum(1 for q in unique_optimized if q.get('is_synonym'))} 个")
+
+        return unique_optimized
+
+    async def _get_synonyms_from_term_library(self, topic: str) -> list:
+        """从学术用语库获取同义词和近义词"""
+        try:
+            from services.academic_term_service import AcademicTermService
+            term_service = AcademicTermService()
+
+            # 使用术语库搜索关键词
+            keywords = term_service.search_keywords_from_topic(topic)
+
+            # 扩展：获取相关术语的同义词
+            all_synonyms = set(keywords)
+
+            # 为每个关键词查找相关的术语
+            for keyword in keywords:
+                # 如果关键词在术语库中，获取其同义词
+                # 这里简化处理，直接返回术语库找到的所有关键词
+                pass
+
+            return list(all_synonyms)
+
+        except Exception as e:
+            print(f"[搜索词优化] 术语库查询失败: {e}")
+            return []
+
+    def _to_english_query(self, query: str) -> str:
+        """将查询转换为英文"""
+        # 如果已经是英文，直接返回
+        if self._is_english(query):
+            return query
+
+        # 尝试从主题中提取英文术语
+        english_words = self._extract_english_words(query)
+        if english_words:
+            return ' '.join(english_words)
+
+        # 如果没有英文，返回空
+        return ''
+
+    def _to_chinese_query(self, query: str) -> str:
+        """将查询转换为中文"""
+        # 如果已经是中文，直接返回
+        if self._contains_chinese(query):
+            return query
+
+        # 对于英文查询，尝试从术语库获取中文翻译
+        # 这里简化处理，直接返回原查询
+        return query
+
+    def _is_english(self, text: str) -> bool:
+        """判断文本是否主要是英文"""
+        import re
+        english_chars = len(re.findall(r'[a-zA-Z]', text))
+        return english_chars > len(text) * 0.5
+
+    def _contains_chinese(self, text: str) -> bool:
+        """判断文本是否包含中文"""
+        import re
+        return bool(re.search(r'[\u4e00-\u9fff]', text))
+
+    def _extract_english_words(self, text: str) -> list:
+        """从文本中提取英文单词"""
+        import re
+        return re.findall(r'[a-zA-Z]{2,}', text)
+
+    async def _search_with_source(
+        self,
+        query: str,
+        lang: str,
+        source: str,
+        years_ago: int,
+        limit: int
+    ) -> list:
+        """
+        根据数据源类型进行搜索
+
+        Args:
+            query: 搜索查询
+            lang: 语言标识
+            source: 数据源类型
+            years_ago: 近N年
+            limit: 返回数量
+
+        Returns:
+            论文列表
+        """
+        # 根据数据源类型选择搜索策略
+        if source in ['openalex', 'crossref', 'datacite']:
+            # 英文数据源，使用英文查询
+            english_query = self._to_english_query(query)
+            if not english_query:
+                english_query = query
+
+            print(f"[搜索API] {source}: 使用英文查询 '{english_query}'")
+            return await self._call_search_api(english_query, source, years_ago, limit)
+
+        elif source in ['aminer', 'semantic_scholar', 'chinese_doi']:
+            # 中文数据源，使用中文查询
+            chinese_query = self._to_chinese_query(query)
+            if not chinese_query:
+                chinese_query = query
+
+            print(f"[搜索API] {source}: 使用中文查询 '{chinese_query}'")
+            return await self._call_search_api(chinese_query, source, years_ago, limit)
+
+        else:
+            # 通用搜索
+            print(f"[搜索API] 通用: 查询 '{query}'")
+            return await self.search_service.search(
+                query=query,
+                years_ago=years_ago,
+                limit=limit,
+                use_all_sources=False  # 不使用所有源，避免重复
+            )
+
+    async def _call_search_api(
+        self,
+        query: str,
+        source: str,
+        years_ago: int,
+        limit: int
+    ) -> list:
+        """
+        调用特定数据源的API
+
+        Args:
+            query: 搜索查询
+            source: 数据源类型
+            years_ago: 近N年
+            limit: 返回数量
+
+        Returns:
+            论文列表
+        """
+        # 这里可以扩展为调用特定数据源的API
+        # 目前暂时使用通用的 search_service
+        try:
+            if source == 'aminer':
+                # 调用AMiner API
+                return await self.search_service.search(
+                    query=query,
+                    years_ago=years_ago,
+                    limit=limit,
+                    use_all_sources=False
+                )
+            elif source == 'semantic_scholar':
+                # 调用Semantic Scholar API
+                return await self.search_service.search(
+                    query=query,
+                    years_ago=years_ago,
+                    limit=limit,
+                    use_all_sources=False
+                )
+            else:
+                # 其他数据源，使用通用搜索
+                return await self.search_service.search(
+                    query=query,
+                    years_ago=years_ago,
+                    limit=limit,
+                    use_all_sources=True
+                )
+        except Exception as e:
+            print(f"[搜索API] {source} 搜索失败: {e}")
+            return []
 
 
