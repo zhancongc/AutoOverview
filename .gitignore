@@ -27,3 +27,17 @@ build/
 
 # Scripts
 change_model.sh
+
+# Debug & Analysis Scripts
+backend/analyze_*.py
+backend/check_*.py
+backend/debug_*.py
+backend/fix_*.py
+backend/test_*.py
+backend/init_*.py
+
+# Migration Scripts
+backend/migrate_*.py
+
+# Temporary Docs
+docs/paper_*.md
