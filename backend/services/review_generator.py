@@ -300,14 +300,13 @@ class ReviewGeneratorService:
             section_contents.append(section_content)
             cited_indices_by_section[section_title] = section_cited_indices
 
-            # 记录被引用的文献（使用 section_title + paper_id 作为 key）
+            # 记录被引用的文献
             for idx in section_cited_indices:
                 if 1 <= idx <= len(section_papers):
                     paper = section_papers[idx - 1]
                     paper_id = paper.get('id')
                     if paper_id:
-                        # 使用 (section_title, paper_id) 作为 key，避免不同小节相同文献ID被覆盖
-                        all_cited_papers[(section_title, paper_id)] = paper
+                        all_cited_papers[paper_id] = paper
 
         # 合并所有小节内容
         content_draft = "\n\n".join(section_contents)
@@ -316,24 +315,11 @@ class ReviewGeneratorService:
         cited_papers = list(all_cited_papers.values())
         cited_papers = [self._paper_to_dict(p) for p in cited_papers]
 
-        # 调试：检查去重情况
-        total_before_dedup = sum(len(indices) for indices in cited_indices_by_section.values())
-        print(f"[阶段5] 引用统计:")
-        print(f"  - 各小节引用总数（去重前）: {total_before_dedup}")
-        for section_title, indices in cited_indices_by_section.items():
-            print(f"    - {section_title}: {len(indices)} 篇")
-        print(f"  - 去重后引用数: {len(cited_papers)}")
-        if total_before_dedup > len(cited_papers):
-            print(f"  - ⚠️ 因文献ID重复去重: {total_before_dedup - len(cited_papers)} 篇")
-
         # 重新编号引用（全局重新编号）
-        # 创建全局引用编号映射（使用 (section_title, paper_id) 作为 key）
-        paper_key_to_new_index = {}
-        for i, (key, paper) in enumerate(all_cited_papers.items(), 1):
-            section_title, paper_id = key
-            paper_key_to_new_index[key] = i
-            # 确保 cited_papers 的顺序与 paper_key_to_new_index 一致
-            cited_papers[i-1] = self._paper_to_dict(paper)
+        # 创建全局引用编号映射
+        paper_id_to_new_index = {}
+        for i, paper in enumerate(cited_papers, 1):
+            paper_id_to_new_index[paper.get('id')] = i
 
         # 替换所有引用编号
         import re
@@ -348,9 +334,8 @@ class ReviewGeneratorService:
                         if old_index <= len(section_papers):
                             paper = section_papers[old_index - 1]
                             paper_id = paper.get('id')
-                            key = (section_title, paper_id)
-                            if key in paper_key_to_new_index:
-                                return f"[{paper_key_to_new_index[key]}]"
+                            if paper_id in paper_id_to_new_index:
+                                return f"[{paper_id_to_new_index[paper_id]}]"
             return match.group(0)
 
         content = re.sub(r'\[(\d+)\]', replace_citation, content_draft)
