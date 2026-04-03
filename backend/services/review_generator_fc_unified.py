@@ -96,6 +96,16 @@ class ReviewGeneratorFCUnified:
         max_iterations = 30  # 最多30轮对话
         iteration = 0
 
+        # 根据模型确定 max_tokens
+        def get_max_tokens(model_name: str) -> int:
+            """获取模型的最大输出长度"""
+            if "reasoner" in model_name:
+                return 64000  # deepseek-reasoner 最大 64K
+            return 8192  # deepseek-chat 最大 8K
+
+        max_tokens = get_max_tokens(model)
+        print(f"[配置] 使用模型: {model}, 最大输出: {max_tokens} tokens")
+
         while iteration < max_iterations:
             iteration += 1
 
@@ -108,7 +118,7 @@ class ReviewGeneratorFCUnified:
                 tools=self._get_tools_definition(len(papers)),
                 tool_choice="auto",
                 temperature=0.7,
-                max_tokens=8192  # DeepSeek 最大值
+                max_tokens=max_tokens
             )
 
             assistant_message = response.choices[0].message
@@ -325,7 +335,7 @@ class ReviewGeneratorFCUnified:
                         {"role": "user", "content": supplement_message}
                     ],
                     temperature=0.3,
-                    max_tokens=8192  # DeepSeek 最大值
+                    max_tokens=max_tokens
                 )
 
                 content = supplement_response.choices[0].message.content
