@@ -269,12 +269,32 @@ class ReviewGeneratorService:
                 model=model
             )
 
-            section_contents.append(section_content)
-
-            # 提取该小节的引用并记录文献
+            # === 检查是否引用了所有分配的文献 ===
             section_cited_indices = self._extract_cited_indices(section_content)
+            cited_count = len(section_cited_indices)
+            total_count = len(section_papers)
+
+            print(f"  - 该小节引用: {cited_count}/{total_count} 篇")
+
+            # 如果没有引用完所有文献，补充引用
+            if cited_count < total_count:
+                print(f"  - ⚠️ 该小节未引用完所有文献，正在补充...")
+                section_content = await self._supplement_section_citations(
+                    section_content=section_content,
+                    section_title=section_title,
+                    section_papers=section_papers,
+                    cited_indices=section_cited_indices,
+                    topic=topic,
+                    specificity_section=specificity_section,
+                    model=model
+                )
+
+                # 重新提取引用索引
+                section_cited_indices = self._extract_cited_indices(section_content)
+                print(f"  - ✓ 补充后引用: {len(section_cited_indices)}/{total_count} 篇")
+
+            section_contents.append(section_content)
             cited_indices_by_section[section_title] = section_cited_indices
-            print(f"  - 该小节引用: {len(section_cited_indices)} 篇")
 
             # 记录被引用的文献
             for idx in section_cited_indices:
@@ -359,7 +379,8 @@ class ReviewGeneratorService:
 - 专业术语可使用英文
 
 **⚠️ 引用数量强制要求**：
-- 本部分必须引用至少 10-15 篇文献
+- 本小节分配了 {section_paper_count} 篇专属文献
+- **必须引用所有 {section_paper_count} 篇文献**（这是硬性要求）
 - 每篇文献不超过2次
 - 每个论点至少引用 2-3 篇文献支持
 - 使用文献编号，如 [1]、[2]、[3]
@@ -401,6 +422,120 @@ class ReviewGeneratorService:
 
         content = await self._call_llm(system_prompt, user_prompt, model, max_tokens=2000)
         return f"## {section_title}\n\n{content}"
+
+    async def _supplement_section_citations(
+        self,
+        section_content: str,
+        section_title: str,
+        section_papers: List[Dict],
+        cited_indices: set,
+        topic: str,
+        specificity_section: str,
+        model: str
+    ) -> str:
+        """
+        为小节补充未引用的文献
+
+        确保所有分配给该小节的文献都被引用
+        """
+        # 找出未引用的文献索引
+        uncited_indices = [i for i in range(1, len(section_papers) + 1) if i not in cited_indices]
+
+        if not uncited_indices:
+            return section_content
+
+        print(f"  - 需要补充引用 {len(uncited_indices)} 篇文献: {uncited_indices[:10]}...")
+
+        # 格式化未引用的文献
+        uncited_papers_info = []
+        for idx in uncited_indices:
+            paper = section_papers[idx - 1]
+            if hasattr(paper, 'title'):
+                title = paper.title
+                authors_list = paper.authors if paper.authors else []
+                year = paper.year if hasattr(paper, 'year') else 'N/A'
+                abstract = paper.abstract if hasattr(paper, 'abstract') else ''
+            else:
+                title = paper.get('title', '')
+                authors_list = paper.get("authors", [])
+                year = paper.get('year', 'N/A')
+                abstract = paper.get('abstract', '')
+
+            authors = ", ".join(authors_list[:2]) if authors_list else ""
+            title_short = (title or '')[:60]
+            abstract_short = (abstract or '')[:100]
+
+            paper_info = f"[{idx}] {title_short}"
+            if authors:
+                paper_info += f" - {authors}"
+            if year and year != 'N/A':
+                paper_info += f" ({year})"
+            if abstract_short:
+                paper_info += f"\n    {abstract_short}..."
+
+            uncited_papers_info.append(paper_info)
+
+        # 提取当前内容（避免过长）
+        content_preview = section_content if len(section_content) <= 4000 else section_content[:4000]
+
+        supplement_prompt = f"""你是学术写作专家。请在现有小节内容中补充缺失的文献引用。
+
+**小节主题**：{section_title}
+**综述主题**：{topic}
+
+**当前状态**：该小节分配了 {len(section_papers)} 篇专属文献，但只引用了 {len(cited_indices)} 篇。
+
+{'='*60}
+⚠️ 引用边界明确提示（本小节专属文献）
+{'='*60}
+📚 本小节专属文献数：{len(section_papers)} 篇
+🔢 可引用文献编号范围：[1] 到 [{len(section_papers)}]
+❌ 绝对禁止使用编号 [{len(section_papers)+1}] 或更大的编号
+
+**需要补充引用的文献**（共{len(uncited_indices)}篇，必须全部引用）：
+{chr(10).join(uncited_papers_info)}
+{'='*60}
+
+**补充要求**：
+1. **必须引用上方列出的所有未引用文献**
+2. 在合适的段落添加引用，支持论点或数据
+3. 每个新增引用至少包含一句话的上下文
+4. 不要改变原文的核心观点和结构
+5. 确保新增引用自然融入，不突兀
+6. 引用时使用对应的编号，如 [{uncited_indices[0]}]、[{uncited_indices[1]}]
+
+**当前小节内容**：
+{content_preview}
+
+**输出要求**：
+- 输出完整的小节内容（包含原文和新增引用）
+- 保持原有格式和结构
+- 不要添加原文中不存在的引用编号
+- 确保所有未引用文献都被引用"""
+
+        try:
+            response = await self.client.chat.completions.create(
+                model=model,
+                messages=[
+                    {"role": "system", "content": f"""你是专业的学术写作助手，擅长在综述中补充相关文献引用。
+
+{specificity_section}
+
+**重要原则**：
+1. 必须引用所有未引用的文献
+2. 引用必须自然融入文本
+3. 不能改变原文核心观点"""},
+                    {"role": "user", "content": supplement_prompt}
+                ],
+                temperature=0.5,
+                max_tokens=4000
+            )
+            result = response.choices[0].message.content
+            print(f"  - ✓ 补充引用成功，返回内容长度: {len(result)} 字符")
+            return result
+        except Exception as e:
+            print(f"  - ✗ 补充引用失败: {e}")
+            return section_content
 
     # ==================== 第1步：生成大纲 ====================
 
