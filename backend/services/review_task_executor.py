@@ -407,29 +407,15 @@ class ReviewTaskExecutor:
             # 确保数据库session总是被关闭
             db_session.close()
 
-        # 小节间去重，保留文献数量少的小节的文献
-        print(f"\n[阶段3] 小节间去重（保留文献数量少的小节的文献）...")
-
-        # 按文献数量排序小节（数量少的优先）
-        sorted_sections = sorted(
-            raw_papers_by_section.items(),
-            key=lambda x: len(x[1])
-        )
+        # 按小节保留专属文献（不做小节间去重）
+        print(f"\n[阶段3] 按小节保留专属文献...")
 
         papers_by_section = {}
-        global_seen_ids = set()
+        for section_title, section_papers in raw_papers_by_section.items():
+            papers_by_section[section_title] = section_papers
+            print(f"[阶段3] 小节 '{section_title}': {len(section_papers)} 篇专属文献")
 
-        for section_title, section_papers in sorted_sections:
-            dedup_papers = []
-            for paper in section_papers:
-                paper_id = paper.get("id")
-                if paper_id not in global_seen_ids:
-                    global_seen_ids.add(paper_id)
-                    dedup_papers.append(paper)
-            papers_by_section[section_title] = dedup_papers
-            print(f"[阶段3] 小节 '{section_title}': {len(section_papers)} → {len(dedup_papers)} 篇")
-
-        # 合并所有文献
+        # 合并所有文献（用于统计，但不用于分配）
         all_papers = []
         for papers in papers_by_section.values():
             all_papers.extend(papers)
@@ -487,13 +473,13 @@ class ReviewTaskExecutor:
             }
         """
         print("\n" + "=" * 80)
-        print("[阶段4] 精简文献到N篇（50～60随机）")
+        print("[阶段4] 为每个小节分配专属文献")
         print("=" * 80)
 
         papers_by_section = search_result['sections']
         all_papers = search_result['all_papers']
 
-        print(f"[阶段4] 输入文献数: {len(all_papers)}")
+        print(f"[阶段4] 输入文献数（去重前）: {len(all_papers)}")
 
         # 在50～60之间随机取一个数N
         import random
@@ -514,12 +500,12 @@ class ReviewTaskExecutor:
         task_manager.update_task_status(
             task_id,
             TaskStatus.PROCESSING,
-            progress={"step": "filtering", "message": f"正在筛选文献（目标{N}篇）..."}
+            progress={"step": "filtering", "message": f"正在为每个小节分配专属文献（目标{N}篇）..."}
         )
 
-        # 分小节筛选，保证总数为N
+        # 为每个小节筛选专属文献
         filtered_by_section = {}
-        total_selected = 0
+        total_assigned = 0
 
         # 计算每个小节应该分配的文献数量（按比例）
         section_counts = {title: len(papers) for title, papers in papers_by_section.items()}
@@ -538,9 +524,9 @@ class ReviewTaskExecutor:
         if allocated < N:
             # 按比例增加
             for title in section_targets:
-                if total_selected < N:
+                if allocated < N:
                     section_targets[title] += 1
-                    total_selected += 1
+                    allocated += 1
         elif allocated > N:
             # 按比例减少
             for title in section_targets:
@@ -548,15 +534,16 @@ class ReviewTaskExecutor:
                     section_targets[title] -= 1
                     allocated -= 1
 
-        print(f"[阶段4] 小节文献分配:")
+        print(f"[阶段4] 小节专属文献分配:")
         for title, target in section_targets.items():
-            print(f"  - {title}: {section_counts[title]} → {target} 篇")
+            original = section_counts.get(title, 0)
+            print(f"  - {title}: {original}篇 → {target}篇专属")
 
-        # 对每个小节进行筛选
+        # 对每个小节进行筛选（只从该小节的文献池中筛选）
         for section_title, section_papers in papers_by_section.items():
             target_count = section_targets.get(section_title, 1)
 
-            # 使用筛选服务筛选该小节的文献
+            # 使用筛选服务筛选该小节的专属文献
             filtered_papers = self.filter_service.filter_and_sort(
                 papers=section_papers,
                 target_count=target_count,
@@ -568,44 +555,26 @@ class ReviewTaskExecutor:
             # 截取到目标数量
             filtered_papers = filtered_papers[:target_count]
             filtered_by_section[section_title] = filtered_papers
-            print(f"[阶段4] 小节 '{section_title}': 筛选到 {len(filtered_papers)} 篇")
+            print(f"[阶段4] 小节 '{section_title}': 筛选到 {len(filtered_papers)} 篇专属文献")
 
-        # 合并所有筛选后的文献
-        final_papers = []
-        for papers in filtered_by_section.values():
-            final_papers.extend(papers)
+        # 统计最终分配的文献总数
+        final_total = sum(len(papers) for papers in filtered_by_section.values())
+        stats = self.filter_service.get_statistics(
+            [p for papers in filtered_by_section.values() for p in papers]
+        )
 
-        # 最终调整到N篇
-        if len(final_papers) > N:
-            final_papers = final_papers[:N]
-        elif len(final_papers) < N:
-            # 如果不足，从剩余文献中补充
-            all_filtered = self.filter_service.filter_and_sort(
-                papers=all_papers,
-                target_count=N * 2,
-                recent_years_ratio=recent_years_ratio,
-                english_ratio=english_ratio,
-                topic_keywords=topic_keywords
-            )
-            # 添加还未包含的文献
-            current_ids = {p.get('id') for p in final_papers}
-            for paper in all_filtered:
-                if len(final_papers) >= N:
-                    break
-                if paper.get('id') not in current_ids:
-                    final_papers.append(paper)
-                    current_ids.add(paper.get('id'))
-
-        stats = self.filter_service.get_statistics(final_papers)
-        print(f"\n[阶段4] 精简完成:")
-        print(f"  - 最终文献数: {len(final_papers)} (目标: {N})")
+        print(f"\n[阶段4] 专属文献分配完成:")
+        print(f"  - 总文献数: {final_total} (目标: {N})")
         print(f"  - 英文文献: {stats['english_count']}")
         print(f"  - 近5年文献: {stats['recent_count']} ({stats['recent_ratio']:.1%})")
+        print(f"  - 小节分布:")
+        for section_title, papers in filtered_by_section.items():
+            print(f"    - {section_title}: {len(papers)} 篇")
 
         return {
             'sections': filtered_by_section,
-            'all_papers': final_papers,
-            'total_count': len(final_papers)
+            'all_papers': [p for papers in filtered_by_section.values() for p in papers],
+            'total_count': final_total
         }
 
     def _calculate_paper_stats(self, papers: list) -> dict:

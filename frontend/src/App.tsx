@@ -198,7 +198,7 @@ function App() {
           setLoading(false)
           console.error(err)
         }
-      }, 10000) // 每10秒轮询一次
+      }, 20000) // 每20秒轮询一次
 
     } catch (err) {
       setTaskStatus('failed')

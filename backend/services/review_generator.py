@@ -242,20 +242,21 @@ class ReviewGeneratorService:
 
         # 为每个小节生成内容
         section_contents = []
-        all_cited_indices = set()
+        all_cited_papers = {}  # 存储所有被引用的文献 {paper_id: paper}
+        cited_indices_by_section = {}  # 每个小节的引用索引
 
         for section_title, section_outline in outline_sections.items():
-            # 获取该小节的文献
+            # 获取该小节的专属文献
             section_papers = papers_by_section.get(section_title, [])
 
             print(f"\n[阶段5] 生成小节: {section_title}")
-            print(f"  - 该小节文献数: {len(section_papers)}")
+            print(f"  - 该小节专属文献数: {len(section_papers)}")
 
             if not section_papers:
-                print(f"  - 警告: 小节 '{section_title}' 没有文献，跳过")
+                print(f"  - 警告: 小节 '{section_title}' 没有专属文献，跳过")
                 continue
 
-            # 格式化该小节的文献
+            # 格式化该小节的专属文献（重要：只传递该小节的文献）
             papers_info = self._format_papers_compact(section_papers)
 
             # 生成该小节的内容
@@ -264,35 +265,56 @@ class ReviewGeneratorService:
                 section_title=section_title,
                 section_outline=section_outline,
                 section_papers=section_papers,
-                all_papers=all_papers,
                 specificity_section=specificity_section,
                 model=model
             )
 
             section_contents.append(section_content)
 
-            # 提取该小节的引用
+            # 提取该小节的引用并记录文献
             section_cited_indices = self._extract_cited_indices(section_content)
-            all_cited_indices.update(section_cited_indices)
+            cited_indices_by_section[section_title] = section_cited_indices
             print(f"  - 该小节引用: {len(section_cited_indices)} 篇")
+
+            # 记录被引用的文献
+            for idx in section_cited_indices:
+                if 1 <= idx <= len(section_papers):
+                    paper = section_papers[idx - 1]
+                    paper_id = paper.get('id')
+                    if paper_id:
+                        all_cited_papers[paper_id] = paper
 
         # 合并所有小节内容
         content_draft = "\n\n".join(section_contents)
 
-        # 验证和修复引用
-        print(f"\n[阶段5] 验证和修复引用...")
-        cited_indices = sorted(list(all_cited_indices))
-        unique_cited = len(cited_indices)
-        print(f"  - 总引用: {unique_cited} 篇")
+        # 构建最终的文献列表（去重）
+        cited_papers = list(all_cited_papers.values())
+        cited_papers = [self._paper_to_dict(p) for p in cited_papers]
 
-        # 按出现顺序重新编号
-        valid_cited_indices = {i for i in cited_indices if 1 <= i <= len(all_papers)}
-        cited_papers = [self._paper_to_dict(all_papers[i - 1]) for i in valid_cited_indices]
+        # 重新编号引用（全局重新编号）
+        # 创建全局引用编号映射
+        paper_id_to_new_index = {}
+        for i, paper in enumerate(cited_papers, 1):
+            paper_id_to_new_index[paper.get('id')] = i
 
-        # 重新编号引用
-        content, cited_papers = self._renumber_citations_by_appearance(
-            content_draft, cited_papers, valid_cited_indices
-        )
+        # 替换所有引用编号
+        import re
+        def replace_citation(match):
+            old_index = int(match.group(1))
+            # 查找这个旧索引对应的是哪篇文献
+            for section_title, indices in cited_indices_by_section.items():
+                if old_index in indices:
+                    # 找到对应的文献
+                    if old_index <= len(papers_by_section.get(section_title, [])):
+                        section_papers = papers_by_section.get(section_title, [])
+                        if old_index <= len(section_papers):
+                            paper = section_papers[old_index - 1]
+                            paper_id = paper.get('id')
+                            if paper_id in paper_id_to_new_index:
+                                return f"[{paper_id_to_new_index[paper_id]}]"
+            return match.group(0)
+
+        content = re.sub(r'\[(\d+)\]', replace_citation, content_draft)
 
         # 限制每篇文献引用次数
         content = self._limit_citation_count_v2(content, cited_papers, max_count=2)
@@ -309,17 +331,17 @@ class ReviewGeneratorService:
         section_title: str,
         section_outline: dict,
         section_papers: List[Dict],
-        all_papers: List[Dict],
         specificity_section: str,
         model: str
     ) -> str:
-        """为单个小节生成内容"""
+        """为单个小节生成内容（仅使用该小节专属文献）"""
         focus = section_outline.get('focus', f'{section_title}相关内容')
         key_points = section_outline.get('key_points', [])
         comparison_points = section_outline.get('comparison_points', [])
 
-        # 格式化全部文献（重要：让LLM能看到所有60篇文献）
-        papers_info = self._format_papers_compact(all_papers)
+        # 格式化该小节的专属文献（只传递该小节的文献）
+        papers_info = self._format_papers_compact(section_papers)
+        section_paper_count = len(section_papers)
 
         system_prompt = f"""你是学术写作专家，擅长撰写文献综述。
 
@@ -343,8 +365,9 @@ class ReviewGeneratorService:
 - 使用文献编号，如 [1]、[2]、[3]
 
 ⚠️ **引用边界严格限制**：
-- 只能使用编号在 [1] 到 [{len(all_papers)}] 范围内的文献
-- 绝对禁止使用 [{len(all_papers)+1}] 或更大的编号
+- 本小节专属文献：{section_paper_count} 篇
+- 只能使用编号在 [1] 到 [{section_paper_count}] 范围内的文献
+- 绝对禁止使用 [{section_paper_count+1}] 或更大的编号
 - 如果发现没有相关文献，宁可少引用也不要超出范围
 
 **文献相关性提醒**：
@@ -364,13 +387,13 @@ class ReviewGeneratorService:
 {chr(10).join([f"- {p}" for p in comparison_points]) if comparison_points else '根据内容确定'}
 
 {'='*60}
-⚠️ 引用边界明确提示
+⚠️ 引用边界明确提示（本小节专属文献）
 {'='*60}
-📚 全部可用文献数：{len(all_papers)} 篇
-🔢 可引用文献编号范围：[1] 到 [{len(all_papers)}]
-❌ 绝对禁止使用编号 [{len(all_papers)+1}] 或更大的编号
+📚 本小节专属文献数：{section_paper_count} 篇
+🔢 可引用文献编号范围：[1] 到 [{section_paper_count}]
+❌ 绝对禁止使用编号 [{section_paper_count+1}] 或更大的编号
 
-全部文献列表：
+本小节专属文献列表：
 {papers_info}
 {'='*60}
 
