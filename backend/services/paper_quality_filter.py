@@ -104,24 +104,24 @@ class PaperQualityFilter:
                 return True, f"作者为低质量: {first_author}"
 
         # 4. 检查是否为机构仓储内容（通常是内部资料）
+        # 注意：被引为0不代表低质量，可能只是新论文
         if 'Institutional Repository' in venue or '机构知识库' in venue:
-            # 但如果有被引，可能是正规文献
-            if cited == 0:
-                return True, "机构仓储且无被引"
+            # 机构仓储内容通常是低质量的，无论是否有被引
+            return True, "机构仓储内容"
 
         # 5. 检查标题是否过短或无意义
         # 去除空格和标点后，如果少于5个字符，可能是无意义标题
         clean_title = re.sub(r'[^\w\u4e00-\u9fff]', '', title)
-        if len(clean_title) < 5 and cited == 0:
-            return True, "标题过短且无被引"
+        if len(clean_title) < 5:
+            return True, "标题过短"
 
-        # 6. 检查是否为年份过新且无被引的文献（可能是低质量）
+        # 6. 检查是否为年份过新且来源不明的文献（可能是低质量）
         current_year = 2026
-        if year is not None and year >= current_year - 2 and cited == 0:
-            # 近2年发表且无被引的文献，需要更严格检查
-            # 如果来源也不是知名期刊，可能是低质量
-            if not venue or len(venue) < 10:
-                return True, "新文献无被引且来源不明"
+        if year is not None and year >= current_year - 2:
+            # 近2年发表的新文献，需要更严格检查来源
+            # 不再以被引为0作为判断标准
+            if not venue or len(venue) < 5:
+                return True, "新文献且来源不明"
 
         return False, None
 
