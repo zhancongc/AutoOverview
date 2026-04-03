@@ -344,33 +344,39 @@ class ReviewGeneratorFCUnified:
             need_recent = max(0, int(min_citation_count * recent_years_ratio) - citation_stats['recent'])
             need_english = max(0, int(min_citation_count * english_ratio) - citation_stats['english'])
 
+            print(f"  - 需要补充: {need_total} 篇 (当前{citation_stats['total']}, 目标{min_citation_count})")
+            print(f"  - 需要近5年: {need_recent} 篇, 需要英文: {need_english} 篇")
+
             # 选择要补充的论文
             to_cite = []
             used_indices = set()
 
             # 优先补充近5年文献
             for idx, paper in recent_uncited:
-                if len(to_cite) >= need_total:
-                    break
                 if idx not in used_indices:
                     to_cite.append((idx, paper))
                     used_indices.add(idx)
 
             # 补充英文文献
             for idx, paper in english_uncited:
-                if len(to_cite) >= need_total:
-                    break
                 if idx not in used_indices:
                     to_cite.append((idx, paper))
                     used_indices.add(idx)
 
             # 补充其他高质量论文
             for idx, paper in uncited_papers:
-                if len(to_cite) >= need_total:
-                    break
                 if idx not in used_indices:
                     to_cite.append((idx, paper))
                     used_indices.add(idx)
+
+            print(f"  - 可用未引用论文: {len(uncited_papers)} 篇 (有摘要)")
+            print(f"  - 已选择补充: {len(to_cite)} 篇")
+            print(f"  - 需要补充: {need_total} 篇")
+
+            # 如果可用论文不足，给出警告
+            if len(to_cite) < need_total:
+                print(f"  - ⚠️ 警告: 可用论文({len(to_cite)}) < 需要补充数量({need_total})")
+                print(f"  - ⚠️ 警告: 候选论文总数({len(papers)}) < 目标引用数({min_citation_count})")
 
             if to_cite:
                 # 生成补充内容
@@ -470,6 +476,13 @@ class ReviewGeneratorFCUnified:
             print(f"\n[致命错误] 生成内容过短: {len(content)} 字符")
             print(f"[致命错误] 可能原因：LLM 生成失败或被截断")
             return "", []
+
+        # === 引用规范检查 ===
+        # 1. 限制同一文献引用次数（最多2次）
+        content, cited_indices = self._limit_duplicate_citations(content, cited_indices)
+
+        # 2. 重新映射引用编号，使其连续从 1 开始
+        content, cited_papers = self._remap_citations(content, cited_indices, papers)
 
         # 添加标题和参考文献
         final_content = f"# {topic}\n\n{content}"
@@ -999,6 +1012,145 @@ class ReviewGeneratorFCUnified:
         # 这里使用保守的估算：3 字符/token
         estimated_tokens = total_chars // 3
         return estimated_tokens
+
+    def _limit_duplicate_citations(
+        self,
+        content: str,
+        cited_indices: List[int]
+    ) -> tuple[str, List[int]]:
+        """
+        限制同一文献的引用次数，最多允许引用2次
+
+        Args:
+            content: 原始综述内容
+            cited_indices: 提取的引用索引列表（未去重）
+
+        Returns:
+            (处理后的内容, 去重后的引用索引列表)
+        """
+        import re
+
+        # 统计每个文献的引用次数
+        citation_counts = {}
+        citation_matches = []  # 记录所有匹配的位置
+
+        # 找到所有引用及其位置
+        for match in re.finditer(r'\[(\d+(?:\s*,\s*\d+)*)\]', content):
+            citation_str = match.group(1)
+            start_pos = match.start()
+            end_pos = match.end()
+
+            # 解析引用编号
+            cited_nums = [int(n.strip()) for n in citation_str.split(',')]
+
+            citation_matches.append({
+                'start': start_pos,
+                'end': end_pos,
+                'nums': cited_nums,
+                'original': match.group(0)
+            })
+
+            for num in cited_nums:
+                citation_counts[num] = citation_counts.get(num, 0) + 1
+
+        # 找出超过2次引用的文献
+        over_cited = {num: count for num, count in citation_counts.items() if count > 2}
+
+        if over_cited:
+            print(f"\n[引用规范检查] 发现过度引用的文献:")
+            for num, count in sorted(over_cited.items()):
+                print(f"  - 文献 [{num}] 被引用 {count} 次 (超过限制 2 次)")
+
+            # 跟踪每个文献已被删除的次数
+            removed_count = {num: 0 for num in over_cited.keys()}
+
+            # 从后往前处理，避免位置偏移
+            for match in reversed(citation_matches):
+                nums_to_remove = []
+                for num in match['nums']:
+                    if num in over_cited:
+                        # 计算这个文献还需要删除多少次
+                        need_remove = citation_counts[num] - 2 - removed_count[num]
+                        if need_remove > 0:
+                            nums_to_remove.append(num)
+                            removed_count[num] += 1
+
+                if nums_to_remove:
+                    # 从匹配中删除这些编号
+                    remaining_nums = [n for n in match['nums'] if n not in nums_to_remove]
+
+                    if remaining_nums:
+                        # 还有剩余编号，替换为新的引用
+                        new_citation = f'[{", ".join(map(str, remaining_nums))}]'
+                        content = content[:match['start']] + new_citation + content[match['end']:]
+                    else:
+                        # 所有编号都被删除，删除整个引用
+                        content = content[:match['start']] + content[match['end']:]
+
+            total_removed = sum(removed_count.values())
+            print(f"[引用规范检查] 已删除 {total_removed} 个重复引用")
+
+        # 重新提取引用索引（去重并排序）
+        cited_indices = list(set(cited_indices))
+        cited_indices.sort()
+
+        return content, cited_indices
+
+    def _remap_citations(
+        self,
+        content: str,
+        cited_indices: List[int],
+        papers: List[Dict]
+    ) -> tuple[str, List[Dict]]:
+        """
+        重新映射引用编号，使其连续从 1 开始
+
+        Args:
+            content: 原始综述内容（使用原始引用编号）
+            cited_indices: 实际被引用的论文索引列表（已排序）
+            papers: 所有论文列表
+
+        Returns:
+            (重新映射后的内容, 引用的论文列表)
+        """
+        if not cited_indices:
+            return content, []
+
+        # 创建旧编号到新编号的映射
+        old_to_new = {old_idx: new_idx for new_idx, old_idx in enumerate(cited_indices, 1)}
+
+        print(f"\n[引用重映射] 原始编号 -> 新编号")
+        for old_idx, new_idx in old_to_new.items():
+            print(f"  [{old_idx}] -> [{new_idx}]")
+
+        # 替换内容中的引用编号
+        import re
+
+        def replace_citation(match):
+            citation_str = match.group(1)
+            # 解析引用编号
+            cited_nums = [int(n.strip()) for n in citation_str.split(',')]
+
+            # 映射到新编号
+            new_nums = [old_to_new.get(n, n) for n in cited_nums if n in old_to_new]
+
+            if new_nums:
+                return f'[{", ".join(map(str, new_nums))}]'
+            return match.group(0)
+
+        # 匹配各种引用格式: [1], [1,2], [1, 2, 3]
+        citation_pattern = r'\[(\d+(?:\s*,\s*\d+)*)\]'
+        remapped_content = re.sub(citation_pattern, replace_citation, content)
+
+        # 提取引用的论文
+        cited_papers = []
+        for idx in cited_indices:
+            if 1 <= idx <= len(papers):
+                cited_papers.append(papers[idx - 1])
+
+        print(f"[引用重映射] 引用文献: {len(cited_papers)} 篇，编号范围: [1-{len(cited_papers)}]")
+
+        return remapped_content, cited_papers
 
     def _format_references(self, papers: List[Dict]) -> str:
         """
