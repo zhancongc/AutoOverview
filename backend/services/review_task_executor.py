@@ -208,7 +208,7 @@ class ReviewTaskExecutor:
                 recent_years_ratio=params.get('recent_years_ratio', 0.5),
                 english_ratio=params.get('english_ratio', 0.3),
                 specificity_guidance=specificity_guidance,
-                model=params.get('review_model', 'deepseek-chat'),  # 默认使用 chat，需要长综述时可指定 reasoner
+                model=params.get('review_model', 'deepseek-reasoner'),  # 默认使用 reasoner 支持长综述生成，思考模式已关闭
                 enable_reasoning=params.get('enable_reasoning', False)  # 默认关闭思考模式
             )
 
