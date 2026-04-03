@@ -922,7 +922,7 @@ class ReviewTaskExecutor:
 
         for paper in unique_papers:
             # 计算质量得分
-            quality_score = quality_filter.calculate_quality_score(paper)
+            quality_score = quality_filter.get_paper_quality_score(paper)
 
             # 过滤低质量文献
             if quality_score >= 30:  # 质量得分阈值
