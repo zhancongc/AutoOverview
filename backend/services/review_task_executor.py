@@ -325,9 +325,14 @@ class ReviewTaskExecutor:
                 'stats': 统计信息
             }
         """
+        # === 阶段3 输入 ===
+        print("\n" + "=" * 80)
+        print("[阶段3] 按小节搜索文献")
         print("=" * 80)
-        print("[阶段3] 按小节搜索文献（使用优化后的搜索词）")
-        print("=" * 80)
+        print(f"[阶段3] 输入:")
+        print(f"  - 主题: {topic}")
+        print(f"  - 优化查询数: {len(optimized_queries)}")
+        print(f"  - 目标年份范围: 近{params.get('search_years', 10)}年")
 
         # 获取小节关键词
         section_keywords = framework.get('section_keywords', {})
@@ -700,6 +705,14 @@ class ReviewTaskExecutor:
         # AMiner论文详情补充
         all_papers = await self._enrich_aminer_papers(all_papers)
 
+        # === 阶段3 输出 ===
+        print(f"[阶段3] 输出:")
+        print(f"  - 总文献数: {len(all_papers)}")
+        print(f"  - 英文文献: {stats['english']}")
+        print(f"  - 中文文献: {stats['chinese']}")
+        print(f"  - 小节数: {len(papers_by_section)}")
+        print("=" * 80)
+
         return {
             'sections': papers_by_section,
             'all_papers': all_papers,
@@ -903,11 +916,12 @@ class ReviewTaskExecutor:
             }
         """
         print("\n" + "=" * 80)
-        print("[阶段4] 质量过滤（保留所有高质量文献）")
+        print("[阶段4] 质量过滤")
         print("=" * 80)
+        print(f"[阶段4] 输入:")
+        print(f"  - 输入文献数: {len(search_result['all_papers'])}")
 
         all_papers = search_result['all_papers']
-        print(f"[阶段4] 输入文献数: {len(all_papers)}")
 
         task_manager.update_task_status(
             task_id,
@@ -997,6 +1011,12 @@ class ReviewTaskExecutor:
             print(f"  1. 扩大搜索年份范围")
             print(f"  2. 使用更通用的搜索关键词")
             print(f"  3. 检查数据源配置是否正确")
+
+        # === 阶段4 输出 ===
+        print(f"[阶段4] 输出:")
+        print(f"  - 保留文献数: {len(filtered_papers)}")
+        print(f"  - 移除低质量: {removed_count} 篇")
+        print("=" * 80)
 
         return {
             'all_papers': filtered_papers,
@@ -1265,6 +1285,13 @@ class ReviewTaskExecutor:
                 }
             }
         """
+        # === 阶段1 输入 ===
+        print("\n" + "=" * 80)
+        print("[阶段1] 生成综述大纲")
+        print("=" * 80)
+        print(f"[阶段1] 输入:")
+        print(f"  - 主题: {topic}")
+
         import os
         from openai import AsyncOpenAI
 
@@ -1379,6 +1406,11 @@ class ReviewTaskExecutor:
 
             print("\n" + "=" * 80)
 
+            # === 阶段1 输出 ===
+            print(f"[阶段1] 输出:")
+            print(f"  - 章节数: {len(outline.get('body_sections', []))} 个主体章节")
+            print("=" * 80)
+
             return outline
 
         except Exception as e:
@@ -1486,6 +1518,17 @@ class ReviewTaskExecutor:
         Returns:
             优化后的搜索查询列表
         """
+        # === 阶段2 输入 ===
+        print("\n" + "=" * 80)
+        print("[阶段2] 优化搜索查询")
+        print("=" * 80)
+        print(f"[阶段2] 输入:")
+        print(f"  - 原始查询数: {len(search_queries)}")
+        for i, q in enumerate(search_queries[:5], 1):
+            print(f"    {i}. {q.get('query', 'N/A')}")
+        if len(search_queries) > 5:
+            print(f"    ... (还有 {len(search_queries) - 5} 个查询)")
+
         optimized = []
 
         # 数据源语言映射
@@ -1525,9 +1568,12 @@ class ReviewTaskExecutor:
                 seen.add(key)
                 unique_optimized.append(item)
 
-        print(f"[基本优化] 生成 {len(unique_optimized)} 个优化查询")
-        print(f"[基本优化] 英文数据源查询: {sum(1 for q in unique_optimized if q.get('lang') == 'en')} 个")
-        print(f"[基本优化] 中文数据源查询: {sum(1 for q in unique_optimized if q.get('lang') == 'zh')} 个")
+        # === 阶段2 输出 ===
+        print(f"[阶段2] 输出:")
+        print(f"  - 优化查询数: {len(unique_optimized)}")
+        print(f"  - 英文查询: {sum(1 for q in unique_optimized if q.get('lang') == 'en')} 个")
+        print(f"  - 中文查询: {sum(1 for q in unique_optimized if q.get('lang') == 'zh')} 个")
+        print("=" * 80)
 
         return unique_optimized
 
