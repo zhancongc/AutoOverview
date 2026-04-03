@@ -3,6 +3,7 @@
 将同步的生成逻辑包装成异步任务
 """
 import os
+import warnings
 from typing import Dict
 from datetime import datetime
 from sqlalchemy.orm import Session
@@ -712,7 +713,11 @@ class ReviewTaskExecutor:
         task_id: str
     ) -> dict:
         """
-        精简文献到目标数量（新流程阶段4）
+        ⚠️ 已废弃 - 请使用 _filter_papers_by_quality
+
+        此方法不再被调用，保留仅为向后兼容。
+
+        精简文献到目标数量（旧流程阶段4）
 
         流程：
         1. 在50～60之间随机取一个数N
@@ -736,6 +741,12 @@ class ReviewTaskExecutor:
                 'total_count': N
             }
         """
+        warnings.warn(
+            "_filter_papers_to_target 已废弃，请使用 _filter_papers_by_quality",
+            DeprecationWarning,
+            stacklevel=2
+        )
+
         print("\n" + "=" * 80)
         print("[阶段4] 为每个小节分配专属文献")
         print("=" * 80)
@@ -1577,7 +1588,11 @@ class ReviewTaskExecutor:
         section_keywords: dict
     ) -> list:
         """
-        优化搜索查询
+        ⚠️ 已废弃 - 请使用 _optimize_search_queries_basic
+
+        此方法不再被调用，保留仅为向后兼容。
+
+        优化搜索查询（旧版）
 
         优化策略：
         1. 根据数据源类型使用不同语言：
@@ -1593,6 +1608,12 @@ class ReviewTaskExecutor:
         Returns:
             优化后的搜索查询列表
         """
+        warnings.warn(
+            "_optimize_search_queries 已废弃，请使用 _optimize_search_queries_basic",
+            DeprecationWarning,
+            stacklevel=2
+        )
+
         optimized = []
 
         # 数据源语言映射

@@ -1,5 +1,10 @@
 """
-综述生成服务 - Function Calling 版本
+⚠️ 已废弃 - 请使用 review_generator_fc_unified.py
+
+综述生成服务 - Function Calling 版本 [已废弃]
+
+此模块已被 review_generator_fc_unified.py 替代。
+保留仅为向后兼容，新项目请使用 Function Calling 统一版本。
 
 使用渐进式信息披露：
 1. 初始只发送论文标题列表
@@ -12,15 +17,27 @@
 - 按需获取，只获取真正需要的文献
 """
 import os
+import warnings
 import json
 from openai import AsyncOpenAI
 from typing import List, Dict, Tuple, Callable
 
 
 class ReviewGeneratorFunctionCalling:
-    """使用 Function Calling 的综述生成器"""
+    """
+    ⚠️ 已废弃 - 请使用 ReviewGeneratorFCUnified
+
+    使用 Function Calling 的综述生成器 [已废弃]
+
+    请使用 review_generator_fc_unified.py 中的 ReviewGeneratorFCUnified 类。
+    """
 
     def __init__(self, api_key: str, base_url: str = "https://api.deepseek.com"):
+        warnings.warn(
+            "ReviewGeneratorFunctionCalling 已废弃，请使用 ReviewGeneratorFCUnified",
+            DeprecationWarning,
+            stacklevel=2
+        )
         self.client = AsyncOpenAI(api_key=api_key, base_url=base_url)
 
     async def generate_review_with_tools(
@@ -32,7 +49,9 @@ class ReviewGeneratorFunctionCalling:
         specificity_guidance: dict = None
     ) -> Tuple[str, List[Dict]]:
         """
-        使用 function calling 生成综述
+        ⚠️ 已废弃 - 请使用 ReviewGeneratorFCUnified.generate_review
+
+        使用 function calling 生成综述 [已废弃]
 
         Args:
             topic: 论文主题
@@ -44,6 +63,12 @@ class ReviewGeneratorFunctionCalling:
         Returns:
             (综述内容, 实际被引用的文献列表)
         """
+        warnings.warn(
+            "ReviewGeneratorFunctionCalling.generate_review_with_tools 已废弃，请使用 ReviewGeneratorFCUnified.generate_review",
+            DeprecationWarning,
+            stacklevel=2
+        )
+
         print("=" * 80)
         print("综述生成 - Function Calling 版本")
         print("=" * 80)

@@ -1,12 +1,15 @@
 """
+⚠️ 已废弃 - 请使用 review_generator_fc_unified.py
+
 文献综述生成服务 v2.0 - 生产版（优化版）
 
-这是默认的综述生成服务，优化了 token 消耗。
+此模块已被 review_generator_fc_unified.py 替代。
+保留仅为向后兼容，新项目请使用 Function Calling 统一版本。
 
 版本说明：
-- 本文件：生产版（review_generator.py）- 4-5次调用，节省40% token
-- 增强版：review_generator_v2_enhanced.py - 8-10次调用，更精细控制
-- 旧版（单prompt）：已移除
+- 本文件：生产版（review_generator.py）- 4-5次调用，节省40% token [已废弃]
+- 增强版：review_generator_v2_enhanced.py - 8-10次调用，更精细控制 [已废弃]
+- FC统一版：review_generator_fc_unified.py - 使用 Function Calling，推荐使用
 
 优化策略：
 1. 批量生成：将多个主题合并为1-2次调用
@@ -15,6 +18,7 @@
 4. 缓存复用：复用大纲生成结果
 """
 import os
+import warnings
 from openai import AsyncOpenAI
 from typing import List, Dict, Tuple
 from .aminer_paper_detail import enrich_papers
@@ -22,7 +26,11 @@ from .aminer_paper_detail import enrich_papers
 
 class ReviewGeneratorService:
     """
-    综述生成服务 v2.0 生产版（优化版）
+    ⚠️ 已废弃 - 请使用 ReviewGeneratorFCUnified
+
+    综述生成服务 v2.0 生产版（优化版）[已废弃]
+
+    请使用 review_generator_fc_unified.py 中的 ReviewGeneratorFCUnified 类。
 
     步骤拆分（优化后）：
     1. 生成综述大纲 - 1次调用
@@ -40,6 +48,11 @@ class ReviewGeneratorService:
     """
 
     def __init__(self, api_key: str, base_url: str = "https://api.deepseek.com", aminer_token: str = None):
+        warnings.warn(
+            "ReviewGeneratorService 已废弃，请使用 ReviewGeneratorFCUnified",
+            DeprecationWarning,
+            stacklevel=2
+        )
         self.client = AsyncOpenAI(api_key=api_key, base_url=base_url)
         self.aminer_token = aminer_token or os.getenv('AMINER_API_TOKEN')
         self._outline_cache = None  # 缓存大纲结果
@@ -52,7 +65,9 @@ class ReviewGeneratorService:
         specificity_guidance: dict = None
     ) -> Tuple[str, List[Dict]]:
         """
-        生成文献综述（优化版）
+        ⚠️ 已废弃 - 请使用 ReviewGeneratorFCUnified.generate_review
+
+        生成文献综述（优化版）[已废弃]
 
         Args:
             topic: 论文主题
@@ -63,6 +78,12 @@ class ReviewGeneratorService:
         Returns:
             (综述内容, 实际被引用的文献列表)
         """
+        warnings.warn(
+            "ReviewGeneratorService.generate_review 已废弃，请使用 ReviewGeneratorFCUnified.generate_review",
+            DeprecationWarning,
+            stacklevel=2
+        )
+
         print("=" * 80)
         print("综述生成 v2.0 - 优化版 (4-5次调用)")
         print("=" * 80)
