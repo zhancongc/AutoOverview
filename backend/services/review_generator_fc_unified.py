@@ -271,12 +271,13 @@ class ReviewGeneratorFCUnified:
         if needs_supplement:
             print(f"\n[补充] 需要补充引用: {', '.join(supplement_reasons)}")
 
-            # 获取未引用的论文
+            # 获取未引用的论文（过滤掉没有 abstract 的论文）
             cited_indices_set = set(cited_indices)
             uncited_papers = [
                 (i + 1, papers[i])
                 for i in range(len(papers))
                 if (i + 1) not in cited_indices_set
+                and papers[i].get("abstract")  # 必须有 abstract
             ]
 
             # 分类未引用的论文
