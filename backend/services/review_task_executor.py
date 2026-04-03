@@ -479,6 +479,90 @@ class ReviewTaskExecutor:
 
         # 统计信息
         stats = self._calculate_paper_stats(all_papers)
+        print(f"\n[阶段3] 去重后统计:")
+        print(f"  - 总文献数: {stats['total']}")
+        print(f"  - 中文: {stats['chinese']}")
+        print(f"  - 英文: {stats['english']}")
+        print(f"  - 小节分布:")
+        for section_title, papers in papers_by_section.items():
+            print(f"    - {section_title}: {len(papers)} 篇")
+
+        # 检查文献数量是否达标，不足则继续搜索
+        min_target_papers = 100  # 目标至少100篇
+        max_search_rounds = 3  # 最多搜索3轮
+        search_round = 1
+
+        while stats['total'] < min_target_papers and search_round <= max_search_rounds:
+            print(f"\n[阶段3] ⚠️ 文献数量不足（{stats['total']} < {min_target_papers}），第 {search_round} 轮补充搜索...")
+
+            # 获取数据库session
+            db_session_gen = db.get_session()
+            db_session = next(db_session_gen)
+
+            try:
+                # 为每个小节补充搜索
+                for section_title, section_papers in papers_by_section.items():
+                    keywords = section_keywords.get(section_title, [])
+                    if not keywords:
+                        continue
+
+                    # 收集已有的 paper_id，避免重复
+                    existing_ids = {p.get('id') for p in section_papers if p.get('id')}
+
+                    # 为每个关键词补充搜索
+                    for keyword in keywords[:3]:  # 最多3个关键词
+                        # 数据库搜索
+                        from services.paper_metadata_dao import PaperMetadataDAO
+                        dao = PaperMetadataDAO(db_session)
+
+                        db_papers = dao.search_papers(
+                            keyword=keyword,
+                            min_year=datetime.now().year - params.get('search_years', 10),
+                            limit=50
+                        )
+
+                        # 转换为字典格式并过滤已存在的
+                        db_papers_dict = [p.to_paper_dict() for p in db_papers]
+                        new_papers = [p for p in db_papers_dict if p.get('id') not in existing_ids]
+
+                        # 添加到小节文献池
+                        for paper in new_papers:
+                            paper_id = paper.get('id')
+                            if paper_id and paper_id not in existing_ids:
+                                section_papers.append(paper)
+                                existing_ids.add(paper_id)
+
+                        # 如果数据库不足，用API补充
+                        if len(new_papers) < 20:
+                            api_papers = await self.search_service.search(
+                                query=keyword,
+                                years_ago=params.get('search_years', 10),
+                                limit=30,
+                                use_all_sources=True
+                            )
+
+                            for paper in api_papers:
+                                paper_id = paper.get('id')
+                                if paper_id and paper_id not in existing_ids:
+                                    section_papers.append(paper)
+                                    existing_ids.add(paper_id)
+
+                    papers_by_section[section_title] = section_papers
+
+            finally:
+                db_session.close()
+
+            # 重新统计
+            all_papers = []
+            for papers in papers_by_section.values():
+                all_papers.extend(papers)
+
+            stats = self._calculate_paper_stats(all_papers)
+            print(f"[阶段3] 第 {search_round} 轮补充搜索后:")
+            print(f"  - 总文献数: {stats['total']}")
+
+            search_round += 1
+
         print(f"\n[阶段3] 搜索完成:")
         print(f"  - 总文献数: {stats['total']}")
         print(f"  - 中文: {stats['chinese']}")
