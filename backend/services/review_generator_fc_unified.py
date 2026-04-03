@@ -64,10 +64,24 @@ class ReviewGeneratorFCUnified:
         print(f"  - 目标引用数: {target_citation_count} 篇")
 
         # 构建系统提示
-        system_prompt = self._build_system_prompt(specificity_guidance, target_citation_count, len(papers))
+        system_prompt = self._build_system_prompt(
+            specificity_guidance,
+            target_citation_count,
+            len(papers),
+            recent_years_ratio,
+            english_ratio
+        )
 
         # 构建用户消息
-        user_message = self._build_user_message(topic, paper_titles_list, framework, target_citation_count, len(papers))
+        user_message = self._build_user_message(
+            topic,
+            paper_titles_list,
+            framework,
+            target_citation_count,
+            len(papers),
+            recent_years_ratio,
+            english_ratio
+        )
 
         # 记录工具调用情况
         tool_calls_log = []
@@ -461,7 +475,14 @@ class ReviewGeneratorFCUnified:
 
         return "\n".join(lines)
 
-    def _build_system_prompt(self, specificity_guidance: dict = None, target_citation_count: int = 50, paper_count: int = 100) -> str:
+    def _build_system_prompt(
+        self,
+        specificity_guidance: dict = None,
+        target_citation_count: int = 50,
+        paper_count: int = 100,
+        recent_years_ratio: float = 0.5,
+        english_ratio: float = 0.3
+    ) -> str:
         """构建系统提示"""
         base_prompt = f"""你是学术写作专家，正在撰写一篇高质量的文献综述。
 
@@ -478,15 +499,15 @@ class ReviewGeneratorFCUnified:
 4. 明确指出研究分歧和不足
 5. 指出研究空白和未来方向
 
-**引用要求**：
-- 目标引用数量：约 {target_citation_count} 篇（可浮动 ±10 篇）
+**引用要求**（必须严格遵守）：
+- **总引用数量**：至少 {target_citation_count} 篇
+- **近5年文献比例**：至少 {recent_years_ratio:.0%}（当前年份 2026，近5年指 2021-2026）
+- **英文文献比例**：至少 {english_ratio:.0%}
 - 引用编号范围：[1] 到 [{paper_count}]，不要超出此范围
-- 每个重要观点都要有引用
 - **不要过度引用同一篇论文**：同一篇论文不要被引用超过2次
 - **按顺序引用**：正文中首次出现的引用应该是[1]，然后是[2]，依此类推
 - 优先引用高被引论文（可通过工具查看 cited_by_count）
-- 在引用前，务必使用 get_paper_details 工具了解论文内容
-- 从提供的文献列表中选择最相关的文献进行引用
+- 在引用前，务必使用 get_paper_details 工具了解论文内容，包括年份和语言
 
 **语言要求**：
 - 只使用中文撰写
@@ -503,7 +524,16 @@ class ReviewGeneratorFCUnified:
 
         return base_prompt
 
-    def _build_user_message(self, topic: str, paper_titles: str, framework: dict, target_citation_count: int = 50, paper_count: int = 100) -> str:
+    def _build_user_message(
+        self,
+        topic: str,
+        paper_titles: str,
+        framework: dict,
+        target_citation_count: int = 50,
+        paper_count: int = 100,
+        recent_years_ratio: float = 0.5,
+        english_ratio: float = 0.3
+    ) -> str:
         """构建用户消息"""
         outline = framework.get('outline', {})
 
@@ -560,17 +590,19 @@ class ReviewGeneratorFCUnified:
 
 **写作要求**：
 1. 按照上述大纲结构撰写
-2. 在需要引用论文时，使用 get_paper_details 工具获取详细信息
+2. 在需要引用论文时，使用 get_paper_details 工具获取详细信息（包括年份和语言）
 3. 确保每个小节都有充分的引用支持
 4. 使用对比分析，指出不同研究的观点和差异
 5. 指出当前研究的不足和未来方向
 6. **确保完整输出所有内容，不要中途截断**
 
-**引用要求**：
-- 目标引用数量：约 {target_citation_count} 篇（可浮动 ±10 篇）
+**引用要求**（必须严格遵守）：
+- **总引用数量**：至少 {target_citation_count} 篇
+- **近5年文献比例**：至少 {recent_years_ratio:.0%}（当前年份 2026，近5年指 2021-2026）
+- **英文文献比例**：至少 {english_ratio:.0%}
 - **引用编号范围**：[1] 到 [{paper_count}]，**严禁超出此范围**
 - **按顺序引用**：正文中首次出现的引用应该是[1]，然后是[2]，依此类推
-- **不要过度引用同一篇论文**：同一篇论文不要被引用超过3次
+- **不要过度引用同一篇论文**：同一篇论文不要被引用超过2次
 - 从提供的文献列表中选择最相关的文献进行引用
 - 优先引用高质量、高被引的文献
 - 每个重要观点都要有引用支持
