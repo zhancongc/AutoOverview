@@ -58,10 +58,10 @@ class ReviewGeneratorFCUnified:
         print(f"  - 目标引用数: {target_citation_count} 篇")
 
         # 构建系统提示
-        system_prompt = self._build_system_prompt(specificity_guidance, target_citation_count)
+        system_prompt = self._build_system_prompt(specificity_guidance, target_citation_count, len(papers))
 
         # 构建用户消息
-        user_message = self._build_user_message(topic, paper_titles_list, framework, target_citation_count)
+        user_message = self._build_user_message(topic, paper_titles_list, framework, target_citation_count, len(papers))
 
         # 记录工具调用情况
         tool_calls_log = []
@@ -85,9 +85,10 @@ class ReviewGeneratorFCUnified:
             response = await self.client.chat.completions.create(
                 model=model,
                 messages=messages,
-                tools=self._get_tools_definition(),
+                tools=self._get_tools_definition(len(papers)),
                 tool_choice="auto",
-                temperature=0.7
+                temperature=0.7,
+                max_tokens=16000  # 确保完整输出
             )
 
             assistant_message = response.choices[0].message
@@ -215,7 +216,8 @@ class ReviewGeneratorFCUnified:
                         {"role": "system", "content": "你是学术编辑，负责补充文献引用。"},
                         {"role": "user", "content": supplement_message}
                     ],
-                    temperature=0.3
+                    temperature=0.3,
+                    max_tokens=16000  # 确保完整输出
                 )
 
                 content = supplement_response.choices[0].message.content
@@ -242,14 +244,14 @@ class ReviewGeneratorFCUnified:
 
         return final_content, cited_papers
 
-    def _get_tools_definition(self) -> List[Dict]:
+    def _get_tools_definition(self, paper_count: int = 100) -> List[Dict]:
         """定义可用的工具"""
         return [
             {
                 "type": "function",
                 "function": {
                     "name": "get_paper_details",
-                    "description": """获取论文的详细信息，包括：
+                    "description": f"""获取论文的详细信息，包括：
 - 摘要（了解研究内容和结论）
 - 作者列表
 - 发表年份
@@ -259,13 +261,15 @@ class ReviewGeneratorFCUnified:
 
 当你需要引用某篇论文来支持论点时，必须先调用此函数获取详细信息。
 不要编造论文内容，只使用工具返回的真实信息。
+
+重要：论文索引必须在有效范围内（1-{paper_count}）。
                     """,
                     "parameters": {
                         "type": "object",
                         "properties": {
                             "paper_index": {
                                 "type": "integer",
-                                "description": "论文在列表中的索引（1-60），例如：[5] 表示索引为5的论文"
+                                "description": f"论文在列表中的索引（1-{paper_count}），例如：[5] 表示索引为5的论文"
                             }
                         },
                         "required": ["paper_index"]
@@ -359,12 +363,12 @@ class ReviewGeneratorFCUnified:
 
         return "\n".join(lines)
 
-    def _build_system_prompt(self, specificity_guidance: dict = None, target_citation_count: int = 50) -> str:
+    def _build_system_prompt(self, specificity_guidance: dict = None, target_citation_count: int = 50, paper_count: int = 100) -> str:
         """构建系统提示"""
         base_prompt = f"""你是学术写作专家，正在撰写一篇高质量的文献综述。
 
 **重要：使用工具获取论文详情**
-- 你只能看到论文的标题列表（共 {len(papers) if 'papers' in dir() else 100} 篇）
+- 你只能看到论文的标题列表（共 {paper_count} 篇）
 - 当你需要引用某篇论文时，必须先调用 get_paper_details 工具获取摘要和详细信息
 - 不要编造论文内容，只使用工具返回的真实信息
 - 引用格式：[1]、[2] 等
@@ -377,9 +381,11 @@ class ReviewGeneratorFCUnified:
 5. 指出研究空白和未来方向
 
 **引用要求**：
-- 目标引用数量：{target_citation_count}篇左右（可浮动±10篇）
+- 目标引用数量：约 {target_citation_count} 篇（可浮动 ±10 篇）
+- 引用编号范围：[1] 到 [{paper_count}]，不要超出此范围
 - 每个重要观点都要有引用
-- 不要过度引用同一篇论文
+- **不要过度引用同一篇论文**：同一篇论文不要被引用超过3次
+- **按顺序引用**：正文中首次出现的引用应该是[1]，然后是[2]，依此类推
 - 优先引用高被引论文（可通过工具查看 cited_by_count）
 - 在引用前，务必使用 get_paper_details 工具了解论文内容
 - 从提供的文献列表中选择最相关的文献进行引用
@@ -388,6 +394,10 @@ class ReviewGeneratorFCUnified:
 - 只使用中文撰写
 - 禁止中英文混用
 - 使用学术化表达
+
+**输出要求**：
+- 确保完整输出所有内容，不要中途截断
+- 每个章节都要完整撰写
 """
 
         if specificity_guidance:
@@ -395,7 +405,7 @@ class ReviewGeneratorFCUnified:
 
         return base_prompt
 
-    def _build_user_message(self, topic: str, paper_titles: str, framework: dict, target_citation_count: int = 50) -> str:
+    def _build_user_message(self, topic: str, paper_titles: str, framework: dict, target_citation_count: int = 50, paper_count: int = 100) -> str:
         """构建用户消息"""
         outline = framework.get('outline', {})
 
@@ -456,9 +466,13 @@ class ReviewGeneratorFCUnified:
 3. 确保每个小节都有充分的引用支持
 4. 使用对比分析，指出不同研究的观点和差异
 5. 指出当前研究的不足和未来方向
+6. **确保完整输出所有内容，不要中途截断**
 
 **引用要求**：
 - 目标引用数量：约 {target_citation_count} 篇（可浮动 ±10 篇）
+- **引用编号范围**：[1] 到 [{paper_count}]，**严禁超出此范围**
+- **按顺序引用**：正文中首次出现的引用应该是[1]，然后是[2]，依此类推
+- **不要过度引用同一篇论文**：同一篇论文不要被引用超过3次
 - 从提供的文献列表中选择最相关的文献进行引用
 - 优先引用高质量、高被引的文献
 - 每个重要观点都要有引用支持
