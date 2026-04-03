@@ -1954,13 +1954,13 @@ class ReviewTaskExecutor:
         words = re.findall(r'[\u4e00-\u9fff]{2,4}', text)
         return words
 
-    def _optimize_search_queries_basic(
+    async def _optimize_search_queries_basic(
         self,
         search_queries: list,
         topic: str
     ) -> list:
         """
-        基本搜索词优化（只做语言优化，不扩展同义词）
+        基本搜索词优化（语言优化 + 翻译扩展）
 
         Args:
             search_queries: 原始搜索查询列表
@@ -2019,11 +2019,34 @@ class ReviewTaskExecutor:
                 seen.add(key)
                 unique_optimized.append(item)
 
+        # === 翻译扩展 ===
+        print(f"[阶段2] 翻译扩展:")
+        try:
+            from services.keyword_translator import translate_search_queries
+
+            # 启用翻译功能
+            translated_queries = await translate_search_queries(
+                queries=unique_optimized,
+                translate=True
+            )
+
+            # 合并原文和翻译后的查询
+            unique_optimized = translated_queries
+
+        except Exception as e:
+            print(f"[阶段2] 翻译扩展失败: {e}")
+            print(f"[阶段2] 使用原文查询继续")
+
         # === 阶段2 输出 ===
         print(f"[阶段2] 输出:")
         print(f"  - 优化查询数: {len(unique_optimized)}")
         print(f"  - 英文查询: {sum(1 for q in unique_optimized if q.get('lang') == 'en')} 个")
         print(f"  - 中文查询: {sum(1 for q in unique_optimized if q.get('lang') == 'zh')} 个")
+
+        # 统计翻译查询数
+        translation_count = sum(1 for q in unique_optimized if q.get('is_translation', False))
+        if translation_count > 0:
+            print(f"  - 翻译查询: {translation_count} 个")
         print("=" * 80)
 
         return unique_optimized
@@ -2497,10 +2520,10 @@ class ReviewTaskExecutor:
         )
 
         print("\n" + "=" * 80)
-        print("[阶段2] 搜索词优化（基本语言优化）")
+        print("[阶段2] 搜索词优化（基本语言优化 + 翻译扩展）")
         print("=" * 80)
 
-        optimized_queries = self._optimize_search_queries_basic(
+        optimized_queries = await self._optimize_search_queries_basic(
             search_queries=search_queries,
             topic=topic
         )
