@@ -415,6 +415,28 @@ class ReviewTaskExecutor:
             papers_by_section[section_title] = section_papers
             print(f"[阶段3] 小节 '{section_title}': {len(section_papers)} 篇专属文献")
 
+        # 检查小节间是否有重复文献
+        all_paper_ids = []
+        for section_title, section_papers in papers_by_section.items():
+            for paper in section_papers:
+                paper_id = paper.get('id')
+                if paper_id:
+                    all_paper_ids.append((section_title, paper_id))
+
+        # 统计重复的 paper_id
+        from collections import Counter
+        paper_id_counts = Counter([pid for _, pid in all_paper_ids])
+        duplicate_ids = {pid: count for pid, count in paper_id_counts.items() if count > 1}
+
+        if duplicate_ids:
+            print(f"[阶段3] ⚠️ 发现小节间重复文献:")
+            for paper_id, count in list(duplicate_ids.items())[:5]:
+                sections_with_id = [st for st, pid in all_paper_ids if pid == paper_id]
+                print(f"    - paper_id={paper_id}: 出现{count}次，小节: {sections_with_id}")
+            print(f"    - 总计 {len(duplicate_ids)} 个重复的 paper_id")
+        else:
+            print(f"[阶段3] ✓ 没有发现小节间重复文献")
+
         # 合并所有文献（用于统计，但不用于分配）
         all_papers = []
         for papers in papers_by_section.values():
