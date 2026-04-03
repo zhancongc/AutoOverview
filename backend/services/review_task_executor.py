@@ -203,7 +203,10 @@ class ReviewTaskExecutor:
                 topic=topic,
                 papers=all_papers,
                 framework=framework,
-                target_citation_count=target_citation_count,  # 传递目标引用数
+                target_citation_count=target_citation_count,
+                min_citation_count=params.get('target_count', 50),
+                recent_years_ratio=params.get('recent_years_ratio', 0.5),
+                english_ratio=params.get('english_ratio', 0.3),
                 specificity_guidance=specificity_guidance
             )
 

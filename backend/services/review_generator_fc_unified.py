@@ -29,7 +29,10 @@ class ReviewGeneratorFCUnified:
         framework: dict,
         model: str = "deepseek-chat",
         specificity_guidance: dict = None,
-        target_citation_count: int = 50
+        target_citation_count: int = 50,
+        min_citation_count: int = 50,
+        recent_years_ratio: float = 0.5,
+        english_ratio: float = 0.3
     ) -> Tuple[str, List[Dict]]:
         """
         一次性生成完整综述（使用 Function Calling）
@@ -41,6 +44,9 @@ class ReviewGeneratorFCUnified:
             model: 模型名称
             specificity_guidance: 场景特异性指导
             target_citation_count: 目标引用数量
+            min_citation_count: 最小引用数量（默认50）
+            recent_years_ratio: 近5年文献比例要求（默认0.5，即50%）
+            english_ratio: 英文文献比例要求（默认0.3，即30%）
 
         Returns:
             (综述内容, 被引用的论文列表)
@@ -183,12 +189,53 @@ class ReviewGeneratorFCUnified:
 
         print(f"  - 引用的论文数: {len(cited_papers)}")
 
-        # 检查引用数量，如果不足则补充
-        min_citations = max(target_citation_count - 10, int(len(papers) * 0.3))  # 目标-10 或30%
-        max_citations = target_citation_count + 10  # 目标+10
+        # 检查引用数量和质量
+        current_year = 2026  # 当前年份
+        recent_threshold = current_year - 5  # 近5年阈值
 
-        if len(cited_papers) < min_citations:
-            print(f"\n[补充] 引用数量不足 ({len(cited_papers)} < {min_citations})，正在补充...")
+        # 统计当前引用情况
+        def _check_citation_quality(papers_list):
+            """检查引用质量"""
+            if not papers_list:
+                return {"total": 0, "recent": 0, "recent_ratio": 0, "english": 0, "english_ratio": 0}
+
+            total = len(papers_list)
+            recent_count = sum(1 for p in papers_list if p.get("year") and p.get("year", 0) >= recent_threshold)
+            english_count = sum(1 for p in papers_list if p.get("lang") == "en")
+
+            return {
+                "total": total,
+                "recent": recent_count,
+                "recent_ratio": recent_count / total if total > 0 else 0,
+                "english": english_count,
+                "english_ratio": english_count / total if total > 0 else 0
+            }
+
+        citation_stats = _check_citation_quality(cited_papers)
+
+        print(f"\n[质量检查] 当前引用统计:")
+        print(f"  - 总引用数: {citation_stats['total']} (要求: ≥{min_citation_count})")
+        print(f"  - 近5年文献: {citation_stats['recent']} 篇 ({citation_stats['recent_ratio']:.1%}) (要求: ≥{recent_years_ratio:.0%})")
+        print(f"  - 英文文献: {citation_stats['english']} 篇 ({citation_stats['english_ratio']:.1%}) (要求: ≥{english_ratio:.0%})")
+
+        # 检查是否需要补充
+        needs_supplement = False
+        supplement_reasons = []
+
+        if citation_stats['total'] < min_citation_count:
+            needs_supplement = True
+            supplement_reasons.append(f"数量不足 ({citation_stats['total']} < {min_citation_count})")
+
+        if citation_stats['recent_ratio'] < recent_years_ratio:
+            needs_supplement = True
+            supplement_reasons.append(f"近5年文献比例不足 ({citation_stats['recent_ratio']:.1%} < {recent_years_ratio:.0%})")
+
+        if citation_stats['english_ratio'] < english_ratio:
+            needs_supplement = True
+            supplement_reasons.append(f"英文文献比例不足 ({citation_stats['english_ratio']:.1%} < {english_ratio:.0%})")
+
+        if needs_supplement:
+            print(f"\n[补充] 需要补充引用: {', '.join(supplement_reasons)}")
 
             # 获取未引用的论文
             cited_indices_set = set(cited_indices)
@@ -198,13 +245,60 @@ class ReviewGeneratorFCUnified:
                 if (i + 1) not in cited_indices_set
             ]
 
-            # 按相关性评分和被引量排序
-            uncited_papers.sort(key=lambda x: (
-                x[1].get('relevance_score', 0),
-                x[1].get('cited_by_count', 0)
-            ), reverse=True)
+            # 分类未引用的论文
+            recent_uncited = [(idx, p) for idx, p in uncited_papers if p.get("year", 0) >= recent_threshold]
+            english_uncited = [(idx, p) for idx, p in uncited_papers if p.get("lang") == "en"]
 
-            to_cite = uncited_papers[:min_citations - len(cited_papers)]
+            # 按优先级排序
+            def _paper_priority(item):
+                idx, paper = item
+                score = 0
+                # 近5年加分
+                if paper.get("year", 0) >= recent_threshold:
+                    score += 100
+                # 英文加分
+                if paper.get("lang") == "en":
+                    score += 50
+                # 相关性加分
+                score += paper.get('relevance_score', 0) * 10
+                # 被引量加分
+                score += min(paper.get('cited_by_count', 0) / 10, 50)
+                return score
+
+            uncited_papers.sort(key=_paper_priority, reverse=True)
+
+            # 计算需要补充的数量
+            need_total = max(0, min_citation_count - citation_stats['total'])
+            need_recent = max(0, int(min_citation_count * recent_years_ratio) - citation_stats['recent'])
+            need_english = max(0, int(min_citation_count * english_ratio) - citation_stats['english'])
+
+            # 选择要补充的论文
+            to_cite = []
+            used_indices = set()
+
+            # 优先补充近5年文献
+            for idx, paper in recent_uncited:
+                if len(to_cite) >= need_total:
+                    break
+                if idx not in used_indices:
+                    to_cite.append((idx, paper))
+                    used_indices.add(idx)
+
+            # 补充英文文献
+            for idx, paper in english_uncited:
+                if len(to_cite) >= need_total:
+                    break
+                if idx not in used_indices:
+                    to_cite.append((idx, paper))
+                    used_indices.add(idx)
+
+            # 补充其他高质量论文
+            for idx, paper in uncited_papers:
+                if len(to_cite) >= need_total:
+                    break
+                if idx not in used_indices:
+                    to_cite.append((idx, paper))
+                    used_indices.add(idx)
 
             if to_cite:
                 # 生成补充内容
@@ -229,7 +323,11 @@ class ReviewGeneratorFCUnified:
                     if 1 <= idx <= len(papers):
                         cited_papers.append(papers[idx - 1])
 
-                print(f"  - ✓ 补充后引用: {len(cited_papers)} 篇")
+                # 重新检查质量
+                final_stats = _check_citation_quality(cited_papers)
+                print(f"  - ✓ 补充后引用: {final_stats['total']} 篇")
+                print(f"    - 近5年: {final_stats['recent']} 篇 ({final_stats['recent_ratio']:.1%})")
+                print(f"    - 英文: {final_stats['english']} 篇 ({final_stats['english_ratio']:.1%})")
 
         # 添加标题和参考文献
         final_content = f"# {topic}\n\n{content}"
