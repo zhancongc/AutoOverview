@@ -118,8 +118,6 @@ class ReviewGeneratorFCUnified:
         while iteration < max_iterations:
             iteration += 1
 
-            print(f"\n[迭代 {iteration}] 调用 LLM...")
-
             # 调用 LLM
             response = await self.client.chat.completions.create(
                 model=model,
@@ -135,8 +133,6 @@ class ReviewGeneratorFCUnified:
 
             # 检查是否要调用工具
             if assistant_message.tool_calls:
-                print(f"  - 模型请求 {len(assistant_message.tool_calls)} 个工具调用")
-
                 # 添加助手消息（包含 tool_calls）
                 messages.append(assistant_message)
 
@@ -145,8 +141,6 @@ class ReviewGeneratorFCUnified:
                 for tool_call in assistant_message.tool_calls:
                     function_name = tool_call.function.name
                     function_args = json.loads(tool_call.function.arguments)
-
-                    print(f"    [{function_name}] 参数: {function_args}")
 
                     # 执行工具调用
                     if function_name == "get_paper_details":
@@ -159,8 +153,6 @@ class ReviewGeneratorFCUnified:
                         paper_index = function_args.get("paper_index")
                         if 1 <= paper_index <= len(papers):
                             accessed_papers[paper_index] = papers[paper_index - 1]
-
-                        print(f"      → 返回 {len(str(result))} 字符")
 
                         tool_responses.append({
                             "role": "tool",
@@ -180,8 +172,6 @@ class ReviewGeneratorFCUnified:
                             papers=papers
                         )
 
-                        print(f"      → 找到 {result.get('count', 0)} 篇匹配论文")
-
                         tool_responses.append({
                             "role": "tool",
                             "tool_call_id": tool_call.id,
@@ -199,8 +189,6 @@ class ReviewGeneratorFCUnified:
 
             else:
                 # 没有工具调用，对话结束
-                print(f"  - 生成完成，无更多工具调用")
-
                 # 添加最终回复
                 messages.append(assistant_message)
 
@@ -208,10 +196,7 @@ class ReviewGeneratorFCUnified:
                 break
 
         # === 后处理 ===
-        print(f"\n[统计] 工具调用情况:")
-        print(f"  - 总迭代次数: {iteration}")
-        print(f"  - 工具调用次数: {len(tool_calls_log)}")
-        print(f"  - 访问的论文数: {len(accessed_papers)}")
+        print(f"[综述生成] 工具调用: {len(tool_calls_log)}次, 访问论文: {len(accessed_papers)}篇, 迭代: {iteration}轮")
 
         # 提取引用的论文
         cited_indices = self._extract_cited_indices(content)

@@ -615,8 +615,7 @@ if __name__ == "__main__":
     import uvicorn
     # 启用热重载，修改代码后自动重启服务
     # reload=True 时必须使用字符串格式的应用路径
-    # access_log=False 禁用 HTTP 请求日志，减少日志噪音
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True, access_log=False)
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True, access_log=True)
 
 @app.get("/api/tasks/status")
 async def get_tasks_status():
