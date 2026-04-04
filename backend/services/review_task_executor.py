@@ -2685,10 +2685,10 @@ class ReviewTaskExecutor:
         limit: int
     ) -> list:
         """
-        根据数据源类型进行搜索
+        根据数据源类型进行搜索（支持布尔查询）
 
         Args:
-            query: 搜索查询
+            query: 搜索查询（可能包含 AND, OR, NOT）
             lang: 语言标识
             source: 数据源类型
             years_ago: 近N年
@@ -2697,20 +2697,45 @@ class ReviewTaskExecutor:
         Returns:
             论文列表
         """
+        # 检测是否为布尔查询
+        is_boolean_query = self._is_boolean_query(query)
+
         # 根据数据源类型选择搜索策略
-        if source in ['openalex', 'crossref', 'datacite']:
+        if source in ['semantic_scholar']:
+            # Semantic Scholar 支持布尔查询，直接传递
+            return await self._call_search_api(
+                query=query,
+                source=source,
+                years_ago=years_ago,
+                limit=limit,
+                use_boolean=True
+            )
+
+        elif source in ['openalex', 'crossref', 'datacite']:
             # 英文数据源，使用英文查询
             english_query = self._to_english_query(query)
             if not english_query:
                 english_query = query
 
+            # 如果是布尔查询，尝试分解为多个查询
+            if is_boolean_query:
+                return await self._search_boolean_decomposed(
+                    query, english_query, source, years_ago, limit
+                )
+
             return await self._call_search_api(english_query, source, years_ago, limit)
 
-        elif source in ['aminer', 'semantic_scholar', 'chinese_doi']:
+        elif source in ['aminer', 'chinese_doi']:
             # 中文数据源，使用中文查询
             chinese_query = self._to_chinese_query(query)
             if not chinese_query:
                 chinese_query = query
+
+            # AMiner 不支持布尔查询，分解后搜索
+            if is_boolean_query:
+                return await self._search_boolean_decomposed(
+                    query, chinese_query, source, years_ago, limit
+                )
 
             return await self._call_search_api(chinese_query, source, years_ago, limit)
 
@@ -2723,12 +2748,80 @@ class ReviewTaskExecutor:
                 use_all_sources=False  # 不使用所有源，避免重复
             )
 
+    def _is_boolean_query(self, query: str) -> bool:
+        """检测查询是否包含布尔操作符"""
+        import re
+        # 检测 AND, OR, NOT（支持大小写）
+        return bool(re.search(r'\b(AND|OR|NOT)\b', query, re.IGNORECASE))
+
+    async def _search_boolean_decomposed(
+        self,
+        original_query: str,
+        translated_query: str,
+        source: str,
+        years_ago: int,
+        limit: int
+    ) -> list:
+        """
+        将布尔查询分解为多个单独的查询，然后合并结果
+
+        Args:
+            original_query: 原始布尔查询
+            translated_query: 翻译后的查询
+            source: 数据源类型
+            years_ago: 近N年
+            limit: 返回数量
+
+        Returns:
+            合并后的论文列表
+        """
+        import re
+
+        # 分解布尔查询为多个关键词
+        # 替换布尔操作符为空格，然后分割
+        keywords = re.split(r'\s+(?:AND|OR|NOT)\s+', translated_query, flags=re.IGNORECASE)
+        keywords = [kw.strip() for kw in keywords if kw.strip()]
+
+        if not keywords:
+            # 如果分解失败，使用第一个关键词
+            keywords = [translated_query.split()[0] if translated_query else original_query]
+
+        print(f"[布尔查询] {source} 不支持布尔查询，分解为: {keywords}")
+
+        # 对每个关键词进行搜索
+        all_papers = []
+        seen_ids = set()
+
+        for keyword in keywords[:3]:  # 最多分解为3个查询
+            papers = await self._call_search_api(
+                query=keyword,
+                source=source,
+                years_ago=years_ago,
+                limit=limit
+            )
+
+            # 去重并合并
+            for paper in papers:
+                paper_id = paper.get("id")
+                if paper_id and paper_id not in seen_ids:
+                    seen_ids.add(paper_id)
+                    all_papers.append(paper)
+
+            # 如果已经找到足够的论文，停止搜索
+            if len(all_papers) >= limit:
+                break
+
+        # 按引用量排序
+        all_papers.sort(key=lambda p: p.get("cited_by_count", 0), reverse=True)
+        return all_papers[:limit]
+
     async def _call_search_api(
         self,
         query: str,
         source: str,
         years_ago: int,
-        limit: int
+        limit: int,
+        use_boolean: bool = False
     ) -> list:
         """
         调用特定数据源的API
@@ -2738,14 +2831,20 @@ class ReviewTaskExecutor:
             source: 数据源类型
             years_ago: 近N年
             limit: 返回数量
+            use_boolean: 是否使用布尔查询（仅对支持的数据源有效）
 
         Returns:
             论文列表
         """
-        # 这里可以扩展为调用特定数据源的API
-        # 目前暂时使用通用的 search_service
         try:
-            if source == 'aminer':
+            if source == 'semantic_scholar' and use_boolean:
+                # 使用 Semantic Scholar 高级搜索（支持布尔查询）
+                return await self._call_semantic_scholar_boolean(
+                    query=query,
+                    years_ago=years_ago,
+                    limit=limit
+                )
+            elif source == 'aminer':
                 # 调用AMiner API
                 return await self.search_service.search(
                     query=query,
@@ -2754,7 +2853,7 @@ class ReviewTaskExecutor:
                     use_all_sources=False
                 )
             elif source == 'semantic_scholar':
-                # 调用Semantic Scholar API
+                # 调用Semantic Scholar API（普通搜索）
                 return await self.search_service.search(
                     query=query,
                     years_ago=years_ago,
@@ -2772,6 +2871,44 @@ class ReviewTaskExecutor:
         except Exception as e:
             print(f"[搜索API] {source} 搜索失败: {e}")
             return []
+
+    async def _call_semantic_scholar_boolean(
+        self,
+        query: str,
+        years_ago: int,
+        limit: int
+    ) -> list:
+        """
+        使用 Semantic Scholar 高级搜索（支持布尔查询）
+
+        Args:
+            query: 搜索查询（可能包含 AND, OR, NOT）
+            years_ago: 近N年
+            limit: 返回数量
+
+        Returns:
+            论文列表
+        """
+        import os
+        from services.semantic_scholar_search import SemanticScholarService
+
+        api_key = os.getenv("SEMANTIC_SCHOLAR_API_KEY")
+        service = SemanticScholarService(api_key=api_key)
+
+        try:
+            # 使用高级搜索功能
+            papers = await service.search_papers(
+                query=query,
+                years_ago=years_ago,
+                limit=limit,
+                sort="citationCount:desc"  # 按引用量排序
+            )
+
+            print(f"[Semantic Scholar 布尔查询] \"{query[:50]}...\" 找到 {len(papers)} 篇")
+            return papers
+
+        finally:
+            await service.close()
 
     # ==================== 共同方法：文献搜索和筛选 ====================
 
