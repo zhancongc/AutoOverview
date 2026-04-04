@@ -156,6 +156,50 @@
   background: #f5f5f5;
 }
 
+/* 研究方向选择 */
+.direction-selector-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.direction-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #444;
+  white-space: nowrap;
+}
+
+.direction-select {
+  flex: 1;
+  min-width: 200px;
+  padding: 0.6rem 1rem;
+  font-size: 0.9rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.direction-select:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+.direction-select:disabled {
+  background: #f5f5f5;
+  cursor: not-allowed;
+}
+
+.direction-desc {
+  font-size: 0.85rem;
+  color: #666;
+  font-style: italic;
+}
+
 /* 按钮放在下一行 */
 .action-buttons-row {
   display: flex;

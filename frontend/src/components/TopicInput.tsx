@@ -14,6 +14,9 @@ interface TopicInputProps {
   showExportButton: boolean
   onExport: () => void
   error: string
+  researchDirections?: any[]
+  selectedDirectionId?: string
+  onDirectionChange?: (directionId: string) => void
 }
 
 export function TopicInput({
@@ -27,7 +30,10 @@ export function TopicInput({
   searchingPapers,
   showExportButton,
   onExport,
-  error
+  error,
+  researchDirections = [],
+  selectedDirectionId = '',
+  onDirectionChange
 }: TopicInputProps) {
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && e.ctrlKey) {
@@ -49,6 +55,31 @@ export function TopicInput({
           disabled={loading || analyzing || searchingPapers}
         />
       </div>
+
+      {/* 研究方向选择 */}
+      {researchDirections.length > 0 && (
+        <div className="direction-selector-row">
+          <label className="direction-label">研究方向（可选）：</label>
+          <select
+            value={selectedDirectionId}
+            onChange={(e) => onDirectionChange?.(e.target.value)}
+            className="direction-select"
+            disabled={loading || analyzing || searchingPapers}
+          >
+            <option value="">自动推断</option>
+            {researchDirections.map((direction) => (
+              <option key={direction.id} value={direction.id}>
+                {direction.name} ({direction.name_en})
+              </option>
+            ))}
+          </select>
+          {selectedDirectionId && (
+            <span className="direction-desc">
+              {researchDirections.find(d => d.id === selectedDirectionId)?.description}
+            </span>
+          )}
+        </div>
+      )}
 
       {/* 按钮放在下一行 */}
       <div className="action-buttons-row">

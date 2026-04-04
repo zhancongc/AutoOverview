@@ -192,3 +192,19 @@ export interface SearchSourcesResponse {
     keyword_stats: KeywordStat[];
   };
 }
+
+// 研究方向相关类型
+export interface ResearchDirection {
+  id: string;
+  name: string;
+  name_en: string;
+  description: string;
+  keywords: string[];
+  abbreviations: Record<string, string>;
+  sub_directions: Record<string, string>;
+}
+
+export interface ResearchDirectionsResponse {
+  success: boolean;
+  data: ResearchDirection[];
+}

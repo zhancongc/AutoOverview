@@ -2074,46 +2074,9 @@ class ReviewGeneratorService:
         # 计算总分
         total_score = title_score + venue_score + abstract_score
 
-        # === 负面指标：检查是否包含明显不相关的内容 ===
-        # 这些关键词表示论文属于完全不相关的领域
-        strongly_irrelevant_keywords = [
-            # 精神病学/心理学
-            '抗抑郁', ' antidepressant', '抑郁', ' depression', '精神分裂', ' schizophrenia',
-            '心理治疗', ' psychotherapy', '焦虑症', ' anxiety disorder',
-            # 气象/气候
-            '气象', ' weather forecast', '气候变化', ' climate change', '天气预报',
-            '空气质量', ' air quality', '空气污染', ' air pollution', 'pm2.5',
-            # 金融/股票
-            '股票市场', ' stock market', '金融衍生品', ' financial derivative',
-            '投资回报', ' investment return', '证券', ' security',
-            # 社会科学/政治
-            '选举', ' election', '投票', ' voting', '公共政策', ' public policy',
-            '社会运动', ' social movement', '政治观点', ' political view',
-            # 教育
-            '教学方法', ' teaching method', '课程设计', ' curriculum design',
-            '学生评估', ' student assessment', '课堂教学', ' classroom teaching',
-        ]
-
-        for irrelevant_kw in strongly_irrelevant_keywords:
-            if irrelevant_kw in title or irrelevant_kw in venue:
-                print(f"[相关性检查] ✗ 强不相关: {irrelevant_kw} in {title[:40]}...")
-                return False
-
-        # === 软性负面指标：降低相关性但不是完全排除 ===
-        soft_irrelevant_keywords = [
-            '社会', ' social', '政治', ' political',
-            '经济', ' economic', '商业', ' business',
-            '教育', ' education', '管理', ' management',
-        ]
-
-        soft_irrelevant_count = sum(1 for kw in soft_irrelevant_keywords if kw in title or kw in venue)
-        if soft_irrelevant_count > 0 and total_score < 1:
-            # 如果有软性不相关关键词且总分极低，认为不相关
-            print(f"[相关性检查] ✗ 软不相关: {soft_irrelevant_count}个软性关键词，总分{total_score}")
-            return False
-
         # === 最终决策 ===
         # 至少需要1分才认为相关（降低阈值）
+        # 注意：不再使用硬编码的"不相关领域"列表，以支持跨学科研究
         if total_score >= 1:
             return True
 

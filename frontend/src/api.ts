@@ -5,7 +5,8 @@ import type {
   ReviewRecord,
   ThreeCirclesResponse,
   ClassifyTopicResponse,
-  SmartAnalyzeResponse
+  SmartAnalyzeResponse,
+  ResearchDirectionsResponse
 } from './types';
 
 const API_BASE = '/api';
@@ -73,6 +74,7 @@ export const api = {
   async submitReviewTask(
     topic: string,
     options: {
+      researchDirectionId?: string;
       targetCount?: number;
       recentYearsRatio?: number;
       englishRatio?: number;
@@ -82,6 +84,7 @@ export const api = {
   ): Promise<TaskSubmitResponse> {
     const response = await axios.post(`${API_BASE}/smart-generate`, {
       topic,
+      research_direction_id: options.researchDirectionId ?? '',
       target_count: options.targetCount ?? 50,
       recent_years_ratio: options.recentYearsRatio ?? 0.5,
       english_ratio: options.englishRatio ?? 0.3,
@@ -95,6 +98,7 @@ export const api = {
   async searchPapersOnly(
     topic: string,
     options: {
+      researchDirectionId?: string;
       targetCount?: number;
       recentYearsRatio?: number;
       englishRatio?: number;
@@ -104,6 +108,7 @@ export const api = {
   ): Promise<{ success: boolean; message: string; data: any }> {
     const response = await axios.post(`${API_BASE}/search-papers-only`, {
       topic,
+      research_direction_id: options.researchDirectionId ?? '',
       target_count: options.targetCount ?? 50,
       recent_years_ratio: options.recentYearsRatio ?? 0.5,
       english_ratio: options.englishRatio ?? 0.3,
@@ -174,6 +179,12 @@ export const api = {
   // 健康检查
   async checkHealth(): Promise<{ status: string; deepseek_configured: boolean }> {
     const response = await axios.get(`${API_BASE}/health`);
+    return response.data;
+  },
+
+  // 获取研究方向列表
+  async getResearchDirections(): Promise<ResearchDirectionsResponse> {
+    const response = await axios.get(`${API_BASE}/research-directions`);
     return response.data;
   }
 };

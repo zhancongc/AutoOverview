@@ -5,7 +5,8 @@ import type {
   Statistics,
   ReviewRecord,
   TopicClassification,
-  TabType
+  TabType,
+  ResearchDirection
 } from './types'
 import { TopicInput } from './components/TopicInput'
 import { TabNavigation } from './components/TabNavigation'
@@ -50,6 +51,26 @@ function App() {
   const [englishRatio, setEnglishRatio] = useState(0.3)
   const [searchYears, setSearchYears] = useState(10)
   const [maxSearchQueries, setMaxSearchQueries] = useState(8)
+
+  // 研究方向
+  const [researchDirections, setResearchDirections] = useState<ResearchDirection[]>([])
+  const [selectedDirectionId, setSelectedDirectionId] = useState<string>('')
+
+  // 加载研究方向列表
+  useEffect(() => {
+    loadResearchDirections()
+  }, [])
+
+  const loadResearchDirections = async () => {
+    try {
+      const response = await api.getResearchDirections()
+      if (response.success) {
+        setResearchDirections(response.data)
+      }
+    } catch (err) {
+      console.error('加载研究方向失败:', err)
+    }
+  }
 
   // 分析数据
   const [classification, setClassification] = useState<TopicClassification | null>(null)
@@ -134,6 +155,7 @@ function App() {
 
     try {
       const response = await api.searchPapersOnly(topic, {
+        researchDirectionId: selectedDirectionId,
         targetCount,
         recentYearsRatio,
         englishRatio,
@@ -368,6 +390,9 @@ function App() {
           showExportButton={!!review}
           onExport={handleExportCurrent}
           error={error}
+          researchDirections={researchDirections}
+          selectedDirectionId={selectedDirectionId}
+          onDirectionChange={setSelectedDirectionId}
         />
 
         <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} />

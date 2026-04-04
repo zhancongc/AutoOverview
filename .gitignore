@@ -46,3 +46,11 @@ backend/*_backup.py
 
 # Temporary Docs
 docs/paper_*.md
+
+# Analysis Documents (keep structure but ignore individual analysis files if needed)
+# docs/analysis/ is tracked, but temporary analysis files can be added here if needed
+
+# Backup Files
+*.bak
+*.backup
+config.py.bak

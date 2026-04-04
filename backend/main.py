@@ -66,6 +66,12 @@ class GenerateRequest(BaseModel):
     # 必填参数
     topic: str = Field(..., description="论文主题", min_length=1)
 
+    # 可选参数：研究方向ID（提高搜索相关性）
+    research_direction_id: str = Field(
+        "",
+        description="研究方向ID（可选）。可选值：computer（计算机科学）、materials（材料科学）、management（管理学）。如果不指定，系统将自动推断。",
+    )
+
     # 基本配置（有默认值）
     target_count: int = Field(50, description="目标文献数量", ge=10, le=100)
     recent_years_ratio: float = Field(0.5, description="近5年占比", ge=0.1, le=1.0)
@@ -94,6 +100,35 @@ record_service = ReviewRecordService()
 async def root():
     """健康检查"""
     return {"status": "ok", "service": "论文综述生成器 API"}
+
+
+@app.get("/api/research-directions")
+async def get_research_directions():
+    """
+    获取系统支持的研究方向列表
+
+    返回所有可用的研究方向，包括：
+    - 方向ID
+    - 中文名称
+    - 英文名称
+    - 描述
+    - 关键词列表
+    - 缩写词表
+    - 子方向列表
+    """
+    try:
+        from config.research_directions import get_all_directions
+
+        directions = get_all_directions()
+
+        return {
+            "success": True,
+            "data": directions
+        }
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/search")
 async def search_papers(
@@ -502,9 +537,19 @@ async def submit_review_task(
 
     try:
         # 创建任务
+        # 获取研究方向名称
+        research_direction = ""
+        if request.research_direction_id:
+            from config.research_directions import get_direction_by_id
+            direction_info = get_direction_by_id(request.research_direction_id)
+            if direction_info:
+                research_direction = direction_info.get("name", "")
+
         task = task_manager.create_task(
             topic=request.topic,
             params={
+                "research_direction_id": request.research_direction_id,
+                "research_direction": research_direction,  # 实际的方向名称
                 "target_count": request.target_count,
                 "recent_years_ratio": request.recent_years_ratio,
                 "english_ratio": request.english_ratio,
@@ -572,6 +617,10 @@ async def get_task_status(task_id: str):
 class SearchPapersOnlyRequest(BaseModel):
     """查找文献请求"""
     topic: str = Field(..., description="论文主题", min_length=1)
+    research_direction_id: str = Field(
+        "",
+        description="研究方向ID（可选）。可选值：computer（计算机科学）、materials（材料科学）、management（管理学）。如果不指定，系统将自动推断。",
+    )
     target_count: int = Field(50, description="目标文献数量", ge=10, le=100)
     recent_years_ratio: float = Field(0.5, description="近5年占比", ge=0.1, le=1.0)
     english_ratio: float = Field(0.3, description="英文文献占比", ge=0.1, le=1.0)
@@ -600,7 +649,17 @@ async def search_papers_only(request: SearchPapersOnlyRequest):
     try:
         executor = ReviewTaskExecutor()
 
+        # 获取研究方向名称
+        research_direction = ""
+        if request.research_direction_id:
+            from config.research_directions import get_direction_by_id
+            direction_info = get_direction_by_id(request.research_direction_id)
+            if direction_info:
+                research_direction = direction_info.get("name", "")
+
         params = {
+            'research_direction_id': request.research_direction_id,
+            'research_direction': research_direction,  # 实际的方向名称
             'target_count': request.target_count,
             'recent_years_ratio': request.recent_years_ratio,
             'english_ratio': request.english_ratio,
@@ -747,7 +806,8 @@ async def get_search_history(
         from models import OutlineGenerationStage, PaperSearchStage, PaperFilterStage
         from database import db
 
-        session = db.get_session()
+        session_gen = db.get_session()
+        session = next(session_gen)
         try:
             # 构建查询
             query = session.query(ReviewTask)
@@ -819,7 +879,8 @@ async def get_search_history_detail(task_id: str):
         from models import OutlineGenerationStage, PaperSearchStage, PaperFilterStage
         from database import db
 
-        session = db.get_session()
+        session_gen = db.get_session()
+        session = next(session_gen)
         try:
             # 获取任务
             task = session.query(ReviewTask).filter_by(id=task_id).first()

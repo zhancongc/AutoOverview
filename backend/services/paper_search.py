@@ -71,35 +71,11 @@ class PaperSearchService:
 
             # 处理搜索结果
             for item in data.get("results", []):
-                # 额外的相关性过滤：检查主题是否相关
-                concepts = [c.get("display_name", "").lower() for c in item.get("concepts", [])]
+                # 注意：不再使用硬编码的"不相关领域"列表，以支持跨学科研究
+                # OpenAlex 的搜索 API 已经根据 query 返回相关结果
+                # 我们只需要过滤被引量等基本条件
 
-                # 相关领域关键词（计算机科学相关）
-                relevant_fields = [
-                    'computer science', 'programming', 'software', 'algorithm',
-                    'artificial intelligence', 'machine learning', 'deep learning',
-                    'natural language processing', 'nlp', 'language model',
-                    'code', 'coding', 'programming language', 'software engineering',
-                    'data', 'database', 'information', 'computing'
-                ]
-
-                # 不相关领域关键词
-                irrelevant_fields = [
-                    'medicine', 'medical', 'clinical', 'healthcare', 'health',
-                    'biology', 'biological', 'genetics', 'dna', 'gene', 'genomic',
-                    'chemistry', 'chemical', 'physics', 'quantum',
-                    'geology', 'environmental', 'climate', 'ecology',
-                    'political science', 'sociology', 'psychology'
-                ]
-
-                # 检查是否包含相关领域的概念
-                has_relevant = any(any(field in c for field in relevant_fields) for c in concepts)
-                # 检查是否包含太多不相关领域的概念
-                irrelevant_count = sum(1 for c in concepts if any(field in c for field in irrelevant_fields))
-
-                # 如果没有相关概念，或者有太多不相关概念，跳过
-                if not has_relevant or irrelevant_count >= 2:
-                    continue
+                # 过滤被引量
 
                 # 过滤被引量
                 cited_by_count = item.get("cited_by_count", 0)
