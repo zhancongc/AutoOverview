@@ -91,12 +91,35 @@ export function ReviewViewer({ title, content, papers = [] }: ReviewViewerProps)
       if (isClickScrolling.current) return
 
       const headings = document.querySelectorAll('.review-body h1[id], .review-body h2[id], .review-body h3[id]')
-      const scrollPosition = window.scrollY + 120
+      const scrollPosition = window.scrollY + 100
 
       let currentId = ''
       headings.forEach(heading => {
         const element = heading as HTMLElement
         if (element.offsetTop <= scrollPosition) {
+          currentId = element.id
+        }
+      })
+
+      if (currentId !== activeId) {
+        setActiveId(currentId)
+      }
+    }
+
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [activeId])
+
+  // 点击目录项滚动到对应标题
+  const handleTocClick = useCallback((id: string) => (e: React.MouseEvent) => {
+    e.preventDefault()
+    const element = document.querySelector(`.review-body #${CSS.escape(id)}`) as HTMLElement
+    if (!element) return
+
+    isClickScrolling.current = true
+    setActiveId(id)
+
+    element.scrollIntoView({ behavior: 'smooth', block: 'start' })
           currentId = element.id
         }
       })
