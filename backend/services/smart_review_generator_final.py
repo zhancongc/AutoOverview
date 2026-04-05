@@ -693,14 +693,15 @@ class SmartReviewGeneratorFinal:
 
         description_parts.append("**文献纳入标准**：")
         description_parts.append(
-            "1) 主题相关性：论文标题或摘要需与研究主题高度相关；"
+            "1) 主题相关性（首要标准）：论文标题或摘要需与研究主题高度相关，这是文献入选的先决条件；"
         )
         description_parts.append(
-            f"2) 时间分布：要求近 {int(recent_years_ratio * 100)}% 的文献为近 5 年发表，"
+            f"2) 时间分布：在主题相关的文献中，近 {int(recent_years_ratio * 100)}% 为近 5 年发表，"
             "以确保综述反映最新研究进展；"
         )
         description_parts.append(
-            "3) 质量阈值：优先选择被引次数较高的文献，确保综述建立在高影响力研究基础之上。"
+            "3) 质量优选：在满足上述条件的文献中，优先选择被引次数较高的研究，"
+            "以确保综述建立在高影响力学术成果基础之上。"
         )
 
         if cited_papers_count > 0:
