@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import ReactMarkdown from 'react-markdown'
 import './ReviewViewer.css'
 
@@ -25,19 +25,31 @@ interface ReviewViewerProps {
 export function ReviewViewer({ title, content, papers = [] }: ReviewViewerProps) {
   const [toc, setToc] = useState<TableOfContents[]>([])
   const [activeId, setActiveId] = useState<string>('')
+  const mainRef = useRef<HTMLElement>(null)
+  const isClickScrolling = useRef(false)
+
+  // 生成标题 ID（与 Markdown 渲染器保持一致）
+  const headingIdMap = useRef<Map<string, string>>(new Map())
 
   // 解析 Markdown 生成目录
   useEffect(() => {
     const lines = content.split('\n')
     const headings: Array<{ id: string; text: string; level: number }> = []
+    const idCount: Record<string, number> = {}
 
-    lines.forEach((line, index) => {
+    lines.forEach((line) => {
       const match = line.match(/^(#{1,3})\s+(.+)$/)
       if (match) {
         const level = match[1].length
         const text = match[2].trim()
-        const id = `heading-${index}`
+        // 生成与 Markdown 渲染器一致的 ID
+        const baseId = text.toLowerCase().replace(/[^\w\u4e00-\u9fff]+/g, '-').replace(/^-|-$/g, '')
+        // 处理重复 ID
+        idCount[baseId] = (idCount[baseId] || 0) + 1
+        const id = idCount[baseId] > 1 ? `${baseId}-${idCount[baseId]}` : baseId
+
         headings.push({ id, text, level })
+        headingIdMap.current.set(text, id)
       }
     })
 
@@ -54,7 +66,6 @@ export function ReviewViewer({ title, content, papers = [] }: ReviewViewerProps)
           children: []
         }
 
-        // 找到合适的父节点
         while (stack.length > 0 && stack[stack.length - 1].level >= item.level) {
           stack.pop()
         }
@@ -77,8 +88,10 @@ export function ReviewViewer({ title, content, papers = [] }: ReviewViewerProps)
   // 监听滚动，高亮当前章节
   useEffect(() => {
     const handleScroll = () => {
-      const headings = document.querySelectorAll('[id^="heading-"]')
-      const scrollPosition = window.scrollY + 100
+      if (isClickScrolling.current) return
+
+      const headings = document.querySelectorAll('.review-body h1[id], .review-body h2[id], .review-body h3[id]')
+      const scrollPosition = window.scrollY + 120
 
       let currentId = ''
       headings.forEach(heading => {
@@ -88,11 +101,29 @@ export function ReviewViewer({ title, content, papers = [] }: ReviewViewerProps)
         }
       })
 
-      setActiveId(currentId)
+      if (currentId !== activeId) {
+        setActiveId(currentId)
+      }
     }
 
     window.addEventListener('scroll', handleScroll)
     return () => window.removeEventListener('scroll', handleScroll)
+  }, [activeId])
+
+  // 点击目录项滚动到对应标题
+  const handleTocClick = useCallback((id: string) => (e: React.MouseEvent) => {
+    e.preventDefault()
+    const element = document.querySelector(`.review-body #${CSS.escape(id)}`) as HTMLElement
+    if (!element) return
+
+    isClickScrolling.current = true
+    setActiveId(id)
+
+    window.scrollTo({ top: element.offsetTop - 80, behavior: 'smooth' })
+
+    setTimeout(() => {
+      isClickScrolling.current = false
+    }, 800)
   }, [])
 
   // 渲染目录项
@@ -100,13 +131,7 @@ export function ReviewViewer({ title, content, papers = [] }: ReviewViewerProps)
     <li key={item.id} className={`toc-item toc-level-${item.level} ${activeId === item.id ? 'active' : ''}`}>
       <a
         href={`#${item.id}`}
-        onClick={(e) => {
-          e.preventDefault()
-          const element = document.getElementById(item.id)
-          if (element) {
-            element.scrollIntoView({ behavior: 'smooth', block: 'start' })
-          }
-        }}
+        onClick={handleTocClick(item.id)}
       >
         {item.text}
       </a>
@@ -172,21 +197,21 @@ export function ReviewViewer({ title, content, papers = [] }: ReviewViewerProps)
     return links
   }
 
-  // 自定义 Markdown 渲染器，添加 id 到标题
+  // 自定义 Markdown 渲染器，添加 id 到标题（与目录 ID 保持一致）
   const components = useMemo(() => ({
     h1: ({ children, ...props }: any) => {
       const text = children?.toString() || ''
-      const id = text.toLowerCase().replace(/\s+/g, '-')
+      const id = headingIdMap.current.get(text) || text.toLowerCase().replace(/[^\w\u4e00-\u9fff]+/g, '-').replace(/^-|-$/g, '')
       return <h1 id={id} {...props}>{children}</h1>
     },
     h2: ({ children, ...props }: any) => {
       const text = children?.toString() || ''
-      const id = text.toLowerCase().replace(/\s+/g, '-')
+      const id = headingIdMap.current.get(text) || text.toLowerCase().replace(/[^\w\u4e00-\u9fff]+/g, '-').replace(/^-|-$/g, '')
       return <h2 id={id} {...props}>{children}</h2>
     },
     h3: ({ children, ...props }: any) => {
       const text = children?.toString() || ''
-      const id = text.toLowerCase().replace(/\s+/g, '-')
+      const id = headingIdMap.current.get(text) || text.toLowerCase().replace(/[^\w\u4e00-\u9fff]+/g, '-').replace(/^-|-$/g, '')
       return <h3 id={id} {...props}>{children}</h3>
     }
   }), [])
