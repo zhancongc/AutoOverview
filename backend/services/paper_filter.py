@@ -14,7 +14,6 @@ class PaperFilterService:
         papers: List[Dict],
         target_count: int = 50,
         recent_years_ratio: float = 0.5,
-        english_ratio: float = 0.3,
         topic_keywords: List[str] | None = None
     ) -> List[Dict]:
         """
@@ -24,7 +23,6 @@ class PaperFilterService:
             papers: 原始论文列表
             target_count: 目标数量（默认50篇）
             recent_years_ratio: 近5年占比要求（默认50%）
-            english_ratio: 英文文献占比要求（默认30%）
             topic_keywords: 题目关键词，用于相关性评分
 
         Returns:
@@ -49,46 +47,23 @@ class PaperFilterService:
         recent_papers = [p for p in scored_papers if p.get("year") is not None and p.get("year") >= recent_threshold]
         old_papers = [p for p in scored_papers if p.get("year") is not None and p.get("year") < recent_threshold]
 
-        english_papers = [p for p in scored_papers if p.get("is_english", False)]
-        non_english_papers = [p for p in scored_papers if not p.get("is_english", False)]
-
         # 计算需要的数量
         recent_needed = int(target_count * recent_years_ratio)
-        english_needed = int(target_count * english_ratio)
 
         selected = set()
         result = []
-        english_count = 0  # 跟踪已选择的英文论文数量
 
-        # 优先选择：近5年 + 英文（高相关性）
+        # 优先选择：近5年（高相关性）
         for paper in recent_papers:
-            if paper.get("is_english") and len(result) < target_count and english_count < english_needed:
-                paper_id = paper.get("id")
-                if paper_id not in selected:
-                    selected.add(paper_id)
-                    result.append(paper)
-                    english_count += 1
-
-        # 补充：近5年 + 非英文
-        for paper in recent_papers:
-            if not paper.get("is_english") and len(result) < target_count:
+            if len(result) < target_count:
                 paper_id = paper.get("id")
                 if paper_id not in selected:
                     selected.add(paper_id)
                     result.append(paper)
 
-        # 补充：5年前 + 英文
+        # 补充：5年前
         for paper in old_papers:
-            if paper.get("is_english") and len(result) < target_count and english_count < english_needed:
-                paper_id = paper.get("id")
-                if paper_id not in selected:
-                    selected.add(paper_id)
-                    result.append(paper)
-                    english_count += 1
-
-        # 补充：5年前 + 非英文
-        for paper in old_papers:
-            if not paper.get("is_english") and len(result) < target_count:
+            if len(result) < target_count:
                 paper_id = paper.get("id")
                 if paper_id not in selected:
                     selected.add(paper_id)
@@ -161,10 +136,6 @@ class PaperFilterService:
             score += 10  # 近5年加 10 分
         elif paper_year is not None and paper_year >= current_year - 10:
             score += 5   # 5-10年前加 5 分
-
-        # 英文论文加分（因为通常质量更好）
-        if paper.get("is_english", False):
-            score += 5
 
         return min(score, 100)  # 最高 100 分
 

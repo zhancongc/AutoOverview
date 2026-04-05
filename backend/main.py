@@ -94,7 +94,7 @@ class GenerateRequest(BaseModel):
     # 基本配置（有默认值）
     target_count: int = Field(50, description="目标文献数量", ge=10, le=100)
     recent_years_ratio: float = Field(0.5, description="近5年占比", ge=0.1, le=1.0)
-    english_ratio: float = Field(0.3, description="英文文献占比", ge=0.1, le=1.0)
+    english_ratio: float = Field(0.0, description="英文文献占比（已废弃，不再使用）", ge=0.0, le=1.0)
 
     # 高级配置（可选，有默认值）
     search_years: int = Field(10, description="搜索年份范围", ge=5, le=30)
@@ -671,7 +671,7 @@ class SearchPapersOnlyRequest(BaseModel):
     )
     target_count: int = Field(50, description="目标文献数量", ge=10, le=100)
     recent_years_ratio: float = Field(0.5, description="近5年占比", ge=0.1, le=1.0)
-    english_ratio: float = Field(0.3, description="英文文献占比", ge=0.1, le=1.0)
+    english_ratio: float = Field(0.0, description="英文文献占比（已废弃，不再使用）", ge=0.0, le=1.0)
     search_years: int = Field(10, description="搜索年份范围", ge=5, le=30)
     max_search_queries: int = Field(8, description="最多搜索查询数", ge=1, le=20)
 

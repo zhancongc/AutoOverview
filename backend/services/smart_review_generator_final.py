@@ -673,7 +673,6 @@ class SmartReviewGeneratorFinal:
         search_years = search_params.get("search_years", 10)
         target_count = search_params.get("target_count", 50)
         recent_years_ratio = search_params.get("recent_years_ratio", 0.5)
-        english_ratio = search_params.get("english_ratio", 0.3)
         search_platform = search_params.get("search_platform", "Semantic Scholar")
         sort_by = search_params.get("sort_by", "被引量降序")
 
@@ -701,11 +700,7 @@ class SmartReviewGeneratorFinal:
             "以确保综述反映最新研究进展；"
         )
         description_parts.append(
-            f"3) 语种平衡：英文文献占比约 {int(english_ratio * 100)}%，"
-            "兼顾国际前沿与本土研究；"
-        )
-        description_parts.append(
-            "4) 质量阈值：优先选择被引次数较高的文献，确保综述建立在高影响力研究基础之上。"
+            "3) 质量阈值：优先选择被引次数较高的文献，确保综述建立在高影响力研究基础之上。"
         )
 
         if cited_papers_count > 0:
