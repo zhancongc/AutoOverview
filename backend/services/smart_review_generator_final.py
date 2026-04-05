@@ -50,10 +50,25 @@ class SmartReviewGeneratorFinal:
         self,
         topic: str,
         papers: List[Dict],
-        model: str = "deepseek-reasoner"
+        model: str = "deepseek-reasoner",
+        search_params: Dict[str, Any] = None
     ) -> Dict[str, Any]:
         """
         从论文列表生成综述（主要入口）
+
+        Args:
+            topic: 研究主题
+            papers: 论文列表
+            model: 模型名称
+            search_params: 搜索和筛选参数，用于生成方法论说明
+                {
+                    "search_years": 搜索年份范围（默认10年）,
+                    "target_count": 目标文献数量（默认50篇）,
+                    "recent_years_ratio": 近5年文献占比要求（默认0.5）,
+                    "english_ratio": 英文文献占比要求（默认0.3）,
+                    "search_platform": 搜索平台（默认"Semantic Scholar"）,
+                    "sort_by": 排序方式（默认"citationCount:desc"）
+                }
         """
         print("=" * 80)
         print(f"智能综述生成器 - 最终版")
@@ -72,7 +87,9 @@ class SmartReviewGeneratorFinal:
         raw_content, accessed_paper_indices = await self._generate_raw_review(
             topic=topic,
             papers=papers,
-            model=model
+            model=model,
+            search_params=search_params,
+            total_papers_count=len(papers)
         )
 
         # === 步骤 3: 提取并排序引用 ===
@@ -166,14 +183,22 @@ class SmartReviewGeneratorFinal:
         self,
         topic: str,
         papers: List[Dict],
-        model: str
+        model: str,
+        search_params: Dict[str, Any] = None,
+        total_papers_count: int = 0
     ) -> Tuple[str, Set[int]]:
         """生成初始综述（不进行引用映射）"""
         paper_titles_list = self._format_paper_titles_list(papers)
         print(f"[准备] 论文标题列表 ({len(papers)} 篇)")
 
         system_prompt = self._build_system_prompt(len(papers))
-        user_message = self._build_user_message(topic, paper_titles_list, len(papers))
+        user_message = self._build_user_message(
+            topic=topic,
+            paper_titles=paper_titles_list,
+            paper_count=len(papers),
+            search_params=search_params,
+            total_papers_count=total_papers_count
+        )
 
         messages = [
             {"role": "system", "content": system_prompt},
@@ -457,6 +482,22 @@ class SmartReviewGeneratorFinal:
 - 先获取论文详情再引用
 - 不要编造内容
 
+**【绝对禁止】文献堆砌（Laundry List）**：
+❌ 禁止这样写："A 做了这个，B 做了那个，C 做了其他"
+❌ 禁止只罗列文献而不进行分析
+❌ 禁止缺乏作者自身的批判性思维
+
+**【必须做到】对比分析与批判性思维**：
+✅ 必须增加"对比分析"段落
+✅ 必须说明"为什么选这个而不选那个"
+✅ 必须分析不同方法/系统的**本质区别**（如内存管理机制、算法复杂度、架构设计等）
+✅ 必须指出不同研究的**优缺点**和**适用场景**
+✅ 必须体现你作为作者的**独立判断**和**批判性思维**
+
+**写作范式转换**：
+❌ 错误范式："Maxima 提供了微积分功能，SymPy 是 Python 库，Cadabra2 用于张量计算"
+✅ 正确范式："尽管 Maxima [5] 和 SymPy [8] 都提供通用符号计算能力，但二者在架构设计上存在本质区别：Maxima 基于 Lisp 实现，擅长传统数学分析；而 SymPy 作为纯 Python 库，在与现代数据科学生态系统集成方面具有显著优势。在高并发工程环境下，SymPy 的内存管理机制更为灵活，这解释了为何它在工业界应用中更受青睐 [8, 23]。相比之下，Cadabra2 [6] 采用领域特定设计，虽然通用性不及前两者，但在张量场论计算中的表达效率是通用系统的 3-5 倍 [6, 24]。"
+
 **【重要】表格使用要求**：
 在以下情况下必须使用表格：
 1. **横向对比**：当比较多个研究的方法、特点、结果时
@@ -471,11 +512,17 @@ class SmartReviewGeneratorFinal:
 - 表格内容要简洁，重点突出
 - 表格中的引用使用 [1]、[2] 等格式
 
-表格内容可以包括：
-- 不同算法的性能对比
-- 不同系统的功能特性对比
-- 不同研究的方法、结果对比
-- 不同时期的技术发展总结
+表格内容必须包括：
+- 不同方法/系统的**核心区别**（不仅仅是罗列功能）
+- **优缺点对比**
+- **适用场景**分析
+- 性能/效率**量化对比**（如有数据）
+
+**【每个章节必须包含】**：
+1. 该领域的发展脉络梳理
+2. 不同流派/方法/系统的分类
+3. **深度对比分析段落**（批判性分析不同方案的优劣）
+4. 你的独立判断和见解
 
 **语言要求**：
 - 只使用中文撰写
@@ -485,26 +532,56 @@ class SmartReviewGeneratorFinal:
 - 使用 Markdown 格式，标题使用 ## 或 ###
 - 确保完整输出所有内容
 - 至少包含 1-2 个对比表格
+- 每个主体章节都要有专门的"对比分析"小节
 """
 
-    def _build_user_message(self, topic: str, paper_titles: str, paper_count: int) -> str:
+    def _build_user_message(
+        self,
+        topic: str,
+        paper_titles: str,
+        paper_count: int,
+        search_params: Dict[str, Any] = None,
+        total_papers_count: int = 0
+    ) -> str:
+        # 构建方法论描述
+        methodology_description = self._build_methodology_description(
+            search_params, total_papers_count, paper_count
+        )
+
         return f"""请撰写关于「{topic}」的文献综述。
 
 {paper_titles}
+
+**【引言部分必须包含】文献检索与筛选方法论**：
+在引言的末尾（或者作为独立的"2. 文献检索策略"小节），必须加入一个专门段落，说明你的文献纳入与排除标准（Inclusion/Exclusion Criteria）。
+
+**方法论说明（请用自己的话组织，不要直接复制）**：
+{methodology_description}
+
+**【核心要求】批判性思维与对比分析**：
+⚠️  不要写成"A做了这个，B做了那个"的文献堆砌
+⚠️  必须体现你作为作者的批判性思维
+⚠️  每个主体章节都必须包含"对比分析"小节
 
 **写作要求**：
 1. 先设计综述结构，再撰写内容
 2. 引用论文前，必须先调用 get_multiple_paper_details 工具批量获取详细信息
 3. 确保每个小节都有充分的引用支持
-4. 使用对比分析，指出不同研究的观点和差异
+4. **深度对比分析**：不要只说"有什么"，要说"为什么选这个而不选那个"。分析不同方法在架构设计、算法复杂度、内存管理、性能表现等方面的**本质区别**
 5. 指出当前研究的不足和未来方向
 6. 确保完整输出所有内容，不要中途截断
+7. **每个主体章节都要有专门的对比分析段落**
 
 **【强调】表格要求**：
 - 在适当的位置插入 1-3 个对比表格
 - 表格类型可以是：系统对比、算法对比、方法对比、时期对比等
+- 表格必须包含：核心区别、优缺点、适用场景等深度分析内容
 - 每个表格都要有标题，并在正文中引用
 - 表格中也要标注相应的文献引用 [1]、[2] 等
+
+**【写作范例】**：
+❌ 不要这样写："Maxima 提供了微积分功能，SymPy 是一个 Python 库，Cadabra2 用于张量计算。"
+✅ 应该这样写："尽管 Maxima [5]、SymPy [8] 和 Cadabra2 [6] 都是计算机代数系统，但它们的设计哲学和适用场景存在本质差异。Maxima 基于 Lisp 实现，继承了 MACSYMA 的传统，在符号积分和化简方面表现优异；SymPy 作为纯 Python 实现，虽然性能略逊，但与现代数据科学生态系统的无缝集成使其在工程领域更受欢迎；而 Cadabra2 采用领域特定设计，在张量场论中的表达效率是通用系统的数倍。在高并发场景下，SymPy 的内存管理机制更为灵活，这解释了为何它在工业界应用中逐渐占据主导地位 [8, 23]。"
 
 请开始撰写。"""
 
@@ -571,3 +648,69 @@ class SmartReviewGeneratorFinal:
                 for tc in tool_calls:
                     total_chars += len(tc.function.name) + len(tc.function.arguments) + 50
         return total_chars // 3
+
+    def _build_methodology_description(
+        self,
+        search_params: Dict[str, Any] = None,
+        total_papers_count: int = 0,
+        cited_papers_count: int = 0
+    ) -> str:
+        """
+        构建文献检索与筛选方法论描述
+
+        Args:
+            search_params: 搜索参数
+            total_papers_count: 初始检索到的文献总数
+            cited_papers_count: 最终引用的文献数
+
+        Returns:
+            方法论描述文本
+        """
+        if search_params is None:
+            search_params = {}
+
+        # 提取参数，提供默认值
+        search_years = search_params.get("search_years", 10)
+        target_count = search_params.get("target_count", 50)
+        recent_years_ratio = search_params.get("recent_years_ratio", 0.5)
+        english_ratio = search_params.get("english_ratio", 0.3)
+        search_platform = search_params.get("search_platform", "Semantic Scholar")
+        sort_by = search_params.get("sort_by", "被引量降序")
+
+        # 构建描述
+        description_parts = []
+
+        description_parts.append("**文献检索策略**：")
+        description_parts.append(
+            f"本综述基于 {search_platform} 学术数据库进行文献检索，"
+            f"检索时间范围为过去 {search_years} 年（{datetime.now().year - search_years}-{datetime.now().year}）。"
+        )
+
+        if total_papers_count > 0:
+            description_parts.append(
+                f"初始检索获得 {total_papers_count} 篇相关文献，"
+                f"按 {sort_by} 排序后进行多轮筛选。"
+            )
+
+        description_parts.append("**文献纳入标准**：")
+        description_parts.append(
+            "1) 主题相关性：论文标题或摘要需与研究主题高度相关；"
+        )
+        description_parts.append(
+            f"2) 时间分布：要求近 {int(recent_years_ratio * 100)}% 的文献为近 5 年发表，"
+            "以确保综述反映最新研究进展；"
+        )
+        description_parts.append(
+            f"3) 语种平衡：英文文献占比约 {int(english_ratio * 100)}%，"
+            "兼顾国际前沿与本土研究；"
+        )
+        description_parts.append(
+            "4) 质量阈值：优先选择被引次数较高的文献，确保综述建立在高影响力研究基础之上。"
+        )
+
+        if cited_papers_count > 0:
+            description_parts.append(
+                f"经过上述筛选流程，最终从初始文献池中精选出 {cited_papers_count} 篇文献进行深入分析和综述撰写。"
+            )
+
+        return "\n".join(description_parts)

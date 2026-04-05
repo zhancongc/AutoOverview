@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import App from './App'
 import { SimpleApp } from './components/SimpleApp'
 import { ReviewPage } from './components/ReviewPage'
+import { ProfilePage } from './components/ProfilePage'
 import { LoginPage } from './components/LoginPage'
 import ErrorBoundary from './ErrorBoundary'
 import './index.css'
@@ -14,6 +15,11 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/" element={<SimpleApp />} />
+        <Route path="/profile" element={
+          <ProtectedRoute>
+            <ProfilePage />
+          </ProtectedRoute>
+        } />
         <Route path="/review" element={
           <ProtectedRoute>
             <ReviewPage />

@@ -176,10 +176,21 @@ class ReviewTaskExecutor:
                 deepseek_base_url=os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com")
             )
 
+            # 构建搜索参数，用于生成文献检索方法论说明
+            search_params = {
+                "search_years": params.get('search_years', 10),
+                "target_count": params.get('target_count', 50),
+                "recent_years_ratio": params.get('recent_years_ratio', 0.5),
+                "english_ratio": params.get('english_ratio', 0.3),
+                "search_platform": "Semantic Scholar",
+                "sort_by": "被引量降序"
+            }
+
             result = await final_generator.generate_review_from_papers(
                 topic=topic,
                 papers=all_papers,
-                model=params.get('review_model', 'deepseek-reasoner')
+                model=params.get('review_model', 'deepseek-reasoner'),
+                search_params=search_params
             )
 
             review = result["review"]

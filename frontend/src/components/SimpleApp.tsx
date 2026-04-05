@@ -172,7 +172,7 @@ export function SimpleApp() {
         <div className="nav-actions">
           {isLoggedIn ? (
             <div className="user-menu">
-              <button className="user-info" onClick={() => navigate('/review')}>
+              <button className="user-info" onClick={() => navigate('/profile')}>
                 <span className="user-avatar">👤</span>
                 <span className="user-name">{userInfo?.nickname || '用户'}</span>
               </button>
