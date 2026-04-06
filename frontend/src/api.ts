@@ -82,6 +82,9 @@ export const api = {
       maxSearchQueries?: number;
     } = {}
   ): Promise<TaskSubmitResponse> {
+    const token = localStorage.getItem('auth_token');
+    const headers: Record<string, string> = {};
+    if (token) headers.Authorization = `Bearer ${token}`;
     const response = await axios.post(`${API_BASE}/smart-generate`, {
       topic,
       research_direction_id: options.researchDirectionId ?? '',
@@ -90,7 +93,7 @@ export const api = {
       english_ratio: options.englishRatio ?? 0.3,
       search_years: options.searchYears ?? 10,
       max_search_queries: options.maxSearchQueries ?? 8
-    });
+    }, { headers });
     return response.data;
   },
 
@@ -201,5 +204,65 @@ export const api = {
   async getResearchDirections(): Promise<ResearchDirectionsResponse> {
     const response = await axios.get(`${API_BASE}/research-directions`);
     return response.data;
-  }
+  },
+
+  // ==================== 订阅/支付 API ====================
+
+  async getSubscriptionPlans(): Promise<{ plans: Array<{
+    type: string;
+    name: string;
+    price: number;
+    duration_days: number;
+    recommended?: boolean;
+    features: string[];
+  }> }> {
+    const response = await axios.get(`${API_BASE}/subscription/plans`);
+    return response.data;
+  },
+
+  async createSubscription(planType: string): Promise<{
+    order_no: string;
+    pay_url: string;
+    amount: number;
+  }> {
+    const token = localStorage.getItem('auth_token');
+    const response = await axios.post(`${API_BASE}/subscription/create`, {
+      plan_type: planType
+    }, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
+  },
+
+  async querySubscription(orderNo: string): Promise<{
+    status: string;
+    payment_time?: string;
+    expires_at?: string;
+  }> {
+    const token = localStorage.getItem('auth_token');
+    const response = await axios.get(`${API_BASE}/subscription/query/${orderNo}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
+  },
+
+  async getMembershipInfo(): Promise<{
+    membership_type: string;
+    expires_at?: string;
+    days_remaining?: number;
+  }> {
+    const token = localStorage.getItem('auth_token');
+    const response = await axios.get(`${API_BASE}/subscription/membership`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
+  },
+
+  async getCredits(): Promise<{ credits: number; has_purchased: boolean }> {
+    const token = localStorage.getItem('auth_token');
+    const headers: Record<string, string> = {};
+    if (token) headers.Authorization = `Bearer ${token}`;
+    const response = await axios.get(`${API_BASE}/usage/credits`, { headers });
+    return response.data;
+  },
 };

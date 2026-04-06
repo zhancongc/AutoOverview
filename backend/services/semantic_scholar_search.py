@@ -4,7 +4,7 @@ Semantic Scholar 文献检索服务
 """
 import httpx
 import asyncio
-from typing import List, Dict
+from typing import List, Dict, Optional
 from datetime import datetime, timedelta
 
 
@@ -268,6 +268,59 @@ class SemanticScholarService:
         # 计算非ASCII字符比例
         non_ascii = sum(1 for c in text if ord(c) > 127)
         return non_ascii / len(text) < 0.3
+
+    async def search_by_exact_title(self, title: str) -> Optional[Dict]:
+        """
+        精确标题搜索，用于锚定已知的核心论文。
+
+        使用 Semantic Scholar 的 paper/search 端点，
+        以标题作为查询词，取第一条结果。
+
+        Args:
+            title: 论文的完整英文标题
+
+        Returns:
+            匹配到的论文（Dict）或 None
+        """
+        try:
+            papers = await self.search_papers(
+                query=f'title:"{title}"',
+                limit=3
+            )
+
+            if not papers:
+                # 回退：用标题直接搜索
+                papers = await self.search_papers(
+                    query=title,
+                    limit=5
+                )
+
+            if papers:
+                # 找标题最匹配的
+                best = None
+                best_score = 0
+                title_lower = title.lower().strip()
+                for p in papers:
+                    p_title = (p.get("title") or "").lower().strip()
+                    # 简单相似度：交集词占比
+                    words_a = set(title_lower.split())
+                    words_b = set(p_title.split())
+                    if not words_a:
+                        continue
+                    overlap = len(words_a & words_b) / len(words_a)
+                    if overlap > best_score:
+                        best_score = overlap
+                        best = p
+
+                # 相似度阈值：至少 70% 的词匹配
+                if best and best_score >= 0.7:
+                    return best
+
+            return None
+
+        except Exception as e:
+            print(f"[SemanticScholar] 精确标题搜索失败: {e}")
+            return None
 
     async def search_by_venue(
         self,

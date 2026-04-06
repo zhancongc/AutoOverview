@@ -5,7 +5,7 @@
 """
 import asyncio
 import sys
-sys.path.append('/Users/zhancc/Github/PaperOverview/backend')
+sys.path.append('/Users/zhancc/Github/AutoOverview/backend')
 
 from services.review_task_executor import ReviewTaskExecutor
 from database import db

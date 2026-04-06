@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import './ReviewViewer.css'
 
 interface TableOfContents {
@@ -31,27 +32,56 @@ export function ReviewViewer({ title, content, papers = [] }: ReviewViewerProps)
   // 生成标题 ID（与 Markdown 渲染器保持一致）
   const headingIdMap = useRef<Map<string, string>>(new Map())
 
+  // 统一的 id 生成函数
+  const makeId = (text: string) => text.toLowerCase().replace(/[^\w\u4e00-\u9fff]+/g, '-').replace(/^-|-$/g, '')
+
+  // 统一的文本清洗：去掉 Markdown 格式标记
+  const stripMd = (text: string) => text.replace(/\*\*/g, '').replace(/\*/g, '').replace(/__/g, '').replace(/_/g, '').trim()
+
+  // 从 React children 中递归提取纯文本
+  const extractText = (children: any): string => {
+    if (typeof children === 'string') return stripMd(children)
+    if (typeof children === 'number') return String(children)
+    if (Array.isArray(children)) return children.map(extractText).join('')
+    if (children?.props?.children) return extractText(children.props.children)
+    return ''
+  }
+
+  // 预处理 content：把没有 # 前缀但以 **数字.数字** 开头的粗体行转为 #### 标题
+  const processedContent = useMemo(() => {
+    return content.split('\n').map(line => {
+      if (line.match(/^\*\*\d+\.\d+/) && !line.startsWith('#')) {
+        return '#### ' + line
+      }
+      return line
+    }).join('\n')
+  }, [content])
+
   // 解析 Markdown 生成目录
   useEffect(() => {
-    const lines = content.split('\n')
+    const lines = processedContent.split('\n')
     const headings: Array<{ id: string; text: string; level: number }> = []
     const idCount: Record<string, number> = {}
 
     lines.forEach((line) => {
-      const match = line.match(/^(#{1,3})\s+(.+)$/)
+      const match = line.match(/^(#{1,4})\s+(.+)$/)
       if (match) {
         const level = match[1].length
-        const text = match[2].trim()
-        // 生成与 Markdown 渲染器一致的 ID
-        const baseId = text.toLowerCase().replace(/[^\w\u4e00-\u9fff]+/g, '-').replace(/^-|-$/g, '')
-        // 处理重复 ID
+        const rawText = stripMd(match[2])
+        const baseId = makeId(rawText)
         idCount[baseId] = (idCount[baseId] || 0) + 1
         const id = idCount[baseId] > 1 ? `${baseId}-${idCount[baseId]}` : baseId
 
-        headings.push({ id, text, level })
-        headingIdMap.current.set(text, id)
+        headings.push({ id, text: rawText, level })
+        headingIdMap.current.set(rawText, id)
       }
     })
+
+    // 标准化标题级别：让最高级标题从 level 1 开始
+    if (headings.length > 0) {
+      const minLevel = Math.min(...headings.map(h => h.level))
+      headings.forEach(h => { h.level = h.level - minLevel + 1 })
+    }
 
     // 构建嵌套的目录结构
     const buildTocTree = (items: Array<{ id: string; text: string; level: number }>): TableOfContents[] => {
@@ -83,14 +113,14 @@ export function ReviewViewer({ title, content, papers = [] }: ReviewViewerProps)
     }
 
     setToc(buildTocTree(headings))
-  }, [content])
+  }, [processedContent])
 
   // 监听滚动，高亮当前章节
   useEffect(() => {
     const handleScroll = () => {
       if (isClickScrolling.current) return
 
-      const headings = document.querySelectorAll('.review-body h1[id], .review-body h2[id], .review-body h3[id]')
+      const headings = document.querySelectorAll('.review-body h1[id], .review-body h2[id], .review-body h3[id], .review-body h4[id]')
       const scrollPosition = window.scrollY + 100
 
       let currentId = ''
@@ -113,34 +143,13 @@ export function ReviewViewer({ title, content, papers = [] }: ReviewViewerProps)
   // 点击目录项滚动到对应标题
   const handleTocClick = useCallback((id: string) => (e: React.MouseEvent) => {
     e.preventDefault()
-    const element = document.querySelector(`.review-body #${CSS.escape(id)}`) as HTMLElement
+    const element = document.getElementById(id) as HTMLElement
     if (!element) return
 
     isClickScrolling.current = true
     setActiveId(id)
 
     element.scrollIntoView({ behavior: 'smooth', block: 'start' })
-          currentId = element.id
-        }
-      })
-
-      if (currentId !== activeId) {
-        setActiveId(currentId)
-      }
-    }
-
-    window.addEventListener('scroll', handleScroll)
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [activeId])
-
-  // 点击目录项滚动到对应标题
-  const handleTocClick = useCallback((id: string) => (e: React.MouseEvent) => {
-    e.preventDefault()
-    const element = document.querySelector(`.review-body #${CSS.escape(id)}`) as HTMLElement
-    if (!element) return
-
-    isClickScrolling.current = true
-    setActiveId(id)
 
     window.scrollTo({ top: element.offsetTop - 80, behavior: 'smooth' })
 
@@ -223,19 +232,24 @@ export function ReviewViewer({ title, content, papers = [] }: ReviewViewerProps)
   // 自定义 Markdown 渲染器，添加 id 到标题（与目录 ID 保持一致）
   const components = useMemo(() => ({
     h1: ({ children, ...props }: any) => {
-      const text = children?.toString() || ''
-      const id = headingIdMap.current.get(text) || text.toLowerCase().replace(/[^\w\u4e00-\u9fff]+/g, '-').replace(/^-|-$/g, '')
+      const text = extractText(children)
+      const id = headingIdMap.current.get(text) || makeId(text)
       return <h1 id={id} {...props}>{children}</h1>
     },
     h2: ({ children, ...props }: any) => {
-      const text = children?.toString() || ''
-      const id = headingIdMap.current.get(text) || text.toLowerCase().replace(/[^\w\u4e00-\u9fff]+/g, '-').replace(/^-|-$/g, '')
+      const text = extractText(children)
+      const id = headingIdMap.current.get(text) || makeId(text)
       return <h2 id={id} {...props}>{children}</h2>
     },
     h3: ({ children, ...props }: any) => {
-      const text = children?.toString() || ''
-      const id = headingIdMap.current.get(text) || text.toLowerCase().replace(/[^\w\u4e00-\u9fff]+/g, '-').replace(/^-|-$/g, '')
+      const text = extractText(children)
+      const id = headingIdMap.current.get(text) || makeId(text)
       return <h3 id={id} {...props}>{children}</h3>
+    },
+    h4: ({ children, ...props }: any) => {
+      const text = extractText(children)
+      const id = headingIdMap.current.get(text) || makeId(text)
+      return <h4 id={id} {...props}>{children}</h4>
     }
   }), [])
 
@@ -253,8 +267,8 @@ export function ReviewViewer({ title, content, papers = [] }: ReviewViewerProps)
         {/* 正文内容 */}
         <main className="review-main">
           <div className="review-body">
-            <ReactMarkdown components={components}>
-              {content}
+            <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>
+              {processedContent}
             </ReactMarkdown>
           </div>
 

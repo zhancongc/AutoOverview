@@ -9,7 +9,7 @@
 """
 import asyncio
 import sys
-sys.path.append('/Users/zhancc/Github/PaperOverview/backend')
+sys.path.append('/Users/zhancc/Github/AutoOverview/backend')
 
 from services.contextual_keyword_translator import DomainKnowledge, translate_keywords_contextual
 from services.title_relevance_checker import batch_check_titles

@@ -369,8 +369,8 @@ function App() {
     <div className="app">
       <header className="app-header">
         <div className="header-title">
-          <h1>📚 论文综述生成器</h1>
-          <p className="subtitle">基于AI的智能文献综述生成工具</p>
+          <h1>📚 AutoOverview</h1>
+          <p className="subtitle">让综述编写简单到只需一句话</p>
         </div>
         <button className="settings-btn" onClick={() => setSettingsOpen(true)}>
           ⚙️ 设置
@@ -445,7 +445,7 @@ function App() {
       </main>
 
       <footer className="app-footer">
-        <p>© 2024 论文综述生成器 | 基于 FastAPI + React 构建</p>
+        <p>© 2026 AutoOverview | 基于 FastAPI + React 构建</p>
       </footer>
 
       <SettingsModal

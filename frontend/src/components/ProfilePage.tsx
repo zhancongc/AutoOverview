@@ -10,6 +10,7 @@ export function ProfilePage() {
   const [records, setRecords] = useState<ReviewRecord[]>([])
   const [loading, setLoading] = useState(false)
   const [userInfo, setUserInfo] = useState<any>(null)
+  const [credits, setCredits] = useState<number>(0)
 
   useEffect(() => {
     if (!isLoggedIn()) {
@@ -18,6 +19,7 @@ export function ProfilePage() {
     }
     setUserInfo(getLocalUserInfo())
     loadRecords()
+    api.getCredits().then(data => setCredits(data.credits)).catch(() => {})
   }, [])
 
   const loadRecords = async () => {
@@ -36,9 +38,8 @@ export function ProfilePage() {
 
   const handleViewRecord = (record: ReviewRecord) => {
     if (record.task_id) {
-      navigate(`/review/${record.task_id}`)
+      navigate(`/review?task_id=${record.task_id}`)
     } else if (record.id) {
-      // 如果没有 task_id，通过 record.id 加载
       navigate('/review', {
         state: {
           title: record.topic,
@@ -105,7 +106,7 @@ export function ProfilePage() {
       <nav className="profile-nav">
         <div className="nav-logo" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
           <span className="logo-icon">📚</span>
-          <span className="logo-text">PaperOverview</span>
+          <span className="logo-text">AutoOverview</span>
         </div>
         <div className="nav-actions">
           <button className="nav-btn nav-btn-home" onClick={() => navigate('/')}>
@@ -133,17 +134,9 @@ export function ProfilePage() {
             <div className="stat-number">{records.length}</div>
             <div className="stat-label">总综述数</div>
           </div>
-          <div className="stat-card">
-            <div className="stat-number">
-              {records.filter(r => r.status === 'success').length}
-            </div>
-            <div className="stat-label">已完成</div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-number">
-              {records.filter(r => r.status === 'processing').length}
-            </div>
-            <div className="stat-label">进行中</div>
+          <div className="stat-card stat-card-credits">
+            <div className="stat-number">{credits}</div>
+            <div className="stat-label">剩余额度</div>
           </div>
         </div>
 
@@ -220,7 +213,7 @@ export function ProfilePage() {
       {/* 页脚 */}
       <footer className="profile-footer">
         <div className="footer-content">
-          <p className="footer-copyright">© 2026 PaperOverview. All rights reserved.</p>
+          <p className="footer-copyright">© 2026 AutoOverview. All rights reserved.</p>
           <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer" className="footer-icp">
             沪ICP备2023018158号-4
           </a>

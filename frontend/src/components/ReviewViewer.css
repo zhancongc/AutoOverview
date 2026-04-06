@@ -75,6 +75,12 @@
 
 .toc-level-3 {
   padding-left: 2rem;
+  font-size: 0.9rem;
+}
+
+.toc-level-4 {
+  padding-left: 3rem;
+  font-size: 0.85rem;
 }
 
 .toc-children {
@@ -118,6 +124,14 @@
 .review-body h3 {
   font-size: 1.25rem;
   margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+  color: #555;
+  scroll-margin-top: 5rem;
+}
+
+.review-body h4 {
+  font-size: 1.1rem;
+  margin-top: 1.25rem;
   margin-bottom: 0.5rem;
   color: #555;
   scroll-margin-top: 5rem;
@@ -170,6 +184,29 @@
   font-style: italic;
 }
 
+.review-body table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+  font-size: 0.9rem;
+}
+
+.review-body table th,
+.review-body table td {
+  border: 1px solid #ddd;
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+}
+
+.review-body table th {
+  background: #f5f5f5;
+  font-weight: 600;
+}
+
+.review-body table tr:nth-child(even) {
+  background: #fafafa;
+}
+
 /* 参考文献 */
 .review-references {
   background: white;
@@ -180,10 +217,18 @@
 
 .review-references h2 {
   font-size: 1.5rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: 0.5rem;
   color: #333;
   border-bottom: 2px solid #667eea;
   padding-bottom: 0.5rem;
+  text-align: center;
+  padding-bottom: 0.5rem;
+}
+
+.references-summary {
+  font-size: 0.85rem;
+  color: #888;
+  margin: 0.25rem 0 1rem;
 }
 
 .references-list {
@@ -300,7 +345,8 @@
 }
 
 .references-notice {
-  margin-top: 1.5rem;
+  margin-top: 0.75rem;
+  margin-bottom: 1.5rem;
   padding: 1rem;
   background: linear-gradient(135deg, #f0f7ff 0%, #e8f4fd 100%);
   border-radius: 8px;

@@ -3,7 +3,7 @@
 """
 import asyncio
 import sys
-sys.path.append('/Users/zhancc/Github/PaperOverview/backend')
+sys.path.append('/Users/zhancc/Github/AutoOverview/backend')
 
 async def test_query_ordering():
     """测试查询排序逻辑"""

@@ -10,6 +10,7 @@ load_dotenv('.env.auth', override=True)  # 加载 .env.auth
 
 from fastapi import FastAPI, HTTPException, Depends, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from contextlib import asynccontextmanager
 from pydantic import BaseModel, Field
 from typing import List, Dict, Optional
@@ -26,6 +27,12 @@ import authkit.routers.auth
 authkit.routers.auth.set_get_db(auth_get_db)
 
 from authkit.routers import router as auth_router
+
+# 支付模块
+from authkit.routers import subscription as sub_router
+from authkit.routers import webhook as webhook_router
+from authkit.routers import payment_callback as payment_cb_router
+from authkit.models.payment import Subscription, PaymentLog, PaymentBase
 from models import ReviewRecord
 from services.scholarflux_wrapper import ScholarFlux
 from services.smart_paper_search import SmartPaperSearchService
@@ -39,6 +46,39 @@ from services.task_manager import TaskManager, TaskStatus, task_manager
 from services.review_task_executor import ReviewTaskExecutor
 from config import Config, UserConfig
 
+# 认证依赖
+security = HTTPBearer(auto_error=False)
+
+def get_current_user_id(credentials: HTTPAuthorizationCredentials = Depends(security)) -> Optional[int]:
+    """从 token 中提取 user_id，未登录返回 None"""
+    if not credentials:
+        return None
+    from authkit.core.security import decode_access_token
+    payload = decode_access_token(credentials.credentials)
+    if payload:
+        uid = payload.get("sub")
+        return int(uid) if uid else None
+    return None
+
+
+def check_and_deduct_credit(user_id: int, db_session: Session) -> Optional[str]:
+    """
+    检查并扣除用户综述额度。返回 None 表示通过，返回错误信息表示额度不足。
+    """
+    from authkit.models import User
+    user = db_session.query(User).filter(User.id == user_id).first()
+    if not user:
+        return None  # 用户不存在时不拦截
+
+    credits = user.get_meta("review_credits", 0)
+    if credits <= 0:
+        return "综述生成额度已用完，请购买套餐后继续使用"
+
+    # 扣除额度
+    user.set_meta("review_credits", credits - 1)
+    db_session.commit()
+    return None
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -49,12 +89,22 @@ async def lifespan(app: FastAPI):
     # 创建数据库表
     from models import Base
     db.create_tables()
-    print("[Startup] 数据库表已创建/更新")
+
+    # 创建支付相关表
+    PaymentBase.metadata.create_all(bind=db.engine)
+    print("[Startup] 数据库表已创建/更新（含支付表）")
 
     # 初始化 auth-kit 数据库（使用 PostgreSQL）
     auth_db_url = os.getenv("AUTH_DATABASE_URL", "postgresql://postgres:security@localhost/paper")
     init_auth_database(auth_db_url)
     print("[Startup] Auth 数据库已初始化 (PostgreSQL)")
+
+    # 初始化支付模块 - 注入数据库依赖
+    from authkit.database import get_db as authkit_get_db
+    sub_router.set_get_db(authkit_get_db)
+    webhook_router.set_get_db(authkit_get_db)
+    payment_cb_router.set_get_db(authkit_get_db)
+    print("[Startup] 支付模块已初始化")
 
     yield
     # 关闭时执行
@@ -76,6 +126,11 @@ app.add_middleware(
 
 # 集成认证路由
 app.include_router(auth_router)
+
+# 集成支付路由
+app.include_router(sub_router.router)
+app.include_router(webhook_router.router)
+app.include_router(payment_cb_router.router)
 
 # 请求模型
 class TopicRequest(BaseModel):
@@ -214,20 +269,34 @@ async def delete_record(
 
     return {"success": True, "message": "删除成功"}
 
+
 @app.post("/api/records/export")
 async def export_review_docx(
     request: ExportRequest,
-    db_session: Session = Depends(get_db)
+    db_session: Session = Depends(get_db),
+    user_id: Optional[int] = Depends(get_current_user_id)
 ):
     """
-    导出文献综述为 Word 文档
-
-    接收 record_id，从数据库获取数据并返回 .docx 文件
+    导出文献综述为 Word 文档（仅付费用户可用）
+    PDF 导出由前端 html2canvas + jspdf 实现
     """
     record = record_service.get_record(db_session, request.record_id)
 
     if not record:
         raise HTTPException(status_code=404, detail="记录不存在")
+
+    # Word 导出仅限付费用户
+    if user_id:
+        from authkit.database import SessionLocal as AuthSessionLocal
+        if AuthSessionLocal:
+            auth_db = AuthSessionLocal()
+            try:
+                from authkit.models import User
+                user = auth_db.query(User).filter(User.id == user_id).first()
+                if user and not user.get_meta("has_purchased", False):
+                    raise HTTPException(status_code=403, detail="Word 导出为付费功能，请购买套餐后使用")
+            finally:
+                auth_db.close()
 
     try:
         generator = DocxGenerator()
@@ -239,33 +308,26 @@ async def export_review_docx(
         )
 
         from fastapi.responses import Response
-
-        # 生成文件名：文献综述-论文标题-yymmdd-HHMMSS.docx
         from datetime import datetime
         now = datetime.now()
         timestamp = now.strftime("%y%m%d-%H%M%S")
 
-        # 清理主题中的特殊字符
         safe_topic = record.topic.replace('/', '-').replace('\\', '-').replace(':', '-')
         safe_topic = safe_topic.replace('（', '-').replace('）', '-')
         safe_topic = safe_topic.replace('<', '-').replace('>', '-').replace('|', '-')
         safe_topic = safe_topic.replace('"', '-').replace('*', '-').replace('?', '-')
-        # 限制主题长度，避免文件名过长
         safe_topic = safe_topic[:50]
 
         filename = f"文献综述-{safe_topic}-{timestamp}.docx"
-
-        # 使用 URL 编码处理中文文件名
         encoded_filename = quote(filename, safe='')
-        content_disposition = f"attachment; filename*=UTF-8''{encoded_filename}"
 
         return Response(
             content=docx_bytes,
             media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            headers={
-                "Content-Disposition": content_disposition
-            }
+            headers={"Content-Disposition": f"attachment; filename*=UTF-8''{encoded_filename}"}
         )
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"导出失败: {str(e)}")
 
@@ -277,6 +339,30 @@ async def health_check():
         "status": "ok",
         "deepseek_configured": bool(api_key)
     }
+
+
+@app.get("/api/usage/credits")
+async def get_credits(user_id: Optional[int] = Depends(get_current_user_id)):
+    """获取当前用户综述额度"""
+    if not user_id:
+        return {"credits": 0, "has_purchased": False}
+
+    from authkit.database import SessionLocal as AuthSessionLocal
+    if not AuthSessionLocal:
+        return {"credits": 0, "has_purchased": False}
+
+    auth_db = AuthSessionLocal()
+    try:
+        from authkit.models import User
+        user = auth_db.query(User).filter(User.id == user_id).first()
+        if not user:
+            return {"credits": 0, "has_purchased": False}
+        return {
+            "credits": user.get_meta("review_credits", 0),
+            "has_purchased": user.get_meta("has_purchased", False),
+        }
+    finally:
+        auth_db.close()
 
 
 @app.get("/api/papers/statistics")
@@ -539,7 +625,8 @@ class TaskSubmitResponse(BaseModel):
 async def submit_review_task(
     request: GenerateRequest,
     background_tasks: BackgroundTasks,
-    db_session: Session = Depends(get_db)
+    db_session: Session = Depends(get_db),
+    user_id: Optional[int] = Depends(get_current_user_id)
 ):
     """
     提交综述生成任务（异步模式）
@@ -553,6 +640,18 @@ async def submit_review_task(
             success=False,
             message="API配置错误：DEEPSEEK_API_KEY not configured"
         )
+
+    # 额度检查
+    if user_id:
+        from authkit.database import SessionLocal as AuthSessionLocal
+        if AuthSessionLocal:
+            auth_db = AuthSessionLocal()
+            try:
+                usage_error = check_and_deduct_credit(user_id, auth_db)
+                if usage_error:
+                    return TaskSubmitResponse(success=False, message=usage_error)
+            finally:
+                auth_db.close()
 
     try:
         # 创建任务
@@ -608,22 +707,46 @@ async def submit_review_task(
 
 
 @app.get("/api/tasks/{task_id}")
-async def get_task_status(task_id: str):
+async def get_task_status(task_id: str, db_session: Session = Depends(get_db)):
     """
     获取任务状态和结果
 
     前端轮询此接口获取任务进度和结果
     """
+    from models import ReviewTask, ReviewRecord
+
+    # 首先尝试从内存中获取任务
     task = task_manager.get_task(task_id)
 
-    if not task:
+    if task:
+        response_data = task.to_dict()
+        # 如果任务完成，添加结果数据
+        if task.status == TaskStatus.COMPLETED and task.result:
+            response_data["result"] = task.result
+        return {
+            "success": True,
+            "data": response_data
+        }
+
+    # 内存中没有，从数据库查询
+    review_task = db_session.query(ReviewTask).filter_by(id=task_id).first()
+
+    if not review_task:
         raise HTTPException(status_code=404, detail="任务不存在")
 
-    response_data = task.to_dict()
+    response_data = review_task.to_dict()
 
-    # 如果任务完成，添加结果数据
-    if task.status == TaskStatus.COMPLETED and task.result:
-        response_data["result"] = task.result
+    # 如果任务完成，从数据库获取综述记录并添加到结果中
+    if review_task.status == "completed" and review_task.review_record_id:
+        review_record = db_session.query(ReviewRecord).filter_by(id=review_task.review_record_id).first()
+        if review_record:
+            response_data["result"] = {
+                "id": review_record.id,
+                "review": review_record.review,
+                "papers": review_record.papers if isinstance(review_record.papers, list) else [],
+                "statistics": review_record.statistics if isinstance(review_record.statistics, dict) else {},
+                "created_at": review_record.created_at.isoformat() if review_record.created_at else ""
+            }
 
     return {
         "success": True,
@@ -632,31 +755,60 @@ async def get_task_status(task_id: str):
 
 
 @app.get("/api/tasks/{task_id}/review")
-async def get_task_review(task_id: str):
+async def get_task_review(task_id: str, db_session: Session = Depends(get_db)):
     """
     通过 task_id 获取综述结果
 
     用于分享链接：/review/{task_id}
     """
+    from models import ReviewTask, ReviewRecord
+
+    # 首先尝试从内存中获取任务
     task = task_manager.get_task(task_id)
 
-    if not task:
+    if task and task.status == TaskStatus.COMPLETED and task.result:
+        # 内存中有完整的任务数据
+        return {
+            "success": True,
+            "data": {
+                "task_id": task_id,
+                "topic": task.topic,
+                "review": task.result.get("review", ""),
+                "papers": task.result.get("papers", []),
+                "cited_papers_count": task.result.get("cited_papers_count", 0),
+                "created_at": task.result.get("created_at", ""),
+                "statistics": task.result.get("statistics", {}),
+                "record_id": task.result.get("id")
+            }
+        }
+
+    # 内存中没有，从数据库查询
+    review_task = db_session.query(ReviewTask).filter_by(id=task_id).first()
+
+    if not review_task:
         raise HTTPException(status_code=404, detail="任务不存在")
 
-    if task.status != TaskStatus.COMPLETED or not task.result:
+    if review_task.status != "completed" or not review_task.review_record_id:
         raise HTTPException(status_code=404, detail="综述尚未生成完成")
 
+    # 从数据库获取综述记录
+    review_record = db_session.query(ReviewRecord).filter_by(id=review_task.review_record_id).first()
+
+    if not review_record:
+        raise HTTPException(status_code=404, detail="综述记录不存在")
+
+    # 返回与内存任务相同格式的数据
     return {
         "success": True,
         "data": {
             "task_id": task_id,
-            "topic": task.topic,
-            "review": task.result.get("review", ""),
-            "papers": task.result.get("papers", []),
-            "cited_papers_count": task.result.get("cited_papers_count", 0),
-            "created_at": task.result.get("created_at", ""),
-            "statistics": task.result.get("statistics", {}),
-            "record_id": task.result.get("id")
+            "topic": review_record.topic,
+            "review": review_record.review,
+            "papers": review_record.papers if isinstance(review_record.papers, list) else [],
+            "cited_papers_count": len(review_record.papers) if isinstance(review_record.papers, list) else 0,
+            "created_at": review_record.created_at.isoformat() if review_record.created_at else "",
+            "statistics": review_record.statistics if isinstance(review_record.statistics, dict) else {},
+            "record_id": review_record.id
         }
     }
 

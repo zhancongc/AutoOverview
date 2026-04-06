@@ -12,6 +12,7 @@ from services.task_manager import TaskManager, TaskStatus, task_manager
 from services.paper_filter import PaperFilterService
 from services.smart_review_generator_final import SmartReviewGeneratorFinal
 from services.semantic_scholar_search import SemanticScholarService
+from services.paper_search_agent import PaperSearchAgent
 from services.citation_validator_v2 import CitationValidatorV2
 from services.review_record_service import ReviewRecordService
 from services.stage_recorder import stage_recorder
@@ -103,32 +104,13 @@ class ReviewTaskExecutor:
             ss_service = SemanticScholarService(api_key=semantic_scholar_api_key)
 
             try:
-                # 用主题搜索，按引用量排序，取尽可能多的论文
-                all_papers = await ss_service.search_papers(
-                    query=topic,
-                    years_ago=params.get('search_years', 10),
-                    limit=100,
-                    sort="citationCount:desc"
+                # 使用 LLM + Function Calling 驱动检索
+                search_agent = PaperSearchAgent(ss_service=ss_service)
+                all_papers = await search_agent.search(
+                    topic=topic,
+                    search_years=params.get('search_years', 10),
+                    target_count=params.get('target_count', 50)
                 )
-
-                # 如果结果不足，用简化关键词再搜一次
-                if len(all_papers) < 30:
-                    # 取主题核心部分作为补充查询
-                    simple_query = topic.split('的')[0] if '的' in topic else topic
-                    if simple_query != topic:
-                        print(f"[阶段1] 结果不足({len(all_papers)}篇)，用简化关键词补充搜索: {simple_query}")
-                        extra_papers = await ss_service.search_papers(
-                            query=simple_query,
-                            years_ago=params.get('search_years', 10),
-                            limit=100,
-                            sort="citationCount:desc"
-                        )
-                        # 去重合并
-                        seen_ids = {p.get('id') for p in all_papers}
-                        for p in extra_papers:
-                            if p.get('id') not in seen_ids:
-                                seen_ids.add(p.get('id'))
-                                all_papers.append(p)
 
                 print(f"[阶段1] 搜索完成: 共 {len(all_papers)} 篇文献")
 

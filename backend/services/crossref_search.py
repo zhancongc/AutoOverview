@@ -19,7 +19,7 @@ class CrossrefSearchService:
         self.client = httpx.AsyncClient(
             timeout=30.0,
             headers={
-                'User-Agent': 'PaperOverview/1.0 (+https://github.com/paperciting/PaperOverview; mailto:paperciting@example.com)',
+                'User-Agent': 'AutoOverview/1.0 (+https://github.com/autociting/AutoOverview; mailto:autociting@example.com)',
                 'Accept': 'application/json'
             }
         )

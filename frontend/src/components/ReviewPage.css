@@ -1,0 +1,209 @@
+/* ==================== 综述页面 - 学术风格 ==================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Source+Sans+Pro:wght@300;400;600;700&display=swap');
+
+:root {
+  --academic-red: #D63031;
+  --academic-red-dark: #B71C1C;
+  --academic-red-light: #FF5252;
+  --cream-white: #FFFBF5;
+  --pure-white: #FFFFFF;
+  --ink-black: #1A1A1A;
+  --charcoal: #2D3436;
+  --text-gray: #636E72;
+  --light-gray: #DFE6E9;
+  --border-gray: #E8ECEF;
+}
+
+.review-page {
+  min-height: 100vh;
+  background: var(--cream-white);
+  font-family: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.review-page-header {
+  background: white;
+  color: var(--ink-black);
+  padding: 1.5rem 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  border-bottom: 2px solid var(--academic-red);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  position: relative;
+}
+
+.back-button {
+  padding: 0.625rem 1.25rem;
+  background: var(--cream-white);
+  color: var(--charcoal);
+  border: 2px solid var(--border-gray);
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-family: 'Source Sans Pro', sans-serif;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  position: absolute;
+  left: 3rem;
+}
+
+.back-button:hover {
+  background: white;
+  border-color: var(--academic-red);
+  color: var(--academic-red);
+  transform: translateX(-3px);
+}
+
+.review-page-title {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.35rem;
+  font-weight: 700;
+  margin: 0;
+  flex: 1;
+  text-align: center;
+  color: var(--ink-black);
+  letter-spacing: -0.02em;
+  padding: 0 2rem;
+}
+
+/* 标题移到正文区域顶部 */
+.review-inline-title {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--ink-black);
+  text-align: center;
+  margin: 0;
+  padding: 1.5rem 2rem 0.5rem;
+  max-width: 1400px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.export-button {
+  padding: 0.625rem 1.5rem;
+  background: linear-gradient(135deg, var(--academic-red) 0%, var(--academic-red-dark) 100%);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 700;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-family: 'Source Sans Pro', sans-serif;
+  box-shadow: 0 4px 12px rgba(214, 48, 49, 0.25);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  position: absolute;
+  right: 3rem;
+}
+
+.regenerate-button {
+  padding: 0.625rem 1.25rem;
+  background: var(--cream-white);
+  color: var(--charcoal);
+  border: 2px solid var(--border-gray);
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-family: 'Source Sans Pro', sans-serif;
+}
+
+.regenerate-button:hover {
+  background: white;
+  border-color: var(--academic-red);
+  color: var(--academic-red);
+}
+
+.export-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(214, 48, 49, 0.35);
+}
+
+.export-button:active {
+  transform: translateY(0);
+}
+
+@media (max-width: 900px) {
+  .review-page-header {
+    padding: 1rem 1.5rem;
+    gap: 0.75rem;
+  }
+
+  .review-inline-title {
+    font-size: 1.15rem;
+    padding: 1rem 1.5rem 0.25rem;
+  }
+}
+
+@media (max-width: 520px) {
+  .review-page-header {
+    padding: 1rem;
+  }
+
+  .back-button,
+  .export-button {
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+  }
+
+  .segmented-tab {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.82rem;
+  }
+
+  .review-inline-title {
+    font-size: 1rem;
+    padding: 0.75rem 1rem 0.25rem;
+  }
+}
+
+/* ==================== 分段 Tab 控件（嵌入 header） ==================== */
+
+.review-segmented-tabs {
+  display: flex;
+  background: var(--cream-white);
+  border-radius: 10px;
+  padding: 3px;
+  gap: 2px;
+}
+
+.segmented-tab {
+  padding: 0.45rem 1.1rem;
+  background: none;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-gray);
+  transition: all 0.2s ease;
+  font-family: 'Source Sans Pro', sans-serif;
+  white-space: nowrap;
+}
+
+.segmented-tab:hover {
+  color: var(--charcoal);
+}
+
+.segmented-tab.active {
+  background: white;
+  color: var(--academic-red);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}

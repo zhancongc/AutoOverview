@@ -1,5 +1,5 @@
 -- ============================================================================
--- PaperOverview Database Schema
+-- AutoOverview Database Schema
 -- PostgreSQL DDL
 -- Generated from backend/models.py
 -- ============================================================================

@@ -19,6 +19,7 @@
   min-height: 100vh;
   background: var(--cream-white);
   padding: 0;
+  padding-top: 72px;
   display: flex;
   flex-direction: column;
   position: relative;
@@ -55,17 +56,38 @@
 /* ==================== 顶部导航栏 ==================== */
 
 .home-nav {
-  background: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(20px);
   padding: 1.5rem 3rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
   border-bottom: 1px solid var(--border-gray);
-  position: sticky;
+  position: fixed;
   top: 0;
+  left: 0;
+  right: 0;
   z-index: 100;
-  position: relative;
+}
+
+.nav-links {
+  display: flex;
+  gap: 2rem;
+  align-items: center;
+}
+
+.nav-links a {
+  font-family: 'Source Sans Pro', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--charcoal);
+  text-decoration: none;
+  transition: color 0.2s;
+  letter-spacing: 0.01em;
+}
+
+.nav-links a:hover {
+  color: var(--academic-red);
 }
 
 .nav-logo {
@@ -563,20 +585,6 @@
 
 /* ==================== 竞品对比 ==================== */
 
-.comparison-section {
-  margin-top: 2.5rem;
-  text-align: center;
-}
-
-.comparison-title {
-  font-family: 'Playfair Display', Georgia, serif;
-  font-size: 2.25rem;
-  font-weight: 700;
-  color: var(--ink-black);
-  margin-bottom: 3rem;
-  letter-spacing: -0.02em;
-}
-
 .comparison-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
@@ -667,6 +675,300 @@
   color: var(--text-gray);
 }
 
+/* ==================== Landing Sections ==================== */
+
+.landing-section {
+  scroll-margin-top: 80px;
+  padding: 5rem 3rem;
+}
+
+.section-alt {
+  background: white;
+}
+
+.section-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.section-title {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 2.25rem;
+  font-weight: 700;
+  color: var(--ink-black);
+  text-align: center;
+  margin-bottom: 1.2rem;
+  letter-spacing: -0.02em;
+}
+
+.section-subtitle {
+  font-family: 'Source Sans Pro', sans-serif;
+  font-size: 1.05rem;
+  color: var(--text-gray);
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+/* ==================== 使用流程 ==================== */
+
+.process-steps {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 1.5rem;
+}
+
+.process-step {
+  flex: 1;
+  max-width: 320px;
+  background: var(--cream-white);
+  border-radius: 20px;
+  padding: 2.5rem 2rem;
+  text-align: center;
+  border: 1px solid var(--border-gray);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.process-step:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.08);
+  border-color: rgba(214, 48, 49, 0.2);
+}
+
+.step-number {
+  font-family: 'Playfair Display', serif;
+  font-size: 3rem;
+  font-weight: 700;
+  color: rgba(214, 48, 49, 0.12);
+  line-height: 1;
+  margin-bottom: 0.75rem;
+}
+
+.step-icon {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+}
+
+.step-title {
+  font-family: 'Source Sans Pro', sans-serif;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--ink-black);
+  margin-bottom: 0.75rem;
+}
+
+.step-desc {
+  font-family: 'Source Sans Pro', sans-serif;
+  font-size: 0.9rem;
+  color: var(--text-gray);
+  line-height: 1.7;
+  margin: 0;
+}
+
+.process-arrow {
+  font-size: 2rem;
+  color: var(--light-gray);
+  align-self: center;
+  padding-top: 2rem;
+  flex-shrink: 0;
+}
+
+/* ==================== 案例展示 ==================== */
+
+.cases-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+}
+
+.case-card {
+  background: white;
+  border-radius: 20px;
+  padding: 2rem;
+  border: 2px solid var(--border-gray);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+
+.case-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.08);
+  border-color: rgba(214, 48, 49, 0.2);
+}
+
+.case-icon {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+}
+
+.case-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--ink-black);
+  margin-bottom: 0.75rem;
+  line-height: 1.4;
+}
+
+.case-desc {
+  font-family: 'Source Sans Pro', sans-serif;
+  font-size: 0.9rem;
+  color: var(--text-gray);
+  line-height: 1.7;
+  margin-bottom: 1.25rem;
+}
+
+.case-tags {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.case-tag {
+  font-family: 'Source Sans Pro', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.3rem 0.75rem;
+  background: rgba(214, 48, 49, 0.08);
+  color: var(--academic-red);
+  border-radius: 50px;
+}
+
+/* ==================== 价格方案 ==================== */
+
+.pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+}
+
+.pricing-card {
+  background: white;
+  border-radius: 20px;
+  padding: 2.5rem 2rem;
+  border: 2px solid var(--border-gray);
+  text-align: center;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.pricing-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
+}
+
+.pricing-featured {
+  border-color: var(--academic-red);
+  background: linear-gradient(180deg, rgba(214, 48, 49, 0.04) 0%, white 100%);
+  box-shadow: 0 8px 24px rgba(214, 48, 49, 0.15);
+}
+
+.pricing-featured:hover {
+  box-shadow: 0 16px 40px rgba(214, 48, 49, 0.25);
+}
+
+.pricing-badge {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, var(--academic-red), var(--academic-red-dark));
+  color: white;
+  font-family: 'Source Sans Pro', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 0.35rem 1.25rem;
+  border-radius: 50px;
+  letter-spacing: 0.05em;
+}
+
+.pricing-name {
+  font-family: 'Source Sans Pro', sans-serif;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--charcoal);
+  margin-bottom: 1rem;
+}
+
+.pricing-price {
+  font-family: 'Playfair Display', serif;
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--ink-black);
+  margin-bottom: 2rem;
+}
+
+.pricing-original {
+  font-size: 1rem;
+  color: var(--text-gray);
+  text-decoration: line-through;
+  margin-right: 8px;
+  font-weight: 400;
+}
+
+.pricing-period {
+  font-family: 'Source Sans Pro', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-gray);
+}
+
+.pricing-features {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 2rem 0;
+  text-align: left;
+  flex: 1;
+}
+
+.pricing-features li {
+  font-family: 'Source Sans Pro', sans-serif;
+  font-size: 0.9rem;
+  color: var(--charcoal);
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--border-gray);
+  line-height: 1.5;
+}
+
+.pricing-features li:last-child {
+  border-bottom: none;
+}
+
+.pricing-btn {
+  width: 100%;
+  padding: 0.85rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-family: 'Source Sans Pro', sans-serif;
+  background: var(--cream-white);
+  color: var(--charcoal);
+  border: 2px solid var(--border-gray);
+}
+
+.pricing-btn:hover {
+  border-color: var(--academic-red);
+  color: var(--academic-red);
+  transform: translateY(-2px);
+}
+
+.pricing-btn-primary {
+  background: linear-gradient(135deg, var(--academic-red), var(--academic-red-dark));
+  color: white;
+  border: none;
+  box-shadow: 0 4px 12px rgba(214, 48, 49, 0.25);
+}
+
+.pricing-btn-primary:hover {
+  box-shadow: 0 8px 20px rgba(214, 48, 49, 0.35);
+  color: white;
+}
+
 /* ==================== 页脚 ==================== */
 
 .home-footer {
@@ -752,14 +1054,50 @@
     grid-template-columns: repeat(2, 1fr);
   }
 
-  .comparison-title {
+  .section-title {
     font-size: 1.875rem;
+  }
+
+  .process-steps {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .process-arrow {
+    display: none;
+  }
+
+  .process-step {
+    max-width: 280px;
+  }
+
+  .cases-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .pricing-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
 @media (max-width: 768px) {
+  .simple-home {
+    padding-top: 110px;
+  }
+
   .home-nav {
     padding: 1rem 1.5rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .nav-links {
+    order: 3;
+    width: 100%;
+    justify-content: center;
+    gap: 1.25rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--border-gray);
   }
 
   .logo-text {
@@ -813,8 +1151,22 @@
     grid-template-columns: 1fr;
   }
 
-  .comparison-title {
+  .section-title {
     font-size: 1.625rem;
+  }
+
+  .landing-section {
+    padding: 3.5rem 1.5rem;
+  }
+
+  .cases-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .pricing-grid {
+    grid-template-columns: 1fr;
+    max-width: 400px;
+    margin: 0 auto;
   }
 }
 
@@ -829,6 +1181,10 @@
 
   .nav-btn {
     padding: 0.4rem 0.875rem;
+    font-size: 0.8rem;
+  }
+
+  .nav-links a {
     font-size: 0.8rem;
   }
 
@@ -851,5 +1207,9 @@
 
   .home-footer {
     padding: 2rem 1.5rem;
+  }
+
+  .landing-section {
+    padding: 3rem 1rem;
   }
 }

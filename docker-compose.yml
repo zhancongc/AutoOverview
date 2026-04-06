@@ -3,7 +3,7 @@ version: '3.8'
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: paperoverview_postgres
+    container_name: autooverview_postgres
     restart: unless-stopped
     environment:
       POSTGRES_USER: postgres

@@ -25,7 +25,6 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
             <ReviewPage />
           </ProtectedRoute>
         } />
-        <Route path="/review/:taskId" element={<ReviewPage />} />
         <Route path="/jade" element={<App />} />
       </Routes>
     </BrowserRouter>

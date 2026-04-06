@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react'
-import { useNavigate, useLocation, useParams } from 'react-router-dom'
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom'
 import { ReviewViewer } from './ReviewViewer'
+import { PaymentModal } from './PaymentModal'
 import { api } from '../api'
 import type { Paper } from '../types'
 import './ReviewPage.css'
+import { exportToPdf } from '../utils/pdfExport'
 
 interface ReviewState {
   title: string
@@ -12,10 +14,13 @@ interface ReviewState {
   recordId?: number
 }
 
+type TabType = 'content' | 'references'
+
 export function ReviewPage() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { taskId } = useParams<{ taskId: string }>()
+  const [searchParams] = useSearchParams()
+  const taskId = searchParams.get('task_id') || ''
   const state = location.state as ReviewState | null
 
   // 通过 taskId 加载的数据
@@ -27,6 +32,9 @@ export function ReviewPage() {
   } | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [activeTab, setActiveTab] = useState<TabType>('content')
+  const [hasPurchased, setHasPurchased] = useState(false)
+  const [showPayModal, setShowPayModal] = useState(false)
 
   // 如果 URL 中有 taskId，从后端加载
   useEffect(() => {
@@ -49,6 +57,9 @@ export function ReviewPage() {
           setError('加载失败：' + (err.response?.data?.detail || err.message))
         })
         .finally(() => setLoading(false))
+    } else if (!taskId && !state) {
+      // 没有 taskId 也没有 state，回到首页
+      navigate('/')
     }
   }, [taskId, state])
 
@@ -59,7 +70,7 @@ export function ReviewPage() {
     return (
       <div className="review-page">
         <div className="review-page-header">
-          <button className="back-button" onClick={() => navigate('/')}>← 返回首页</button>
+          <button className="back-button" onClick={() => navigate(-1)}>← 返回</button>
         </div>
         <div style={{ textAlign: 'center', padding: '4rem', color: '#666' }}>{error}</div>
       </div>
@@ -70,7 +81,7 @@ export function ReviewPage() {
     return (
       <div className="review-page">
         <div className="review-page-header">
-          <button className="back-button" onClick={() => navigate('/')}>← 返回首页</button>
+          <button className="back-button" onClick={() => navigate(-1)}>← 返回</button>
         </div>
         <div style={{ textAlign: 'center', padding: '4rem', color: '#666' }}>加载中...</div>
       </div>
@@ -78,33 +89,67 @@ export function ReviewPage() {
   }
 
   if (!reviewData || !reviewData.content) {
+    // taskId 场景下，数据还在加载中或加载失败（error 已在上面处理）
+    if (taskId) {
+      return (
+        <div className="review-page">
+          <div className="review-page-header">
+            <button className="back-button" onClick={() => navigate(-1)}>← 返回</button>
+          </div>
+          <div style={{ textAlign: 'center', padding: '4rem', color: '#666' }}>
+            {loading ? '加载中...' : '综述数据为空'}
+          </div>
+        </div>
+      )
+    }
     navigate('/')
     return null
   }
 
   const handleBack = () => {
+    navigate(-1)
+  }
+
+  const handleRegenerate = () => {
+    sessionStorage.setItem('pending_topic', reviewData.title)
     navigate('/')
   }
 
-  const handleExport = async () => {
+  const handleExportPdf = async () => {
+    const el = document.querySelector('.review-viewer .review-main') as HTMLElement
+    if (!el) { alert('导出失败，未找到内容'); return }
+    try {
+      const filename = reviewData.title.replace(/[\/\\:]/g, '-')
+      await exportToPdf(el, filename, !hasPurchased)
+    } catch (err) {
+      alert('导出 PDF 失败，请稍后重试')
+      console.error(err)
+    }
+  }
+
+  const handleExportWord = async () => {
+    if (!hasPurchased) {
+      setShowPayModal(true)
+      return
+    }
     if (!reviewData.recordId) {
       alert('该综述暂不支持导出')
       return
     }
-
     try {
+      const token = localStorage.getItem('auth_token')
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+      if (token) headers.Authorization = `Bearer ${token}`
       const response = await fetch('/api/records/export', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers,
         body: JSON.stringify({ record_id: reviewData.recordId })
       })
-
-      if (!response.ok) {
-        throw new Error('导出失败')
+      if (response.status === 403) {
+        setShowPayModal(true)
+        return
       }
-
+      if (!response.ok) throw new Error('导出失败')
       const blob = await response.blob()
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
@@ -125,18 +170,133 @@ export function ReviewPage() {
     <div className="review-page">
       <div className="review-page-header">
         <button className="back-button" onClick={handleBack}>
-          ← 返回首页
+          ← 返回
         </button>
-        <h1 className="review-page-title">{reviewData.title}</h1>
-        <button className="export-button" onClick={handleExport}>
-          导出 Word
-        </button>
+        <div className="review-segmented-tabs">
+          <button
+            className={`segmented-tab ${activeTab === 'content' ? 'active' : ''}`}
+            onClick={() => setActiveTab('content')}
+          >
+            正文
+          </button>
+          <button
+            className={`segmented-tab ${activeTab === 'references' ? 'active' : ''}`}
+            onClick={() => setActiveTab('references')}
+          >
+            参考文献
+          </button>
+        </div>
+        <div className="header-actions">
+          <button className="regenerate-button" onClick={handleRegenerate}>
+            重新生成
+          </button>
+          <button className="export-button export-word-btn" onClick={handleExportWord}>
+            导出 Word
+          </button>
+        </div>
       </div>
-      <ReviewViewer
-        title={reviewData.title}
-        content={reviewData.content}
-        papers={reviewData.papers}
-      />
+      {activeTab === 'content' && (
+        <h2 className="review-inline-title">{reviewData.title}</h2>
+      )}
+      {activeTab === 'content' ? (
+        <ReviewViewer
+          title={reviewData.title}
+          content={reviewData.content}
+          papers={[]}
+        />
+      ) : (
+        reviewData.papers.length > 0 ? (
+          <div className="review-references" style={{ maxWidth: 960, margin: '0 auto', padding: '2rem' }}>
+            <h2>参考文献</h2>
+            <p className="references-summary">
+              共 {reviewData.papers.length} 篇文献
+              {(() => {
+                const currentYear = new Date().getFullYear()
+                const recentCount = reviewData.papers.filter(p => p.year >= currentYear - 5).length
+                const englishCount = reviewData.papers.filter(p => p.is_english).length
+                const total = reviewData.papers.length
+                const parts = []
+                if (total > 0) {
+                  parts.push(`近5年 ${Math.round(recentCount / total * 100)}%`)
+                  parts.push(`英文 ${Math.round(englishCount / total * 100)}%`)
+                }
+                return parts.length > 0 ? ` · ${parts.join(' · ')}` : ''
+              })()}
+            </p>
+            <div className="references-notice">
+              <span className="notice-icon">💡</span>
+              <span className="notice-text">
+                点击文献标题或右侧平台图标，可在第三方平台验证文献真实性
+              </span>
+            </div>
+            <ol className="references-list">
+              {reviewData.papers.map((paper, index) => {
+                const searchQuery = encodeURIComponent(paper.title)
+                const verificationLinks = [
+                  { name: 'Google Scholar', url: `https://scholar.google.com/scholar?q=${searchQuery}`, icon: '🔬', color: '#4285f4' },
+                  { name: '百度学术', url: `https://xueshu.baidu.com/s?wd=${searchQuery}`, icon: '🎓', color: '#2932e1' },
+                  paper.url
+                    ? { name: 'Semantic Scholar', url: paper.url, icon: '📚', color: '#1a73e8' }
+                    : { name: 'Semantic Scholar', url: `https://www.semanticscholar.org/search?q=${searchQuery}`, icon: '📚', color: '#1a73e8' },
+                  ...(paper.doi ? [{ name: 'DOI', url: `https://doi.org/${paper.doi}`, icon: '🔗', color: '#7f8c8d' }] : [])
+                ]
+                return (
+                  <li key={paper.id} className="reference-item">
+                    <div className="reference-header">
+                      <span className="ref-number">{index + 1}.</span>
+                      <div className="ref-verification">
+                        {verificationLinks.map((link) => (
+                          <a
+                            key={link.name}
+                            href={link.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="verification-link"
+                            title={`在 ${link.name} 中验证`}
+                            style={{ '--link-color': link.color } as any}
+                          >
+                            <span className="link-icon">{link.icon}</span>
+                            <span className="link-name">{link.name}</span>
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="ref-content">
+                      <a
+                        href={verificationLinks.find(l => l.name === 'Semantic Scholar')?.url || verificationLinks[0].url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="ref-title-link"
+                        title="点击在第三方平台查看"
+                      >
+                        {paper.title}
+                      </a>
+                      <div className="ref-meta">
+                        <span className="ref-authors">{paper.authors.join(', ')}</span>
+                        <span className="ref-year"> ({paper.year})</span>
+                      </div>
+                    </div>
+                  </li>
+                )
+              })}
+            </ol>
+          </div>
+        ) : (
+          <div style={{ textAlign: 'center', padding: '4rem', color: '#666' }}>
+            暂无参考文献
+          </div>
+        )
+      )}
+      {showPayModal && (
+        <PaymentModal
+          onClose={() => setShowPayModal(false)}
+          onPaymentSuccess={() => {
+            setShowPayModal(false)
+            setHasPurchased(true)
+          }}
+          planType="single"
+        />
+      )}
     </div>
   )
 }

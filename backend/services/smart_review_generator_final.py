@@ -325,7 +325,46 @@ class SmartReviewGeneratorFinal:
         print(f"[规范] 最终参考文献: {len(final_references)} 篇")
         print(f"[规范] 引用次数统计: {dict(global_counts)}")
 
+        # === 规则 6: 修正正文中声称的论文数量 ===
+        content = self._fix_paper_count_claims(content, len(final_references))
+
         return content, final_references
+
+    def _fix_paper_count_claims(self, content: str, actual_count: int) -> str:
+        """
+        修正正文中声称的论文数量，使其与最终实际引用数量一致。
+        解决"精选出40篇"但实际只有27篇参考文献的不一致问题。
+        """
+
+        def replace_count(match):
+            prefix = match.group(1)  # "精选" "筛选" 等前缀词
+            old_num = int(match.group(2))
+            if old_num != actual_count:
+                print(f"[数字校正] '{prefix}{old_num}篇' -> '{prefix}{actual_count}篇' (实际引用数)")
+            return f'{prefix}{actual_count}篇'
+
+        # 匹配 "精选出 X 篇" "筛选出了 X 篇" 等
+        content = re.sub(
+            r'(精选|筛选|选出|保留|纳入|最终选出|最终保留)\s*(?:出\s*|了\s*)?(\d+)\s*篇',
+            replace_count,
+            content
+        )
+
+        # 匹配 "X 篇核心文献" "X 篇相关文献"
+        def replace_x_documents(match):
+            old_num = int(match.group(1))
+            suffix = match.group(2)
+            if old_num != actual_count:
+                print(f"[数字校正] '{old_num}篇{suffix}' -> '{actual_count}篇{suffix}'")
+            return f'{actual_count}篇{suffix}'
+
+        content = re.sub(
+            r'(\d+)\s*篇(核心|相关|重要|关键)文献',
+            replace_x_documents,
+            content
+        )
+
+        return content
 
     def _extract_cited_indices(self, content: str) -> List[int]:
         """提取正文中的所有引用编号（按出现顺序）"""
@@ -384,6 +423,8 @@ class SmartReviewGeneratorFinal:
         """格式化 IEEE 参考文献"""
         lines = []
 
+        current_year = datetime.now().year
+
         for i, paper in enumerate(papers, 1):
             title = paper.get("title", "Unknown Title")
             authors = paper.get("authors", [])
@@ -397,6 +438,10 @@ class SmartReviewGeneratorFinal:
                 ""
             )
 
+            # === DOI/标识符处理 ===
+            arxiv_id = self._extract_arxiv_id(paper)
+            doi = self._validate_and_clean_doi(doi, arxiv_id, year, current_year, venue)
+
             author_str = self._format_authors_ieee(authors)
 
             is_arxiv = "arxiv" in venue.lower() if venue else False
@@ -407,8 +452,8 @@ class SmartReviewGeneratorFinal:
 
             if is_arxiv:
                 ref_entry = f"[{i}] {author_str}\"{title},\" arXiv preprint"
-                if doi:
-                    ref_entry += f", {doi}"
+                if arxiv_id:
+                    ref_entry += f", arXiv:{arxiv_id}"
                 if year and year != "n.d.":
                     ref_entry += f", {year}"
             elif is_conference and venue:
@@ -429,10 +474,110 @@ class SmartReviewGeneratorFinal:
                     ref_entry += f", {year}"
                 if doi:
                     ref_entry += f". DOI: {doi}"
+                elif arxiv_id:
+                    ref_entry += f", arXiv:{arxiv_id}"
 
             lines.append(ref_entry)
 
         return "\n\n".join(lines)
+
+    def _validate_and_clean_doi(
+        self, doi: str, arxiv_id: str, year, current_year: int, venue: str
+    ) -> str:
+        """
+        验证并清理 DOI：
+        1. 非白名单前缀的 DOI 降级（如会议平台自编号 10.52202/...）
+        2. 当年/次年的会议论文统一降级为 arXiv（可能尚未正式出版）
+        3. 无效格式 DOI 清除
+        """
+        if not doi:
+            return ""
+
+        # DOI 格式基础校验：必须是 10.xxxx/xxxx 格式
+        if not re.match(r'^10\.\d{4,}/', doi):
+            return ""
+
+        # 白名单前缀：可靠的学术出版商
+        TRUSTED_PREFIXES = [
+            '10.1109/',   # IEEE
+            '10.1145/',   # ACM
+            '10.1038/',   # Nature
+            '10.1126/',   # Science
+            '10.1007/',   # Springer
+            '10.1016/',   # Elsevier
+            '10.1021/',   # ACS
+            '10.1063/',   # AIP
+            '10.1080/',   # Taylor & Francis
+            '10.1162/',   # MIT Press
+            '10.1371/',   # PLOS
+            '10.1523/',   # Society for Neuroscience
+            '10.48550/',  # arXiv (via DOI)
+            '10.18653/',  # ACL
+            '10.5555/',   # AAAI
+            '10.1609/',   # AAAI
+            '10.4204/',   # EPTCS/LIPIcs
+            '10.4230/',   # Dagstuhl/LIPIcs
+        ]
+
+        is_trusted = any(doi.startswith(prefix) for prefix in TRUSTED_PREFIXES)
+
+        # 非白名单 DOI：回退到 arXiv ID 或清空
+        if not is_trusted:
+            if arxiv_id:
+                print(f"[DOI过滤] 非白名单DOI '{doi}' -> 回退 arXiv:{arxiv_id}")
+                return ""
+            else:
+                print(f"[DOI过滤] 非白名单DOI '{doi}' -> 清空")
+                return ""
+
+        # 当年或未来年份的会议论文：可能尚未正式出版，降级
+        try:
+            paper_year = int(year) if year else 0
+        except (ValueError, TypeError):
+            paper_year = 0
+
+        if paper_year >= current_year:
+            conference_keywords = ['CVPR', 'ICCV', 'ECCV', 'NeurIPS', 'ICML', 'ICLR',
+                                   'AAAI', 'IJCAI', 'ACL', 'EMNLP', 'CVF']
+            venue_upper = venue.upper() if venue else ""
+            is_conference_paper = any(kw in venue_upper for kw in conference_keywords)
+
+            if is_conference_paper:
+                if arxiv_id:
+                    print(f"[预印本降级] {paper_year}年会议论文 '{title[:40]}...' -> arXiv:{arxiv_id}")
+                    return ""
+                else:
+                    # 有可信 DOI 但可能是预分配的，保留但加警告
+                    print(f"[预印本警告] {paper_year}年会议论文使用DOI '{doi}' (可能尚未正式出版)")
+
+        return doi
+
+    def _extract_arxiv_id(self, paper: Dict) -> str:
+        """从论文数据中提取 arXiv ID"""
+        # 从 DOI 提取
+        doi = paper.get("doi", "")
+        if doi and "10.48550/arXiv" in doi:
+            match = re.search(r'arXiv\.(\d+\.\d+)', doi)
+            if match:
+                return match.group(1)
+
+        # 从 externalIds 提取
+        ext_ids = paper.get("externalIds", {})
+        if ext_ids and ext_ids.get("ArXiv"):
+            return ext_ids["ArXiv"]
+
+        # 从 abstract 提取
+        abstract = paper.get("abstract", "") or ""
+        match = re.search(r'arXiv:(\d+\.\d+)', abstract)
+        if match:
+            return match.group(1)
+
+        # 从 paperId 判断（Semantic Scholar 的 arXiv ID 格式）
+        paper_id = paper.get("id", "") or paper.get("paperId", "")
+        if paper_id and re.match(r'^\d{4}\.\d{4,5}$', paper_id):
+            return paper_id
+
+        return ""
 
     def _format_authors_ieee(self, authors: List[str]) -> str:
         """格式化作者（IEEE 格式）"""
@@ -535,7 +680,7 @@ class SmartReviewGeneratorFinal:
 - 使用学术化表达
 
 **输出要求**：
-- 使用 Markdown 格式，标题使用 ## 或 ###
+- 使用 Markdown 格式，主标题使用 ##，一级节标题使用 ###，二级节标题（如 1.1、2.1）使用 ####，确保所有层级的编号标题都带有对应的 Markdown 标题符号，不要仅用粗体代替标题
 - 确保完整输出所有内容
 - 至少包含 1-2 个对比表格
 - 每个主体章节都要有专门的"对比分析"小节

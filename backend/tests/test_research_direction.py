@@ -7,7 +7,7 @@
 """
 import asyncio
 import sys
-sys.path.append('/Users/zhancc/Github/PaperOverview/backend')
+sys.path.append('/Users/zhancc/Github/AutoOverview/backend')
 
 from services.contextual_keyword_translator import translate_keywords_contextual
 from services.review_task_executor import ReviewTaskExecutor

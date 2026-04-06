@@ -8,7 +8,7 @@
 4. 缩写词扩展功能
 """
 import sys
-sys.path.append('/Users/zhancc/Github/PaperOverview/backend')
+sys.path.append('/Users/zhancc/Github/AutoOverview/backend')
 
 from config.research_directions import (
     get_all_directions,

@@ -16,7 +16,7 @@ class DataCiteSearchService:
     def __init__(self):
         self.client = httpx.AsyncClient(timeout=30.0, headers={
             'Accept': 'application/vnd.api+json',
-            'User-Agent': 'PaperOverview/1.0'
+            'User-Agent': 'AutoOverview/1.0'
         })
 
     async def search_papers(
