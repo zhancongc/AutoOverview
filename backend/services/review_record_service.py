@@ -162,8 +162,7 @@ class ReviewRecordService:
         """
         query = db_session.query(ReviewRecord)
         if user_id is not None:
-            from sqlalchemy import or_
-            query = query.filter(or_(ReviewRecord.user_id == user_id, ReviewRecord.user_id.is_(None)))
+            query = query.filter(ReviewRecord.user_id == user_id)
         return query.order_by(
             ReviewRecord.created_at.desc()
         ).offset(skip).limit(limit).all()

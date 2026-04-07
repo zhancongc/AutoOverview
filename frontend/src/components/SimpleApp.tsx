@@ -558,7 +558,7 @@ export function SimpleApp() {
               <button className="pricing-btn pricing-btn-primary" onClick={() => { isLoggedIn ? setShowPaymentModal('yearly') : setShowLoginModal(true) }}>选择进阶包</button>
             </div>
           </div>
-          <p className="pricing-note">额度永久有效，不设过期时间。注册即送 1 篇免费综述，可在线查看。</p>
+          <p className="pricing-note">额度永久有效，不设过期时间。注册即送 1 篇免费综述，仅支持查看，不能导出。</p>
         </div>
       </section>
 
