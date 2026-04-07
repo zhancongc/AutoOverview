@@ -264,7 +264,7 @@ export function SimpleApp() {
             <div className="user-menu">
               <button className="user-info" onClick={() => navigate('/profile')}>
                 <span className="user-avatar">👤</span>
-                <span className="user-name">{userInfo?.nickname || '用户'}</span>
+                <span className="user-name">个人中心</span>
               </button>
               <button className="nav-btn nav-btn-logout" onClick={handleLogout}>
                 退出

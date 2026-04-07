@@ -124,6 +124,7 @@ class ReviewRecord(Base):
             "english_ratio": self.english_ratio,
             "status": self.status,
             "error_message": self.error_message,
+            "is_paid": getattr(self, 'is_paid', False),
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None
         }

@@ -52,7 +52,8 @@ export function ProfilePage() {
           title: record.topic,
           content: record.review,
           papers: record.papers,
-          recordId: record.id
+          recordId: record.id,
+          isPaid: record.is_paid ?? false,
         }
       })
     }

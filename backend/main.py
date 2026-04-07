@@ -61,30 +61,32 @@ def get_current_user_id(credentials: HTTPAuthorizationCredentials = Depends(secu
     return None
 
 
-def check_and_deduct_credit(user_id: int, db_session: Session) -> Optional[str]:
+def check_and_deduct_credit(user_id: int, db_session: Session) -> tuple[Optional[str], bool]:
     """
-    检查并扣除用户综述额度。返回 None 表示通过，返回错误信息表示额度不足。
-    优先扣除免费额度，再扣除付费额度。
+    检查并扣除用户综述额度。
+    返回 (错误信息, 是否扣除付费额度)。错误信息为 None 表示通过。
+    优先扣除付费额度，再扣除免费额度。
     """
     from authkit.models import User
     user = db_session.query(User).filter(User.id == user_id).first()
     if not user:
-        return None  # 用户不存在时不拦截
+        return None, False  # 用户不存在时不拦截
 
     free_credits = user.get_meta("free_credits", 0)
     paid_credits = user.get_meta("review_credits", 0)
     total = free_credits + paid_credits
 
     if total <= 0:
-        return "综述生成额度已用完，请购买套餐后继续使用"
+        return "综述生成额度已用完，请购买套餐后继续使用", False
 
     # 优先扣除付费额度，再用免费额度
-    if paid_credits > 0:
+    used_paid = paid_credits > 0
+    if used_paid:
         user.set_meta("review_credits", paid_credits - 1)
     else:
         user.set_meta("free_credits", free_credits - 1)
     db_session.commit()
-    return None
+    return None, used_paid
 
 
 def refund_credit(user_id: int, db_session: Session) -> None:
@@ -761,21 +763,18 @@ async def submit_review_task(
             message="API配置错误：DEEPSEEK_API_KEY not configured"
         )
 
-    # 检查用户付费状态
-    user_has_purchased = False
+    # 检查用户付费状态并扣除额度
+    is_paid = False
     if user_id:
         from authkit.database import SessionLocal as AuthSessionLocal
         if AuthSessionLocal:
             auth_db = AuthSessionLocal()
             try:
-                from authkit.models import User
-                user = auth_db.query(User).filter(User.id == user_id).first()
-                if user:
-                    user_has_purchased = user.get_meta("has_purchased", False)
-                # 额度检查
-                usage_error = check_and_deduct_credit(user_id, auth_db)
+                # 额度检查，返回是否使用了付费额度
+                usage_error, used_paid = check_and_deduct_credit(user_id, auth_db)
                 if usage_error:
                     return TaskSubmitResponse(success=False, message=usage_error)
+                is_paid = used_paid
             finally:
                 auth_db.close()
 
@@ -801,7 +800,7 @@ async def submit_review_task(
                 "max_search_queries": request.max_search_queries,
             },
             user_id=user_id,
-            is_paid=user_has_purchased
+            is_paid=is_paid
         )
 
         # 启动后台任务

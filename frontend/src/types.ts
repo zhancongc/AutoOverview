@@ -35,6 +35,7 @@ export interface ReviewRecord {
   english_ratio: number;
   status: string;
   error_message?: string;
+  is_paid?: boolean;
   created_at: string;
   updated_at: string;
 }

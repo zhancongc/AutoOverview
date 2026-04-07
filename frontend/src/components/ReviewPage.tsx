@@ -11,6 +11,8 @@ interface ReviewState {
   content: string
   papers: Paper[]
   recordId?: number
+  isPublic?: boolean
+  isPaid?: boolean
 }
 
 type TabType = 'content' | 'references'
@@ -47,15 +49,15 @@ export function ReviewPage() {
     })
   }, [])
 
-  // 计算文档显示状态
+  // 计算文档显示状态（优先使用 API 返回的 taskData，fallback 到 state）
   const isPublicDocument = taskData?.isPublic ?? false
-  const isPaidDocument = taskData?.isPaid ?? false
+  const isPaidDocument = taskData?.isPaid ?? state?.isPaid ?? false
   const shouldShowWatermark = !isPublicDocument && !isPaidDocument
   const canExportWord = isPublicDocument || isPaidDocument || userHasPurchased
 
-  // 如果 URL 中有 taskId，从后端加载
+  // 如果 URL 中有 taskId，从后端加载完整数据（确保 isPaid/isPublic 正确）
   useEffect(() => {
-    if (taskId && !state) {
+    if (taskId) {
       setLoading(true)
       api.getTaskReview(taskId)
         .then(res => {
@@ -76,7 +78,7 @@ export function ReviewPage() {
           setError('加载失败：' + (err.response?.data?.detail || err.message))
         })
         .finally(() => setLoading(false))
-    } else if (!taskId && !state) {
+    } else if (!state) {
       // 没有 taskId 也没有 state，回到首页
       navigate('/')
     }
