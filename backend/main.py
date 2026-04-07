@@ -402,7 +402,7 @@ async def get_active_task(user_id: Optional[int] = Depends(get_current_user_id))
 
     # 先检查内存中的任务
     from services.task_manager import task_manager
-    for task_id, task in task_manager.tasks.items():
+    for task_id, task in task_manager._tasks.items():
         if getattr(task, 'user_id', None) == user_id and task.status in ("pending", "processing"):
             return {
                 "active": True,

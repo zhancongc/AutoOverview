@@ -38,6 +38,12 @@ export function ProfilePage() {
   }
 
   const handleViewRecord = (record: ReviewRecord) => {
+    if (record.status === 'processing' || record.status === 'failed') {
+      // 生成中或失败的任务，引导重新生成
+      sessionStorage.setItem('pending_topic', record.topic)
+      navigate('/')
+      return
+    }
     if (record.task_id) {
       navigate(`/review?task_id=${record.task_id}`)
     } else if (record.id) {
@@ -168,7 +174,7 @@ export function ProfilePage() {
               {records.map((record) => (
                 <div
                   key={record.id}
-                  className="record-item"
+                  className={`record-item ${record.status === 'processing' || record.status === 'failed' ? 'record-item-disabled' : ''}`}
                   onClick={() => handleViewRecord(record)}
                 >
                   <div className="record-main">
@@ -178,7 +184,7 @@ export function ProfilePage() {
                         {record.status === 'success' ? (
                           <span className="status-success">✓ 完成</span>
                         ) : record.status === 'failed' ? (
-                          <span className="status-failed">✗ 失败</span>
+                          <span className="status-failed">✗ 失败 · 点击重新生成</span>
                         ) : (
                           <span className="status-processing">⏳ 进行中</span>
                         )}

@@ -328,6 +328,17 @@
   transform: translateY(-2px);
 }
 
+.record-item-disabled {
+  opacity: 0.6;
+}
+
+.record-item-disabled:hover {
+  border-color: var(--text-gray);
+  box-shadow: none;
+  transform: none;
+  cursor: pointer;
+}
+
 .record-main {
   flex: 1;
   min-width: 0;
