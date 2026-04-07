@@ -94,7 +94,7 @@ PLANS = [
     },
     {
         "type": "semester",
-        "name": "学期包",
+        "name": "基础包",
         "price": 59.8,
         "credits": 3,
         "recommended": True,
@@ -106,7 +106,7 @@ PLANS = [
     },
     {
         "type": "yearly",
-        "name": "学年包",
+        "name": "进阶包",
         "price": 99.8,
         "credits": 6,
         "recommended": False,

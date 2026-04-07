@@ -20,15 +20,70 @@ export function SimpleApp() {
   const [showLoginModal, setShowLoginModal] = useState(false)
   const [showPaymentModal, setShowPaymentModal] = useState<string | false>(false)
   const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [activeTaskId, setActiveTaskId] = useState<string | null>(null)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [userInfo, setUserInfo] = useState<any>(null)
+  const [credits, setCredits] = useState<number>(0)
 
   useEffect(() => {
     const loggedIn = checkLoggedIn()
     setIsLoggedIn(loggedIn)
     if (loggedIn) {
       setUserInfo(getLocalUserInfo())
+      api.getCredits().then(data => setCredits(data.credits)).catch(() => {})
+      // 检查是否有进行中的任务
+      api.getActiveTask().then(data => {
+        if (data.active && data.task_id) {
+          setActiveTaskId(data.task_id)
+          setTopic(data.topic || '')
+          setIsGenerating(true)
+          setProgress({ step: 'processing', message: '正在恢复任务状态...' })
+          sessionStorage.setItem('active_task_id', data.task_id)
+          sessionStorage.setItem('active_task_topic', data.topic || '')
+          pollTask(data.task_id)
+        }
+      }).catch(() => {})
     }
   }, [])
+
+  const pollTask = (taskId: string) => {
+    const doPoll = async () => {
+      try {
+        const statusResponse = await api.getTaskStatus(taskId)
+        if (!statusResponse.success) {
+          sessionStorage.removeItem('active_task_id')
+          sessionStorage.removeItem('active_task_topic')
+          setIsGenerating(false)
+          setActiveTaskId(null)
+          return
+        }
+
+        const taskInfo = statusResponse.data
+        if (taskInfo.status === 'completed' && taskInfo.result) {
+          sessionStorage.removeItem('active_task_id')
+          sessionStorage.removeItem('active_task_topic')
+          navigate(`/review?task_id=${taskId}`)
+          return
+        } else if (taskInfo.status === 'failed') {
+          sessionStorage.removeItem('active_task_id')
+          sessionStorage.removeItem('active_task_topic')
+          setError(taskInfo.error || '任务执行失败')
+          setIsGenerating(false)
+          setActiveTaskId(null)
+          return
+        }
+
+        setProgress({ step: taskInfo.progress?.step || 'processing', message: taskInfo.progress?.message || '正在处理...' })
+        setTimeout(doPoll, 5000)
+      } catch {
+        sessionStorage.removeItem('active_task_id')
+        sessionStorage.removeItem('active_task_topic')
+        setIsGenerating(false)
+        setActiveTaskId(null)
+      }
+    }
+    setTimeout(doPoll, 1000)
+  }
 
   useEffect(() => {
     const pendingTopic = sessionStorage.getItem('pending_topic')
@@ -37,6 +92,19 @@ export function SimpleApp() {
       setTopic(pendingTopic)
     }
   }, [])
+
+  // Esc 关闭弹窗
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (showLoginModal) setShowLoginModal(false)
+        if (showPaymentModal) setShowPaymentModal(false)
+        if (mobileMenuOpen) setMobileMenuOpen(false)
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [showLoginModal, showPaymentModal, mobileMenuOpen])
 
   const handleGenerate = async () => {
     if (!topic.trim()) {
@@ -74,6 +142,9 @@ export function SimpleApp() {
       }
 
       const taskId = submitResponse.data.task_id
+      setActiveTaskId(taskId)
+      sessionStorage.setItem('active_task_id', taskId)
+      sessionStorage.setItem('active_task_topic', topic)
       const startTime = Date.now()
       let pollCount = 0
 
@@ -104,13 +175,18 @@ export function SimpleApp() {
 
           if (taskInfo.status === 'completed' && taskInfo.result) {
             setProgress({ step: 'completed', message: '\u751F\u6210\u5B8C\u6210\uFF01\u6B63\u5728\u8DF3\u8F6C...' })
+            sessionStorage.removeItem('active_task_id')
+            sessionStorage.removeItem('active_task_topic')
             setTimeout(() => {
               navigate(`/review?task_id=${taskId}`)
             }, 500)
             return
           } else if (taskInfo.status === 'failed') {
+            sessionStorage.removeItem('active_task_id')
+            sessionStorage.removeItem('active_task_topic')
             setError(taskInfo.error || '\u4EFB\u52A1\u6267\u884C\u5931\u8D25')
             setIsGenerating(false)
+            setActiveTaskId(null)
             return
           }
 
@@ -174,13 +250,16 @@ export function SimpleApp() {
           <span className="logo-icon">📚</span>
           <span className="logo-text">AutoOverview</span>
         </div>
-        <div className="nav-links">
-          <a href="#features">产品特色</a>
-          <a href="#process">使用流程</a>
-          <a href="#cases">案例展示</a>
-          <a href="#pricing">价格方案</a>
+        <button className="mobile-menu-toggle" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+          <span className={`hamburger ${mobileMenuOpen ? 'open' : ''}`} />
+        </button>
+        <div className={`nav-links ${mobileMenuOpen ? 'mobile-open' : ''}`}>
+          <a href="#features" onClick={() => setMobileMenuOpen(false)}>产品特色</a>
+          <a href="#process" onClick={() => setMobileMenuOpen(false)}>使用流程</a>
+          <a href="#cases" onClick={() => setMobileMenuOpen(false)}>案例展示</a>
+          <a href="#pricing" onClick={() => setMobileMenuOpen(false)}>价格方案</a>
         </div>
-        <div className="nav-actions">
+        <div className={`nav-actions ${mobileMenuOpen ? 'mobile-open' : ''}`}>
           {isLoggedIn ? (
             <div className="user-menu">
               <button className="user-info" onClick={() => navigate('/profile')}>
@@ -238,7 +317,10 @@ export function SimpleApp() {
 
         <div className="home-input-section">
           <div className="input-section-header">
-            <h2 className="input-section-title">一键生成论文综述</h2>
+            <div className="input-section-title-row">
+              <h2 className="input-section-title">一键生成论文综述</h2>
+              {isLoggedIn && <span className="credits-badge">剩余 {credits} 次</span>}
+            </div>
             <p className="input-section-subtitle">输入研究主题，AI 为您生成专业文献综述</p>
           </div>
 
@@ -262,7 +344,8 @@ export function SimpleApp() {
 
           {error && (
             <div className="home-error">
-              {error}
+              <span>{error}</span>
+              <button className="retry-button" onClick={handleGenerate}>重试</button>
             </div>
           )}
 
@@ -275,6 +358,10 @@ export function SimpleApp() {
                 />
               </div>
               <div className="progress-message">{progress.message}</div>
+              <div className="progress-hint">
+                您可以离开此页面，综述会在后台继续生成。
+                <span className="progress-hint-link" onClick={() => navigate('/profile')}>前往个人中心查看 &rarr;</span>
+              </div>
             </div>
           )}
         </div>
@@ -444,33 +531,34 @@ export function SimpleApp() {
               </div>
               <ul className="pricing-features">
                 <li>1 篇综述生成额度</li>
-                <li>在线查看 + PDF 导出</li>
+                <li>在线查看 + Word 导出</li>
                 <li>限时优惠，省 {'\u00A510.2'}</li>
               </ul>
               <button className="pricing-btn pricing-btn-primary" onClick={() => { isLoggedIn ? setShowPaymentModal('single') : setShowLoginModal(true) }}>立即购买</button>
             </div>
             <div className="pricing-card pricing-featured">
               <div className="pricing-badge">推荐</div>
-              <h3 className="pricing-name">学期包</h3>
+              <h3 className="pricing-name">基础包</h3>
               <div className="pricing-price">{'\u00A559.8'}</div>
               <ul className="pricing-features">
                 <li>3 篇综述生成额度</li>
-                <li>在线查看 + PDF 导出</li>
+                <li>在线查看 + Word 导出</li>
                 <li>低至 {'\u00A519.9'}/篇</li>
               </ul>
-              <button className="pricing-btn pricing-btn-primary" onClick={() => { isLoggedIn ? setShowPaymentModal('semester') : setShowLoginModal(true) }}>选择学期包</button>
+              <button className="pricing-btn pricing-btn-primary" onClick={() => { isLoggedIn ? setShowPaymentModal('semester') : setShowLoginModal(true) }}>选择基础包</button>
             </div>
             <div className="pricing-card">
-              <h3 className="pricing-name">学年包</h3>
+              <h3 className="pricing-name">进阶包</h3>
               <div className="pricing-price">{'\u00A599.8'}</div>
               <ul className="pricing-features">
                 <li>6 篇综述生成额度</li>
-                <li>在线查看 + PDF 导出</li>
+                <li>在线查看 + Word 导出</li>
                 <li>低至 {'\u00A516.6'}/篇</li>
               </ul>
-              <button className="pricing-btn pricing-btn-primary" onClick={() => { isLoggedIn ? setShowPaymentModal('yearly') : setShowLoginModal(true) }}>选择学年包</button>
+              <button className="pricing-btn pricing-btn-primary" onClick={() => { isLoggedIn ? setShowPaymentModal('yearly') : setShowLoginModal(true) }}>选择进阶包</button>
             </div>
           </div>
+          <p className="pricing-note">额度永久有效，不设过期时间。注册即送 1 篇免费综述，可在线查看。</p>
         </div>
       </section>
 

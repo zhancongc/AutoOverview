@@ -73,8 +73,9 @@ class AuthService:
             self.db.commit()
             self.db.refresh(new_user)
 
-            # 注册送 1 篇免费综述额度
-            new_user.set_meta("review_credits", 1)
+            # 注册送 1 篇免费综述额度（可生成，不可导出 Word）
+            new_user.set_meta("free_credits", 1)
+            new_user.set_meta("review_credits", 0)
             new_user.set_meta("has_purchased", False)
             self.db.commit()
 
@@ -212,8 +213,9 @@ class AuthService:
             self.db.commit()
             self.db.refresh(user)
 
-            # 注册送 1 篇免费综述额度
-            user.set_meta("review_credits", 1)
+            # 注册送 1 篇免费综述额度（可生成，不可导出 Word）
+            user.set_meta("free_credits", 1)
+            user.set_meta("review_credits", 0)
             user.set_meta("has_purchased", False)
             self.db.commit()
         else:

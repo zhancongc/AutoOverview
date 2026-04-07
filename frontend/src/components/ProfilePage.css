@@ -164,6 +164,22 @@
   margin-bottom: 2.5rem;
 }
 
+.stat-card-free {
+  border-left: 3px solid #74b9ff;
+}
+
+.stat-card-free .stat-number {
+  color: #0984e3;
+}
+
+.stat-card-paid {
+  border-left: 3px solid #fdcb6e;
+}
+
+.stat-card-paid .stat-number {
+  color: #e17055;
+}
+
 .stat-card {
   background: white;
   border-radius: 20px;
@@ -193,6 +209,12 @@
   font-size: 0.95rem;
   color: var(--text-gray);
   font-weight: 600;
+}
+
+.stat-sub {
+  font-size: 0.8rem;
+  color: var(--text-gray);
+  margin-top: 0.25rem;
 }
 
 /* ==================== 历史记录区域 ==================== */

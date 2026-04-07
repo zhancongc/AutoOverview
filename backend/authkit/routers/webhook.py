@@ -109,7 +109,8 @@ def process_payment(params: dict, db: Session) -> str:
             credits_to_add = PLAN_CREDITS.get(sub.plan_type, 1)
             current_credits = user.get_meta("review_credits", 0)
             user.set_meta("review_credits", current_credits + credits_to_add)
-            logger.info(f"用户 {user.id} 获得 {credits_to_add} 篇综述额度，当前总计 {current_credits + credits_to_add}")
+            user.set_meta("has_purchased", True)
+            logger.info(f"用户 {user.id} 获得 {credits_to_add} 篇付费额度，当前付费 {current_credits + credits_to_add}")
 
         db.commit()
 

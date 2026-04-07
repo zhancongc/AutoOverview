@@ -5,7 +5,6 @@ import { PaymentModal } from './PaymentModal'
 import { api } from '../api'
 import type { Paper } from '../types'
 import './ReviewPage.css'
-import { exportToPdf } from '../utils/pdfExport'
 
 interface ReviewState {
   title: string
@@ -29,12 +28,30 @@ export function ReviewPage() {
     content: string
     papers: Paper[]
     recordId?: number
+    isPublic: boolean
+    isPaid: boolean
   } | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [activeTab, setActiveTab] = useState<TabType>('content')
-  const [hasPurchased, setHasPurchased] = useState(false)
+  const [userHasPurchased, setUserHasPurchased] = useState(false)
   const [showPayModal, setShowPayModal] = useState(false)
+  const [exporting, setExporting] = useState(false)
+
+  // 加载用户付费状态
+  useEffect(() => {
+    api.getCredits().then(res => {
+      setUserHasPurchased(res.has_purchased)
+    }).catch(() => {
+      // 忽略错误，默认未付费
+    })
+  }, [])
+
+  // 计算文档显示状态
+  const isPublicDocument = taskData?.isPublic ?? false
+  const isPaidDocument = taskData?.isPaid ?? false
+  const shouldShowWatermark = !isPublicDocument && !isPaidDocument
+  const canExportWord = isPublicDocument || isPaidDocument || userHasPurchased
 
   // 如果 URL 中有 taskId，从后端加载
   useEffect(() => {
@@ -48,6 +65,8 @@ export function ReviewPage() {
               content: res.data.review,
               papers: res.data.papers || [],
               recordId: res.data.record_id,
+              isPublic: res.data.is_public,
+              isPaid: res.data.is_paid,
             })
           } else {
             setError('综述不存在或尚未完成')
@@ -115,20 +134,9 @@ export function ReviewPage() {
     navigate('/')
   }
 
-  const handleExportPdf = async () => {
-    const el = document.querySelector('.review-viewer .review-main') as HTMLElement
-    if (!el) { alert('导出失败，未找到内容'); return }
-    try {
-      const filename = reviewData.title.replace(/[\/\\:]/g, '-')
-      await exportToPdf(el, filename, !hasPurchased)
-    } catch (err) {
-      alert('导出 PDF 失败，请稍后重试')
-      console.error(err)
-    }
-  }
 
   const handleExportWord = async () => {
-    if (!hasPurchased) {
+    if (!canExportWord) {
       setShowPayModal(true)
       return
     }
@@ -136,6 +144,7 @@ export function ReviewPage() {
       alert('该综述暂不支持导出')
       return
     }
+    setExporting(true)
     try {
       const token = localStorage.getItem('auth_token')
       const headers: Record<string, string> = { 'Content-Type': 'application/json' }
@@ -163,6 +172,8 @@ export function ReviewPage() {
     } catch (err) {
       alert('导出失败，请稍后重试')
       console.error(err)
+    } finally {
+      setExporting(false)
     }
   }
 
@@ -190,8 +201,9 @@ export function ReviewPage() {
           <button className="regenerate-button" onClick={handleRegenerate}>
             重新生成
           </button>
-          <button className="export-button export-word-btn" onClick={handleExportWord}>
-            导出 Word
+
+          <button className={`export-button export-word-btn ${!canExportWord ? 'export-word-premium' : ''}`} onClick={handleExportWord} disabled={exporting}>
+            {exporting ? '导出中...' : canExportWord ? '导出 Word' : '🔒 导出 Word (付费)'}
           </button>
         </div>
       </div>
@@ -203,6 +215,7 @@ export function ReviewPage() {
           title={reviewData.title}
           content={reviewData.content}
           papers={[]}
+          hasPurchased={!shouldShowWatermark}
         />
       ) : (
         reviewData.papers.length > 0 ? (
@@ -292,7 +305,7 @@ export function ReviewPage() {
           onClose={() => setShowPayModal(false)}
           onPaymentSuccess={() => {
             setShowPayModal(false)
-            setHasPurchased(true)
+            setUserHasPurchased(true)
           }}
           planType="single"
         />

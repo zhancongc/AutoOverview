@@ -11,6 +11,7 @@ export function ProfilePage() {
   const [loading, setLoading] = useState(false)
   const [userInfo, setUserInfo] = useState<any>(null)
   const [credits, setCredits] = useState<number>(0)
+  const [freeCredits, setFreeCredits] = useState<number>(0)
 
   useEffect(() => {
     if (!isLoggedIn()) {
@@ -19,7 +20,7 @@ export function ProfilePage() {
     }
     setUserInfo(getLocalUserInfo())
     loadRecords()
-    api.getCredits().then(data => setCredits(data.credits)).catch(() => {})
+    api.getCredits().then(data => { setCredits(data.credits); setFreeCredits(data.free_credits) }).catch(() => {})
   }, [])
 
   const loadRecords = async () => {
@@ -132,11 +133,15 @@ export function ProfilePage() {
         <div className="profile-stats">
           <div className="stat-card">
             <div className="stat-number">{records.length}</div>
-            <div className="stat-label">总综述数</div>
+            <div className="stat-label">综述数量</div>
           </div>
-          <div className="stat-card stat-card-credits">
-            <div className="stat-number">{credits}</div>
-            <div className="stat-label">剩余额度</div>
+          <div className="stat-card stat-card-free">
+            <div className="stat-number">{freeCredits}</div>
+            <div className="stat-label">免费额度</div>
+          </div>
+          <div className="stat-card stat-card-paid">
+            <div className="stat-number">{credits - freeCredits}</div>
+            <div className="stat-label">套餐额度</div>
           </div>
         </div>
 
@@ -152,7 +157,8 @@ export function ProfilePage() {
           ) : records.length === 0 ? (
             <div className="history-empty">
               <div className="empty-icon">📝</div>
-              <p>还没有生成过综述</p>
+              <p className="empty-title">还没有生成过综述</p>
+              <p className="empty-desc">输入研究主题，AI 为您自动搜索文献并生成专业综述</p>
               <button className="empty-button" onClick={() => navigate('/')}>
                 去生成第一篇综述
               </button>

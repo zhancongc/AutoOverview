@@ -21,7 +21,7 @@ const PLANS = [
   },
   {
     type: 'semester',
-    name: '学期包',
+    name: '基础包',
     price: 59.8,
     credits: 3,
     features: [
@@ -32,7 +32,7 @@ const PLANS = [
   },
   {
     type: 'yearly',
-    name: '学年包',
+    name: '进阶包',
     price: 99.8,
     credits: 6,
     features: [
@@ -56,6 +56,15 @@ export function PaymentModal({ onClose, onPaymentSuccess, planType }: PaymentMod
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const plan = PLANS.find(p => p.type === planType) || PLANS[0]
+
+  // Esc 关闭弹窗
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    document.addEventListener('keydown', handleEscape)
+    return () => document.removeEventListener('keydown', handleEscape)
+  }, [onClose])
 
   // 轮询支付状态
   useEffect(() => {

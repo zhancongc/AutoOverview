@@ -23,7 +23,11 @@ class ReviewRecordService:
         topic: str,
         target_count: int = 50,
         recent_years_ratio: float = 0.5,
-        english_ratio: float = 0.3
+        english_ratio: float = 0.3,
+        is_paid: bool = False,
+        user_id: Optional[int] = None,
+        subscription_id: Optional[int] = None,
+        order_no: Optional[str] = None
     ) -> ReviewRecord:
         """
         创建新的综述记录
@@ -34,6 +38,10 @@ class ReviewRecordService:
             target_count: 目标文献数量
             recent_years_ratio: 近5年占比
             english_ratio: 英文文献占比
+            is_paid: 是否为付费后生成的文档
+            user_id: 生成该综述的用户ID
+            subscription_id: 关联的支付订单ID
+            order_no: 支付订单号
 
         Returns:
             创建的记录对象
@@ -46,7 +54,11 @@ class ReviewRecordService:
             target_count=target_count,
             recent_years_ratio=recent_years_ratio,
             english_ratio=english_ratio,
-            status="processing"
+            status="processing",
+            is_paid=is_paid,
+            user_id=user_id,
+            subscription_id=subscription_id,
+            order_no=order_no
         )
         db_session.add(record)
         db_session.commit()
@@ -133,7 +145,8 @@ class ReviewRecordService:
         self,
         db_session: Session,
         skip: int = 0,
-        limit: int = 20
+        limit: int = 20,
+        user_id: Optional[int] = None
     ) -> List[ReviewRecord]:
         """
         获取记录列表
@@ -142,11 +155,16 @@ class ReviewRecordService:
             db_session: 数据库会话
             skip: 跳过条数
             limit: 返回条数
+            user_id: 用户ID，不为 None 时只返回该用户的记录
 
         Returns:
             记录列表
         """
-        return db_session.query(ReviewRecord).order_by(
+        query = db_session.query(ReviewRecord)
+        if user_id is not None:
+            from sqlalchemy import or_
+            query = query.filter(or_(ReviewRecord.user_id == user_id, ReviewRecord.user_id.is_(None)))
+        return query.order_by(
             ReviewRecord.created_at.desc()
         ).offset(skip).limit(limit).all()
 

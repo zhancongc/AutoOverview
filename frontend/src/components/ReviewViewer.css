@@ -3,6 +3,70 @@
   background: #f5f5f5;
 }
 
+/* 防复制保护 */
+.review-protected .review-main {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* 水印层 */
+.review-watermark {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.watermark-text {
+  font-size: 4rem;
+  color: rgba(214, 48, 49, 0.08);
+  font-weight: 700;
+  white-space: nowrap;
+  transform: rotate(-30deg);
+  position: absolute;
+}
+
+.watermark-text::before,
+.watermark-text::after {
+  content: 'AutoOverview 预览版';
+  position: absolute;
+}
+
+.watermark-text::before {
+  top: -8em;
+  left: -5em;
+}
+
+.watermark-text::after {
+  top: 8em;
+  left: 5em;
+}
+
+.watermark-subtext {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  background: rgba(214, 48, 49, 0.9);
+  color: white;
+  padding: 0.75rem 1.25rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  box-shadow: 0 4px 12px rgba(214, 48, 49, 0.3);
+  pointer-events: auto;
+  z-index: 1001;
+}
+
 .review-content-wrapper {
   display: flex;
   max-width: 1400px;
@@ -31,7 +95,7 @@
   margin-bottom: 1rem;
   color: #333;
   padding-bottom: 0.5rem;
-  border-bottom: 2px solid #667eea;
+  border-bottom: 2px solid #D63031;
 }
 
 .toc-list {
@@ -56,11 +120,11 @@
 
 .toc-item a:hover {
   background: #f0f0f0;
-  color: #667eea;
+  color: #D63031;
 }
 
 .toc-item.active > a {
-  background: #667eea;
+  background: #D63031;
   color: white;
   font-weight: 500;
 }
@@ -108,7 +172,7 @@
   margin-top: 2rem;
   margin-bottom: 1rem;
   color: #333;
-  border-bottom: 2px solid #667eea;
+  border-bottom: 2px solid #D63031;
   padding-bottom: 0.5rem;
   scroll-margin-top: 5rem;
 }
@@ -177,7 +241,7 @@
 }
 
 .review-body blockquote {
-  border-left: 4px solid #667eea;
+  border-left: 4px solid #D63031;
   padding-left: 1rem;
   margin: 1rem 0;
   color: #666;
@@ -219,7 +283,7 @@
   font-size: 1.5rem;
   margin-bottom: 0.5rem;
   color: #333;
-  border-bottom: 2px solid #667eea;
+  border-bottom: 2px solid #D63031;
   padding-bottom: 0.5rem;
   text-align: center;
   padding-bottom: 0.5rem;
@@ -249,10 +313,10 @@
 }
 
 .reference-item:hover {
-  background: #f0f7ff;
-  border-color: #667eea;
+  background: #fef2f2;
+  border-color: #D63031;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.1);
+  box-shadow: 0 4px 12px rgba(214, 48, 49, 0.1);
 }
 
 .reference-header {
@@ -265,7 +329,7 @@
 
 .ref-number {
   font-weight: 600;
-  color: #667eea;
+  color: #D63031;
   font-size: 1.1rem;
   flex-shrink: 0;
 }
@@ -289,13 +353,13 @@
   font-weight: 500;
   transition: all 0.2s;
   color: #555;
-  border-color: var(--link-color, #999);
+  border-color: var(--link-color, #D63031);
 }
 
 .verification-link:hover {
-  background: var(--link-color, #667eea);
+  background: var(--link-color, #D63031);
   color: white;
-  border-color: var(--link-color, #667eea);
+  border-color: var(--link-color, #D63031);
   transform: translateY(-1px);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
@@ -324,7 +388,7 @@
 }
 
 .ref-title-link:hover {
-  color: #667eea;
+  color: #D63031;
   text-decoration: underline;
 }
 
@@ -348,9 +412,9 @@
   margin-top: 0.75rem;
   margin-bottom: 1.5rem;
   padding: 1rem;
-  background: linear-gradient(135deg, #f0f7ff 0%, #e8f4fd 100%);
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
   border-radius: 8px;
-  border-left: 4px solid #667eea;
+  border-left: 4px solid #D63031;
   display: flex;
   align-items: center;
   gap: 0.75rem;

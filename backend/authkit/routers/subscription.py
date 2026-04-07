@@ -71,7 +71,7 @@ def _add_credits(user_id: int, plan_type: str, db: Session):
     user.set_meta("review_credits", current_credits + credits_to_add)
     user.set_meta("has_purchased", True)
     db.commit()
-    logger.info(f"用户 {user_id} 获得 {credits_to_add} 篇综述额度，当前总计 {current_credits + credits_to_add}")
+    logger.info(f"用户 {user_id} 获得 {credits_to_add} 篇付费额度，当前付费 {current_credits + credits_to_add}")
 
 
 @router.get("/plans")

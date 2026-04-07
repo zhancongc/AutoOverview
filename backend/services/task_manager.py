@@ -21,10 +21,12 @@ class TaskStatus(str, Enum):
 class Task:
     """任务对象"""
 
-    def __init__(self, task_id: str, topic: str, params: Dict):
+    def __init__(self, task_id: str, topic: str, params: Dict, user_id: Optional[int] = None, is_paid: bool = False):
         self.task_id = task_id
         self.topic = topic
         self.params = params
+        self.user_id = user_id  # 创建任务的用户ID
+        self.is_paid = is_paid  # 用户是否已付费
         self.status = TaskStatus.PENDING
         self.created_at = datetime.now()
         self.started_at: Optional[datetime] = None
@@ -39,6 +41,8 @@ class Task:
             "task_id": self.task_id,
             "topic": self.topic,
             "status": self.status.value,
+            "user_id": self.user_id,
+            "is_paid": self.is_paid,
             "created_at": self.created_at.isoformat(),
             "started_at": self.started_at.isoformat() if self.started_at else None,
             "completed_at": self.completed_at.isoformat() if self.completed_at else None,
@@ -115,10 +119,10 @@ class TaskManager:
         """获取当前运行中的任务数"""
         return len(self._running_tasks)
 
-    def create_task(self, topic: str, params: Dict) -> Task:
+    def create_task(self, topic: str, params: Dict, user_id: Optional[int] = None, is_paid: bool = False) -> Task:
         """创建新任务"""
         task_id = str(uuid.uuid4())[:8]  # 短ID
-        task = Task(task_id, topic, params)
+        task = Task(task_id, topic, params, user_id=user_id, is_paid=is_paid)
         self._tasks[task_id] = task
         return task
 

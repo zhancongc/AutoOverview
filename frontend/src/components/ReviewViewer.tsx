@@ -21,9 +21,10 @@ interface ReviewViewerProps {
     doi?: string
     url?: string
   }>
+  hasPurchased?: boolean
 }
 
-export function ReviewViewer({ title, content, papers = [] }: ReviewViewerProps) {
+export function ReviewViewer({ title, content, papers = [], hasPurchased = false }: ReviewViewerProps) {
   const [toc, setToc] = useState<TableOfContents[]>([])
   const [activeId, setActiveId] = useState<string>('')
   const mainRef = useRef<HTMLElement>(null)
@@ -254,7 +255,7 @@ export function ReviewViewer({ title, content, papers = [] }: ReviewViewerProps)
   }), [])
 
   return (
-    <div className="review-viewer">
+    <div className={`review-viewer ${!hasPurchased ? 'review-protected' : ''}`}>
       <div className="review-content-wrapper">
         {/* 侧边栏目录 */}
         <aside className="review-sidebar">
@@ -265,7 +266,17 @@ export function ReviewViewer({ title, content, papers = [] }: ReviewViewerProps)
         </aside>
 
         {/* 正文内容 */}
-        <main className="review-main">
+        <main className="review-main"
+          onContextMenu={(e) => !hasPurchased && e.preventDefault()}
+          onCopy={(e) => !hasPurchased && e.preventDefault()}
+          onCut={(e) => !hasPurchased && e.preventDefault()}
+        >
+          {!hasPurchased && (
+            <div className="review-watermark">
+              <span className="watermark-text">AutoOverview 预览版</span>
+              <span className="watermark-subtext">购买后解锁无水印 Word 导出</span>
+            </div>
+          )}
           <div className="review-body">
             <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>
               {processedContent}

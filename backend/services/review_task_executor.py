@@ -84,7 +84,9 @@ class ReviewTaskExecutor:
                 topic=topic,
                 target_count=params.get('target_count', 50),
                 recent_years_ratio=params.get('recent_years_ratio', 0.5),
-                english_ratio=params.get('english_ratio', 0.3)
+                english_ratio=params.get('english_ratio', 0.3),
+                is_paid=getattr(task, 'is_paid', False),
+                user_id=getattr(task, 'user_id', None)
             )
 
             # =====================================================

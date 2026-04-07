@@ -89,6 +89,13 @@ class ReviewRecord(Base):
     papers = Column(JSON, nullable=False, comment="文献列表JSON")
     statistics = Column(JSON, nullable=False, comment="统计信息JSON")
 
+    # 用户关联
+    user_id = Column(Integer, nullable=True, index=True, comment="生成该综述的用户ID")
+
+    # 支付关联（用于对账）
+    subscription_id = Column(Integer, nullable=True, index=True, comment="关联的支付订单ID（subscriptions表）")
+    order_no = Column(String(64), nullable=True, index=True, comment="支付订单号（方便对账）")
+
     # 生成参数
     target_count = Column(Integer, default=50, comment="目标文献数量")
     recent_years_ratio = Column(Float, default=0.5, comment="近5年占比")
@@ -97,6 +104,9 @@ class ReviewRecord(Base):
     # 状态
     status = Column(String(20), default="success", comment="状态: success/failed")
     error_message = Column(Text, nullable=True, comment="错误信息")
+
+    # 付费状态
+    is_paid = Column(Boolean, default=False, comment="是否为付费后生成的文档")
 
     # 时间戳
     created_at = Column(DateTime, default=datetime.now, comment="创建时间")

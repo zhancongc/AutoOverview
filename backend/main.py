@@ -64,18 +64,25 @@ def get_current_user_id(credentials: HTTPAuthorizationCredentials = Depends(secu
 def check_and_deduct_credit(user_id: int, db_session: Session) -> Optional[str]:
     """
     检查并扣除用户综述额度。返回 None 表示通过，返回错误信息表示额度不足。
+    优先扣除免费额度，再扣除付费额度。
     """
     from authkit.models import User
     user = db_session.query(User).filter(User.id == user_id).first()
     if not user:
         return None  # 用户不存在时不拦截
 
-    credits = user.get_meta("review_credits", 0)
-    if credits <= 0:
+    free_credits = user.get_meta("free_credits", 0)
+    paid_credits = user.get_meta("review_credits", 0)
+    total = free_credits + paid_credits
+
+    if total <= 0:
         return "综述生成额度已用完，请购买套餐后继续使用"
 
-    # 扣除额度
-    user.set_meta("review_credits", credits - 1)
+    # 优先扣除付费额度，再用免费额度
+    if paid_credits > 0:
+        user.set_meta("review_credits", paid_credits - 1)
+    else:
+        user.set_meta("free_credits", free_credits - 1)
     db_session.commit()
     return None
 
@@ -229,10 +236,13 @@ async def search_papers(
 async def get_records(
     skip: int = 0,
     limit: int = 20,
+    user_id: Optional[int] = Depends(get_current_user_id),
     db_session: Session = Depends(get_db)
 ):
-    """获取生成记录列表"""
-    records = record_service.list_records(db_session, skip, limit)
+    """获取当前用户的生成记录列表"""
+    if not user_id:
+        raise HTTPException(status_code=401, detail="未登录")
+    records = record_service.list_records(db_session, skip, limit, user_id=user_id)
 
     return {
         "success": True,
@@ -277,26 +287,42 @@ async def export_review_docx(
     user_id: Optional[int] = Depends(get_current_user_id)
 ):
     """
-    导出文献综述为 Word 文档（仅付费用户可用）
+    导出文献综述为 Word 文档
+    - 公开文档（案例）可直接导出
+    - 付费用户可导出自己的文档
     PDF 导出由前端 html2canvas + jspdf 实现
     """
+    from models import ReviewTask
+
+    # 公开文档列表（案例展示）
+    PUBLIC_TASK_IDS = {"feae8f9d", "c851aa9a", "84bba875"}
+
     record = record_service.get_record(db_session, request.record_id)
 
     if not record:
         raise HTTPException(status_code=404, detail="记录不存在")
 
-    # Word 导出仅限付费用户
-    if user_id:
-        from authkit.database import SessionLocal as AuthSessionLocal
-        if AuthSessionLocal:
-            auth_db = AuthSessionLocal()
-            try:
-                from authkit.models import User
-                user = auth_db.query(User).filter(User.id == user_id).first()
-                if user and not user.get_meta("has_purchased", False):
-                    raise HTTPException(status_code=403, detail="Word 导出为付费功能，请购买套餐后使用")
-            finally:
-                auth_db.close()
+    # 查找对应的 task_id 判断是否为公开文档
+    review_task = db_session.query(ReviewTask).filter_by(review_record_id=record.id).first()
+    is_public_doc = review_task and review_task.id in PUBLIC_TASK_IDS
+
+    # 如果不是公开文档，检查用户权限
+    if not is_public_doc:
+        # Word 导出仅限付费用户或文档是付费生成的
+        if getattr(record, 'is_paid', False):
+            # 文档是付费生成的，允许导出
+            pass
+        elif user_id:
+            from authkit.database import SessionLocal as AuthSessionLocal
+            if AuthSessionLocal:
+                auth_db = AuthSessionLocal()
+                try:
+                    from authkit.models import User
+                    user = auth_db.query(User).filter(User.id == user_id).first()
+                    if user and not user.get_meta("has_purchased", False):
+                        raise HTTPException(status_code=403, detail="Word 导出为付费功能，请购买套餐后使用")
+                finally:
+                    auth_db.close()
 
     try:
         generator = DocxGenerator()
@@ -341,24 +367,97 @@ async def health_check():
     }
 
 
+@app.get("/api/jade/access")
+async def check_jade_access(user_id: Optional[int] = Depends(get_current_user_id)):
+    """检查当前用户是否有 /jade 页面的访问权限"""
+    if not user_id:
+        return {"allowed": False}
+
+    whitelist_str = os.getenv("JADE_WHITELIST", "")
+    whitelist = {email.strip() for email in whitelist_str.split(",") if email.strip()}
+    if not whitelist:
+        return {"allowed": False}
+
+    from authkit.database import SessionLocal as AuthSessionLocal
+    if not AuthSessionLocal:
+        return {"allowed": False}
+
+    auth_db = AuthSessionLocal()
+    try:
+        from authkit.models import User
+        user = auth_db.query(User).filter(User.id == user_id).first()
+        if user and user.email in whitelist:
+            return {"allowed": True}
+    finally:
+        auth_db.close()
+
+    return {"allowed": False}
+
+
+@app.get("/api/tasks/active")
+async def get_active_task(user_id: Optional[int] = Depends(get_current_user_id)):
+    """获取当前用户进行中的任务"""
+    if not user_id:
+        return {"active": False}
+
+    # 先检查内存中的任务
+    from services.task_manager import task_manager
+    for task_id, task in task_manager.tasks.items():
+        if getattr(task, 'user_id', None) == user_id and task.status in ("pending", "processing"):
+            return {
+                "active": True,
+                "task_id": task_id,
+                "topic": task.topic,
+                "status": task.status,
+                "progress": task.progress if hasattr(task, 'progress') else None
+            }
+
+    # 再检查数据库
+    from models import ReviewTask, ReviewRecord
+    db_session = next(get_db())
+    try:
+        # 通过 review_records 的 user_id 找到关联的进行中任务
+        pending_tasks = db_session.query(ReviewTask).filter(
+            ReviewTask.status.in_(["pending", "processing"])
+        ).all()
+        for t in pending_tasks:
+            if t.review_record_id:
+                record = db_session.query(ReviewRecord).filter_by(id=t.review_record_id).first()
+                if record and record.user_id == user_id:
+                    return {
+                        "active": True,
+                        "task_id": t.id,
+                        "topic": t.topic,
+                        "status": t.status,
+                        "progress": None
+                    }
+    finally:
+        db_session.close()
+
+    return {"active": False}
+
+
 @app.get("/api/usage/credits")
 async def get_credits(user_id: Optional[int] = Depends(get_current_user_id)):
     """获取当前用户综述额度"""
     if not user_id:
-        return {"credits": 0, "has_purchased": False}
+        return {"credits": 0, "free_credits": 0, "has_purchased": False}
 
     from authkit.database import SessionLocal as AuthSessionLocal
     if not AuthSessionLocal:
-        return {"credits": 0, "has_purchased": False}
+        return {"credits": 0, "free_credits": 0, "has_purchased": False}
 
     auth_db = AuthSessionLocal()
     try:
         from authkit.models import User
         user = auth_db.query(User).filter(User.id == user_id).first()
         if not user:
-            return {"credits": 0, "has_purchased": False}
+            return {"credits": 0, "free_credits": 0, "has_purchased": False}
+        free = user.get_meta("free_credits", 0)
+        paid = user.get_meta("review_credits", 0)
         return {
-            "credits": user.get_meta("review_credits", 0),
+            "credits": free + paid,
+            "free_credits": free,
             "has_purchased": user.get_meta("has_purchased", False),
         }
     finally:
@@ -641,12 +740,18 @@ async def submit_review_task(
             message="API配置错误：DEEPSEEK_API_KEY not configured"
         )
 
-    # 额度检查
+    # 检查用户付费状态
+    user_has_purchased = False
     if user_id:
         from authkit.database import SessionLocal as AuthSessionLocal
         if AuthSessionLocal:
             auth_db = AuthSessionLocal()
             try:
+                from authkit.models import User
+                user = auth_db.query(User).filter(User.id == user_id).first()
+                if user:
+                    user_has_purchased = user.get_meta("has_purchased", False)
+                # 额度检查
                 usage_error = check_and_deduct_credit(user_id, auth_db)
                 if usage_error:
                     return TaskSubmitResponse(success=False, message=usage_error)
@@ -673,7 +778,9 @@ async def submit_review_task(
                 "english_ratio": request.english_ratio,
                 "search_years": request.search_years,
                 "max_search_queries": request.max_search_queries,
-            }
+            },
+            user_id=user_id,
+            is_paid=user_has_purchased
         )
 
         # 启动后台任务
@@ -707,7 +814,11 @@ async def submit_review_task(
 
 
 @app.get("/api/tasks/{task_id}")
-async def get_task_status(task_id: str, db_session: Session = Depends(get_db)):
+async def get_task_status(
+    task_id: str,
+    user_id: Optional[int] = Depends(get_current_user_id),
+    db_session: Session = Depends(get_db)
+):
     """
     获取任务状态和结果
 
@@ -715,10 +826,19 @@ async def get_task_status(task_id: str, db_session: Session = Depends(get_db)):
     """
     from models import ReviewTask, ReviewRecord
 
+    PUBLIC_TASK_IDS = {"feae8f9d", "c851aa9a", "84bba875"}
+    is_public = task_id in PUBLIC_TASK_IDS
+
     # 首先尝试从内存中获取任务
     task = task_manager.get_task(task_id)
 
     if task:
+        # 非公开任务需要验证所有者
+        if not is_public and user_id:
+            task_user_id = getattr(task, 'user_id', None)
+            if task_user_id and task_user_id != user_id:
+                raise HTTPException(status_code=403, detail="无权访问该任务")
+
         response_data = task.to_dict()
         # 如果任务完成，添加结果数据
         if task.status == TaskStatus.COMPLETED and task.result:
@@ -733,6 +853,13 @@ async def get_task_status(task_id: str, db_session: Session = Depends(get_db)):
 
     if not review_task:
         raise HTTPException(status_code=404, detail="任务不存在")
+
+    # 非公开任务需要验证所有者
+    if not is_public:
+        if review_task.review_record_id:
+            owner_record = db_session.query(ReviewRecord).filter_by(id=review_task.review_record_id).first()
+            if owner_record and owner_record.user_id and owner_record.user_id != user_id:
+                raise HTTPException(status_code=403, detail="无权访问该任务")
 
     response_data = review_task.to_dict()
 
@@ -755,7 +882,11 @@ async def get_task_status(task_id: str, db_session: Session = Depends(get_db)):
 
 
 @app.get("/api/tasks/{task_id}/review")
-async def get_task_review(task_id: str, db_session: Session = Depends(get_db)):
+async def get_task_review(
+    task_id: str,
+    user_id: Optional[int] = Depends(get_current_user_id),
+    db_session: Session = Depends(get_db)
+):
     """
     通过 task_id 获取综述结果
 
@@ -763,10 +894,20 @@ async def get_task_review(task_id: str, db_session: Session = Depends(get_db)):
     """
     from models import ReviewTask, ReviewRecord
 
+    # 公开文档列表（案例展示）
+    PUBLIC_TASK_IDS = {"feae8f9d", "c851aa9a", "84bba875"}
+    is_public = task_id in PUBLIC_TASK_IDS
+
     # 首先尝试从内存中获取任务
     task = task_manager.get_task(task_id)
 
     if task and task.status == TaskStatus.COMPLETED and task.result:
+        # 非公开任务需要验证所有者
+        if not is_public:
+            task_user_id = getattr(task, 'user_id', None)
+            if task_user_id and task_user_id != user_id:
+                raise HTTPException(status_code=403, detail="无权访问该综述")
+
         # 内存中有完整的任务数据
         return {
             "success": True,
@@ -778,7 +919,9 @@ async def get_task_review(task_id: str, db_session: Session = Depends(get_db)):
                 "cited_papers_count": task.result.get("cited_papers_count", 0),
                 "created_at": task.result.get("created_at", ""),
                 "statistics": task.result.get("statistics", {}),
-                "record_id": task.result.get("id")
+                "record_id": task.result.get("id"),
+                "is_public": is_public,
+                "is_paid": getattr(task, 'is_paid', False)
             }
         }
 
@@ -797,6 +940,11 @@ async def get_task_review(task_id: str, db_session: Session = Depends(get_db)):
     if not review_record:
         raise HTTPException(status_code=404, detail="综述记录不存在")
 
+    # 非公开任务需要验证所有者
+    if not is_public:
+        if review_record.user_id and review_record.user_id != user_id:
+            raise HTTPException(status_code=403, detail="无权访问该综述")
+
     # 返回与内存任务相同格式的数据
     return {
         "success": True,
@@ -808,7 +956,9 @@ async def get_task_review(task_id: str, db_session: Session = Depends(get_db)):
             "cited_papers_count": len(review_record.papers) if isinstance(review_record.papers, list) else 0,
             "created_at": review_record.created_at.isoformat() if review_record.created_at else "",
             "statistics": review_record.statistics if isinstance(review_record.statistics, dict) else {},
-            "record_id": review_record.id
+            "record_id": review_record.id,
+            "is_public": is_public,
+            "is_paid": getattr(review_record, 'is_paid', False)
         }
     }
 

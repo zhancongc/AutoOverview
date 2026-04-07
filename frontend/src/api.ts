@@ -123,7 +123,10 @@ export const api = {
 
   // 获取任务状态
   async getTaskStatus(taskId: string): Promise<{ success: boolean; data: TaskInfo }> {
-    const response = await axios.get(`${API_BASE}/tasks/${taskId}`);
+    const token = localStorage.getItem('auth_token');
+    const headers: Record<string, string> = {};
+    if (token) headers.Authorization = `Bearer ${token}`;
+    const response = await axios.get(`${API_BASE}/tasks/${taskId}`, { headers });
     return response.data;
   },
 
@@ -137,8 +140,13 @@ export const api = {
     created_at: string;
     statistics: any;
     record_id?: number;
+    is_public: boolean;
+    is_paid: boolean;
   } }> {
-    const response = await axios.get(`${API_BASE}/tasks/${taskId}/review`);
+    const token = localStorage.getItem('auth_token');
+    const headers: Record<string, string> = {};
+    if (token) headers.Authorization = `Bearer ${token}`;
+    const response = await axios.get(`${API_BASE}/tasks/${taskId}/review`, { headers });
     return response.data;
   },
 
@@ -168,8 +176,12 @@ export const api = {
 
   // 历史记录
   async getRecords(skip: number = 0, limit: number = 20): Promise<RecordsResponse> {
+    const token = localStorage.getItem('auth_token');
+    const headers: Record<string, string> = {};
+    if (token) headers.Authorization = `Bearer ${token}`;
     const response = await axios.get(`${API_BASE}/records`, {
-      params: { skip, limit }
+      params: { skip, limit },
+      headers
     });
     return response.data;
   },
@@ -258,11 +270,27 @@ export const api = {
     return response.data;
   },
 
-  async getCredits(): Promise<{ credits: number; has_purchased: boolean }> {
+  async getCredits(): Promise<{ credits: number; free_credits: number; has_purchased: boolean }> {
     const token = localStorage.getItem('auth_token');
     const headers: Record<string, string> = {};
     if (token) headers.Authorization = `Bearer ${token}`;
     const response = await axios.get(`${API_BASE}/usage/credits`, { headers });
+    return response.data;
+  },
+
+  async checkJadeAccess(): Promise<{ allowed: boolean }> {
+    const token = localStorage.getItem('auth_token');
+    const headers: Record<string, string> = {};
+    if (token) headers.Authorization = `Bearer ${token}`;
+    const response = await axios.get(`${API_BASE}/jade/access`, { headers });
+    return response.data;
+  },
+
+  async getActiveTask(): Promise<{ active: boolean; task_id?: string; topic?: string; status?: string }> {
+    const token = localStorage.getItem('auth_token');
+    const headers: Record<string, string> = {};
+    if (token) headers.Authorization = `Bearer ${token}`;
+    const response = await axios.get(`${API_BASE}/tasks/active`, { headers });
     return response.data;
   },
 };

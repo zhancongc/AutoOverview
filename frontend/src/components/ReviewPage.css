@@ -140,6 +140,42 @@
   transform: translateY(0);
 }
 
+.export-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.export-pdf-btn {
+  background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+  box-shadow: 0 4px 12px rgba(108, 117, 125, 0.25);
+}
+
+.export-pdf-btn:hover {
+  box-shadow: 0 8px 20px rgba(108, 117, 125, 0.35);
+}
+
+.export-word-premium {
+  background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+  box-shadow: 0 4px 12px rgba(243, 156, 18, 0.35);
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 4px 12px rgba(243, 156, 18, 0.35);
+  }
+  50% {
+    box-shadow: 0 4px 20px rgba(243, 156, 18, 0.55);
+  }
+}
+
+.export-word-premium:hover {
+  animation: none;
+  box-shadow: 0 8px 25px rgba(243, 156, 18, 0.45);
+}
+
 @media (max-width: 900px) {
   .review-page-header {
     padding: 1rem 1.5rem;

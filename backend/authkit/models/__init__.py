@@ -68,3 +68,6 @@ class User(Base):
         data = self.get_metadata()
         data[key] = value
         self.set_metadata(data)
+        # 显式标记字段已变更，确保 SQLAlchemy 检测到从 None 到字符串的变化
+        from sqlalchemy.orm.attributes import flag_modified
+        flag_modified(self, "meta_data")
