@@ -200,20 +200,21 @@ export function ReviewViewer({ title, content, papers = [], hasPurchased = false
       color: '#2932e1'
     })
 
-    // Semantic Scholar（如果有 url）
+    // 学术搜索验证
     if (paper.url) {
       links.push({
-        name: 'Semantic Scholar',
+        name: '查看原文',
         url: paper.url,
-        icon: '📚',
+        icon: '📄',
         color: '#1a73e8'
       })
-    } else {
+    }
+    if (paper.doi) {
       links.push({
-        name: 'Semantic Scholar',
-        url: `https://www.semanticscholar.org/search?q=${searchQuery}`,
-        icon: '📚',
-        color: '#1a73e8'
+        name: 'DOI',
+        url: `https://doi.org/${paper.doi}`,
+        icon: '🔗',
+        color: '#7f8c8d'
       })
     }
 
@@ -313,7 +314,7 @@ export function ReviewViewer({ title, content, papers = [], hasPurchased = false
                       </div>
                       <div className="ref-content">
                         <a
-                          href={verificationLinks.find(l => l.name === 'Semantic Scholar')?.url || verificationLinks[0].url}
+                          href={verificationLinks[0]?.url}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="ref-title-link"

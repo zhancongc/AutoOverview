@@ -248,9 +248,6 @@ export function ReviewPage() {
                 const verificationLinks = [
                   { name: 'Google Scholar', url: `https://scholar.google.com/scholar?q=${searchQuery}`, icon: '🔬', color: '#4285f4' },
                   { name: '百度学术', url: `https://xueshu.baidu.com/s?wd=${searchQuery}`, icon: '🎓', color: '#2932e1' },
-                  paper.url
-                    ? { name: 'Semantic Scholar', url: paper.url, icon: '📚', color: '#1a73e8' }
-                    : { name: 'Semantic Scholar', url: `https://www.semanticscholar.org/search?q=${searchQuery}`, icon: '📚', color: '#1a73e8' },
                   ...(paper.doi ? [{ name: 'DOI', url: `https://doi.org/${paper.doi}`, icon: '🔗', color: '#7f8c8d' }] : [])
                 ]
                 return (
@@ -276,7 +273,7 @@ export function ReviewPage() {
                     </div>
                     <div className="ref-content">
                       <a
-                        href={verificationLinks.find(l => l.name === 'Semantic Scholar')?.url || verificationLinks[0].url}
+                        href={verificationLinks[0]?.url}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="ref-title-link"
