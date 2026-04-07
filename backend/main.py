@@ -87,6 +87,27 @@ def check_and_deduct_credit(user_id: int, db_session: Session) -> Optional[str]:
     return None
 
 
+def refund_credit(user_id: int, db_session: Session) -> None:
+    """
+    退还用户综述额度（任务失败时调用）。
+    优先退还免费额度，再退还付费额度（与扣除顺序相反）。
+    """
+    from authkit.models import User
+    user = db_session.query(User).filter(User.id == user_id).first()
+    if not user:
+        return
+
+    free_credits = user.get_meta("free_credits", 0)
+    paid_credits = user.get_meta("review_credits", 0)
+
+    # 优先退还免费额度（与扣除时"先用付费再用免费"相反）
+    if free_credits == 0:
+        user.set_meta("review_credits", paid_credits + 1)
+    else:
+        user.set_meta("free_credits", free_credits + 1)
+    db_session.commit()
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """应用生命周期管理"""

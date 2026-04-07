@@ -321,6 +321,22 @@ class ReviewTaskExecutor:
             except:
                 pass
 
+            # 退还用户额度
+            task_user_id = getattr(task, 'user_id', None)
+            if task_user_id:
+                try:
+                    from main import refund_credit
+                    from authkit.database import SessionLocal as AuthSessionLocal
+                    if AuthSessionLocal:
+                        auth_db = AuthSessionLocal()
+                        try:
+                            refund_credit(task_user_id, auth_db)
+                            print(f"[TaskExecutor] 已退还用户 {task_user_id} 的综述额度")
+                        finally:
+                            auth_db.close()
+                except Exception as refund_err:
+                    print(f"[TaskExecutor] 额度退还失败: {refund_err}")
+
     # ==================== 新增：阶段3增强文献搜索方法 ====================
 
     async def _search_literature_by_sections(
