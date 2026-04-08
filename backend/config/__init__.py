@@ -42,13 +42,13 @@ class Config:
 
     # ==================== 质量评分权重 ====================
     # 被引量在质量评分中的权重 (0.0-1.0)
-    CITATION_WEIGHT = float(os.getenv("CITATION_WEIGHT", "0.4"))
+    CITATION_WEIGHT = float(os.getenv("CITATION_WEIGHT", "0.1"))
 
     # 新近度在质量评分中的权重 (0.0-1.0)
     RECENCY_WEIGHT = float(os.getenv("RECENCY_WEIGHT", "0.3"))
 
     # 相关性在质量评分中的权重 (0.0-1.0)
-    RELEVANCE_WEIGHT = float(os.getenv("RELEVANCE_WEIGHT", "0.3"))
+    RELEVANCE_WEIGHT = float(os.getenv("RELEVANCE_WEIGHT", "0.6"))
 
     @classmethod
     def validate(cls):

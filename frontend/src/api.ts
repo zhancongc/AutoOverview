@@ -101,22 +101,14 @@ export const api = {
   async searchPapersOnly(
     topic: string,
     options: {
-      researchDirectionId?: string;
       targetCount?: number;
-      recentYearsRatio?: number;
-      englishRatio?: number;
       searchYears?: number;
-      maxSearchQueries?: number;
     } = {}
   ): Promise<{ success: boolean; message: string; data: any }> {
     const response = await axios.post(`${API_BASE}/search-papers-only`, {
       topic,
-      research_direction_id: options.researchDirectionId ?? '',
       target_count: options.targetCount ?? 50,
-      recent_years_ratio: options.recentYearsRatio ?? 0.5,
-      english_ratio: options.englishRatio ?? 0.3,
-      search_years: options.searchYears ?? 10,
-      max_search_queries: options.maxSearchQueries ?? 8
+      search_years: options.searchYears ?? 10
     });
     return response.data;
   },

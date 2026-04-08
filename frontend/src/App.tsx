@@ -155,12 +155,8 @@ function App() {
 
     try {
       const response = await api.searchPapersOnly(topic, {
-        researchDirectionId: selectedDirectionId,
         targetCount,
-        recentYearsRatio,
-        englishRatio,
         searchYears,
-        maxSearchQueries
       })
 
       if (response.success && response.data) {
@@ -178,9 +174,7 @@ function App() {
         // 更新文献列表
         if (data.all_papers) {
           setAllPapers(data.all_papers)
-        }
-        if (data.filtered_papers) {
-          setPapers(data.filtered_papers)
+          setPapers(data.all_papers)
         }
 
         // 更新统计信息

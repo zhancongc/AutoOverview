@@ -1189,15 +1189,8 @@ async def get_task_review(
 class SearchPapersOnlyRequest(BaseModel):
     """查找文献请求"""
     topic: str = Field(..., description="论文主题", min_length=1)
-    research_direction_id: str = Field(
-        "",
-        description="研究方向ID（可选）。可选值：computer（计算机科学）、materials（材料科学）、management（管理学）。如果不指定，系统将自动推断。",
-    )
     target_count: int = Field(50, description="目标文献数量", ge=10, le=100)
-    recent_years_ratio: float = Field(0.5, description="近5年占比", ge=0.1, le=1.0)
-    english_ratio: float = Field(0.0, description="英文文献占比（已废弃，不再使用）", ge=0.0, le=1.0)
     search_years: int = Field(10, description="搜索年份范围", ge=5, le=30)
-    max_search_queries: int = Field(8, description="最多搜索查询数", ge=1, le=20)
 
 
 @app.post("/api/search-papers-only")
@@ -1205,38 +1198,14 @@ async def search_papers_only(request: SearchPapersOnlyRequest):
     """
     查找文献（不生成综述）
 
-    执行流程：
-    1. 生成综述框架和搜索关键词
-    2. 优化搜索关键词
-    3. 按小节搜索文献
-    4. 质量过滤
-
-    返回：
-    - 综述框架
-    - 搜索到的文献列表
-    - 筛选后的文献列表
-    - 统计信息
-    - 过程日志
+    使用 PaperSearchAgent 搜索文献并返回结果。
     """
     try:
         executor = ReviewTaskExecutor()
 
-        # 获取研究方向名称
-        research_direction = ""
-        if request.research_direction_id:
-            from config.research_directions import get_direction_by_id
-            direction_info = get_direction_by_id(request.research_direction_id)
-            if direction_info:
-                research_direction = direction_info.get("name", "")
-
         params = {
-            'research_direction_id': request.research_direction_id,
-            'research_direction': research_direction,  # 实际的方向名称
             'target_count': request.target_count,
-            'recent_years_ratio': request.recent_years_ratio,
-            'english_ratio': request.english_ratio,
             'search_years': request.search_years,
-            'max_search_queries': request.max_search_queries,
         }
 
         result = await executor.search_papers_only(
@@ -1329,7 +1298,7 @@ if __name__ == "__main__":
     uvicorn.run(
         "main:app",
         host="0.0.0.0",
-        port=8000,
+        port=8006,
         reload=True,
         access_log=True,
         reload_excludes=[".venv", "*.pyc", "__pycache__"]

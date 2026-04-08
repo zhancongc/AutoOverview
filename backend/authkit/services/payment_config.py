@@ -7,15 +7,37 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+def _resolve_cert_path(env_value: str | None, default_name: str, base_dir: str) -> str | None:
+    """解析证书路径：环境变量优先，相对路径基于 base_dir 解析"""
+    if env_value is None:
+        return os.path.join(base_dir, default_name)
+    if os.path.isabs(env_value):
+        return env_value
+    return os.path.join(base_dir, env_value)
+
+
 def get_payment_config():
     """获取支付配置"""
+    # 默认证书路径在 backend 目录下
+    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     return {
         "alipay_app_id": os.getenv("ALIPAY_APP_ID", ""),
         "alipay_app_private_key": os.getenv("ALIPAY_APP_PRIVATE_KEY", ""),
         "alipay_public_key": os.getenv("ALIPAY_PUBLIC_KEY", ""),
+        "alipay_server_url": os.getenv("ALIPAY_SERVER_URL", "https://openapi.alipay.com/gateway.do"),
+        # 证书路径配置：环境变量优先，相对路径基于 backend 目录解析
+        "alipay_app_cert_path": _resolve_cert_path(
+            os.getenv("ALIPAY_APP_CERT_PATH"), "appCertPublicKey_2021006144609789.crt", base_dir
+        ),
+        "alipay_alipay_cert_path": _resolve_cert_path(
+            os.getenv("ALIPAY_ALIPAY_CERT_PATH"), "alipayCertPublicKey_RSA2.crt", base_dir
+        ),
+        "alipay_root_cert_path": _resolve_cert_path(
+            os.getenv("ALIPAY_ROOT_CERT_PATH"), "alipayRootCert.crt", base_dir
+        ),
         "is_dev": os.getenv("IS_DEV", "true").lower() == "true",
-        "frontend_url": os.getenv("FRONTEND_URL", "http://localhost:3000"),
-        "backend_url": os.getenv("BACKEND_URL", "http://localhost:8000"),
+        "frontend_url": os.getenv("FRONTEND_URL", "http://localhost:3006"),
+        "backend_url": os.getenv("BACKEND_URL", "http://localhost:8006"),
     }
 
 
@@ -29,11 +51,36 @@ def init_alipay():
         return DevAlipayService()
     else:
         from .alipay import AlipayService
-        return AlipayService(
-            app_id=config["alipay_app_id"],
-            app_private_key=config["alipay_app_private_key"],
-            alipay_public_key=config["alipay_public_key"],
-        )
+
+        # 检查证书文件是否存在
+        app_cert = config["alipay_app_cert_path"]
+        alipay_cert = config["alipay_alipay_cert_path"]
+        root_cert = config["alipay_root_cert_path"]
+
+        use_cert_mode = all([
+            os.path.exists(app_cert) if app_cert else False,
+            os.path.exists(alipay_cert) if alipay_cert else False,
+            os.path.exists(root_cert) if root_cert else False,
+        ])
+
+        if use_cert_mode:
+            logger.info("[Payment] 生产模式 - 证书模式")
+            return AlipayService(
+                app_id=config["alipay_app_id"],
+                app_private_key=config["alipay_app_private_key"],
+                app_cert_path=app_cert,
+                alipay_cert_path=alipay_cert,
+                alipay_root_cert_path=root_cert,
+                server_url=config["alipay_server_url"],
+            )
+        else:
+            logger.info("[Payment] 生产模式 - 公钥模式")
+            return AlipayService(
+                app_id=config["alipay_app_id"],
+                app_private_key=config["alipay_app_private_key"],
+                alipay_public_key=config["alipay_public_key"],
+                server_url=config["alipay_server_url"],
+            )
 
 
 # 全局支付服务实例
