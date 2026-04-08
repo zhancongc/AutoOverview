@@ -1,29 +1,69 @@
 """
 Semantic Scholar 文献检索服务
 免费API，对中文文献有一定支持
+全局单例：所有并发任务共享同一个实例和速率限制
 """
 import httpx
 import asyncio
+import os
 from typing import List, Dict, Optional
 from datetime import datetime, timedelta
 
 
 class SemanticScholarService:
-    """Semantic Scholar API 客户端"""
+    """
+    Semantic Scholar API 客户端（全局单例）
+
+    所有并发任务共享同一个实例，确保速率限制（1 次/秒）在全局生效。
+    通过 get_semantic_scholar_service() 获取实例，不要直接构造。
+    """
 
     BASE_URL = "https://api.semanticscholar.org/graph/v1"
 
+    _instance = None
+    _initialized = False
+
+    def __new__(cls, api_key: str = None):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+        return cls._instance
+
     def __init__(self, api_key: str = None):
+        if self._initialized:
+            # 单例已初始化，只更新 api_key（如果提供了更好的）
+            if api_key and not self.api_key:
+                self.api_key = api_key
+                self.request_delay = 1.0
+            return
+
         self.client = httpx.AsyncClient(timeout=30.0)
-        # Semantic Scholar API key is optional but increases rate limits
         self.api_key = api_key
         # 速率限制：有API Key时每秒1次，无API Key时每10秒1次
-        self.request_delay = 1.0 if api_key else 10.0  # 秒
+        self.request_delay = 1.0 if api_key else 10.0
         self.last_request_time = None
         # 重试配置
-        self.max_retries = 3  # 最大重试次数
-        self.retry_delay = 5  # 重试延迟（秒）
-        self.backoff_factor = 2  # 退避因子
+        self.max_retries = 3
+        self.retry_delay = 5
+        self.backoff_factor = 2
+        # 异步锁：确保并发请求排队等待速率限制
+        self._lock = asyncio.Lock()
+
+        self._initialized = True
+
+    async def close(self):
+        """关闭 HTTP 客户端（仅在进程退出时调用）"""
+        # 单例模式下不关闭，保持连接复用
+        pass
+
+    async def shutdown(self):
+        """真正关闭（仅进程退出时调用）"""
+        if self.client:
+            await self.client.aclose()
+
+
+def get_semantic_scholar_service() -> SemanticScholarService:
+    """获取全局单例实例"""
+    return SemanticScholarService(api_key=os.getenv("SEMANTIC_SCHOLAR_API_KEY"))
 
     async def search_papers(
         self,
@@ -69,14 +109,6 @@ class SemanticScholarService:
             # 只获取开放获取论文
             search_papers("machine learning", open_access_pdf=True)
         """
-        # 速率限制：等待足够时间再发送请求
-        import asyncio
-        if self.last_request_time:
-            elapsed = datetime.now().timestamp() - self.last_request_time
-            if elapsed < self.request_delay:
-                wait_time = self.request_delay - elapsed
-                await asyncio.sleep(wait_time)
-
         # 计算年份范围
         current_year = datetime.now().year
         if year_start is None:
@@ -127,18 +159,18 @@ class SemanticScholarService:
         if venue:
             print(f"[Semantic Scholar] 期刊: {venue}")
 
-        # 重试机制
+        # 重试机制（带全局速率限制）
         for attempt in range(self.max_retries):
             try:
-                # 速率限制：等待足够时间再发送请求
-                if self.last_request_time:
-                    elapsed = datetime.now().timestamp() - self.last_request_time
-                    if elapsed < self.request_delay:
-                        wait_time = self.request_delay - elapsed
-                        print(f"[Semantic Scholar] 速率限制等待 {wait_time:.1f} 秒...")
-                        await asyncio.sleep(wait_time)
+                # 全局速率限制：通过异步锁确保并发请求排队
+                async with self._lock:
+                    if self.last_request_time:
+                        elapsed = datetime.now().timestamp() - self.last_request_time
+                        if elapsed < self.request_delay:
+                            wait_time = self.request_delay - elapsed
+                            await asyncio.sleep(wait_time)
 
-                self.last_request_time = datetime.now().timestamp()
+                    self.last_request_time = datetime.now().timestamp()
                 response = await self.client.get(
                     f"{self.BASE_URL}/paper/search",
                     params=params,

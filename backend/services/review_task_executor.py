@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 from services.task_manager import TaskManager, TaskStatus, task_manager
 from services.paper_filter import PaperFilterService
 from services.smart_review_generator_final import SmartReviewGeneratorFinal
-from services.semantic_scholar_search import SemanticScholarService
+from services.semantic_scholar_search import SemanticScholarService, get_semantic_scholar_service
 from services.paper_search_agent import PaperSearchAgent
 from services.citation_validator_v2 import CitationValidatorV2
 from services.review_record_service import ReviewRecordService
@@ -59,14 +59,14 @@ class ReviewTaskExecutor:
             print(f"[TaskExecutor] 任务不存在: {task_id}")
             return
 
-        # 尝试获取执行槽位（并发控制）
-        acquired = await task_manager.acquire_slot(task_id)
+        # 尝试获取执行槽位（并发控制，支持排队提示和超时）
+        acquired = await task_manager.acquire_slot(task_id, timeout=1800)  # 30分钟超时
         if not acquired:
-            print(f"[TaskExecutor] 无法获取执行槽位，任务 {task_id} 将等待")
+            print(f"[TaskExecutor] 任务 {task_id} 排队超时")
             task_manager.update_task_status(
                 task_id,
-                TaskStatus.PENDING,
-                progress={"step": "waiting", "message": "等待可用执行槽位..."}
+                TaskStatus.FAILED,
+                error="系统繁忙，排队超时（超过30分钟），请稍后重试"
             )
             return
 
@@ -103,21 +103,17 @@ class ReviewTaskExecutor:
             )
 
             semantic_scholar_api_key = os.getenv("SEMANTIC_SCHOLAR_API_KEY")
-            ss_service = SemanticScholarService(api_key=semantic_scholar_api_key)
+            ss_service = get_semantic_scholar_service()
 
-            try:
-                # 使用 LLM + Function Calling 驱动检索
-                search_agent = PaperSearchAgent(ss_service=ss_service)
-                all_papers = await search_agent.search(
-                    topic=topic,
-                    search_years=params.get('search_years', 10),
-                    target_count=params.get('target_count', 50)
-                )
+            # 使用 LLM + Function Calling 驱动检索
+            search_agent = PaperSearchAgent(ss_service=ss_service)
+            all_papers = await search_agent.search(
+                topic=topic,
+                search_years=params.get('search_years', 10),
+                target_count=params.get('target_count', 50)
+            )
 
-                print(f"[阶段1] 搜索完成: 共 {len(all_papers)} 篇文献")
-
-            finally:
-                await ss_service.close()
+            print(f"[阶段1] 搜索完成: 共 {len(all_papers)} 篇文献")
 
             if not all_papers:
                 raise Exception(f'未找到关于「{topic}」的相关文献')
@@ -3014,26 +3010,20 @@ class ReviewTaskExecutor:
         Returns:
             论文列表
         """
-        import os
-        from services.semantic_scholar_search import SemanticScholarService
+        from services.semantic_scholar_search import get_semantic_scholar_service
 
-        api_key = os.getenv("SEMANTIC_SCHOLAR_API_KEY")
-        service = SemanticScholarService(api_key=api_key)
+        service = get_semantic_scholar_service()
 
-        try:
-            # 使用高级搜索功能
-            papers = await service.search_papers(
-                query=query,
-                years_ago=years_ago,
-                limit=limit,
-                sort="citationCount:desc"  # 按引用量排序
-            )
+        # 使用高级搜索功能
+        papers = await service.search_papers(
+            query=query,
+            years_ago=years_ago,
+            limit=limit,
+            sort="citationCount:desc"  # 按引用量排序
+        )
 
-            print(f"[Semantic Scholar 布尔查询] \"{query[:50]}...\" 找到 {len(papers)} 篇")
-            return papers
-
-        finally:
-            await service.close()
+        print(f"[Semantic Scholar 布尔查询] \"{query[:50]}...\" 找到 {len(papers)} 篇")
+        return papers
 
     # ==================== 共同方法：文献搜索和筛选 ====================
 
