@@ -60,8 +60,7 @@ class AuthService:
             province=getattr(user_data, 'province', None),
             city=getattr(user_data, 'city', None),
             is_active=True,
-            is_verified=False,
-            is_staff=False
+            is_verified=False
         )
 
         # 设置扩展元数据（如果有）

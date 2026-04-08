@@ -237,7 +237,6 @@ async def get_user_stats(
                 "user_id": current_user.id,
                 "email": current_user.email,
                 "nickname": current_user.nickname,
-                "is_staff": current_user.is_staff,
                 "is_verified": current_user.is_verified,
                 "created_at": current_user.created_at,
                 # metadata 用于存储业务特定数据

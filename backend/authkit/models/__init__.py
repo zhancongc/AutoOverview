@@ -31,7 +31,6 @@ class User(Base):
     is_active = Column(Boolean, default=True, comment="是否活跃")
     is_verified = Column(Boolean, default=False, comment="邮箱是否验证")
     is_superuser = Column(Boolean, default=False, comment="是否超级管理员")
-    is_staff = Column(Boolean, default=False, comment="是否员工")
 
     # 扩展字段（JSON 格式，用于存储业务特定数据）
     meta_data = Column(Text, comment="扩展元数据（JSON格式）")

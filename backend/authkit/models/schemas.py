@@ -48,7 +48,6 @@ class UserResponse(BaseModel):
     language: Optional[str] = None
     is_active: bool
     is_verified: bool
-    is_staff: bool
     metadata: Optional[dict] = None  # 扩展元数据
     created_at: Optional[str] = None
 
@@ -79,7 +78,6 @@ class UserResponse(BaseModel):
             language=user.language,
             is_active=user.is_active if user.is_active is not None else True,
             is_verified=user.is_verified if user.is_verified is not None else False,
-            is_staff=user.is_staff if user.is_staff is not None else False,
             metadata=user.get_metadata(),
             created_at=user.created_at.isoformat() if user.created_at else None
         )

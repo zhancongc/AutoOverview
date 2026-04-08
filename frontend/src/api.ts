@@ -198,18 +198,29 @@ export const api = {
 
   // 导出综述为 Word
   async exportReview(recordId: number): Promise<Blob> {
+    const token = localStorage.getItem('auth_token');
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) headers.Authorization = `Bearer ${token}`;
+
     const response = await axios.post(`${API_BASE}/records/export`, {
       record_id: recordId
     }, {
-      responseType: 'blob'
+      responseType: 'blob',
+      headers
     });
     return response.data;
   },
 
   // 单次解锁综述（29.8元）
   async unlockRecord(recordId: number): Promise<{ success: boolean; message: string; order_no?: string; already_unlocked?: boolean }> {
+    const token = localStorage.getItem('auth_token');
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) headers.Authorization = `Bearer ${token}`;
+
     const response = await axios.post(`${API_BASE}/records/unlock`, {
       record_id: recordId
+    }, {
+      headers
     });
     return response.data;
   },
