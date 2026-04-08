@@ -18,7 +18,7 @@ class Subscription(PaymentBase):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, nullable=False, index=True, comment="用户ID")
     order_no = Column(String(64), unique=True, nullable=False, index=True, comment="商户订单号")
-    plan_type = Column(String(32), nullable=False, comment="套餐类型: single(体验包1篇)/semester(基础包3篇)/yearly(进阶包6篇)/unlock(单次解锁)")
+    plan_type = Column(String(32), nullable=False, comment="套餐类型: single(体验包1篇)/semester(标准包3篇)/yearly(进阶包6篇)/unlock(单次解锁)")
     amount = Column(Float, nullable=False, comment="订单金额")
     status = Column(String(20), default="pending", comment="订单状态: pending/paid/cancelled")
     payment_method = Column(String(20), nullable=True, comment="支付方式: alipay")
@@ -62,7 +62,7 @@ class PaymentLog(PaymentBase):
 
 class SubscriptionCreate(BaseModel):
     """创建订阅请求"""
-    plan_type: str  # single(体验包1篇)/semester(基础包3篇)/yearly(进阶包6篇)/unlock(单次解锁)
+    plan_type: str  # single(体验包1篇)/semester(标准包3篇)/yearly(进阶包6篇)/unlock(单次解锁)
 
 
 class PaymentCreateResponse(BaseModel):
@@ -85,7 +85,7 @@ class MembershipInfo(BaseModel):
 PLANS = [
     {
         "type": "single",
-        "name": "单次体验",
+        "name": "体验包",
         "price": 29.8,
         "credits": 1,
         "recommended": False,
@@ -96,26 +96,26 @@ PLANS = [
     },
     {
         "type": "semester",
-        "name": "基础包",
-        "price": 59.8,
+        "name": "标准包",
+        "price": 69.8,
         "credits": 3,
         "recommended": True,
         "features": [
             "3 篇综述生成额度",
             "在线查看 + PDF 导出",
-            "低至 ¥19.9/篇",
+            "约 ¥23.2/篇",
         ]
     },
     {
         "type": "yearly",
         "name": "进阶包",
-        "price": 99.8,
+        "price": 109.8,
         "credits": 6,
         "recommended": False,
         "features": [
             "6 篇综述生成额度",
             "在线查看 + PDF 导出",
-            "低至 ¥16.6/篇",
+            "约 ¥18.3/篇",
         ]
     },
 ]

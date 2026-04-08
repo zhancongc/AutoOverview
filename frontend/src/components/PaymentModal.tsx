@@ -22,7 +22,7 @@ const PLANS = [
   },
   {
     type: 'single',
-    name: '单次体验',
+    name: '体验包',
     price: 29.8,
     credits: 1,
     features: [
@@ -32,24 +32,24 @@ const PLANS = [
   },
   {
     type: 'semester',
-    name: '基础包',
-    price: 59.8,
+    name: '标准包',
+    price: 69.8,
     credits: 3,
     features: [
       '3 篇综述生成额度',
       '在线查看 + PDF 导出',
-      '低至 ¥19.9/篇',
+      '约 ¥23.2/篇',
     ],
   },
   {
     type: 'yearly',
     name: '进阶包',
-    price: 99.8,
+    price: 109.8,
     credits: 6,
     features: [
       '6 篇综述生成额度',
       '在线查看 + PDF 导出',
-      '低至 ¥16.6/篇',
+      '约 ¥18.3/篇',
     ],
   },
 ]

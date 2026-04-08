@@ -557,36 +557,42 @@ export function SimpleApp() {
           <p className="section-subtitle">按需购买，注册即送 1 篇免费综述</p>
           <div className="pricing-grid">
             <div className="pricing-card">
-              <h3 className="pricing-name">单次体验</h3>
+              <h3 className="pricing-name">体验包</h3>
               <div className="pricing-price">
-                <span className="pricing-original">{'\u00A539.9'}</span>
+                <span className="pricing-original">{'\u00A539.8'}</span>
                 {'\u00A529.8'}
               </div>
               <ul className="pricing-features">
-                <li>1 篇综述生成额度</li>
+                <li>1 篇深度综述</li>
                 <li>在线查看 + Word 导出</li>
-                <li>限时优惠，省 {'\u00A510.2'}</li>
+                <li>首购特惠，省 {'\u00A510'}</li>
               </ul>
               <button className="pricing-btn pricing-btn-primary" onClick={() => { isLoggedIn ? setShowPaymentModal('single') : setShowLoginModal(true) }}>立即购买</button>
             </div>
             <div className="pricing-card pricing-featured">
               <div className="pricing-badge">推荐</div>
-              <h3 className="pricing-name">基础包</h3>
-              <div className="pricing-price">{'\u00A559.8'}</div>
+              <h3 className="pricing-name">标准包</h3>
+              <div className="pricing-price">
+                <span className="pricing-original">{'\u00A5119.4'}</span>
+                {'\u00A569.8'}
+              </div>
               <ul className="pricing-features">
-                <li>3 篇综述生成额度</li>
+                <li>3 篇深度综述</li>
                 <li>在线查看 + Word 导出</li>
-                <li>低至 {'\u00A519.9'}/篇</li>
+                <li>约 {'\u00A523.2'}/篇</li>
               </ul>
-              <button className="pricing-btn pricing-btn-primary" onClick={() => { isLoggedIn ? setShowPaymentModal('semester') : setShowLoginModal(true) }}>选择基础包</button>
+              <button className="pricing-btn pricing-btn-primary" onClick={() => { isLoggedIn ? setShowPaymentModal('semester') : setShowLoginModal(true) }}>选择标准包</button>
             </div>
             <div className="pricing-card">
               <h3 className="pricing-name">进阶包</h3>
-              <div className="pricing-price">{'\u00A599.8'}</div>
+              <div className="pricing-price">
+                <span className="pricing-original">{'\u00A5238.8'}</span>
+                {'\u00A5109.8'}
+              </div>
               <ul className="pricing-features">
-                <li>6 篇综述生成额度</li>
+                <li>6 篇深度综述</li>
                 <li>在线查看 + Word 导出</li>
-                <li>低至 {'\u00A516.6'}/篇</li>
+                <li>约 {'\u00A518.3'}/篇</li>
               </ul>
               <button className="pricing-btn pricing-btn-primary" onClick={() => { isLoggedIn ? setShowPaymentModal('yearly') : setShowLoginModal(true) }}>选择进阶包</button>
             </div>
