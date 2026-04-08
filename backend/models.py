@@ -34,7 +34,6 @@ class PaperMetadata(Base):
     # 索引（移除title索引以避免长度限制问题，title搜索使用LIKE查询）
     __table_args__ = (
         Index('idx_paper_metadata_year', 'year'),
-        Index('idx_paper_metadata_source', 'source'),
         Index('idx_paper_metadata_created_at', 'created_at'),
         Index('idx_paper_metadata_is_english', 'is_english'),
     )
