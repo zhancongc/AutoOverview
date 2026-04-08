@@ -471,7 +471,7 @@ async def unlock_record_for_export(
 
         # 开发环境直接支付成功
         if os.getenv("PAYMENT_ENV", "dev") == "dev":
-            from authkit.services.alipay_service import AlipayService
+            from authkit.services.alipay import AlipayService
             alipay_service = AlipayService()
             await alipay_service.handle_payment_success(
                 order_no=order_no,
