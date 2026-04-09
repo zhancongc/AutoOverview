@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { QRCodeSVG } from 'qrcode.react'
 import { api } from '../api'
 import './PaymentModal.css'
 
@@ -259,6 +260,9 @@ export function PaymentModal({ onClose, onPaymentSuccess, planType, recordId }: 
                   ) : (
                     <>
                       <p className="payment-scan-hint">请使用支付宝扫码完成支付</p>
+                      <div className="payment-qrcode-container">
+                        <QRCodeSVG value={payUrl} size={180} />
+                      </div>
                       <p className="payment-order-info">订单号：{orderNo} · 金额：¥{amount}</p>
                       <p className="payment-or-hint">或者</p>
                       <button className="payment-modal-btn" onClick={handleAlipayPay}>
