@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { QRCodeSVG } from 'qrcode.react'
+import QRCode from 'qrcode'
 import { api } from '../api'
 import './PaymentModal.css'
 
@@ -69,6 +69,7 @@ export function PaymentModal({ onClose, onPaymentSuccess, planType, recordId }: 
   const [paymentStatus, setPaymentStatus] = useState<'idle' | 'creating' | 'waiting' | 'paid' | 'failed'>('idle')
   const [amount, setAmount] = useState(0)
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const qrCanvasRef = useRef<HTMLCanvasElement>(null)
 
   const plan = PLANS.find(p => p.type === planType) || PLANS[0]
 
@@ -80,6 +81,13 @@ export function PaymentModal({ onClose, onPaymentSuccess, planType, recordId }: 
     document.addEventListener('keydown', handleEscape)
     return () => document.removeEventListener('keydown', handleEscape)
   }, [onClose])
+
+  // 生成二维码
+  useEffect(() => {
+    if (payUrl && qrCanvasRef.current) {
+      QRCode.toCanvas(qrCanvasRef.current, payUrl, { width: 180, margin: 2 })
+    }
+  }, [payUrl])
 
   // 轮询支付状态
   useEffect(() => {
@@ -261,7 +269,7 @@ export function PaymentModal({ onClose, onPaymentSuccess, planType, recordId }: 
                     <>
                       <p className="payment-scan-hint">请使用支付宝扫码完成支付</p>
                       <div className="payment-qrcode-container">
-                        <QRCodeSVG value={payUrl} size={180} />
+                        <canvas ref={qrCanvasRef} />
                       </div>
                       <p className="payment-order-info">订单号：{orderNo} · 金额：¥{amount}</p>
                       <p className="payment-or-hint">或者</p>
