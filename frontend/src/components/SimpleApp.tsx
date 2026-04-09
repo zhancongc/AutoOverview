@@ -293,28 +293,28 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
           <a href="#process" onClick={() => setMobileMenuOpen(false)}>使用流程</a>
           <a href="#cases" onClick={() => setMobileMenuOpen(false)}>案例展示</a>
           <a href="#pricing" onClick={() => setMobileMenuOpen(false)}>价格方案</a>
-        </div>
-        <div className={`nav-actions ${mobileMenuOpen ? 'mobile-open' : ''}`}>
-          {isLoggedIn ? (
-            <div className="user-menu">
-              <button className="user-info" onClick={() => navigate('/profile')}>
-                <span className="user-avatar">👤</span>
-                <span className="user-name">个人中心</span>
-              </button>
-              <button className="nav-btn nav-btn-logout" onClick={handleLogout}>
-                退出
-              </button>
-            </div>
-          ) : (
-            <div className="auth-buttons">
-              <button
-                className="nav-btn nav-btn-register"
-                onClick={() => setShowLoginModal(true)}
-              >
-                登录 / 注册
-              </button>
-            </div>
-          )}
+          <div className={`nav-actions ${mobileMenuOpen ? 'mobile-open' : ''}`}>
+            {isLoggedIn ? (
+              <div className="user-menu">
+                <button className="user-info" onClick={() => navigate('/profile')}>
+                  <span className="user-avatar">👤</span>
+                  <span className="user-name">个人中心</span>
+                </button>
+                <button className="nav-btn nav-btn-logout" onClick={handleLogout}>
+                  退出
+                </button>
+              </div>
+            ) : (
+              <div className="auth-buttons">
+                <button
+                  className="nav-btn nav-btn-register"
+                  onClick={() => setShowLoginModal(true)}
+                >
+                  登录 / 注册
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </nav>
 

@@ -1448,14 +1448,9 @@
   }
 
   .nav-actions.mobile-open {
-    position: absolute;
-    top: calc(100% + 160px);
-    left: 0;
-    right: 0;
-    background: rgba(255, 255, 255, 0.98);
     justify-content: center;
-    padding: 1rem 1.5rem;
-    border-bottom: 1px solid var(--border-gray);
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--border-gray);
     gap: 0.75rem;
   }
 
