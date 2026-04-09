@@ -58,9 +58,9 @@ def init_alipay():
         root_cert = config["alipay_root_cert_path"]
 
         use_cert_mode = all([
-            os.path.exists(app_cert) if app_cert else False,
-            os.path.exists(alipay_cert) if alipay_cert else False,
-            os.path.exists(root_cert) if root_cert else False,
+            app_cert and os.path.exists(app_cert),
+            alipay_cert and os.path.exists(alipay_cert),
+            root_cert and os.path.exists(root_cert),
         ])
 
         if use_cert_mode:
@@ -68,6 +68,7 @@ def init_alipay():
             return AlipayService(
                 app_id=config["alipay_app_id"],
                 app_private_key=config["alipay_app_private_key"],
+                alipay_public_key=config["alipay_public_key"],
                 app_cert_path=app_cert,
                 alipay_cert_path=alipay_cert,
                 alipay_root_cert_path=root_cert,

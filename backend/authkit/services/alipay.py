@@ -18,9 +18,11 @@ class AlipayService:
         app_id: str,
         app_private_key: str,
         alipay_public_key: Optional[str] = None,
+        app_cert_path: Optional[str] = None,
+        alipay_cert_path: Optional[str] = None,
+        alipay_root_cert_path: Optional[str] = None,
         server_url: str = "https://openapi.alipay.com/gateway.do",
         sign_type: str = "RSA2",
-        **kwargs  # 支持证书模式参数: app_cert_path, alipay_cert_path, alipay_root_cert_path
     ):
         from alipay.aop.api.AlipayClientConfig import AlipayClientConfig
         from alipay.aop.api.DefaultAlipayClient import DefaultAlipayClient
@@ -31,40 +33,23 @@ class AlipayService:
         config.app_private_key = app_private_key
         config.sign_type = sign_type
 
-        # 从 kwargs 中提取证书路径
-        app_cert_path = kwargs.get('app_cert_path')
-        alipay_cert_path = kwargs.get('alipay_cert_path')
-        alipay_root_cert_path = kwargs.get('alipay_root_cert_path')
-
         # 判断使用证书模式还是公钥模式
         use_cert_mode = all([app_cert_path, alipay_cert_path, alipay_root_cert_path])
 
         if use_cert_mode:
-            # 证书模式 - 尝试设置证书路径
-            try:
-                # 使用 hasattr 安全设置属性，避免 SDK 版本不兼容
-                if hasattr(config, 'app_cert_path'):
-                    config.app_cert_path = app_cert_path
-                if hasattr(config, 'alipay_cert_path'):
-                    config.alipay_cert_path = alipay_cert_path
-                if hasattr(config, 'alipay_root_cert_path'):
-                    config.alipay_root_cert_path = alipay_root_cert_path
-                logger.info(f"支付宝客户端初始化成功（证书模式），APP_ID: {app_id}")
-            except Exception as e:
-                logger.warning(f"设置证书路径失败，尝试公钥模式: {e}")
-                # 回退到公钥模式
-                if alipay_public_key:
-                    config.alipay_public_key = alipay_public_key
-                    logger.info(f"支付宝客户端初始化成功（公钥模式-回退），APP_ID: {app_id}")
-                else:
-                    raise ValueError("证书模式配置失败，且未配置 alipay_public_key")
-        else:
-            # 公钥模式（兼容旧配置）
+            # 证书模式
+            config.app_cert_path = app_cert_path
+            config.alipay_cert_path = alipay_cert_path
+            config.alipay_root_cert_path = alipay_root_cert_path
             if alipay_public_key:
                 config.alipay_public_key = alipay_public_key
-                logger.info(f"支付宝客户端初始化成功（公钥模式），APP_ID: {app_id}")
-            else:
+            logger.info(f"支付宝客户端初始化成功（证书模式），APP_ID: {app_id}")
+        else:
+            # 公钥模式
+            if not alipay_public_key:
                 raise ValueError("必须配置 alipay_public_key（公钥模式）或三个证书路径（证书模式）")
+            config.alipay_public_key = alipay_public_key
+            logger.info(f"支付宝客户端初始化成功（公钥模式），APP_ID: {app_id}")
 
         self.client = DefaultAlipayClient(config)
 
