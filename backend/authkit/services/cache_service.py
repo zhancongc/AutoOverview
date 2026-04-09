@@ -1,11 +1,14 @@
 """
 缓存服务 - 用于存储验证码
 """
+import logging
 import redis
 from typing import Optional
 import json
 
 from ..core.config import config
+
+logger = logging.getLogger(__name__)
 
 
 class CacheService:
@@ -26,7 +29,7 @@ class CacheService:
             self.redis_client.setex(key, expire_seconds, value)
             return True
         except Exception as e:
-            print(f"Redis set error: {e}")
+            logger.error("Redis set error: key=%s, error=%s", key, e)
             return False
 
     def get(self, key: str) -> Optional[str]:
@@ -34,7 +37,7 @@ class CacheService:
         try:
             return self.redis_client.get(key)
         except Exception as e:
-            print(f"Redis get error: {e}")
+            logger.error("Redis get error: key=%s, error=%s", key, e)
             return None
 
     def delete(self, key: str) -> bool:
@@ -43,7 +46,7 @@ class CacheService:
             self.redis_client.delete(key)
             return True
         except Exception as e:
-            print(f"Redis delete error: {e}")
+            logger.error("Redis delete error: key=%s, error=%s", key, e)
             return False
 
     def exists(self, key: str) -> bool:
@@ -51,7 +54,7 @@ class CacheService:
         try:
             return self.redis_client.exists(key) > 0
         except Exception as e:
-            print(f"Redis exists error: {e}")
+            logger.error("Redis exists error: key=%s, error=%s", key, e)
             return False
 
     # 验证码相关方法

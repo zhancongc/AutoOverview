@@ -1,9 +1,12 @@
 """
 认证服务 - 核心业务逻辑
 """
+import logging
 from typing import Optional, Tuple
 from datetime import datetime
 from sqlalchemy.orm import Session
+
+logger = logging.getLogger(__name__)
 
 from ..models import User
 from ..models.schemas import UserCreate, UserResponse
@@ -85,6 +88,7 @@ class AuthService:
 
         except Exception as e:
             self.db.rollback()
+            logger.error("注册失败: email=%s, error=%s", email, e, exc_info=True)
             return False, f"注册失败: {str(e)}", None
 
     def login_by_password(self, email: str, password: str) -> Tuple[bool, str, Optional[dict]]:
@@ -273,6 +277,7 @@ class AuthService:
             return True, "更新成功", UserResponse.from_user(user)
         except Exception as e:
             self.db.rollback()
+            logger.error("更新用户信息失败: error=%s", e, exc_info=True)
             return False, f"更新失败: {str(e)}", None
 
     def reset_password(self, email: str, code: str, new_password: str) -> Tuple[bool, str]:
@@ -304,4 +309,5 @@ class AuthService:
             return True, "密码重置成功"
         except Exception as e:
             self.db.rollback()
+            logger.error("密码重置失败: email=%s, error=%s", email, e, exc_info=True)
             return False, f"重置失败: {str(e)}"

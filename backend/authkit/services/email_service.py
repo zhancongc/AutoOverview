@@ -1,6 +1,7 @@
 """
 邮件服务 - 使用通用模板系统
 """
+import logging
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -12,6 +13,8 @@ from ..templates.base_emails import (
     get_welcome_email,
     get_password_reset_email
 )
+
+logger = logging.getLogger(__name__)
 
 
 class EmailService:
@@ -74,7 +77,7 @@ class EmailService:
             return True
 
         except Exception as e:
-            print(f"发送邮件失败: {e}")
+            logger.error("发送邮件失败: to=%s, error=%s", to_email, e, exc_info=True)
             return False
 
     def send_verification_code(
