@@ -51,10 +51,10 @@ def _load_private_key_from_secrets(base_dir: str) -> str | None:
         with open(secrets_path, "r", encoding="utf-8") as f:
             content = f.read()
 
-        # 第一步：提取纯 base64 内容（移除所有标记、空白、换行）
         content = content.strip()
+        logger.info(f"原始密钥内容长度: {len(content)}")
 
-        # 移除 PEM 标记（如果有）
+        # 先清理内容，提取纯 base64
         if "-----BEGIN" in content:
             lines = content.split("\n")
             base64_lines = []
@@ -72,26 +72,71 @@ def _load_private_key_from_secrets(base_dir: str) -> str | None:
                     base64_lines.append(line)
             pure_base64 = "".join(base64_lines)
         else:
-            # 已经是纯内容，移除所有空白
             pure_base64 = content.replace("\n", "").replace("\r", "").replace(" ", "").strip()
 
         logger.info(f"提取到纯 base64 密钥，长度: {len(pure_base64)}")
 
-        # 第二步：格式化为标准 PKCS#1 PEM
-        # 每 64 字符换行
-        lines = []
-        for i in range(0, len(pure_base64), 64):
-            lines.append(pure_base64[i:i+64])
-        content_with_newlines = "\n".join(lines)
+        # 尝试用 cryptography 解析并转换为 PKCS#1
+        try:
+            from cryptography.hazmat.primitives import serialization
+            from cryptography.hazmat.backends import default_backend
 
-        pkcs1_pem = (
-            "-----BEGIN RSA PRIVATE KEY-----\n"
-            f"{content_with_newlines}\n"
-            "-----END RSA PRIVATE KEY-----"
-        )
+            # 先尝试作为 PKCS#8 加载
+            try:
+                pkcs8_pem = f"-----BEGIN PRIVATE KEY-----\n{pure_base64}\n-----END PRIVATE KEY-----"
+                private_key_obj = serialization.load_pem_private_key(
+                    pkcs8_pem.encode(),
+                    password=None,
+                    backend=default_backend()
+                )
+                logger.info("成功解析为 PKCS#8 格式")
+            except Exception:
+                # 如果 PKCS#8 失败，尝试 PKCS#1
+                pkcs1_pem = f"-----BEGIN RSA PRIVATE KEY-----\n{pure_base64}\n-----END RSA PRIVATE KEY-----"
+                private_key_obj = serialization.load_pem_private_key(
+                    pkcs1_pem.encode(),
+                    password=None,
+                    backend=default_backend()
+                )
+                logger.info("成功解析为 PKCS#1 格式")
 
-        logger.info("secrets.txt: 已格式化为 PKCS#1 格式")
-        return pkcs1_pem
+            # 转换为 PKCS#1 (TraditionalOpenSSL) 格式
+            pkcs1_der = private_key_obj.private_bytes(
+                encoding=serialization.Encoding.PEM,
+                format=serialization.PrivateFormat.TraditionalOpenSSL,
+                encryption_algorithm=serialization.NoEncryption()
+            )
+
+            result = pkcs1_der.decode()
+            logger.info("secrets.txt: 已转换为 PKCS#1 格式")
+            return result
+
+        except ImportError:
+            logger.warning("cryptography 未安装，尝试直接格式化")
+            #  fallback: 直接包装成 PKCS#1
+            lines = []
+            for i in range(0, len(pure_base64), 64):
+                lines.append(pure_base64[i:i+64])
+            content_with_newlines = "\n".join(lines)
+            result = (
+                "-----BEGIN RSA PRIVATE KEY-----\n"
+                f"{content_with_newlines}\n"
+                "-----END RSA PRIVATE KEY-----"
+            )
+            return result
+        except Exception as e:
+            logger.warning(f"cryptography 转换失败: {e}，尝试直接格式化")
+            # fallback: 直接包装成 PKCS#1
+            lines = []
+            for i in range(0, len(pure_base64), 64):
+                lines.append(pure_base64[i:i+64])
+            content_with_newlines = "\n".join(lines)
+            result = (
+                "-----BEGIN RSA PRIVATE KEY-----\n"
+                f"{content_with_newlines}\n"
+                "-----END RSA PRIVATE KEY-----"
+            )
+            return result
 
     except Exception as e:
         logger.error(f"读取 secrets.txt 失败: {e}", exc_info=True)
