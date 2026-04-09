@@ -336,7 +336,7 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
               <div className="visual-stats">
                 <div className="visual-stat">
                   <span className="visual-stat-number">2亿+</span>
-                  <span className="visual-stat-label">篇文献库</span>
+                  <span className="visual-stat-label">篇文献检索</span>
                 </div>
                 <div className="visual-stat">
                   <span className="visual-stat-number">5min</span>
