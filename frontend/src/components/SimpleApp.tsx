@@ -37,7 +37,7 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
     }
     if (loggedIn) {
       setUserInfo(getLocalUserInfo())
-      api.getCredits().then(data => setCredits(data.credits)).catch(() => {})
+      api.getCredits().then(data => setCredits(data.credits)).catch(err => console.error('获取额度失败:', err))
       // 检查是否有进行中的任务
       api.getActiveTask().then(data => {
         if (data.active && data.task_id) {
@@ -49,7 +49,7 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
           sessionStorage.setItem('active_task_topic', data.topic || '')
           pollTask(data.task_id)
         }
-      }).catch(() => {})
+      }).catch(err => console.error('获取活跃任务失败:', err))
     }
   }, [])
 

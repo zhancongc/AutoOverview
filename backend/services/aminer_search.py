@@ -8,11 +8,14 @@ Token 获取地址: https://www.aminer.cn/open/board?tab=control
 import asyncio
 import base64
 import json
+import logging
 from typing import List, Dict, Optional
 from urllib.parse import quote
 from datetime import datetime
 
 import httpx
+
+logger = logging.getLogger(__name__)
 
 
 class AMinerSearchService:
@@ -62,14 +65,14 @@ class AMinerSearchService:
                     days_left = (exp_date - now).days
 
                     if days_left < 0:
-                        print(f"[AMiner] ⚠️  Token 已过期！请重新获取: https://www.aminer.cn/open/board?tab=control")
+                        logger.warning("Token 已过期！请重新获取: https://www.aminer.cn/open/board?tab=control")
                     elif days_left <= 10:
-                        print(f"[AMiner] ⚠️  Token 即将过期（剩余 {days_left} 天），请尽快重新获取: https://www.aminer.cn/open/board?tab=control")
+                        logger.warning("Token 即将过期（剩余 %d 天），请尽快重新获取: https://www.aminer.cn/open/board?tab=control", days_left)
                     else:
-                        print(f"[AMiner] Token 有效期至 {exp_date.strftime('%Y-%m-%d')} (剩余 {days_left} 天)")
+                        logger.info("Token 有效期至 %s (剩余 %d 天)", exp_date.strftime('%Y-%m-%d'), days_left)
         except Exception as e:
-            print(f"[AMiner] 无法解析 Token 过期时间: {e}")
-            print(f"[AMiner] 获取新 Token: https://www.aminer.cn/open/board?tab=control")
+            logger.warning("无法解析 Token 过期时间: %s", e)
+            logger.info("获取新 Token: https://www.aminer.cn/open/board?tab=control")
 
     async def initialize(self):
         """初始化 HTTP 客户端"""
@@ -96,6 +99,7 @@ class AMinerSearchService:
             else:
                 return False
         except Exception as e:
+            logger.error(f"AMiner Token 验证失败: {e}")
             return False
 
     async def search_by_title(
@@ -127,7 +131,7 @@ class AMinerSearchService:
             'title': search_title
         }
 
-        print(f"[AMiner] 搜索: {title}")
+        logger.info("AMiner 搜索: %s", title)
 
         try:
             response = await self.client.get(
@@ -139,7 +143,7 @@ class AMinerSearchService:
 
             total = data.get('total', 0)
             items = data.get('data', [])
-            print(f"[AMiner] ✓ 找到 {total} 篇，本页返回 {len(items)} 篇")
+            logger.info("AMiner ✓ 找到 %d 篇，本页返回 %d 篇", total, len(items))
 
             return {
                 'success': True,
@@ -150,19 +154,19 @@ class AMinerSearchService:
             }
 
         except httpx.HTTPStatusError as e:
-            print(f"[AMiner] HTTP错误: {e.response.status_code}")
+            logger.error("HTTP错误: %s", e.response.status_code)
             try:
                 error_data = e.response.json()
-                print(f"[AMiner] 错误信息: {error_data}")
-            except:
-                print(f"[AMiner] 错误内容: {e.response.text[:200]}")
+                logger.error("错误信息: %s", error_data)
+            except Exception:
+                logger.error("错误内容: %s", e.response.text[:200])
             return {
                 'success': False,
                 'error': f"HTTP {e.response.status_code}",
                 'items': []
             }
         except Exception as e:
-            print(f"[AMiner] 请求失败: {e}")
+            logger.error("请求失败: %s", e)
             return {
                 'success': False,
                 'error': str(e),
@@ -203,7 +207,7 @@ class AMinerSearchService:
             'keyword': combined  # 关键词中也搜索组合
         }
 
-        print(f"[AMiner Pro] 组合搜索: '{combined}'")
+        logger.info("AMiner Pro 组合搜索: '%s'", combined)
 
         try:
             response = await self.client.get(
@@ -217,7 +221,7 @@ class AMinerSearchService:
 
             # 检查是否为空响应
             if not response_text or response_text.strip() == '':
-                print(f"[AMiner Pro] 空响应")
+                logger.warning("AMiner Pro 空响应")
                 return {
                     'success': False,
                     'error': 'Empty response',
@@ -228,8 +232,8 @@ class AMinerSearchService:
             try:
                 data = response.json()
             except Exception as e:
-                print(f"[AMiner Pro] JSON 解析失败: {e}")
-                print(f"[AMiner Pro] 响应内容: {response_text[:500]}")
+                logger.error("AMiner Pro JSON 解析失败: %s", e)
+                logger.debug("AMiner Pro 响应内容: %s", response_text[:500])
                 return {
                     'success': False,
                     'error': f'JSON parse error: {e}',
@@ -238,7 +242,7 @@ class AMinerSearchService:
 
             # 检查数据结构
             if data is None:
-                print(f"[AMiner Pro] 返回数据为 None")
+                logger.warning("AMiner Pro 返回数据为 None")
                 return {
                     'success': False,
                     'error': 'Response data is None',
@@ -253,7 +257,7 @@ class AMinerSearchService:
             if items is None:
                 items = []
 
-            print(f"[AMiner Pro] ✓ 找到 {total} 篇，本页返回 {len(items)} 篇")
+            logger.info("AMiner Pro ✓ 找到 %d 篇，本页返回 %d 篇", total, len(items))
 
             return {
                 'success': True,
@@ -264,19 +268,19 @@ class AMinerSearchService:
             }
 
         except httpx.HTTPStatusError as e:
-            print(f"[AMiner Pro] HTTP错误: {e.response.status_code}")
+            logger.error("AMiner Pro HTTP错误: %s", e.response.status_code)
             try:
                 error_data = e.response.json()
-                print(f"[AMiner Pro] 错误信息: {error_data}")
-            except:
-                print(f"[AMiner Pro] 错误内容: {e.response.text[:200]}")
+                logger.error("AMiner Pro 错误信息: %s", error_data)
+            except Exception:
+                logger.error("AMiner Pro 错误内容: %s", e.response.text[:200])
             return {
                 'success': False,
                 'error': f"HTTP {e.response.status_code}",
                 'items': []
             }
         except Exception as e:
-            print(f"[AMiner Pro] 请求失败: {e}")
+            logger.error("AMiner Pro 请求失败: %s", e)
             import traceback
             traceback.print_exc()
             return {
@@ -311,7 +315,7 @@ class AMinerSearchService:
             'keyword': keyword
         }
 
-        print(f"[AMiner Pro] 关键词搜索: {keyword}")
+        logger.info("AMiner Pro 关键词搜索: %s", keyword)
 
         try:
             response = await self.client.get(
@@ -325,7 +329,7 @@ class AMinerSearchService:
 
             # 检查是否为空响应
             if not response_text or response_text.strip() == '':
-                print(f"[AMiner Pro] 空响应")
+                logger.warning("AMiner Pro 空响应")
                 return {
                     'success': False,
                     'error': 'Empty response',
@@ -336,8 +340,8 @@ class AMinerSearchService:
             try:
                 data = response.json()
             except Exception as e:
-                print(f"[AMiner Pro] JSON 解析失败: {e}")
-                print(f"[AMiner Pro] 响应内容: {response_text[:500]}")
+                logger.error("AMiner Pro JSON 解析失败: %s", e)
+                logger.debug("AMiner Pro 响应内容: %s", response_text[:500])
                 return {
                     'success': False,
                     'error': f'JSON parse error: {e}',
@@ -346,7 +350,7 @@ class AMinerSearchService:
 
             # 检查数据结构
             if data is None:
-                print(f"[AMiner Pro] 返回数据为 None")
+                logger.warning("AMiner Pro 返回数据为 None")
                 return {
                     'success': False,
                     'error': 'Response data is None',
@@ -361,7 +365,7 @@ class AMinerSearchService:
             if items is None:
                 items = []
 
-            print(f"[AMiner Pro] ✓ 找到 {total} 篇，本页返回 {len(items)} 篇")
+            logger.info("AMiner Pro ✓ 找到 %d 篇，本页返回 %d 篇", total, len(items))
 
             return {
                 'success': True,
@@ -372,19 +376,19 @@ class AMinerSearchService:
             }
 
         except httpx.HTTPStatusError as e:
-            print(f"[AMiner Pro] HTTP错误: {e.response.status_code}")
+            logger.error("AMiner Pro HTTP错误: %s", e.response.status_code)
             try:
                 error_data = e.response.json()
-                print(f"[AMiner Pro] 错误信息: {error_data}")
-            except:
-                print(f"[AMiner Pro] 错误内容: {e.response.text[:200]}")
+                logger.error("AMiner Pro 错误信息: %s", error_data)
+            except Exception:
+                logger.error("AMiner Pro 错误内容: %s", e.response.text[:200])
             return {
                 'success': False,
                 'error': f"HTTP {e.response.status_code}",
                 'items': []
             }
         except Exception as e:
-            print(f"[AMiner Pro] 请求失败: {e}")
+            logger.error("AMiner Pro 请求失败: %s", e)
             import traceback
             traceback.print_exc()
             return {
@@ -424,7 +428,7 @@ class AMinerSearchService:
             # 避免请求过快
             await asyncio.sleep(1)
 
-        print(f"[AMiner] 总共获取 {len(all_papers)} 篇不重复论文")
+        logger.info("AMiner 总共获取 %d 篇不重复论文", len(all_papers))
         return all_papers
 
     def _parse_paper(self, item: Dict) -> Dict:
@@ -579,7 +583,7 @@ class AMinerSearchService:
             # 两个关键词：分别用 title 和 keyword 搜索，然后合并（提升相关度）
             keyword1, keyword2 = keywords[0], keywords[1]
 
-            print(f"[AMiner Pro] 双关键词搜索: '{keyword1}' + '{keyword2}'")
+            logger.info("AMiner Pro 双关键词搜索: '%s' + '%s'", keyword1, keyword2)
 
             # 策略：分别搜索并合并
             # 搜索1：用 title 搜索第一个关键词
@@ -612,7 +616,7 @@ class AMinerSearchService:
                     item_seen_ids.add(pid)
                     unique_items.append(item)
 
-            print(f"[AMiner Pro] 合并后: {len(unique_items)} 篇不重复文献")
+            logger.info("AMiner Pro 合并后: %d 篇不重复文献", len(unique_items))
 
             # 解析论文
             for item in unique_items:

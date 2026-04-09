@@ -3,9 +3,12 @@ DataCite 文献检索服务
 专注于研究数据集的元数据检索
 API 文档: https://api.datacite.org/
 """
+import logging
 import httpx
 from typing import List, Dict, Optional
 from datetime import datetime, timedelta
+
+logger = logging.getLogger(__name__)
 
 
 class DataCiteSearchService:
@@ -79,8 +82,8 @@ class DataCiteSearchService:
                 if published:
                     try:
                         year = datetime.fromisoformat(published.replace('Z', '+00:00')).year
-                    except:
-                        pass
+                    except Exception as e:
+                        logger.debug("解析发布日期失败: %s, error=%s", published, e)
 
                 # 判断语言
                 is_english = self._is_english(title)

@@ -2,7 +2,10 @@
 学术术语数据库访问层
 用于管理和查询学术术语
 """
+import logging
 from typing import List, Dict, Optional
+
+logger = logging.getLogger(__name__)
 from sqlalchemy.orm import Session
 from sqlalchemy import or_, and_
 from models import AcademicTerm
@@ -98,8 +101,8 @@ class AcademicTermDAO:
                 english_match = AcademicTerm.english_terms.like(f"%{keyword}%")
                 alias_match = AcademicTerm.aliases.like(f"%{keyword}%")
                 query = query.filter(or_(chinese_match, english_match, alias_match))
-            except:
-                # 如果 JSON 搜索不支持，只搜索中文术语
+            except Exception as e:
+                logger.debug("JSON 搜索不支持，回退到中文搜索: %s", e)
                 query = query.filter(chinese_match)
 
         if category:

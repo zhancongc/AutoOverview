@@ -3,8 +3,11 @@ Auth Kit 独立性验证（简化版）
 
 验证 auth-kit 是否可以独立复用
 """
+import logging
 import os
 import sys
+
+logger = logging.getLogger(__name__)
 
 # 添加 auth-kit 到路径
 auth_kit_dir = os.path.dirname(os.path.abspath(__file__))
@@ -49,7 +52,8 @@ def check_no_business_deps():
                             if keyword.lower() in line_lower:
                                 found_issues.append(f"{filepath}:{i} - 发现 '{keyword}'")
                                 break
-            except:
+            except Exception as e:
+                logger.error("Failed to read file %s: %s", filepath, e)
                 pass
 
     if found_issues:

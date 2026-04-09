@@ -2,7 +2,10 @@
 论文元数据数据库访问层
 用于存储和检索所有搜索到的论文元数据
 """
+import logging
 from typing import List, Dict, Optional
+
+logger = logging.getLogger(__name__)
 from datetime import datetime
 from sqlalchemy.orm import Session
 from sqlalchemy import or_, and_
@@ -139,7 +142,8 @@ class PaperMetadataDAO:
                     )
                     self.session.add(paper_metadata)
                     new_count += 1
-            except Exception:
+            except Exception as e:
+                logger.debug("跳过无效论文元数据: %s", e)
                 continue
 
         self.session.commit()

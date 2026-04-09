@@ -2,6 +2,7 @@
 阶段记录服务
 记录综述生成过程中各个阶段的数据到数据库
 """
+import logging
 import sys
 import traceback
 from datetime import datetime
@@ -17,6 +18,8 @@ from models import (
     ReviewGenerationStage,
     PaperSearchSource
 )
+
+logger = logging.getLogger(__name__)
 
 
 class StageRecorder:
@@ -48,7 +51,7 @@ class StageRecorder:
             return True
         except Exception as e:
             session.rollback()
-            print(f"[StageRecorder] 创建任务失败: {e}")
+            logger.error("创建任务失败: %s", e)
             return False
         finally:
             session.close()
@@ -68,7 +71,7 @@ class StageRecorder:
         try:
             task = session.query(ReviewTask).filter_by(id=task_id).first()
             if not task:
-                print(f"[StageRecorder] 任务不存在: {task_id}")
+                logger.warning("任务不存在: %s", task_id)
                 return False
 
             task.status = status
@@ -87,7 +90,7 @@ class StageRecorder:
             return True
         except Exception as e:
             session.rollback()
-            print(f"[StageRecorder] 更新任务状态失败: {e}")
+            logger.error("更新任务状态失败: %s", e)
             return False
         finally:
             session.close()
@@ -125,7 +128,7 @@ class StageRecorder:
             return record.id
         except Exception as e:
             session.rollback()
-            print(f"[StageRecorder] 记录大纲生成失败: {e}")
+            logger.error("记录大纲生成失败: %s", e)
             traceback.print_exc()
             return None
         finally:
@@ -166,7 +169,7 @@ class StageRecorder:
             return record.id
         except Exception as e:
             session.rollback()
-            print(f"[StageRecorder] 记录文献搜索失败: {e}")
+            logger.error("记录文献搜索失败: %s", e)
             traceback.print_exc()
             return None
         finally:
@@ -211,7 +214,7 @@ class StageRecorder:
             return record.id
         except Exception as e:
             session.rollback()
-            print(f"[StageRecorder] 记录文献筛选失败: {e}")
+            logger.error("记录文献筛选失败: %s", e)
             traceback.print_exc()
             return None
         finally:
@@ -274,7 +277,7 @@ class StageRecorder:
             return record.id
         except Exception as e:
             session.rollback()
-            print(f"[StageRecorder] 记录综述生成失败: {e}")
+            logger.error("记录综述生成失败: %s", e)
             traceback.print_exc()
             return None
         finally:
@@ -341,15 +344,15 @@ class StageRecorder:
                         count += 1
                 except Exception as e:
                     # 单条插入失败，继续下一条
-                    print(f"[StageRecorder] 跳过记录: {e}")
+                    logger.warning("跳过记录: %s", e)
                     continue
 
             session.commit()
-            print(f"[StageRecorder] 记录搜索来源: {count} 条 (去重前: {len(sources)})")
+            logger.info("记录搜索来源: %d 条 (去重前: %d)", count, len(sources))
             return count
         except Exception as e:
             session.rollback()
-            print(f"[StageRecorder] 记录搜索来源失败: {e}")
+            logger.error("记录搜索来源失败: %s", e)
             traceback.print_exc()
             return 0
         finally:
@@ -414,7 +417,7 @@ class StageRecorder:
                 "keyword_stats": keyword_stats
             }
         except Exception as e:
-            print(f"[StageRecorder] 获取搜索来源统计失败: {e}")
+            logger.error("获取搜索来源统计失败: %s", e)
             traceback.print_exc()
             return {
                 "task_id": task_id,

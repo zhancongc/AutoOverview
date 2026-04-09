@@ -2,10 +2,13 @@
 综述生成任务执行器
 将同步的生成逻辑包装成异步任务
 """
+import logging
 import os
 from typing import Dict
 from datetime import datetime
 from sqlalchemy.orm import Session
+
+logger = logging.getLogger(__name__)
 
 from services.task_manager import TaskManager, TaskStatus, task_manager
 from services.paper_filter import PaperFilterService
@@ -271,8 +274,7 @@ class ReviewTaskExecutor:
             )
 
         except Exception as e:
-            import traceback
-            traceback.print_exc()
+            logger.error("综述生成任务失败: task_id=%s, error=%s", task_id, e, exc_info=True)
 
             if task_id in task_manager._running_tasks:
                 task_manager.release_slot(task_id)
@@ -298,8 +300,8 @@ class ReviewTaskExecutor:
                         record=record,
                         error_message=str(e)
                     )
-            except:
-                pass
+            except Exception as e:
+                logger.error("任务失败后更新状态异常: task_id=%s, error=%s", task_id, e)
 
             # 退还用户额度
             task_user_id = getattr(task, 'user_id', None)
@@ -311,11 +313,11 @@ class ReviewTaskExecutor:
                         auth_db = AuthSessionLocal()
                         try:
                             refund_credit(task_user_id, auth_db)
-                            print(f"[TaskExecutor] 已退还用户 {task_user_id} 的综述额度")
+                            logger.info("已退还用户 %s 的综述额度", task_user_id)
                         finally:
                             auth_db.close()
                 except Exception as refund_err:
-                    print(f"[TaskExecutor] 额度退还失败: {refund_err}")
+                    logger.error("额度退还失败: user_id=%s, error=%s", task_user_id, refund_err)
 
     async def search_papers_only(
         self,

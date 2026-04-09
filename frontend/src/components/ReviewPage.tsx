@@ -70,7 +70,7 @@ export function ReviewPage() {
     api.getCredits().then(data => {
       setCredits(data.credits)
       setFreeCredits(data.free_credits)
-    }).catch(() => {})
+    }).catch(err => console.error('获取额度失败:', err))
   }, [])
 
   // 如果 URL 中有 taskId，从后端加载完整数据（确保 isPaid/isPublic 正确）
@@ -216,7 +216,7 @@ export function ReviewPage() {
                 isPaid: res.data.is_paid,
               })
             }
-          }).catch(() => {})
+          }).catch(err => console.error('加载记录失败:', err))
         }
 
         // 直接导出
@@ -424,7 +424,7 @@ export function ReviewPage() {
                     isPaid: res.data.is_paid,
                   })
                 }
-              }).catch(() => {})
+              }).catch(err => console.error('轮询任务状态失败:', err))
             }
           }}
           planType="unlock"

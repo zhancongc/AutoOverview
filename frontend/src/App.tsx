@@ -291,6 +291,7 @@ function App() {
           clearInterval(pollInterval)
           setTaskStatus('failed')
           setError('查询任务状态出错')
+          console.error('轮询任务状态失败:', err)
           setLoading(false)
           console.error(err)
         }

@@ -31,7 +31,7 @@ export function ProfilePage() {
     api.getCredits().then(data => {
       setCredits(data.credits)
       setFreeCredits(data.free_credits)
-    }).catch(() => {})
+    }).catch(err => console.error('获取额度失败:', err))
   }, [])
 
   const loadRecords = async () => {
@@ -236,33 +236,31 @@ export function ProfilePage() {
                   <div className="record-main">
                     <div className="record-top">
                       <h3 className="record-topic">{record.topic}</h3>
-                      <div className="record-status-badge">
-                        {record.status === 'success' ? (
-                          <span className="status-success">✓ 完成</span>
-                        ) : record.status === 'failed' ? (
-                          <span className="status-failed">✗ 失败 · 点击重新生成</span>
-                        ) : (
-                          <span className="status-processing">⏳ 进行中</span>
+                      {record.status === 'success' ? (
+                        <span className="status-success">✓ 完成</span>
+                      ) : record.status === 'failed' ? (
+                        <span className="status-failed">✗ 失败</span>
+                      ) : (
+                        <span className="status-processing">⏳ 进行中</span>
+                      )}
+                    </div>
+                    <div className="record-bottom">
+                      <div className="record-meta">
+                        <span className="record-time">{formatDate(record.created_at)}</span>
+                        {record.statistics && (
+                          <span className="record-stats-inline">📄 {record.statistics.total || 0} 篇文献</span>
                         )}
                       </div>
                       {record.status === 'success' && (
                         <button
-                          className={`export-button export-word-btn ${!record.is_paid ? 'export-word-premium' : ''}`}
+                          className={`export-button ${!record.is_paid ? 'export-word-premium' : ''}`}
                           onClick={(e) => handleExportRecord(record.id, e)}
                           disabled={exportingId === record.id}
                         >
                           {exportingId === record.id ? '导出中...' :
                            record.is_paid ? '导出 Word' :
-                           '🔒 解锁导出 (29.8元)'}
+                           '🔓 解锁导出'}
                         </button>
-                      )}
-                    </div>
-                    <div className="record-info">
-                      <span className="record-time">{formatDate(record.created_at)}</span>
-                      {record.statistics && (
-                        <div className="record-stats-inline">
-                          <span>📄 {record.statistics.total || 0} 篇文献</span>
-                        </div>
                       )}
                     </div>
                   </div>

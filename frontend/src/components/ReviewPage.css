@@ -19,6 +19,8 @@
   min-height: 100vh;
   background: var(--cream-white);
   font-family: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, sans-serif;
+  overflow-x: visible !important;
+  overflow-y: auto;
 }
 
 .review-page-header {
@@ -27,6 +29,7 @@
   padding: 1.5rem 3rem;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 1rem;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
   border-bottom: 2px solid var(--academic-red);
@@ -35,13 +38,18 @@
   z-index: 100;
 }
 
+/* 移动端菜单按钮靠右 */
+.mobile-menu-toggle.review-mobile-toggle {
+  position: absolute;
+  right: 0.5rem;
+}
+
 .back-button {
   padding: 0.625rem 1.25rem;
   background: var(--cream-white);
   color: var(--charcoal);
   border: 2px solid var(--border-gray);
   border-radius: 10px;
-  margin-right: auto;
   cursor: pointer;
   font-size: 0.9rem;
   font-weight: 600;
@@ -188,6 +196,17 @@
   }
 }
 
+/* ==================== 移动端菜单按钮 ==================== */
+
+.review-mobile-toggle {
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  z-index: 101;
+}
+
 @media (max-width: 768px) {
   /* 移动端隐藏桌面端的操作按钮，显示菜单按钮 */
   .header-actions {
@@ -206,6 +225,7 @@
   .back-button {
     padding: 0.5rem 0.75rem;
     font-size: 0.85rem;
+    left: 0.5rem;
   }
 
   .review-page-header {
@@ -222,17 +242,6 @@
     padding: 0.4rem 0.8rem;
     font-size: 0.82rem;
   }
-}
-
-/* ==================== 移动端菜单按钮 ==================== */
-
-.review-mobile-toggle {
-  display: none;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0.5rem;
-  z-index: 101;
 }
 
 .review-mobile-toggle .hamburger {
@@ -263,26 +272,90 @@
 
 /* ==================== 移动端侧边栏 ==================== */
 
+/* 侧边栏基础样式 - 使用最强优先级确保完整显示 */
+.review-page .mobile-sidebar {
+  position: fixed !important;
+  top: 0 !important;
+  right: 0 !important;
+  left: auto !important;
+  bottom: 0 !important;
+  width: 280px !important;
+  max-width: 80vw !important;
+  min-width: 280px !important;
+  background: white !important;
+  z-index: 9999 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  transform: translateX(100%);
+  transition: transform 0.3s ease;
+  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.1);
+  overflow: visible !important;
+}
+
+.review-page .mobile-sidebar.sidebar-open {
+  transform: translateX(0);
+}
+
+/* 侧边栏头部 */
+.review-page .sidebar-header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 1.25rem 1.25rem 1rem;
+  border-bottom: 1px solid var(--border-gray);
+}
+
+.review-page .sidebar-header-title {
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--ink-black);
+}
+
+.review-page .sidebar-close {
+  margin-left: auto;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: var(--text-gray);
+  cursor: pointer;
+  padding: 0.25rem;
+  line-height: 1;
+}
+
+.review-page .sidebar-close:hover {
+  color: var(--charcoal);
+}
+
+/* 操作按钮区域 */
 .sidebar-actions {
-  padding: 1rem 1.25rem;
+  padding: 0.625rem 1rem;
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
+  gap: 0.5rem;
   border-bottom: 1px solid var(--border-gray);
+  flex-shrink: 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .sidebar-action-btn {
   width: 100%;
-  padding: 0.75rem;
-  border-radius: 10px;
+  max-width: 100%;
+  padding: 0.55rem 0.75rem;
+  border-radius: 8px;
   border: none;
-  font-size: 0.9rem;
+  font-size: 0.82rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
   font-family: 'Source Sans Pro', sans-serif;
   background: var(--academic-red);
   color: white;
+  line-height: 1.3;
+  box-sizing: border-box;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .sidebar-action-btn:hover {
@@ -312,7 +385,39 @@
 .sidebar-toc {
   flex: 1;
   overflow-y: auto;
-  padding: 0.75rem 1.25rem;
+  overflow-x: hidden;
+  padding: 0.75rem 1rem;
+  min-height: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.sidebar-toc-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.sidebar-toc-item {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.sidebar-toc-item a {
+  display: block;
+  padding: 0.5rem 0;
+  font-size: 0.88rem;
+  color: var(--charcoal);
+  text-decoration: none;
+  border-bottom: 1px solid var(--border-gray);
+  transition: color 0.2s;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .sidebar-toc-title {
@@ -371,54 +476,6 @@
   bottom: 0;
   background: rgba(0, 0, 0, 0.4);
   z-index: 200;
-}
-
-.review-page .mobile-sidebar {
-  position: fixed;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  width: 280px;
-  max-width: 80vw;
-  background: white;
-  z-index: 201;
-  display: flex;
-  flex-direction: column;
-  transform: translateX(100%);
-  transition: transform 0.3s ease;
-  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.1);
-}
-
-.review-page .mobile-sidebar.sidebar-open {
-  transform: translateX(0);
-}
-
-.review-page .sidebar-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1.25rem;
-  border-bottom: 1px solid var(--border-gray);
-}
-
-.review-page .sidebar-header-title {
-  font-weight: 700;
-  font-size: 1rem;
-  color: var(--ink-black);
-}
-
-.review-page .sidebar-close {
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  color: var(--text-gray);
-  cursor: pointer;
-  padding: 0.25rem;
-  line-height: 1;
-}
-
-.review-page .sidebar-close:hover {
-  color: var(--charcoal);
 }
 
 /* ==================== 分段 Tab 控件（嵌入 header） ==================== */

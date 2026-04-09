@@ -1,8 +1,11 @@
 """
 积分服务
 """
+import logging
 from typing import Optional, Tuple
 from datetime import datetime
+
+logger = logging.getLogger(__name__)
 from sqlalchemy.orm import Session
 import random
 import string
@@ -68,6 +71,7 @@ class CreditService:
 
         except Exception as e:
             self.db.rollback()
+            logger.error("扣费失败: user_id=%s, cost=%s, error=%s", user_id, cost, e, exc_info=True)
             return False, str(e)
 
     def add_credits(
@@ -109,9 +113,8 @@ class CreditService:
 
         except Exception as e:
             self.db.rollback()
-            return False, str(e)
-
-    def get_packages(self) -> list:
+            logger.error("充值失败: user_id=%s, amount=%s, error=%s", user_id, amount, e, exc_info=True)
+            return False, str(e)(self) -> list:
         """获取积分套餐列表"""
         packages = []
         for pkg_data in CREDIT_PACKAGES:
@@ -161,6 +164,7 @@ class CreditService:
 
         except Exception as e:
             self.db.rollback()
+            logger.error("创建订单失败: user_id=%s, package_id=%s, error=%s", user_id, package_id, e, exc_info=True)
             return False, str(e), None
 
     def complete_order(
@@ -209,6 +213,7 @@ class CreditService:
 
         except Exception as e:
             self.db.rollback()
+            logger.error("完成订单失败: order_no=%s, error=%s", order_no, e, exc_info=True)
             return False, str(e)
 
     def get_transaction_history(

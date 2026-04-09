@@ -27,11 +27,14 @@ ScholarFlux - 统一学术搜索API封装层
 - 结果保存到数据库
 """
 import asyncio
+import logging
 import os
 import time
 from typing import List, Dict, Optional
 from datetime import datetime, timedelta
 from contextlib import contextmanager
+
+logger = logging.getLogger(__name__)
 
 from .paper_search import PaperSearchService
 from .semantic_scholar_search import SemanticScholarService
@@ -319,8 +322,8 @@ class ScholarFlux:
                 from services.paper_metadata_dao import PaperMetadataDAO
                 dao = PaperMetadataDAO(session)
                 dao.save_papers(papers, source=source)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.error(f"保存论文到数据库失败: {e}")
 
     async def search_papers(
         self,

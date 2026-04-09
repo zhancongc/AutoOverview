@@ -1,9 +1,13 @@
 """
 用户数据模型（通用版本，可复用）
 """
+import logging
+
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, Text
 from sqlalchemy.sql import func
 from sqlalchemy.ext.declarative import declarative_base
+
+logger = logging.getLogger(__name__)
 
 Base = declarative_base()
 
@@ -49,7 +53,8 @@ class User(Base):
         if self.meta_data:
             try:
                 return json.loads(self.meta_data)
-            except:
+            except Exception as e:
+                logger.error("Failed to parse meta_data JSON for user %s: %s", self.id, e)
                 return {}
         return {}
 
