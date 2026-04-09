@@ -36,12 +36,15 @@ class AlipayService:
             raise ValueError("必须配置真实的 ALIPAY_APP_PRIVATE_KEY（应用私钥）")
 
         # 记录私钥格式用于调试
+        key_preview = app_private_key[:100].replace("\n", "\\n") if app_private_key else "empty"
+        logger.info(f"私钥预览（前100字符）: {key_preview}...")
+
         if "BEGIN RSA PRIVATE KEY" in app_private_key:
-            logger.info("检测到 PKCS#1 格式私钥（正确格式）")
+            logger.info("检测到 PKCS#1 格式私钥")
         elif "BEGIN PRIVATE KEY" in app_private_key:
-            logger.warning("检测到 PKCS#8 格式私钥，rsa 库需要 PKCS#1 格式")
+            logger.info("检测到 PKCS#8 格式私钥")
         else:
-            logger.warning("私钥格式未知")
+            logger.info("检测到纯 base64 格式私钥（无 PEM 标记）")
 
         config = AlipayClientConfig()
         config.server_url = server_url
@@ -57,9 +60,7 @@ class AlipayService:
             config.app_cert_path = app_cert_path
             config.alipay_cert_path = alipay_cert_path
             config.alipay_root_cert_path = alipay_root_cert_path
-            # 如果有 alipay_public_key 也设置上，作为备用验证方式
-            if alipay_public_key:
-                config.alipay_public_key = alipay_public_key
+            # 证书模式下不设置 alipay_public_key，让 SDK 完全从证书读取
             logger.info(f"支付宝客户端初始化成功（证书模式），APP_ID: {app_id}")
         else:
             # 公钥模式

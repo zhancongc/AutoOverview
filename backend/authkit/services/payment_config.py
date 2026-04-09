@@ -17,6 +17,7 @@ def _load_public_key_from_file(base_dir: str) -> str | None:
     try:
         with open(public_key_path, "r", encoding="utf-8") as f:
             content = f.read().strip()
+
         # 如果是纯 base64，格式化为 PEM
         if "-----BEGIN" not in content:
             content = content.replace("\n", "").replace("\r", "").replace(" ", "").strip()
@@ -28,6 +29,7 @@ def _load_public_key_from_file(base_dir: str) -> str | None:
             pem_content = f"-----BEGIN PUBLIC KEY-----\n{content_with_newlines}\n-----END PUBLIC KEY-----"
             logger.info("从 public_key.txt 读取并格式化支付宝公钥成功")
             return pem_content
+
         logger.info("从 public_key.txt 读取支付宝公钥成功")
         return content
     except Exception as e:
@@ -37,8 +39,7 @@ def _load_public_key_from_file(base_dir: str) -> str | None:
 
 def _load_private_key_from_secrets(base_dir: str) -> str | None:
     """
-    直接从 secrets.txt 读取私钥，返回完整的 PKCS#1 PEM 格式
-    包含 -----BEGIN RSA PRIVATE KEY----- 和 -----END RSA PRIVATE KEY----- 标记
+    直接从 secrets.txt 读取私钥，保持原始格式
     """
     secrets_path = os.path.join(base_dir, "secrets.txt")
     if not os.path.exists(secrets_path):
@@ -49,83 +50,16 @@ def _load_private_key_from_secrets(base_dir: str) -> str | None:
         with open(secrets_path, "r", encoding="utf-8") as f:
             content = f.read()
 
-        # 清理内容
+        # 简单清理首尾空白
         content = content.strip()
 
-        # 如果已经是完整的 PKCS#1 PEM，直接返回
+        # 记录一下私钥格式特征用于调试
         if "BEGIN RSA PRIVATE KEY" in content:
-            logger.info("secrets.txt 已是 PKCS#1 格式")
-            return content
-
-        # 如果是 PKCS#8，尝试转换
-        if "BEGIN PRIVATE KEY" in content and "BEGIN RSA PRIVATE KEY" not in content:
-            logger.info("检测到 PKCS#8 格式，尝试转换为 PKCS#1")
-            try:
-                from cryptography.hazmat.primitives import serialization
-                from cryptography.hazmat.backends import default_backend
-
-                private_key_obj = serialization.load_pem_private_key(
-                    content.encode(),
-                    password=None,
-                    backend=default_backend()
-                )
-
-                pkcs1_pem = private_key_obj.private_bytes(
-                    encoding=serialization.Encoding.PEM,
-                    format=serialization.PrivateFormat.TraditionalOpenSSL,
-                    encryption_algorithm=serialization.NoEncryption()
-                )
-
-                result = pkcs1_pem.decode()
-                logger.info("PKCS#8 转换 PKCS#1 成功")
-                return result
-            except ImportError:
-                logger.warning("cryptography 未安装，无法转换格式")
-                return content
-            except Exception as e:
-                logger.warning(f"转换失败: {e}，尝试直接使用")
-                return content
-
-        # 如果是纯 base64 内容
-        if "-----BEGIN" not in content:
-            logger.info("检测到纯 base64 内容")
-            # 先清理
-            content = content.replace("\n", "").replace("\r", "").replace(" ", "").strip()
-
-            # 尝试用 cryptography 转换
-            try:
-                from cryptography.hazmat.primitives import serialization
-                from cryptography.hazmat.backends import default_backend
-
-                # 先包装成 PKCS#8
-                pkcs8_pem = f"-----BEGIN PRIVATE KEY-----\n{content}\n-----END PRIVATE KEY-----"
-
-                private_key_obj = serialization.load_pem_private_key(
-                    pkcs8_pem.encode(),
-                    password=None,
-                    backend=default_backend()
-                )
-
-                pkcs1_pem = private_key_obj.private_bytes(
-                    encoding=serialization.Encoding.PEM,
-                    format=serialization.PrivateFormat.TraditionalOpenSSL,
-                    encryption_algorithm=serialization.NoEncryption()
-                )
-
-                result = pkcs1_pem.decode()
-                logger.info("纯 base64 转换 PKCS#1 成功")
-                return result
-            except Exception as e:
-                logger.warning(f"自动转换失败: {e}")
-                # 如果转换失败，至少加上 PKCS#1 标记试试
-                # 每 64 字符换行
-                lines = []
-                for i in range(0, len(content), 64):
-                    lines.append(content[i:i+64])
-                content_with_newlines = "\n".join(lines)
-                result = f"-----BEGIN RSA PRIVATE KEY-----\n{content_with_newlines}\n-----END RSA PRIVATE KEY-----"
-                logger.info("使用简单格式化的 PKCS#1")
-                return result
+            logger.info("secrets.txt: 检测到 PKCS#1 格式")
+        elif "BEGIN PRIVATE KEY" in content:
+            logger.info("secrets.txt: 检测到 PKCS#8 格式")
+        else:
+            logger.info("secrets.txt: 检测到纯密钥内容（无 PEM 标记）")
 
         return content
 
