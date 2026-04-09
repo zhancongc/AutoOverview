@@ -58,9 +58,6 @@ const PLANS = [
 const IS_DEV = window.location.hostname === 'localhost' ||
   window.location.hostname === '127.0.0.1'
 
-// 检测是否为移动端
-const IS_MOBILE = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
-
 export function PaymentModal({ onClose, onPaymentSuccess, planType, recordId }: PaymentModalProps) {
   const [, setLoading] = useState(false)
   const [orderNo, setOrderNo] = useState('')
@@ -178,30 +175,6 @@ export function PaymentModal({ onClose, onPaymentSuccess, planType, recordId }: 
     }
   }
 
-  // 生产环境跳转支付宝
-  const handleAlipayPay = () => {
-    if (payUrl) {
-      if (IS_MOBILE) {
-        // 移动端：直接在当前页跳转，便于唤起支付宝 App
-        window.location.href = payUrl
-      } else {
-        // PC 端：新窗口打开
-        window.open(payUrl, '_blank')
-      }
-    }
-  }
-
-  // 移动端自动跳转支付宝
-  useEffect(() => {
-    if (IS_MOBILE && !IS_DEV && payUrl && paymentStatus === 'waiting') {
-      // 延迟一小会儿，让用户看到弹窗内容
-      const timer = setTimeout(() => {
-        handleAlipayPay()
-      }, 500)
-      return () => clearTimeout(timer)
-    }
-  }, [IS_MOBILE, IS_DEV, payUrl, paymentStatus])
-
   // 关闭弹窗前清理轮询
   const handleClose = () => {
     if (pollingRef.current) clearInterval(pollingRef.current)
@@ -257,27 +230,11 @@ export function PaymentModal({ onClose, onPaymentSuccess, planType, recordId }: 
                 </div>
               ) : (
                 <div className="payment-modal-qrcode">
-                  {IS_MOBILE ? (
-                    <>
-                      <p className="payment-scan-hint">正在跳转到支付宝...</p>
-                      <p className="payment-order-info">订单号：{orderNo} · 金额：¥{amount}</p>
-                      <button className="payment-modal-btn" onClick={handleAlipayPay}>
-                        立即跳转支付
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <p className="payment-scan-hint">请使用支付宝扫码完成支付</p>
-                      <div className="payment-qrcode-container">
-                        <canvas ref={qrCanvasRef} />
-                      </div>
-                      <p className="payment-order-info">订单号：{orderNo} · 金额：¥{amount}</p>
-                      <p className="payment-or-hint">或者</p>
-                      <button className="payment-modal-btn" onClick={handleAlipayPay}>
-                        打开支付宝支付
-                      </button>
-                    </>
-                  )}
+                  <p className="payment-scan-hint">请使用支付宝扫码完成支付</p>
+                  <div className="payment-qrcode-container">
+                    <canvas ref={qrCanvasRef} />
+                  </div>
+                  <p className="payment-order-info">订单号：{orderNo} · 金额：¥{amount}</p>
                   <div className="payment-modal-polling">
                     <div className="payment-spinner small"></div>
                     <p>支付完成后将自动确认...</p>

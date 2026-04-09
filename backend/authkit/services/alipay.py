@@ -93,7 +93,56 @@ class AlipayService:
         return_url: str = None,
         notify_url: str = None,
     ) -> Optional[str]:
-        """创建电脑网站支付订单，返回支付链接"""
+        """创建当面付预下单，返回短链接 qr_code（适合二维码扫码支付）"""
+        try:
+            from alipay.aop.api.domain.AlipayTradePrecreateModel import AlipayTradePrecreateModel
+            from alipay.aop.api.request.AlipayTradePrecreateRequest import AlipayTradePrecreateRequest
+        except ImportError:
+            # SDK 版本不支持当面付，回退到电脑网站支付
+            logger.warning("SDK 不支持当面付，回退到电脑网站支付")
+            return self._create_page_pay_order(
+                out_trade_no, total_amount, subject,
+                timeout_express, return_url, notify_url,
+            )
+
+        try:
+            model = AlipayTradePrecreateModel()
+            model.out_trade_no = out_trade_no
+            model.total_amount = f"{total_amount:.2f}"
+            model.subject = subject
+            model.timeout_express = timeout_express
+
+            request = AlipayTradePrecreateRequest(biz_model=model)
+            if notify_url:
+                request.notify_url = notify_url
+
+            response = self.client.execute(request)
+            from alipay.aop.api.response.AlipayTradePrecreateResponse import AlipayTradePrecreateResponse
+            resp = AlipayTradePrecreateResponse()
+            resp.parse_response_content(response)
+
+            if resp.is_success():
+                logger.info(f"创建预下单成功: {out_trade_no}, 金额: {total_amount}")
+                return resp.qr_code
+            else:
+                logger.error(f"创建预下单失败: {resp.sub_code} - {resp.sub_msg}")
+                return None
+
+        except Exception as e:
+            logger.error(f"创建预下单异常: {str(e)}")
+            traceback.print_exc()
+            return None
+
+    def _create_page_pay_order(
+        self,
+        out_trade_no: str,
+        total_amount: float,
+        subject: str,
+        timeout_express: str = "15m",
+        return_url: str = None,
+        notify_url: str = None,
+    ) -> Optional[str]:
+        """回退方案：创建电脑网站支付订单，返回支付链接"""
         from alipay.aop.api.domain.AlipayTradePagePayModel import AlipayTradePagePayModel
         from alipay.aop.api.request.AlipayTradePagePayRequest import AlipayTradePagePayRequest
 
@@ -113,7 +162,7 @@ class AlipayService:
                 request.notify_url = notify_url
 
             pay_url = self.client.page_execute(request, "GET")
-            logger.info(f"创建支付订单: {out_trade_no}, 金额: {total_amount}")
+            logger.info(f"创建支付订单(PagePay回退): {out_trade_no}, 金额: {total_amount}")
             return pay_url
 
         except Exception as e:
