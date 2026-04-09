@@ -3,7 +3,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #D63031 0%, #B71C1C 100%);
   padding: 2rem;
 }
 
@@ -62,7 +62,7 @@
 
 .tab-button.active {
   background: white;
-  color: #667eea;
+  color: #D63031;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
@@ -94,7 +94,7 @@
 }
 
 .form-input:focus {
-  border-color: #667eea;
+  border-color: #D63031;
 }
 
 .form-input:disabled {
@@ -114,9 +114,9 @@
 .send-code-button {
   padding: 0 1rem;
   white-space: nowrap;
-  border: 1.5px solid #667eea;
+  border: 1.5px solid #D63031;
   background: white;
-  color: #667eea;
+  color: #D63031;
   font-size: 0.85rem;
   font-weight: 500;
   border-radius: 8px;
@@ -125,7 +125,7 @@
 }
 
 .send-code-button:hover:not(:disabled) {
-  background: #667eea;
+  background: #D63031;
   color: white;
 }
 
@@ -143,7 +143,7 @@
 .link-button {
   background: none;
   border: none;
-  color: #667eea;
+  color: #D63031;
   font-size: 0.85rem;
   font-weight: 500;
   cursor: pointer;
@@ -178,7 +178,7 @@
   font-size: 1rem;
   font-weight: 600;
   color: white;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #D63031 0%, #B71C1C 100%);
   border: none;
   border-radius: 8px;
   cursor: pointer;
@@ -187,7 +187,7 @@
 
 .submit-button:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 4px 12px rgba(214, 48, 49, 0.4);
 }
 
 .submit-button:active:not(:disabled) {
