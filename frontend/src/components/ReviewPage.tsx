@@ -25,8 +25,6 @@ interface TocItem {
   children: TocItem[]
 }
 
-const IS_MOBILE = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
-
 export function ReviewPage() {
   const navigate = useNavigate()
   const location = useLocation()

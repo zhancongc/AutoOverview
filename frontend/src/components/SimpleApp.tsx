@@ -389,12 +389,12 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
         </div>
 
         <div className="home-input-section">
+          {isLoggedIn && <span className={`credits-badge ${prevCredits !== credits ? 'credits-updated' : ''}`}>
+            剩余 <span className="credits-number">{credits}</span> 次
+          </span>}
           <div className="input-section-header">
             <div className="input-section-title-row">
               <h2 className="input-section-title">一键生成论文综述</h2>
-              {isLoggedIn && <span className={`credits-badge ${prevCredits !== credits ? 'credits-updated' : ''}`}>
-                剩余 <span className="credits-number">{credits}</span> 次
-              </span>}
             </div>
             <p className="input-section-subtitle">输入研究主题，AI 为您生成专业文献综述</p>
           </div>
