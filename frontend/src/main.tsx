@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import ReactDOM from 'react-dom/client'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useSearchParams } from 'react-router-dom'
 import App from './App'
 import { SimpleApp } from './components/SimpleApp'
 import { ReviewPage } from './components/ReviewPage'
@@ -42,7 +42,11 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
             <ProfilePage />
           </ProtectedRoute>
         } />
-        <Route path="/review" element={<ReviewPage />} />
+        <Route path="/review" element={
+          <ReviewRoute>
+            <ReviewPage />
+          </ReviewRoute>
+        } />
         <Route path="/jade" element={
           <JadeRoute>
             <App />
@@ -61,6 +65,39 @@ function ProtectedRoute({ children }: { children: React.ReactElement }) {
     return <Navigate to="/login" replace state={{ from: { pathname: window.location.pathname } }} />
   }
   return <>{children}</>
+}
+
+// Review 路由守卫（案例白名单免登录，其余需登录）
+function ReviewRoute({ children }: { children: React.ReactElement }) {
+  const [searchParams] = useSearchParams()
+  const taskId = searchParams.get('task_id')
+  const [demoIds, setDemoIds] = useState<Set<string> | null>(null)
+
+  useEffect(() => {
+    fetch('/api/health')
+      .then(res => res.json())
+      .then(data => {
+        const ids = (data.demo_task_ids || []) as string[]
+        setDemoIds(new Set(ids))
+      })
+      .catch(() => setDemoIds(new Set()))
+  }, [])
+
+  // 等待白名单加载
+  if (demoIds === null) return null
+
+  // 案例展示，免登录
+  if (taskId && demoIds.has(taskId)) {
+    return children
+  }
+
+  // 其余需要登录
+  const token = localStorage.getItem('auth_token')
+  if (!token) {
+    return <Navigate to="/login" replace state={{ from: { pathname: window.location.pathname + window.location.search } }} />
+  }
+
+  return children
 }
 
 // Jade 路由守卫（白名单用户才能访问）

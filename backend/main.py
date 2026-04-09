@@ -577,9 +577,11 @@ async def unlock_record_with_credit(
 async def health_check():
     """健康检查接口"""
     api_key = os.getenv("DEEPSEEK_API_KEY")
+    demo_task_ids = [s.strip() for s in os.getenv("DEMO_TASK_IDS", "c851aa9a,feae8f9d,84bba875").split(",") if s.strip()]
     return {
         "status": "ok",
-        "deepseek_configured": bool(api_key)
+        "deepseek_configured": bool(api_key),
+        "demo_task_ids": demo_task_ids
     }
 
 
