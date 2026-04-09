@@ -5,7 +5,6 @@ import App from './App'
 import { SimpleApp } from './components/SimpleApp'
 import { ReviewPage } from './components/ReviewPage'
 import { ProfilePage } from './components/ProfilePage'
-import { LoginPage } from './components/LoginPage'
 import ErrorBoundary from './ErrorBoundary'
 import { api } from './api'
 import './index.css'
@@ -36,7 +35,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   <ErrorBoundary>
     <BrowserRouter>
       <Routes>
-        <Route path="/login" element={<LoginPage />} />
+        <Route path="/login" element={<SimpleApp autoShowLogin />} />
         <Route path="/" element={<SimpleApp />} />
         <Route path="/profile" element={
           <ProtectedRoute>

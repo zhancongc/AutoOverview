@@ -11,7 +11,7 @@ interface TaskProgress {
   message: string
 }
 
-export function SimpleApp() {
+export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
   const navigate = useNavigate()
   const [topic, setTopic] = useState('')
   const [isGenerating, setIsGenerating] = useState(false)
@@ -31,6 +31,10 @@ export function SimpleApp() {
   useEffect(() => {
     const loggedIn = checkLoggedIn()
     setIsLoggedIn(loggedIn)
+    // 未登录且 autoShowLogin 时自动弹出登录弹窗
+    if (!loggedIn && autoShowLogin) {
+      setShowLoginModal(true)
+    }
     if (loggedIn) {
       setUserInfo(getLocalUserInfo())
       api.getCredits().then(data => setCredits(data.credits)).catch(() => {})
@@ -303,14 +307,11 @@ export function SimpleApp() {
             </div>
           ) : (
             <div className="auth-buttons">
-              <button className="nav-btn nav-btn-login" onClick={() => setShowLoginModal(true)}>
-                登录
-              </button>
               <button
                 className="nav-btn nav-btn-register"
                 onClick={() => setShowLoginModal(true)}
               >
-                注册
+                登录 / 注册
               </button>
             </div>
           )}
@@ -320,26 +321,26 @@ export function SimpleApp() {
       <div className="home-container">
         <div id="generate" className="home-hero-wrapper">
           <div className="home-hero">
-            <span className="hero-accent">学术研究 · 高效利器</span>
+            <span className="hero-accent">深度检索 + 智能综述</span>
             <h1 className="home-title">
-              让综述编写<span className="highlight">简单到只需一句话</span>
+              AutoOverview：你的学术版<span className="highlight">"自动驾驶"</span>
             </h1>
             <p className="home-subtitle">
-              输入研究主题，一键生成专业文献综述。让 AI 助您在学术道路上更进一步。
+              深度检索最新核心文献，不只是生成文字——AutoOverview 为您完成 100+ 篇文献统计、智能逻辑建构与自动格式排版。5 分钟，综述初稿到手。
             </p>
           </div>
 
           <div className="hero-visual">
             <div className="visual-card">
-              <div className="visual-icon-large">🔬</div>
+              <div className="visual-icon-large">📊</div>
               <div className="visual-stats">
                 <div className="visual-stat">
-                  <span className="visual-stat-number">权威</span>
-                  <span className="visual-stat-label">- 学术期刊</span>
+                  <span className="visual-stat-number">2亿+</span>
+                  <span className="visual-stat-label">篇文献检索</span>
                 </div>
                 <div className="visual-stat">
-                  <span className="visual-stat-number">海量</span>
-                  <span className="visual-stat-label">- 论文数据</span>
+                  <span className="visual-stat-number">5min</span>
+                  <span className="visual-stat-label">生成综述初稿</span>
                 </div>
               </div>
             </div>
@@ -372,7 +373,7 @@ export function SimpleApp() {
             onClick={handleGenerate}
             disabled={isGenerating || !topic.trim()}
           >
-            {isGenerating ? '生成中...' : '生成综述'}
+            {isGenerating ? '生成中...' : '立即生成我的综述初稿'}
           </button>
 
           {error && (
@@ -397,6 +398,11 @@ export function SimpleApp() {
               </div>
             </div>
           )}
+        </div>
+
+        <div className="social-proof-bar">
+          <span className="social-proof-icon">🏆</span>
+          <span className="social-proof-text">已有 <strong>1000+</strong> 位同学通过 AutoOverview 累计节省了 <strong>10,000+</strong> 小时</span>
         </div>
       </div>
 
@@ -464,22 +470,56 @@ export function SimpleApp() {
             <div className="feature-item">
               <span className="feature-icon">📚</span>
               <div>
-                <h3 className="feature-title">海量真实数据</h3>
-                <p className="feature-desc">海量、真实、最新的论文数据，帮您掌握前沿进展</p>
+                <h3 className="feature-title">检索 100+ 真实论文，非 AI 编造</h3>
+                <p className="feature-desc">每篇综述引用的真实文献均可溯源，拒绝幻觉</p>
               </div>
             </div>
             <div className="feature-item">
               <span className="feature-icon">⚡</span>
               <div>
-                <h3 className="feature-title">极速效率</h3>
-                <p className="feature-desc">2分钟遍历相关文献，5分钟生成专业综述</p>
+                <h3 className="feature-title">5 分钟拿到初稿，无需两周苦熬</h3>
+                <p className="feature-desc">从选题到成稿，全自动完成，省下时间做更重要的事</p>
               </div>
             </div>
             <div className="feature-item">
               <span className="feature-icon">🎯</span>
               <div>
-                <h3 className="feature-title">专业规范</h3>
-                <p className="feature-desc">学术规范的综述结构，精准引用权威文献</p>
+                <h3 className="feature-title">学术规范排版，可直接提交</h3>
+                <p className="feature-desc">自动生成引用编号、参考文献列表，支持 Word 导出</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="landing-section comparison-section">
+        <div className="section-inner">
+          <h2 className="section-title">写综述，你还在用"笨办法"？</h2>
+          <div className="comparison-flow">
+            <div className="comparison-flow-card comparison-flow-manual">
+              <div className="comparison-flow-label">手动检索</div>
+              <ul className="comparison-flow-steps">
+                <li><span className="comparison-flow-step-num">Day 1-3</span> 确定关键词，检索数据库</li>
+                <li><span className="comparison-flow-step-num">Day 4-7</span> 逐篇筛选文献、下载 PDF</li>
+                <li><span className="comparison-flow-step-num">Day 8-12</span> 阅读摘要、做笔记</li>
+                <li><span className="comparison-flow-step-num">Day 13-14</span> 排版、调格式、校对引用</li>
+              </ul>
+              <div className="comparison-flow-result">
+                <span className="comparison-flow-time">≈ 14 天</span>
+                <span className="comparison-flow-mood">😵 焦头烂额</span>
+              </div>
+            </div>
+            <div className="comparison-flow-vs">VS</div>
+            <div className="comparison-flow-card comparison-flow-auto">
+              <div className="comparison-flow-label">AutoOverview</div>
+              <ul className="comparison-flow-steps">
+                <li><span className="comparison-flow-step-num">Step 1</span> 输入研究主题</li>
+                <li><span className="comparison-flow-step-num">Step 2</span> 点击"告别空白页，点此开始"</li>
+                <li><span className="comparison-flow-step-num">Step 3</span> 等待 5 分钟，初稿到手</li>
+              </ul>
+              <div className="comparison-flow-result">
+                <span className="comparison-flow-time">≈ 3 分钟</span>
+                <span className="comparison-flow-mood">🎉 轻松搞定</span>
               </div>
             </div>
           </div>
@@ -597,7 +637,7 @@ export function SimpleApp() {
               <button className="pricing-btn pricing-btn-primary" onClick={() => { isLoggedIn ? setShowPaymentModal('yearly') : setShowLoginModal(true) }}>选择进阶包</button>
             </div>
           </div>
-          <p className="pricing-note">额度永久有效，不设过期时间。注册即送 1 篇免费综述，仅支持查看，不能导出。</p>
+          <p className="pricing-note">额度永久有效，不设过期时间。注册即送 1 篇免费综述额度。</p>
         </div>
       </section>
 

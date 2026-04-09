@@ -336,6 +336,83 @@
   box-shadow: none;
 }
 
+/* Divider */
+.login-modal-divider {
+  display: flex;
+  align-items: center;
+  margin: 1.75rem 0 1.25rem;
+  gap: 1rem;
+}
+
+.login-modal-divider::before,
+.login-modal-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border-gray);
+}
+
+.divider-text {
+  font-size: 0.8rem;
+  color: var(--text-gray);
+  font-family: 'Source Sans Pro', sans-serif;
+  white-space: nowrap;
+}
+
+/* OAuth Buttons */
+.login-modal-oauth {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+}
+
+.oauth-btn {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: 2px solid var(--border-gray);
+  background: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.oauth-btn:hover:not(:disabled) {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+}
+
+.oauth-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.oauth-btn:disabled:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+.oauth-wechat {
+  color: #07C160;
+}
+
+.oauth-wechat:hover:not(:disabled) {
+  border-color: #07C160;
+  color: #07C160;
+}
+
+.oauth-alipay {
+  color: #1677FF;
+}
+
+.oauth-alipay:hover:not(:disabled) {
+  border-color: #1677FF;
+  color: #1677FF;
+}
+
 /* Responsive */
 @media (max-width: 520px) {
   .login-modal {

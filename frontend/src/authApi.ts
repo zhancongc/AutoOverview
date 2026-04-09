@@ -66,25 +66,6 @@ authAxios.interceptors.response.use(
 )
 
 export const authApi = {
-  // 注册
-  async register(email: string, password: string, nickname?: string): Promise<APIResponse> {
-    const response = await authAxios.post('/auth/register', {
-      email,
-      password,
-      nickname
-    })
-    return response.data
-  },
-
-  // 密码登录
-  async login(email: string, password: string): Promise<TokenResponse> {
-    const response = await authAxios.post('/auth/login', {
-      email,
-      password
-    })
-    return response.data
-  },
-
   // 发送验证码
   async sendCode(email: string, purpose: string = 'login'): Promise<APIResponse> {
     const response = await authAxios.post('/auth/send-code', {
@@ -114,16 +95,6 @@ export const authApi = {
     const response = await authAxios.put('/auth/me', {
       nickname,
       avatar_url: avatarUrl
-    })
-    return response.data
-  },
-
-  // 重置密码
-  async resetPassword(email: string, code: string, newPassword: string): Promise<APIResponse> {
-    const response = await authAxios.post('/auth/reset-password', {
-      email,
-      code,
-      new_password: newPassword
     })
     return response.data
   },
