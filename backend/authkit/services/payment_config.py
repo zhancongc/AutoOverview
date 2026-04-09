@@ -3,25 +3,59 @@
 """
 import os
 import logging
+import base64
 
 logger = logging.getLogger(__name__)
 
 
+def _fix_base64_padding(s: str) -> str:
+    """修复 base64 字符串的 padding"""
+    return s + '=' * ((4 - len(s) % 4) % 4)
+
+
 def _read_private_key_from_secrets(base_dir: str) -> str | None:
-    """从 secrets.txt 读取私钥并格式化为 PKCS#8 格式"""
+    """从 secrets.txt 读取私钥并格式化为 PKCS#1 格式"""
     secrets_path = os.path.join(base_dir, "secrets.txt")
     if not os.path.exists(secrets_path):
+        logger.warning(f"secrets.txt 不存在: {secrets_path}")
         return None
     try:
         with open(secrets_path, "r", encoding="utf-8") as f:
             content = f.read().strip()
-        # 如果没有 BEGIN/END 标记，添加 PKCS#8 格式标记
-        if not content.startswith("-----BEGIN"):
-            content = f"-----BEGIN PRIVATE KEY-----\n{content}\n-----END PRIVATE KEY-----"
-        logger.info(f"从 secrets.txt 读取应用私钥成功")
-        return content
+
+        logger.info(f"从 secrets.txt 读取到内容，长度: {len(content)}")
+
+        # 如果已经是完整的 PEM 格式，直接返回
+        if "-----BEGIN" in content:
+            logger.info("私钥已经是 PEM 格式")
+            return content
+
+        # 否则，添加 PKCS#8 格式标记（支付宝生成的通常是 PKCS#8）
+        # 先清理内容
+        content = content.replace("\n", "").replace("\r", "").replace(" ", "").strip()
+
+        # 尝试修复 base64 padding
+        try:
+            content = _fix_base64_padding(content)
+            # 测试解码
+            base64.b64decode(content)
+            logger.info("Base64 padding 修复成功")
+        except Exception as e:
+            logger.warning(f"Base64 padding 修复可能有问题: {e}，继续尝试")
+
+        # 格式化为 PKCS#8 PEM
+        # 每 64 个字符换行
+        lines = []
+        for i in range(0, len(content), 64):
+            lines.append(content[i:i+64])
+        content_with_newlines = "\n".join(lines)
+
+        pem_content = f"-----BEGIN PRIVATE KEY-----\n{content_with_newlines}\n-----END PRIVATE KEY-----"
+
+        logger.info(f"成功格式化私钥为 PKCS#8 PEM 格式")
+        return pem_content
     except Exception as e:
-        logger.warning(f"读取 secrets.txt 失败: {e}")
+        logger.error(f"读取 secrets.txt 失败: {e}", exc_info=True)
         return None
 
 
@@ -43,6 +77,10 @@ def get_payment_config():
     app_private_key = os.getenv("ALIPAY_APP_PRIVATE_KEY", "")
     if not app_private_key or app_private_key == "your-alipay-app-private-key":
         app_private_key = _read_private_key_from_secrets(base_dir) or ""
+        if app_private_key:
+            logger.info("使用 secrets.txt 中的私钥")
+        else:
+            logger.error("无法获取应用私钥")
 
     return {
         "alipay_app_id": os.getenv("ALIPAY_APP_ID", ""),
