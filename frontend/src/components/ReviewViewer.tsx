@@ -22,9 +22,10 @@ interface ReviewViewerProps {
     url?: string
   }>
   hasPurchased?: boolean
+  onTocUpdate?: (toc: TableOfContents[]) => void
 }
 
-export function ReviewViewer({ content, papers = [], hasPurchased = false }: ReviewViewerProps) {
+export function ReviewViewer({ content, papers = [], hasPurchased = false, onTocUpdate }: ReviewViewerProps) {
   const [toc, setToc] = useState<TableOfContents[]>([])
   const [activeId, setActiveId] = useState<string>('')
   useRef<HTMLElement>(null)
@@ -115,6 +116,13 @@ export function ReviewViewer({ content, papers = [], hasPurchased = false }: Rev
 
     setToc(buildTocTree(headings))
   }, [processedContent])
+
+  // 通知父组件 TOC 更新
+  useEffect(() => {
+    if (onTocUpdate && toc.length > 0) {
+      onTocUpdate(toc)
+    }
+  }, [toc, onTocUpdate])
 
   // 监听滚动，高亮当前章节
   useEffect(() => {

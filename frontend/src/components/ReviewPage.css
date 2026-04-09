@@ -192,9 +192,27 @@
     padding: 1rem;
   }
 
-  .back-button,
-  .export-button {
-    padding: 0.5rem 1rem;
+  .review-inline-title {
+    font-size: 1rem;
+    padding: 0.75rem 1rem 0.25rem;
+  }
+
+  /* 移动端隐藏桌面端的操作按钮，显示菜单按钮 */
+  .header-actions {
+    display: none;
+  }
+
+  .review-mobile-toggle {
+    display: block;
+  }
+
+  .review-segmented-tabs {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .back-button {
+    padding: 0.5rem 0.75rem;
     font-size: 0.85rem;
   }
 
@@ -202,11 +220,203 @@
     padding: 0.4rem 0.8rem;
     font-size: 0.82rem;
   }
+}
 
-  .review-inline-title {
-    font-size: 1rem;
-    padding: 0.75rem 1rem 0.25rem;
+/* ==================== 移动端菜单按钮 ==================== */
+
+.review-mobile-toggle {
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  z-index: 101;
+}
+
+.review-mobile-toggle .hamburger {
+  display: block;
+  width: 22px;
+  height: 2px;
+  background: var(--charcoal);
+  position: relative;
+  transition: background 0.3s;
+}
+
+.review-mobile-toggle .hamburger::before,
+.review-mobile-toggle .hamburger::after {
+  content: '';
+  position: absolute;
+  width: 22px;
+  height: 2px;
+  background: var(--charcoal);
+  left: 0;
+  transition: transform 0.3s;
+}
+
+.review-mobile-toggle .hamburger::before { top: -6px; }
+.review-mobile-toggle .hamburger::after { top: 6px; }
+.review-mobile-toggle .hamburger.open { background: transparent; }
+.review-mobile-toggle .hamburger.open::before { transform: rotate(45deg); top: 0; }
+.review-mobile-toggle .hamburger.open::after { transform: rotate(-45deg); top: 0; }
+
+/* ==================== 移动端侧边栏 ==================== */
+
+.sidebar-actions {
+  padding: 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  border-bottom: 1px solid var(--border-gray);
+}
+
+.sidebar-action-btn {
+  width: 100%;
+  padding: 0.75rem;
+  border-radius: 10px;
+  border: none;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Source Sans Pro', sans-serif;
+  background: var(--academic-red);
+  color: white;
+}
+
+.sidebar-action-btn:hover {
+  background: var(--academic-red-dark);
+}
+
+.sidebar-action-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.sidebar-action-premium {
+  background: linear-gradient(135deg, #e17055, #fdcb6e);
+}
+
+.sidebar-action-secondary {
+  background: var(--cream-white);
+  color: var(--charcoal);
+  border: 1px solid var(--border-gray);
+}
+
+.sidebar-action-secondary:hover {
+  background: var(--light-gray);
+}
+
+/* 侧边栏目录 */
+.sidebar-toc {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.75rem 1.25rem;
+}
+
+.sidebar-toc-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-gray);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
+}
+
+.sidebar-toc-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sidebar-toc-children {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sidebar-toc-item a {
+  display: block;
+  padding: 0.5rem 0;
+  font-size: 0.88rem;
+  color: var(--charcoal);
+  text-decoration: none;
+  border-bottom: 1px solid var(--border-gray);
+  transition: color 0.2s;
+}
+
+.sidebar-toc-item a:hover {
+  color: var(--academic-red);
+}
+
+.sidebar-toc-level-1 a { font-weight: 600; }
+.sidebar-toc-level-2 a { padding-left: 0.75rem; font-size: 0.85rem; }
+.sidebar-toc-level-3 a { padding-left: 1.5rem; font-size: 0.82rem; color: var(--text-gray); }
+.sidebar-toc-level-4 a { padding-left: 2.25rem; font-size: 0.8rem; color: var(--text-gray); }
+
+@media (min-width: 521px) {
+  .review-mobile-toggle {
+    display: none !important;
   }
+}
+
+/* ==================== 侧边栏基础样式（与 SimpleApp 共享模式） ==================== */
+
+.review-page .mobile-sidebar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 200;
+}
+
+.review-page .mobile-sidebar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 280px;
+  max-width: 80vw;
+  background: white;
+  z-index: 201;
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  transition: transform 0.3s ease;
+  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.1);
+}
+
+.review-page .mobile-sidebar.sidebar-open {
+  transform: translateX(0);
+}
+
+.review-page .sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem;
+  border-bottom: 1px solid var(--border-gray);
+}
+
+.review-page .sidebar-header-title {
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--ink-black);
+}
+
+.review-page .sidebar-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: var(--text-gray);
+  cursor: pointer;
+  padding: 0.25rem;
+  line-height: 1;
+}
+
+.review-page .sidebar-close:hover {
+  color: var(--charcoal);
 }
 
 /* ==================== 分段 Tab 控件（嵌入 header） ==================== */

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom'
 import { ReviewViewer } from './ReviewViewer'
 import { PaymentModal } from './PaymentModal'
@@ -17,6 +17,15 @@ interface ReviewState {
 }
 
 type TabType = 'content' | 'references'
+
+interface TocItem {
+  id: string
+  text: string
+  level: number
+  children: TocItem[]
+}
+
+const IS_MOBILE = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
 
 export function ReviewPage() {
   const navigate = useNavigate()
@@ -43,6 +52,12 @@ export function ReviewPage() {
   const [showCreditConfirmModal, setShowCreditConfirmModal] = useState(false)
   const [credits, setCredits] = useState<number>(0)
   const [, setFreeCredits] = useState<number>(0)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [tocItems, setTocItems] = useState<TocItem[]>([])
+
+  const handleTocUpdate = useCallback((toc: TocItem[]) => {
+    setTocItems(toc)
+  }, [])
 
   // 计算文档显示状态（优先使用 API 返回的 taskData，fallback 到 state）
   const isPublicDocument = taskData?.isPublic ?? false
@@ -236,6 +251,31 @@ export function ReviewPage() {
     setShowPayModal(true)
   }
 
+  // 侧边栏目录点击
+  const handleSidebarTocClick = (id: string) => {
+    setMobileMenuOpen(false)
+    setTimeout(() => {
+      const element = document.getElementById(id)
+      if (element) {
+        window.scrollTo({ top: element.offsetTop - 80, behavior: 'smooth' })
+      }
+    }, 300)
+  }
+
+  // 渲染侧边栏目录
+  const renderSidebarTocItem = (item: TocItem) => (
+    <li key={item.id} className={`sidebar-toc-item sidebar-toc-level-${item.level}`}>
+      <a href={`#${item.id}`} onClick={(e) => { e.preventDefault(); handleSidebarTocClick(item.id) }}>
+        {item.text}
+      </a>
+      {item.children.length > 0 && (
+        <ul className="sidebar-toc-children">
+          {item.children.map(renderSidebarTocItem)}
+        </ul>
+      )}
+    </li>
+  )
+
   return (
     <div className="review-page">
       <div className="review-page-header">
@@ -267,6 +307,9 @@ export function ReviewPage() {
              '🔒 解锁导出 (29.8元)'}
           </button>
         </div>
+        <button className="mobile-menu-toggle review-mobile-toggle" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+          <span className={`hamburger ${mobileMenuOpen ? 'open' : ''}`} />
+        </button>
       </div>
       {activeTab === 'content' && (
         <h2 className="review-inline-title">{reviewData.title}</h2>
@@ -277,6 +320,7 @@ export function ReviewPage() {
           content={reviewData.content}
           papers={[]}
           hasPurchased={!shouldShowWatermark}
+          onTocUpdate={handleTocUpdate}
         />
       ) : (
         reviewData.papers.length > 0 ? (
@@ -409,6 +453,42 @@ export function ReviewPage() {
           type="warning"
         />
       )}
+
+      {/* 移动端侧边栏遮罩 */}
+      {mobileMenuOpen && (
+        <div className="mobile-sidebar-overlay" onClick={() => setMobileMenuOpen(false)} />
+      )}
+
+      {/* 移动端侧边栏 */}
+      <aside className={`mobile-sidebar ${mobileMenuOpen ? 'sidebar-open' : ''}`}>
+        <div className="sidebar-header">
+          <span className="sidebar-header-title">操作与目录</span>
+          <button className="sidebar-close" onClick={() => setMobileMenuOpen(false)}>&times;</button>
+        </div>
+        <div className="sidebar-actions">
+          <button
+            className={`sidebar-action-btn ${!canExportDirectly ? 'sidebar-action-premium' : ''}`}
+            onClick={() => { setMobileMenuOpen(false); handleExportWord() }}
+            disabled={exporting}
+          >
+            {exporting ? '导出中...' : canExportDirectly ? '导出 Word' : '🔒 解锁导出'}
+          </button>
+          <button
+            className="sidebar-action-btn sidebar-action-secondary"
+            onClick={() => { setMobileMenuOpen(false); handleRegenerate() }}
+          >
+            重新生成
+          </button>
+        </div>
+        {tocItems.length > 0 && (
+          <div className="sidebar-toc">
+            <div className="sidebar-toc-title">目录</div>
+            <ul className="sidebar-toc-list">
+              {tocItems.map(renderSidebarTocItem)}
+            </ul>
+          </div>
+        )}
+      </aside>
     </div>
   )
 }
