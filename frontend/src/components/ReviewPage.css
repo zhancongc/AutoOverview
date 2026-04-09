@@ -207,7 +207,7 @@
   }
 
   .review-segmented-tabs {
-    flex: 1;
+    flex: none;
     justify-content: center;
   }
 

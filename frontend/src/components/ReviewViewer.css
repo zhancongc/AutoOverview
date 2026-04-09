@@ -437,9 +437,7 @@
   }
 
   .review-sidebar {
-    width: 100%;
-    position: static;
-    max-height: none;
+    display: none;
   }
 
   .reference-header {
