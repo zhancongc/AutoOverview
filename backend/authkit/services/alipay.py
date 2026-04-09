@@ -36,8 +36,21 @@ class AlipayService:
             raise ValueError("必须配置真实的 ALIPAY_APP_PRIVATE_KEY（应用私钥）")
 
         # 记录私钥格式用于调试
-        key_preview = app_private_key[:100].replace("\n", "\\n") if app_private_key else "empty"
-        logger.info(f"私钥预览（前100字符）: {key_preview}...")
+        key_preview = app_private_key[:150].replace("\n", "\\n") if app_private_key else "empty"
+        logger.info(f"私钥预览（前150字符）: {key_preview}...")
+        logger.info(f"私钥总长度: {len(app_private_key) if app_private_key else 0}")
+
+        # 尝试验证私钥格式（提前发现问题）
+        try:
+            import rsa
+            # 尝试用 rsa 库加载，提前验证
+            if app_private_key and "BEGIN RSA PRIVATE KEY" in app_private_key:
+                rsa.PrivateKey.load_pkcs1(app_private_key.encode(), format='PEM')
+                logger.info("私钥格式验证通过（rsa.load_pkcs1 成功）")
+        except ImportError:
+            logger.warning("rsa 库不可用，跳过私钥预验证")
+        except Exception as e:
+            logger.error(f"私钥格式验证失败: {e}", exc_info=True)
 
         if "BEGIN RSA PRIVATE KEY" in app_private_key:
             logger.info("检测到 PKCS#1 格式私钥")
