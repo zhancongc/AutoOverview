@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { api } from '../api'
-import QRCode from 'qrcode'
 import './PaymentModal.css'
 
 interface PaymentModalProps {
@@ -65,7 +64,6 @@ export function PaymentModal({ onClose, onPaymentSuccess, planType, recordId }: 
   const [, setLoading] = useState(false)
   const [orderNo, setOrderNo] = useState('')
   const [payUrl, setPayUrl] = useState('')
-  const [qrCodeDataUrl, setQrCodeDataUrl] = useState('')
   const [error, setError] = useState('')
   const [paymentStatus, setPaymentStatus] = useState<'idle' | 'creating' | 'waiting' | 'paid' | 'failed'>('idle')
   const [amount, setAmount] = useState(0)
@@ -142,19 +140,6 @@ export function PaymentModal({ onClose, onPaymentSuccess, planType, recordId }: 
         setAmount(29.8)
         // 统一进入等待状态，开发环境5秒后自动触发支付
         setPaymentStatus('waiting')
-        // PC端生成二维码
-        if (!IS_MOBILE && !IS_DEV && result.pay_url) {
-          try {
-            const dataUrl = await QRCode.toDataURL(result.pay_url, {
-              width: 200,
-              margin: 2,
-              errorCorrectionLevel: 'H'
-            })
-            setQrCodeDataUrl(dataUrl)
-          } catch (err) {
-            console.error('生成二维码失败:', err)
-          }
-        }
       } else {
         // 套餐购买模式
         const result = await api.createSubscription(planType)
@@ -162,19 +147,6 @@ export function PaymentModal({ onClose, onPaymentSuccess, planType, recordId }: 
         setPayUrl(result.pay_url)
         setAmount(result.amount)
         setPaymentStatus('waiting')
-        // PC端生成二维码
-        if (!IS_MOBILE && !IS_DEV && result.pay_url) {
-          try {
-            const dataUrl = await QRCode.toDataURL(result.pay_url, {
-              width: 200,
-              margin: 2,
-              errorCorrectionLevel: 'H'
-            })
-            setQrCodeDataUrl(dataUrl)
-          } catch (err) {
-            console.error('生成二维码失败:', err)
-          }
-        }
       }
     } catch (err: any) {
       const msg = err?.response?.data?.detail || err?.message || '创建订单失败，请稍后重试'
@@ -288,11 +260,6 @@ export function PaymentModal({ onClose, onPaymentSuccess, planType, recordId }: 
                     <>
                       <p className="payment-scan-hint">请使用支付宝扫码完成支付</p>
                       <p className="payment-order-info">订单号：{orderNo} · 金额：¥{amount}</p>
-                      {qrCodeDataUrl && (
-                        <div className="payment-qrcode-container">
-                          <img src={qrCodeDataUrl} alt="支付宝支付二维码" />
-                        </div>
-                      )}
                       <p className="payment-or-hint">或者</p>
                       <button className="payment-modal-btn" onClick={handleAlipayPay}>
                         打开支付宝支付
