@@ -2,7 +2,11 @@
 FastAPI 主应用
 """
 import os
+import logging
 from dotenv import load_dotenv
+
+# 全局日志级别设为 INFO，过滤 DEBUG 输出
+logging.basicConfig(level=logging.INFO)
 
 # 加载环境变量（必须在所有导入之前）
 load_dotenv()  # 加载 .env
