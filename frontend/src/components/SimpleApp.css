@@ -681,7 +681,7 @@
 }
 
 .credits-badge {
-  background: linear-gradient(135deg, #0984e3, #6c5ce7);
+  background: linear-gradient(135deg, var(--academic-red) 0%, var(--academic-red-dark) 100%);
   color: #fff;
   font-family: 'Source Sans Pro', sans-serif;
   font-size: 0.75rem;
@@ -692,7 +692,7 @@
   position: absolute;
   right: -1px;
   top: -1px;
-  box-shadow: 0 4px 12px rgba(108, 92, 231, 0.3);
+  box-shadow: 0 4px 12px rgba(214, 48, 49, 0.3);
 }
 
 .input-section-subtitle {
@@ -1604,6 +1604,7 @@
     font-size: 0.7rem;
     padding: 0.25rem 0.7rem;
     border-radius: 0 20px 0 10px;
+    box-shadow: 0 4px 12px rgba(214, 48, 49, 0.3);
   }
 
   .input-section-title {
