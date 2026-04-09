@@ -166,7 +166,7 @@ def create_subscription(
         )
         db.add(log)
         db.commit()
-        raise HTTPException(status_code=500, detail=f"创建支付订单失败: {str(e)}")
+        raise HTTPException(status_code=500, detail="创建支付订单失败，请稍后重试或联系客服")
 
 
 @router.get("/query/{order_no}")
@@ -244,8 +244,8 @@ def get_membership_info(
                 expires_at_str = None
             else:
                 days_remaining = max(0, (expires_at - datetime.now()).days)
-        except:
-            pass
+        except Exception as e:
+            logger.error("Failed to parse membership expires_at '%s': %s", expires_at_str, e)
 
     return MembershipInfo(
         membership_type=membership_type,
