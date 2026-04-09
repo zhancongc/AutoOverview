@@ -336,11 +336,11 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
               <div className="visual-stats">
                 <div className="visual-stat">
                   <span className="visual-stat-number">2亿+</span>
-                  <span className="visual-stat-label">篇文献检索</span>
+                  <span className="visual-stat-label">篇文献库</span>
                 </div>
                 <div className="visual-stat">
                   <span className="visual-stat-number">5min</span>
-                  <span className="visual-stat-label">生成综述初稿</span>
+                  <span className="visual-stat-label">综述初稿生成</span>
                 </div>
               </div>
             </div>
