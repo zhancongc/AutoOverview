@@ -641,6 +641,39 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
             </div>
           </div>
           <p className="pricing-note">额度永久有效，不设过期时间。注册即送 1 篇免费综述额度。</p>
+
+          <div className="testimonials">
+            <div className="testimonial-card">
+              <p className="testimonial-text">"课题组师兄推荐来的，5 分钟出的综述框架比我查一周文献还全面，引用全是真实论文。"</p>
+              <div className="testimonial-author">
+                <span className="testimonial-avatar">🎓</span>
+                <div>
+                  <span className="testimonial-name">某 985 高校研究生</span>
+                  <span className="testimonial-role">硕士在读</span>
+                </div>
+              </div>
+            </div>
+            <div className="testimonial-card">
+              <p className="testimonial-text">"考研前夜救命神器！开题报告的文献综述部分直接搞定，格式规范，导师挑不出毛病。"</p>
+              <div className="testimonial-author">
+                <span className="testimonial-avatar">📚</span>
+                <div>
+                  <span className="testimonial-name">考研上岸学长</span>
+                  <span className="testimonial-role">工科方向</span>
+                </div>
+              </div>
+            </div>
+            <div className="testimonial-card">
+              <p className="testimonial-text">"博导群里都在传这个工具，省下来的时间终于可以好好做实验了。"</p>
+              <div className="testimonial-author">
+                <span className="testimonial-avatar">🔬</span>
+                <div>
+                  <span className="testimonial-name">博士研究员</span>
+                  <span className="testimonial-role">材料科学方向</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 

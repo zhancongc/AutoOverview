@@ -42,11 +42,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
             <ProfilePage />
           </ProtectedRoute>
         } />
-        <Route path="/review" element={
-          <ProtectedRoute>
-            <ReviewPage />
-          </ProtectedRoute>
-        } />
+        <Route path="/review" element={<ReviewPage />} />
         <Route path="/jade" element={
           <JadeRoute>
             <App />

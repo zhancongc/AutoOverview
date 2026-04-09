@@ -1239,6 +1239,69 @@
   margin-top: 1.5rem;
 }
 
+/* ==================== 用户评价 ==================== */
+
+.testimonials {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  margin-top: 3rem;
+}
+
+.testimonial-card {
+  background: white;
+  border-radius: 16px;
+  padding: 1.75rem;
+  border: 1px solid var(--border-gray);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.testimonial-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
+  border-color: rgba(214, 48, 49, 0.2);
+}
+
+.testimonial-text {
+  font-family: 'Source Sans Pro', sans-serif;
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: var(--charcoal);
+  margin: 0 0 1.25rem 0;
+}
+
+.testimonial-author {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.testimonial-avatar {
+  font-size: 1.5rem;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--cream-white);
+  border-radius: 50%;
+}
+
+.testimonial-name {
+  display: block;
+  font-family: 'Source Sans Pro', sans-serif;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--ink-black);
+}
+
+.testimonial-role {
+  display: block;
+  font-family: 'Source Sans Pro', sans-serif;
+  font-size: 0.8rem;
+  color: var(--text-gray);
+}
+
 /* ==================== 页脚 ==================== */
 
 .home-footer {
@@ -1346,6 +1409,10 @@
   }
 
   .pricing-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .testimonials {
     grid-template-columns: repeat(2, 1fr);
   }
 }
@@ -1486,6 +1553,10 @@
 
   .comparison-flow-vs {
     font-size: 1.25rem;
+  }
+
+  .testimonials {
+    grid-template-columns: 1fr;
   }
 }
 
