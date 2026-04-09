@@ -249,6 +249,12 @@ export function ReviewPage() {
     setShowPayModal(true)
   }
 
+  // 水印点击触发支付弹窗
+  const handleRequestUnlock = () => {
+    setUnlockMode(true)
+    setShowPayModal(true)
+  }
+
   // 侧边栏目录点击
   const handleSidebarTocClick = (id: string) => {
     setMobileMenuOpen(false)
@@ -319,6 +325,7 @@ export function ReviewPage() {
           papers={[]}
           hasPurchased={!shouldShowWatermark}
           onTocUpdate={handleTocUpdate}
+          onRequestUnlock={handleRequestUnlock}
         />
       ) : (
         reviewData.papers.length > 0 ? (

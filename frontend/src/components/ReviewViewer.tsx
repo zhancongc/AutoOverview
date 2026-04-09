@@ -23,9 +23,10 @@ interface ReviewViewerProps {
   }>
   hasPurchased?: boolean
   onTocUpdate?: (toc: TableOfContents[]) => void
+  onRequestUnlock?: () => void
 }
 
-export function ReviewViewer({ content, papers = [], hasPurchased = false, onTocUpdate }: ReviewViewerProps) {
+export function ReviewViewer({ content, papers = [], hasPurchased = false, onTocUpdate, onRequestUnlock }: ReviewViewerProps) {
   const [toc, setToc] = useState<TableOfContents[]>([])
   const [activeId, setActiveId] = useState<string>('')
   useRef<HTMLElement>(null)
@@ -281,7 +282,7 @@ export function ReviewViewer({ content, papers = [], hasPurchased = false, onToc
           onCut={(e) => !hasPurchased && e.preventDefault()}
         >
           {!hasPurchased && (
-            <div className="review-watermark">
+            <div className="review-watermark" onClick={onRequestUnlock} style={onRequestUnlock ? { cursor: 'pointer' } : undefined}>
               <span className="watermark-text">AutoOverview 预览版</span>
               <span className="watermark-subtext">购买后解锁无水印 Word 导出</span>
             </div>

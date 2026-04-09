@@ -36,14 +36,14 @@ import psycopg2
 from dotenv import load_dotenv
 
 # 加载环境变量
-load_dotenv('.env.auth')
+load_dotenv('.env')
 
 DB_CONFIG = {
-    'host': os.getenv('AUTH_DATABASE_HOST', 'localhost'),
-    'port': os.getenv('AUTH_DATABASE_PORT', '5432'),
-    'database': os.getenv('AUTH_DATABASE_NAME', 'paper'),
-    'user': os.getenv('AUTH_DATABASE_USER', 'postgres'),
-    'password': os.getenv('AUTH_DATABASE_PASSWORD', 'security')
+    'host': os.getenv('DB_HOST', 'localhost'),
+    'port': os.getenv('DB_PORT', '5432'),
+    'database': os.getenv('DB_NAME', 'paper'),
+    'user': os.getenv('DB_USER', 'postgres'),
+    'password': os.getenv('DB_PASSWORD', 'security')
 }
 
 
