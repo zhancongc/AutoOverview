@@ -60,11 +60,6 @@ class SemanticScholarService:
         if self.client:
             await self.client.aclose()
 
-
-def get_semantic_scholar_service() -> SemanticScholarService:
-    """获取全局单例实例"""
-    return SemanticScholarService(api_key=os.getenv("SEMANTIC_SCHOLAR_API_KEY"))
-
     async def search_papers(
         self,
         query: str,
@@ -463,8 +458,12 @@ def get_semantic_scholar_service() -> SemanticScholarService:
         all_papers.sort(key=lambda p: p.get("cited_by_count", 0), reverse=True)
         return all_papers
 
-    async def close(self):
-        await self.client.aclose()
+
+# ==================== 全局单例获取 ====================
+
+def get_semantic_scholar_service() -> SemanticScholarService:
+    """获取全局单例实例"""
+    return SemanticScholarService(api_key=os.getenv("SEMANTIC_SCHOLAR_API_KEY"))
 
 
 # ==================== 高级搜索示例 ====================
