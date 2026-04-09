@@ -67,7 +67,7 @@ def init_alipay():
             logger.info("[Payment] 生产模式 - 证书模式")
             return AlipayService(
                 app_id=config["alipay_app_id"],
-                app_private_key=None,  # 证书模式不需要单独的私钥
+                app_private_key=config["alipay_app_private_key"],  # 证书模式也需要私钥来签名
                 alipay_public_key=config["alipay_public_key"],
                 app_cert_path=app_cert,
                 alipay_cert_path=alipay_cert,
