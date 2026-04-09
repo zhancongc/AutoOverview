@@ -1071,6 +1071,22 @@
   flex-wrap: wrap;
 }
 
+.case-action {
+  margin-top: 1rem;
+  font-family: 'Source Sans Pro', sans-serif;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--academic-red);
+  opacity: 0;
+  transform: translateY(4px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.case-card:hover .case-action {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 .case-tag {
   font-family: 'Source Sans Pro', sans-serif;
   font-size: 0.8rem;

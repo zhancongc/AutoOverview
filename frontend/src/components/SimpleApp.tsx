@@ -568,6 +568,7 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
                 <span className="case-tag">计算机科学</span>
                 <span className="case-tag">代数算法</span>
               </div>
+              <div className="case-action">查看详情 &rarr;</div>
             </div>
             <div className="case-card" onClick={() => navigate('/review?task_id=feae8f9d')} role="button" tabIndex={0}>
               <div className="case-icon">🔬</div>
@@ -577,6 +578,7 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
                 <span className="case-tag">材料科学</span>
                 <span className="case-tag">光催化</span>
               </div>
+              <div className="case-action">查看详情 &rarr;</div>
             </div>
             <div className="case-card" onClick={() => navigate('/review?task_id=84bba875')} role="button" tabIndex={0}>
               <div className="case-icon">🧠</div>
@@ -586,6 +588,7 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
                 <span className="case-tag">医学</span>
                 <span className="case-tag">脑机接口</span>
               </div>
+              <div className="case-action">查看详情 &rarr;</div>
             </div>
           </div>
         </div>
