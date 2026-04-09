@@ -323,7 +323,7 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
           <div className="home-hero">
             <span className="hero-accent">深度检索 + 智能综述</span>
             <h1 className="home-title">
-              AutoOverview：你的学术版<span className="highlight">"自动驾驶"</span>
+              5分钟，生成一份<span className="highlight">高水平文献综述</span>
             </h1>
             <p className="home-subtitle">
               深度检索最新核心文献，不只是生成文字——AutoOverview 为您完成 100+ 篇文献统计、智能逻辑建构与自动格式排版。5 分钟，综述初稿到手。
