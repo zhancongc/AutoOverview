@@ -13,8 +13,11 @@ warnings.warn(
     stacklevel=2
 )
 import os
+import logging
 import httpx
 from typing import List, Dict, Tuple
+
+logger = logging.getLogger(__name__)
 
 
 class LLMRelevanceFilter:
@@ -47,7 +50,7 @@ class LLMRelevanceFilter:
             return [], [], []
 
         if not self.api_key:
-            print("[LLM相关性] 无API key，保守策略：保留所有论文", flush=True)
+            logger.debug("[LLM相关性] 无API key，保守策略：保留所有论文")
             return papers, [], ["无API key，保留所有文献"]
 
         # 构建论文信息（只使用标题，节省token）
@@ -146,12 +149,12 @@ class LLMRelevanceFilter:
                 if reasons_text:
                     reasons_list = [r.strip() for r in reasons_text.split(';') if r.strip()]
 
-                print(f"[LLM相关性] 判断完成: 相关{len(relevant_papers)}篇, 不相关{len(irrelevant_papers)}篇", flush=True)
+                logger.debug(f"[LLM相关性] 判断完成: 相关{len(relevant_papers)}篇, 不相关{len(irrelevant_papers)}篇")
 
                 return relevant_papers, irrelevant_papers, reasons_list
 
         except Exception as e:
-            print(f"[LLM相关性] 判断失败: {e}", flush=True)
+            logger.debug(f"[LLM相关性] 判断失败: {e}")
             import traceback
             traceback.print_exc()
             # 失败时保留所有论文（保守策略）

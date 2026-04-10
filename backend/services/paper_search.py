@@ -2,9 +2,12 @@
 OpenAlex 文献检索服务
 无需 API key，完全免费
 """
+import logging
 import httpx
 from typing import List, Dict, Optional
 from datetime import datetime, timedelta
+
+logger = logging.getLogger(__name__)
 
 
 class PaperSearchService:
@@ -39,7 +42,7 @@ class PaperSearchService:
         try:
             # 策略1: 先使用严格的领域限定搜索（计算机科学）
             # 使用 concepts.id 而不是 concepts.name（Computer Science ID: C41008148）
-            print(f"[OpenAlex] 搜索: {query} (限定: Computer Science)")
+            logger.debug(f"[OpenAlex] 搜索: {query} (限定: Computer Science)")
 
             params_strict = {
                 "search": query,
@@ -53,11 +56,11 @@ class PaperSearchService:
             data = response.json()
 
             results_count = len(data.get("results", []))
-            print(f"[OpenAlex] 搜索返回: {results_count} 篇")
+            logger.debug(f"[OpenAlex] 搜索返回: {results_count} 篇")
 
             # 如果结果太少，放宽限制（只限定有摘要和年份）
             if results_count < 10:
-                print(f"[OpenAlex] 结果不足，放宽限制（只限定年份和摘要）")
+                logger.debug("[OpenAlex] 结果不足，放宽限制（只限定年份和摘要）")
                 params_relaxed = {
                     "search": query,
                     "filter": f"from_publication_date:{cutoff_date},has_abstract:true",
@@ -67,7 +70,7 @@ class PaperSearchService:
                 response = await self.client.get(f"{self.BASE_URL}/works", params=params_relaxed)
                 response.raise_for_status()
                 data = response.json()
-                print(f"[OpenAlex] 放宽搜索返回: {len(data.get('results', []))} 篇")
+                logger.debug(f"[OpenAlex] 放宽搜索返回: {len(data.get('results', []))} 篇")
 
             # 处理搜索结果
             for item in data.get("results", []):
@@ -138,7 +141,7 @@ class PaperSearchService:
             return papers
 
         except httpx.HTTPError as e:
-            print(f"OpenAlex API error: {e}")
+            logger.debug("OpenAlex API error: %s", e)
             return []
 
     def _is_english(self, text: str) -> bool:

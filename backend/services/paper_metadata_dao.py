@@ -58,7 +58,7 @@ class PaperMetadataDAO:
             existing.url = paper.get("url", existing.url)
             existing.updated_at = datetime.now()
             self.session.commit()
-            print(f"[PaperMetadataDAO] 更新论文: {paper_id} - 来源: {merged_sources}")
+            logger.debug(f"[PaperMetadataDAO] 更新论文: {paper_id} - 来源: {merged_sources}")
             return existing
         else:
             # 创建新记录
@@ -80,7 +80,7 @@ class PaperMetadataDAO:
             )
             self.session.add(paper_metadata)
             self.session.commit()
-            print(f"[PaperMetadataDAO] 新增论文: {paper_id} - 来源: {source}")
+            logger.debug(f"[PaperMetadataDAO] 新增论文: {paper_id} - 来源: {source}")
             return paper_metadata
 
     def save_papers(self, papers: List[Dict], source: str = "unknown") -> int:

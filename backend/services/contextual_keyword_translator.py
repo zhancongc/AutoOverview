@@ -16,6 +16,9 @@ import os
 import httpx
 from typing import List, Dict, Optional
 import re
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class DomainKnowledge:
@@ -113,7 +116,7 @@ class DomainKnowledge:
                     expansions_made.append(f"{abbr} -> {expansion}")
 
         if expansions_made:
-            print(f"[缩写扩展] {', '.join(expansions_made)}")
+            logger.debug(f"[缩写扩展] {', '.join(expansions_made)}")
 
         return result
 
@@ -242,19 +245,19 @@ class ContextualKeywordTranslator:
         """
         if not self.api_key:
             # 回退到规则扩展（使用研究方向配置）
-            print(f"[缩写扩展] 无 API key，使用规则扩展")
+            logger.debug(f"[缩写扩展] 无 API key，使用规则扩展")
             return [
                 self._expand_with_rules(kw, topic, research_direction_id)
                 for kw in keywords
             ]
 
-        print(f"\n[LLM 缩写扩展] 题目: {topic}")
+        logger.debug(f"\n[LLM 缩写扩展] 题目: {topic}")
         if research_direction_id:
             from config.research_directions import get_direction_by_id
             direction_info = get_direction_by_id(research_direction_id)
             if direction_info:
-                print(f"[LLM 缩写扩展] 研究方向: {direction_info.get('name', '')}")
-        print(f"[LLM 缩写扩展] 待处理关键词: {keywords}")
+                logger.debug(f"[LLM 缩写扩展] 研究方向: {direction_info.get('name', '')}")
+        logger.debug(f"[LLM 缩写扩展] 待处理关键词: {keywords}")
 
         # 构建提示词 - 使用 JSON 格式输出以便更可靠的解析
         prompt = f"""你是一个学术术语专家。请分析以下论文题目和关键词，识别并扩展其中的缩写词。
@@ -320,26 +323,26 @@ class ContextualKeywordTranslator:
 
             # 验证结果
             if len(expanded_keywords) == len(keywords):
-                print(f"[LLM 缩写扩展] 扩展完成")
+                logger.debug(f"[LLM 缩写扩展] 扩展完成")
                 for orig, exp in zip(keywords, expanded_keywords):
                     if orig != exp:
-                        print(f"  {orig} -> {exp}")
+                        logger.debug(f"  {orig} -> {exp}")
                 return expanded_keywords
             else:
-                print(f"[LLM 缩写扩展] 返回数量不匹配（期望 {len(keywords)}，得到 {len(expanded_keywords)}），使用规则扩展")
+                logger.debug(f"[LLM 缩写扩展] 返回数量不匹配（期望 {len(keywords)}，得到 {len(expanded_keywords)}），使用规则扩展")
                 return [
                     DomainKnowledge.expand_abbreviations(kw, topic)
                     for kw in keywords
                 ]
 
         except json.JSONDecodeError as e:
-            print(f"[LLM 缩写扩展] JSON 解析失败: {e}，使用规则扩展")
+            logger.debug(f"[LLM 缩写扩展] JSON 解析失败: {e}，使用规则扩展")
             return [
                 DomainKnowledge.expand_abbreviations(kw, topic)
                 for kw in keywords
             ]
         except Exception as e:
-            print(f"[LLM 缩写扩展] 失败: {e}，使用规则扩展")
+            logger.debug(f"[LLM 缩写扩展] 失败: {e}，使用规则扩展")
             return [
                 self._expand_with_rules(kw, topic, research_direction_id)
                 for kw in keywords
@@ -380,7 +383,7 @@ class ContextualKeywordTranslator:
             result = DomainKnowledge.expand_abbreviations(keyword, topic)
 
         if expansions_made:
-            print(f"[缩写扩展] {', '.join(expansions_made)}")
+            logger.debug(f"[缩写扩展] {', '.join(expansions_made)}")
 
         return result
 
@@ -414,10 +417,10 @@ class ContextualKeywordTranslator:
             if direction_info:
                 research_direction = direction_info.get("name", "")
 
-        print(f"\n[上下文翻译] 题目: {topic}")
+        logger.debug(f"\n[上下文翻译] 题目: {topic}")
         if research_direction:
-            print(f"[上下文翻译] 研究方向: {research_direction}")
-        print(f"[上下文翻译] 原始关键词: {keywords}")
+            logger.debug(f"[上下文翻译] 研究方向: {research_direction}")
+        logger.debug(f"[上下文翻译] 原始关键词: {keywords}")
 
         # === 第一步：使用 LLM 智能扩展缩写词（防止搜到不相关文献）===
         # 合并主题和研究方向，提高上下文理解准确性
@@ -432,7 +435,7 @@ class ContextualKeywordTranslator:
         # 保存原始关键词到扩展关键词的映射
         original_to_expanded = {}
         if expanded_keywords != keywords:
-            print(f"[上下文翻译] 最终关键词: {expanded_keywords}")
+            logger.debug(f"[上下文翻译] 最终关键词: {expanded_keywords}")
             for orig, exp in zip(keywords, expanded_keywords):
                 if orig != exp:
                     original_to_expanded[orig] = exp
@@ -441,15 +444,15 @@ class ContextualKeywordTranslator:
         # 第二步：识别主题领域
         domain = DomainKnowledge.identify_domain(topic)
 
-        print(f"[上下文翻译] 识别领域: {domain if domain else '通用'}")
+        logger.debug(f"[上下文翻译] 识别领域: {domain if domain else '通用'}")
 
         # 第三步：获取领域约束
         if domain:
             constraints = DomainKnowledge.get_domain_constraints(domain)
             exclude_terms = constraints["exclude_terms"]
             related_terms = constraints["related_terms"]
-            print(f"[上下文翻译] 排除术语: {exclude_terms[:5]}...")
-            print(f"[上下文翻译] 相关术语: {related_terms[:5]}...")
+            logger.debug(f"[上下文翻译] 排除术语: {exclude_terms[:5]}...")
+            logger.debug(f"[上下文翻译] 相关术语: {related_terms[:5]}...")
         else:
             exclude_terms = []
             related_terms = []
@@ -468,7 +471,7 @@ class ContextualKeywordTranslator:
                 keywords, domain, exclude_terms, related_terms
             )
 
-        print(f"[上下文翻译] 翻译完成: {len(translations)} 个关键词")
+        logger.debug(f"[上下文翻译] 翻译完成: {len(translations)} 个关键词")
 
         # 将翻译结果的键从扩展后的关键词改回原始关键词
         # 这样调用者可以使用原始关键词查找翻译结果
@@ -585,7 +588,7 @@ class ContextualKeywordTranslator:
             return translations
 
         except Exception as e:
-            print(f"[上下文翻译] LLM翻译失败: {e}")
+            logger.debug(f"[上下文翻译] LLM翻译失败: {e}")
             # 回退到规则翻译
             return self._translate_with_rules(keywords, domain, exclude_terms, related_terms)
 
@@ -677,18 +680,18 @@ if __name__ == "__main__":
         topic1 = "CAS (computer algebra system) 的算法、实现及应用"
         keywords1 = ["CAS符号计算算法", "计算机代数系统实现", "符号积分算法"]
 
-        print("=" * 80)
-        print("测试用例1: 计算机代数系统")
+        logger.debug("=" * 80)
+        logger.debug("测试用例1: 计算机代数系统")
         result1 = await translate_keywords_contextual(keywords1, topic1)
-        print(f"结果: {result1}")
+        logger.debug(f"结果: {result1}")
 
         # 测试用例2：符号执行
         topic2 = "符号执行技术在软件验证中的应用"
         keywords2 = ["符号执行算法", "路径探索策略", "约束求解优化"]
 
-        print("\n" + "=" * 80)
-        print("测试用例2: 符号执行")
+        logger.debug("\n" + "=" * 80)
+        logger.debug("测试用例2: 符号执行")
         result2 = await translate_keywords_contextual(keywords2, topic2)
-        print(f"结果: {result2}")
+        logger.debug(f"结果: {result2}")
 
     asyncio.run(test())

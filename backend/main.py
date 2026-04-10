@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 
 # 全局日志级别设为 INFO，过滤 DEBUG 输出
 logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # 加载环境变量（必须在所有导入之前）
 load_dotenv()  # 加载 .env
@@ -126,26 +127,26 @@ async def lifespan(app: FastAPI):
 
     # 创建支付相关表
     PaymentBase.metadata.create_all(bind=db.engine)
-    print("[Startup] 数据库表已创建/更新（含支付表）")
+    logger.debug("[Startup] 数据库表已创建/更新（含支付表）")
 
     # 初始化 auth-kit 数据库（使用 PostgreSQL）
     auth_db_url = os.getenv("AUTH_DATABASE_URL", "postgresql://postgres:security@localhost/paper")
     init_auth_database(auth_db_url)
-    print("[Startup] Auth 数据库已初始化 (PostgreSQL)")
+    logger.debug("[Startup] Auth 数据库已初始化 (PostgreSQL)")
 
     # 初始化支付模块 - 注入数据库依赖
     from authkit.database import get_db as authkit_get_db
     sub_router.set_get_db(authkit_get_db)
     webhook_router.set_get_db(authkit_get_db)
     payment_cb_router.set_get_db(authkit_get_db)
-    print("[Startup] 支付模块已初始化")
+    logger.debug("[Startup] 支付模块已初始化")
 
     # 从 Redis 恢复重启前的活跃任务
     task_manager.restore_from_redis()
 
     yield
     # 关闭时执行
-    print("[Shutdown] 应用关闭")
+    logger.debug("[Shutdown] 应用关闭")
 
 app = FastAPI(
     title="论文综述生成器 API",
@@ -793,7 +794,7 @@ async def classify_topic(request: TopicRequest):
     import sys
     import time
 
-    print(f"[API] 收到分类请求: {request.topic}")
+    logger.debug("[API] 收到分类请求: %s", request.topic)
     start = time.time()
 
     try:
@@ -803,7 +804,7 @@ async def classify_topic(request: TopicRequest):
         result = await gen.generate_framework(request.topic)
 
         elapsed = time.time() - start
-        print(f"[API] 大模型分类成功，耗时 {elapsed:.2f}秒，类型: {result['type']}")
+        logger.debug(f"[API] 大模型分类成功，耗时 {elapsed:.2f}秒，类型: {result['type']}")
 
         return {
             "success": True,
@@ -812,7 +813,7 @@ async def classify_topic(request: TopicRequest):
         }
     except Exception as e:
         elapsed = time.time() - start
-        print(f"[DEBUG] 大模型分类错误 (耗时{elapsed:.2f}秒): {e}")
+        logger.debug(f"[DEBUG] 大模型分类错误 (耗时{elapsed:.2f}秒): {e}")
         import traceback
         traceback.print_exc()
         # 出错时使用规则引擎回退

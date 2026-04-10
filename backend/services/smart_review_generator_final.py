@@ -19,6 +19,9 @@ from typing import List, Dict, Any, Tuple, Set
 from collections import Counter
 from datetime import datetime
 from openai import AsyncOpenAI
+import logging
+
+logger = logging.getLogger(__name__)
 
 # 添加当前目录到路径
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -70,20 +73,20 @@ class SmartReviewGeneratorFinal:
                     "sort_by": 排序方式（默认"citationCount:desc"）
                 }
         """
-        print("=" * 80)
-        print(f"智能综述生成器 - 最终版")
-        print(f"主题: {topic}")
-        print("=" * 80)
+        logger.debug("=" * 80)
+        logger.debug("智能综述生成器 - 最终版")
+        logger.debug(f"主题: {topic}")
+        logger.debug("=" * 80)
 
         start_time = time.time()
 
         # === 步骤 1: 预处理论文 ===
-        print("\n[步骤 1] 预处理论文...")
+        logger.debug("\n[步骤 1] 预处理论文...")
         papers = self._preprocess_papers(papers)
-        print(f"✓ 清洗后: {len(papers)} 篇")
+        logger.debug(f"✓ 清洗后: {len(papers)} 篇")
 
         # === 步骤 2: 生成综述（初始版）===
-        print("\n[步骤 2] 生成初始综述...")
+        logger.debug("\n[步骤 2] 生成初始综述...")
         raw_content, accessed_paper_indices = await self._generate_raw_review(
             topic=topic,
             papers=papers,
@@ -93,12 +96,12 @@ class SmartReviewGeneratorFinal:
         )
 
         # === 步骤 3: 提取并排序引用 ===
-        print("\n[步骤 3] 处理引用...")
+        logger.debug("\n[步骤 3] 处理引用...")
         cited_sequence = self._extract_cited_indices(raw_content)
-        print(f"  初始引用次数: {len(cited_sequence)}")
+        logger.debug(f"  初始引用次数: {len(cited_sequence)}")
 
         # === 步骤 4: 应用 5 条引用规范 ===
-        print("\n[步骤 4] 应用 5 条引用规范...")
+        logger.debug("\n[步骤 4] 应用 5 条引用规范...")
         final_content, final_references = self._apply_citation_rules(
             content=raw_content,
             cited_sequence=cited_sequence,
@@ -106,22 +109,22 @@ class SmartReviewGeneratorFinal:
         )
 
         # === 步骤 5: 格式化参考文献 (IEEE) ===
-        print("\n[步骤 5] 格式化参考文献 (IEEE)...")
+        logger.debug("\n[步骤 5] 格式化参考文献 (IEEE)...")
         references_formatted = self._format_references_ieee(final_references)
 
         # === 步骤 6: 合并最终内容 ===
         final_review = final_content + "\n\n## References\n\n" + references_formatted
 
         # === 步骤 7: 最终验证 ===
-        print("\n[步骤 7] 最终验证...")
+        logger.debug("\n[步骤 7] 最终验证...")
         validation_result = self._final_validation(final_review, final_references)
 
         if validation_result["valid"]:
-            print("✓ 所有引用规范检查通过！")
+            logger.debug("✓ 所有引用规范检查通过！")
         else:
-            print("⚠️  警告: 仍有问题")
+            logger.debug("⚠️  警告: 仍有问题")
             for issue in validation_result["issues"]:
-                print(f"  - {issue}")
+                logger.debug(f"  - {issue}")
 
         # === 统计 ===
         total_time = time.time() - start_time
@@ -133,13 +136,13 @@ class SmartReviewGeneratorFinal:
             "generated_at": datetime.now().isoformat()
         }
 
-        print("\n" + "=" * 80)
-        print("生成完成统计")
-        print(f"  - 总耗时: {statistics['total_time_seconds']} 秒")
-        print(f"  - 可用论文: {statistics['papers_collected']} 篇")
-        print(f"  - 引用论文: {statistics['papers_cited']} 篇")
-        print(f"  - 综述长度: {statistics['review_length']} 字符")
-        print("=" * 80)
+        logger.debug("\n" + "=" * 80)
+        logger.debug("生成完成统计")
+        logger.debug(f"  - 总耗时: {statistics['total_time_seconds']} 秒")
+        logger.debug(f"  - 可用论文: {statistics['papers_collected']} 篇")
+        logger.debug(f"  - 引用论文: {statistics['papers_cited']} 篇")
+        logger.debug(f"  - 综述长度: {statistics['review_length']} 字符")
+        logger.debug("=" * 80)
 
         return {
             "topic": topic,
@@ -189,7 +192,7 @@ class SmartReviewGeneratorFinal:
     ) -> Tuple[str, Set[int]]:
         """生成初始综述（不进行引用映射）"""
         paper_titles_list = self._format_paper_titles_list(papers)
-        print(f"[准备] 论文标题列表 ({len(papers)} 篇)")
+        logger.debug(f"[准备] 论文标题列表 ({len(papers)} 篇)")
 
         system_prompt = self._build_system_prompt(len(papers))
         user_message = self._build_user_message(
@@ -249,12 +252,12 @@ class SmartReviewGeneratorFinal:
                         })
 
                 messages.extend(tool_responses)
-                print(f"[迭代 {iteration}] 上下文约 {self._estimate_context_tokens(messages)} tokens")
+                logger.debug(f"[迭代 {iteration}] 上下文约 {self._estimate_context_tokens(messages)} tokens")
 
             else:
                 messages.append(assistant_message)
                 content = assistant_message.content
-                print(f"[完成] 生成完成")
+                logger.debug("[完成] 生成完成")
                 break
 
         if content is None:
@@ -287,11 +290,11 @@ class SmartReviewGeneratorFinal:
         # === 规则 3: 创建映射，按首次出现顺序分配新编号 1, 2, 3... ===
         old_to_new = {old_idx: new_idx for new_idx, old_idx in enumerate(first_occurrence, 1)}
 
-        print(f"[规范] 应用引用映射:")
+        logger.debug("[规范] 应用引用映射:")
         for old, new in list(old_to_new.items())[:15]:
-            print(f"  [{old}] -> [{new}]")
+            logger.debug(f"  [{old}] -> [{new}]")
         if len(old_to_new) > 15:
-            print(f"  ... 还有 {len(old_to_new) - 15} 个映射")
+            logger.debug(f"  ... 还有 {len(old_to_new) - 15} 个映射")
 
         # === 替换内容中的引用，并同时应用规则 4（最多 2 次）===
         # 使用全局计数器
@@ -322,8 +325,8 @@ class SmartReviewGeneratorFinal:
             if 1 <= old_idx <= len(all_papers):
                 final_references.append(all_papers[old_idx - 1])
 
-        print(f"[规范] 最终参考文献: {len(final_references)} 篇")
-        print(f"[规范] 引用次数统计: {dict(global_counts)}")
+        logger.debug(f"[规范] 最终参考文献: {len(final_references)} 篇")
+        logger.debug(f"[规范] 引用次数统计: {dict(global_counts)}")
 
         # === 规则 6: 修正正文中声称的论文数量 ===
         content = self._fix_paper_count_claims(content, len(final_references))
@@ -340,7 +343,7 @@ class SmartReviewGeneratorFinal:
             prefix = match.group(1)  # "精选" "筛选" 等前缀词
             old_num = int(match.group(2))
             if old_num != actual_count:
-                print(f"[数字校正] '{prefix}{old_num}篇' -> '{prefix}{actual_count}篇' (实际引用数)")
+                logger.debug(f"[数字校正] '{prefix}{old_num}篇' -> '{prefix}{actual_count}篇' (实际引用数)")
             return f'{prefix}{actual_count}篇'
 
         # 匹配 "精选出 X 篇" "筛选出了 X 篇" 等
@@ -355,7 +358,7 @@ class SmartReviewGeneratorFinal:
             old_num = int(match.group(1))
             suffix = match.group(2)
             if old_num != actual_count:
-                print(f"[数字校正] '{old_num}篇{suffix}' -> '{actual_count}篇{suffix}'")
+                logger.debug(f"[数字校正] '{old_num}篇{suffix}' -> '{actual_count}篇{suffix}'")
             return f'{actual_count}篇{suffix}'
 
         content = re.sub(
@@ -524,10 +527,10 @@ class SmartReviewGeneratorFinal:
         # 非白名单 DOI：回退到 arXiv ID 或清空
         if not is_trusted:
             if arxiv_id:
-                print(f"[DOI过滤] 非白名单DOI '{doi}' -> 回退 arXiv:{arxiv_id}")
+                logger.debug(f"[DOI过滤] 非白名单DOI '{doi}' -> 回退 arXiv:{arxiv_id}")
                 return ""
             else:
-                print(f"[DOI过滤] 非白名单DOI '{doi}' -> 清空")
+                logger.debug(f"[DOI过滤] 非白名单DOI '{doi}' -> 清空")
                 return ""
 
         # 当年或未来年份的会议论文：可能尚未正式出版，降级
@@ -544,11 +547,11 @@ class SmartReviewGeneratorFinal:
 
             if is_conference_paper:
                 if arxiv_id:
-                    print(f"[预印本降级] {paper_year}年会议论文 '{title[:40]}...' -> arXiv:{arxiv_id}")
+                    logger.debug(f"[预印本降级] {paper_year}年会议论文 '{title[:40]}...' -> arXiv:{arxiv_id}")
                     return ""
                 else:
                     # 有可信 DOI 但可能是预分配的，保留但加警告
-                    print(f"[预印本警告] {paper_year}年会议论文使用DOI '{doi}' (可能尚未正式出版)")
+                    logger.debug(f"[预印本警告] {paper_year}年会议论文使用DOI '{doi}' (可能尚未正式出版)")
 
         return doi
 

@@ -13,10 +13,13 @@ warnings.warn(
 )
 import os
 import json
+import logging
 from openai import AsyncOpenAI
 from typing import Dict, List, Tuple
 from enum import Enum
 from dotenv import load_dotenv
+
+logger = logging.getLogger(__name__)
 
 load_dotenv()
 
@@ -219,7 +222,7 @@ class LLTopicClassifier:
             return (topic_type, reason, details)
 
         except Exception as e:
-            print(f"大模型分类失败: {e}")
+            logger.debug(f"大模型分类失败: {e}")
             # 失败时回退到简单规则
             return self._fallback_classification(title)
 

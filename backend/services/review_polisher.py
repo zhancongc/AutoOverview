@@ -13,9 +13,12 @@ warnings.warn(
 )
 import re
 import os
+import logging
 from typing import List, Dict, Tuple, Optional
 from openai import AsyncOpenAI
 from dotenv import load_dotenv
+
+logger = logging.getLogger(__name__)
 
 load_dotenv()
 
@@ -269,7 +272,7 @@ class AIToneEliminator:
             return polished_text, polish_report
 
         except Exception as e:
-            print(f"[AIToneEliminator] LLM润色失败: {e}，使用规则润色")
+            logger.debug(f"[AIToneEliminator] LLM润色失败: {e}，使用规则润色")
             return self.polish_with_rules(text)
 
     async def polish_review(

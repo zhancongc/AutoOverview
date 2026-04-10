@@ -69,10 +69,10 @@ class AMinerSearchService:
                     elif days_left <= 10:
                         logger.warning("Token 即将过期（剩余 %d 天），请尽快重新获取: https://www.aminer.cn/open/board?tab=control", days_left)
                     else:
-                        logger.info("Token 有效期至 %s (剩余 %d 天)", exp_date.strftime('%Y-%m-%d'), days_left)
+                        logger.debug("Token 有效期至 %s (剩余 %d 天)", exp_date.strftime('%Y-%m-%d'), days_left)
         except Exception as e:
             logger.warning("无法解析 Token 过期时间: %s", e)
-            logger.info("获取新 Token: https://www.aminer.cn/open/board?tab=control")
+            logger.debug("获取新 Token: https://www.aminer.cn/open/board?tab=control")
 
     async def initialize(self):
         """初始化 HTTP 客户端"""
@@ -131,7 +131,7 @@ class AMinerSearchService:
             'title': search_title
         }
 
-        logger.info("AMiner 搜索: %s", title)
+        logger.debug("AMiner 搜索: %s", title)
 
         try:
             response = await self.client.get(
@@ -143,7 +143,7 @@ class AMinerSearchService:
 
             total = data.get('total', 0)
             items = data.get('data', [])
-            logger.info("AMiner ✓ 找到 %d 篇，本页返回 %d 篇", total, len(items))
+            logger.debug("AMiner ✓ 找到 %d 篇，本页返回 %d 篇", total, len(items))
 
             return {
                 'success': True,
@@ -207,7 +207,7 @@ class AMinerSearchService:
             'keyword': combined  # 关键词中也搜索组合
         }
 
-        logger.info("AMiner Pro 组合搜索: '%s'", combined)
+        logger.debug("AMiner Pro 组合搜索: '%s'", combined)
 
         try:
             response = await self.client.get(
@@ -257,7 +257,7 @@ class AMinerSearchService:
             if items is None:
                 items = []
 
-            logger.info("AMiner Pro ✓ 找到 %d 篇，本页返回 %d 篇", total, len(items))
+            logger.debug("AMiner Pro ✓ 找到 %d 篇，本页返回 %d 篇", total, len(items))
 
             return {
                 'success': True,
@@ -315,7 +315,7 @@ class AMinerSearchService:
             'keyword': keyword
         }
 
-        logger.info("AMiner Pro 关键词搜索: %s", keyword)
+        logger.debug("AMiner Pro 关键词搜索: %s", keyword)
 
         try:
             response = await self.client.get(
@@ -365,7 +365,7 @@ class AMinerSearchService:
             if items is None:
                 items = []
 
-            logger.info("AMiner Pro ✓ 找到 %d 篇，本页返回 %d 篇", total, len(items))
+            logger.debug("AMiner Pro ✓ 找到 %d 篇，本页返回 %d 篇", total, len(items))
 
             return {
                 'success': True,
@@ -428,7 +428,7 @@ class AMinerSearchService:
             # 避免请求过快
             await asyncio.sleep(1)
 
-        logger.info("AMiner 总共获取 %d 篇不重复论文", len(all_papers))
+        logger.debug("AMiner 总共获取 %d 篇不重复论文", len(all_papers))
         return all_papers
 
     def _parse_paper(self, item: Dict) -> Dict:
@@ -583,7 +583,7 @@ class AMinerSearchService:
             # 两个关键词：分别用 title 和 keyword 搜索，然后合并（提升相关度）
             keyword1, keyword2 = keywords[0], keywords[1]
 
-            logger.info("AMiner Pro 双关键词搜索: '%s' + '%s'", keyword1, keyword2)
+            logger.debug("AMiner Pro 双关键词搜索: '%s' + '%s'", keyword1, keyword2)
 
             # 策略：分别搜索并合并
             # 搜索1：用 title 搜索第一个关键词
@@ -616,7 +616,7 @@ class AMinerSearchService:
                     item_seen_ids.add(pid)
                     unique_items.append(item)
 
-            logger.info("AMiner Pro 合并后: %d 篇不重复文献", len(unique_items))
+            logger.debug("AMiner Pro 合并后: %d 篇不重复文献", len(unique_items))
 
             # 解析论文
             for item in unique_items:
@@ -769,37 +769,37 @@ class AMinerSearchService:
 # 测试代码
 async def test_aminer_search():
     """测试 AMiner 搜索"""
-    print("=" * 80)
-    print("测试 AMiner 论文搜索")
-    print("=" * 80)
+    logger.debug("=" * 80)
+    logger.debug("测试 AMiner 论文搜索")
+    logger.debug("=" * 80)
 
     # 从环境变量或用户输入获取 Token
     import os
     api_token = os.getenv('AMINER_API_TOKEN')
 
     if not api_token:
-        print("\n请提供 AMiner API Token：")
-        print("1. 访问 https://www.aminer.cn/ 注册并获取 Token")
-        print("2. 设置环境变量: export AMINER_API_TOKEN='your_token_here'")
-        print("3. 或直接在此输入 Token:")
+        logger.debug("请提供 AMiner API Token：")
+        logger.debug("1. 访问 https://www.aminer.cn/ 注册并获取 Token")
+        logger.debug("2. 设置环境变量: export AMINER_API_TOKEN='your_token_here'")
+        logger.debug("3. 或直接在此输入 Token:")
 
         user_input = input("Token (或按回车跳过): ").strip()
         if not user_input:
-            print("跳过测试")
+            logger.debug("跳过测试")
             return
         api_token = user_input
 
     async with AMinerSearchService(api_token=api_token) as service:
         # 验证 Token
-        print("\n正在验证 Token...")
+        logger.debug("正在验证 Token...")
         if not await service.verify_token():
-            print("\n✗ Token 无效，请检查后重试")
+            logger.debug("✗ Token 无效，请检查后重试")
             return
-        print()
+
         # 测试1: 单个标题搜索
-        print("\n" + "=" * 60)
-        print("测试1: 按标题搜索")
-        print("=" * 60)
+        logger.debug("=" * 60)
+        logger.debug("测试1: 按标题搜索")
+        logger.debug("=" * 60)
 
         result = await service.search_by_title(
             title="Looking at CTR Prediction Again: Is Attention All You Need",
@@ -807,17 +807,17 @@ async def test_aminer_search():
         )
 
         if result['success']:
-            print(f"总数: {result['total']}")
+            logger.debug("总数: %s", result['total'])
             for i, item in enumerate(result['items'][:3], 1):
-                print(f"\n{i}. {item.get('title', 'N/A')}")
-                print(f"   作者: {item.get('first_author', 'N/A')}")
-                print(f"   年份: {item.get('year', 'N/A')}")
-                print(f"   期刊: {item.get('venue_name', 'N/A')}")
+                logger.debug("%d. %s", i, item.get('title', 'N/A'))
+                logger.debug("   作者: %s", item.get('first_author', 'N/A'))
+                logger.debug("   年份: %s", item.get('year', 'N/A'))
+                logger.debug("   期刊: %s", item.get('venue_name', 'N/A'))
 
         # 测试2: 关键词搜索
-        print("\n" + "=" * 60)
-        print("测试2: 关键词搜索")
-        print("=" * 60)
+        logger.debug("=" * 60)
+        logger.debug("测试2: 关键词搜索")
+        logger.debug("=" * 60)
 
         papers = await service.search_papers(
             keywords=['machine learning', 'deep learning'],
@@ -826,20 +826,20 @@ async def test_aminer_search():
             max_results=20
         )
 
-        print(f"\n找到 {len(papers)} 篇论文:")
+        logger.debug("找到 %d 篇论文:", len(papers))
         for i, paper in enumerate(papers[:5], 1):
             title = paper.get('title', 'N/A')
             year = paper.get('year', 'N/A')
             authors = paper.get('authors', [])[:3]
             author_str = ', '.join(authors) if authors else 'N/A'
 
-            print(f"\n{i}. [{year}] {title}")
+            logger.debug("%d. [%s] %s", i, year, title)
             if author_str != 'N/A':
-                print(f"   作者: {author_str}")
+                logger.debug("   作者: %s", author_str)
 
-        print("\n" + "=" * 80)
-        print(f"总计: {len(papers)} 篇论文")
-        print("=" * 80)
+        logger.debug("=" * 80)
+        logger.debug("总计: %d 篇论文", len(papers))
+        logger.debug("=" * 80)
 
 
 if __name__ == "__main__":

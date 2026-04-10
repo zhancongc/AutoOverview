@@ -5,9 +5,12 @@ Semantic Scholar 文献检索服务
 """
 import httpx
 import asyncio
+import logging
 import os
 from typing import List, Dict, Optional
 from datetime import datetime, timedelta
+
+logger = logging.getLogger(__name__)
 
 
 class SemanticScholarService:
@@ -148,11 +151,11 @@ class SemanticScholarService:
         if self.api_key:
             headers["x-api-key"] = self.api_key
 
-        print(f"[Semantic Scholar] 搜索参数: query=\"{query[:50]}...\", year={year_start}-{year_end}, limit={limit}")
+        logger.debug(f"[Semantic Scholar] 搜索参数: query=\"{query[:50]}...\", year={year_start}-{year_end}, limit={limit}")
         if sort:
-            print(f"[Semantic Scholar] 排序: {sort}")
+            logger.debug(f"[Semantic Scholar] 排序: {sort}")
         if venue:
-            print(f"[Semantic Scholar] 期刊: {venue}")
+            logger.debug(f"[Semantic Scholar] 期刊: {venue}")
 
         # 重试机制（带全局速率限制）
         for attempt in range(self.max_retries):
@@ -177,11 +180,11 @@ class SemanticScholarService:
                     if attempt < self.max_retries - 1:
                         # 计算退避时间
                         backoff_delay = self.retry_delay * (self.backoff_factor ** attempt)
-                        print(f"[Semantic Scholar] 遇到429限流，{backoff_delay}秒后重试 (尝试 {attempt + 1}/{self.max_retries})")
+                        logger.debug(f"[Semantic Scholar] 遇到429限流，{backoff_delay}秒后重试 (尝试 {attempt + 1}/{self.max_retries})")
                         await asyncio.sleep(backoff_delay)
                         continue
                     else:
-                        print(f"[Semantic Scholar] 达到最大重试次数，放弃请求")
+                        logger.debug(f"[Semantic Scholar] 达到最大重试次数，放弃请求")
                         return []
 
                 response.raise_for_status()
@@ -266,7 +269,7 @@ class SemanticScholarService:
                         "source": "semantic_scholar"  # 标记数据来源
                     })
 
-                print(f"[Semantic Scholar] 成功获取 {len(papers)} 篇论文")
+                logger.debug(f"[Semantic Scholar] 成功获取 {len(papers)} 篇论文")
                 return papers
 
             except httpx.HTTPStatusError as e:
@@ -274,13 +277,13 @@ class SemanticScholarService:
                     # 429错误在上面已经处理
                     continue
                 else:
-                    print(f"[Semantic Scholar] HTTP错误: {e}")
+                    logger.debug(f"[Semantic Scholar] HTTP错误: {e}")
                     if attempt < self.max_retries - 1:
                         await asyncio.sleep(self.retry_delay)
                     else:
                         return []
             except Exception as e:
-                print(f"[Semantic Scholar] 请求失败: {e}")
+                logger.debug(f"[Semantic Scholar] 请求失败: {e}")
                 if attempt < self.max_retries - 1:
                     await asyncio.sleep(self.retry_delay)
                 else:
@@ -346,7 +349,7 @@ class SemanticScholarService:
             return None
 
         except Exception as e:
-            print(f"[SemanticScholar] 精确标题搜索失败: {e}")
+            logger.debug(f"[SemanticScholar] 精确标题搜索失败: {e}")
             return None
 
     async def search_by_venue(
@@ -479,12 +482,12 @@ async def example_advanced_search():
     service = SemanticScholarService(api_key=api_key)
 
     try:
-        print("=" * 80)
-        print("Semantic Scholar 高级搜索示例")
-        print("=" * 80)
+        logger.debug("=" * 80)
+        logger.debug("Semantic Scholar 高级搜索示例")
+        logger.debug("=" * 80)
 
         # 示例1: 搜索2021-2024年的LLM论文，按引用量排序
-        print("\n[示例1] 搜索2021-2024年的LLM高被引论文")
+        logger.debug("\n[示例1] 搜索2021-2024年的LLM高被引论文")
         papers = await service.search_papers(
             query="large language model",
             year_start=2021,
@@ -492,36 +495,36 @@ async def example_advanced_search():
             limit=20,
             sort="citationCount:desc"
         )
-        print(f"找到 {len(papers)} 篇论文")
+        logger.debug(f"找到 {len(papers)} 篇论文")
         for i, p in enumerate(papers[:5], 1):
-            print(f"  {i}. [{p.get('year')}] {p.get('title')[:60]}... (引用: {p.get('cited_by_count')})")
+            logger.debug(f"  {i}. [{p.get('year')}] {p.get('title')[:60]}... (引用: {p.get('cited_by_count')})")
 
         # 示例2: 在特定期刊中搜索
-        print("\n[示例2] 在 Nature 中搜索 transformer 论文")
+        logger.debug("\n[示例2] 在 Nature 中搜索 transformer 论文")
         papers = await service.search_by_venue(
             query="transformer architecture",
             venue="Nature",
             years_ago=5,
             limit=10
         )
-        print(f"找到 {len(papers)} 篇论文")
+        logger.debug(f"找到 {len(papers)} 篇论文")
         for i, p in enumerate(papers[:3], 1):
-            print(f"  {i}. {p.get('title')[:60]}...")
+            logger.debug(f"  {i}. {p.get('title')[:60]}...")
 
         # 示例3: 布尔查询
-        print("\n[示例3] 布尔查询: (transformer OR attention) AND vision")
+        logger.debug("\n[示例3] 布尔查询: (transformer OR attention) AND vision")
         papers = await service.search_papers(
             query="(transformer OR attention) AND vision",
             years_ago=3,
             limit=10,
             sort="citationCount:desc"
         )
-        print(f"找到 {len(papers)} 篇论文")
+        logger.debug(f"找到 {len(papers)} 篇论文")
         for i, p in enumerate(papers[:3], 1):
-            print(f"  {i}. {p.get('title')[:60]}...")
+            logger.debug(f"  {i}. {p.get('title')[:60]}...")
 
         # 示例4: 搜索顶级期刊
-        print("\n[示例4] 在顶级期刊中搜索 symbolic computation")
+        logger.debug("\n[示例4] 在顶级期刊中搜索 symbolic computation")
         top_venues = [
             "Journal of Symbolic Computation",
             "Journal of the ACM",
@@ -533,12 +536,12 @@ async def example_advanced_search():
             years_ago=10,
             limit_per_venue=10
         )
-        print(f"找到 {len(papers)} 篇论文")
+        logger.debug(f"找到 {len(papers)} 篇论文")
         for i, p in enumerate(papers[:5], 1):
             venue = p.get('venue', 'Unknown')
-            print(f"  {i}. [{venue}] {p.get('title')[:60]}...")
+            logger.debug(f"  {i}. [{venue}] {p.get('title')[:60]}...")
 
-        print("\n" + "=" * 80)
+        logger.debug("\n" + "=" * 80)
 
     finally:
         await service.close()

@@ -1,8 +1,11 @@
 """
 文献筛选与排序服务
 """
+import logging
 from typing import List, Dict
 from datetime import datetime, timedelta
+
+logger = logging.getLogger(__name__)
 
 
 class PaperFilterService:
@@ -41,7 +44,7 @@ class PaperFilterService:
             if self._is_topic_relevant(paper, topic_keywords):
                 relevant_papers.append(paper)
 
-        print(f"[筛选] 原始论文: {len(papers)} 篇，主题相关: {len(relevant_papers)} 篇")
+        logger.debug(f"[筛选] 原始论文: {len(papers)} 篇，主题相关: {len(relevant_papers)} 篇")
 
         if not relevant_papers:
             return []

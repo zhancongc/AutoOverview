@@ -41,13 +41,13 @@ class ReviewTaskExecutor:
         """
         task = task_manager.get_task(task_id)
         if not task:
-            print(f"[TaskExecutor] 任务不存在: {task_id}")
+            logger.debug(f"[TaskExecutor] 任务不存在: {task_id}")
             return
 
         # 尝试获取执行槽位（并发控制，支持排队提示和超时）
         acquired = await task_manager.acquire_slot(task_id, timeout=1800)  # 30分钟超时
         if not acquired:
-            print(f"[TaskExecutor] 任务 {task_id} 排队超时")
+            logger.debug(f"[TaskExecutor] 任务 {task_id} 排队超时")
             task_manager.update_task_status(
                 task_id,
                 TaskStatus.FAILED,
@@ -77,9 +77,9 @@ class ReviewTaskExecutor:
             # =====================================================
             # 步骤1: PaperSearchAgent 搜索文献
             # =====================================================
-            print("\n" + "=" * 80)
-            print(f"[步骤1] 搜索文献: {topic}")
-            print("=" * 80)
+            logger.debug("\n" + "=" * 80)
+            logger.debug(f"[步骤1] 搜索文献: {topic}")
+            logger.debug("=" * 80)
 
             task_manager.update_task_status(
                 task_id,
@@ -98,7 +98,7 @@ class ReviewTaskExecutor:
                 target_count=params.get('target_count', 50)
             )
 
-            print(f"[步骤1] 搜索完成: 共 {len(all_papers)} 篇文献")
+            logger.debug(f"[步骤1] 搜索完成: 共 {len(all_papers)} 篇文献")
 
             if not all_papers:
                 raise Exception(f'未找到关于「{topic}」的相关文献')
@@ -125,10 +125,10 @@ class ReviewTaskExecutor:
             if not api_key:
                 raise Exception("DEEPSEEK_API_KEY not configured")
 
-            print("\n" + "=" * 80)
-            print(f"[步骤2] 生成综述（最终版）")
-            print(f"[步骤2] 候选文献: {len(all_papers)} 篇")
-            print("=" * 80)
+            logger.debug("\n" + "=" * 80)
+            logger.debug(f"[步骤2] 生成综述（最终版）")
+            logger.debug(f"[步骤2] 候选文献: {len(all_papers)} 篇")
+            logger.debug("=" * 80)
 
             task_manager.update_task_status(
                 task_id,
@@ -165,29 +165,29 @@ class ReviewTaskExecutor:
             # =====================================================
             # 步骤3: CitationValidatorV2 引用校验修复
             # =====================================================
-            print("\n[步骤3] 使用 CitationValidatorV2 进行额外引用校验...")
+            logger.debug("\n[步骤3] 使用 CitationValidatorV2 进行额外引用校验...")
             validator_v2 = CitationValidatorV2()
             validation_result = validator_v2.validate_and_fix(review, cited_papers)
 
             if not validation_result.valid:
-                print(f"[步骤3] 发现问题: {validation_result.issues}")
+                logger.debug(f"[步骤3] 发现问题: {validation_result.issues}")
                 if validation_result.fixed_content:
-                    print("[步骤3] 使用修复后的综述内容")
+                    logger.debug("[步骤3] 使用修复后的综述内容")
                     review = validation_result.fixed_content
                 if validation_result.fixed_references:
-                    print(f"[步骤3] 使用修复后的参考文献 ({len(validation_result.fixed_references)} 篇)")
+                    logger.debug(f"[步骤3] 使用修复后的参考文献 ({len(validation_result.fixed_references)} 篇)")
                     cited_papers = validation_result.fixed_references
                 final_validation = {
                     "valid": validation_result.valid,
                     "issues": validation_result.issues
                 }
             else:
-                print("[步骤3] ✓ 引用规范校验通过")
+                logger.debug("[步骤3] ✓ 引用规范校验通过")
                 # 使用 v2 改进版格式化参考文献（处理 arXiv ID、Unicode 等）
                 improved_refs = validator_v2.format_references_ieee_improved(cited_papers)
                 if "## References" in review:
                     review = review[:review.index("## References")] + "## References\n\n" + improved_refs
-                    print("[步骤3] 使用改进版 IEEE 格式化参考文献")
+                    logger.debug("[步骤3] 使用改进版 IEEE 格式化参考文献")
             # 统计信息
             stats = self.filter_service.get_statistics(cited_papers)
 
@@ -347,7 +347,7 @@ class ReviewTaskExecutor:
 
         stats = self.filter_service.get_statistics(all_papers)
 
-        print(f"[search_papers_only] 搜索完成: {len(all_papers)} 篇文献")
+        logger.debug(f"[search_papers_only] 搜索完成: {len(all_papers)} 篇文献")
 
         return {
             'all_papers': all_papers,

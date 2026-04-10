@@ -13,6 +13,9 @@ from typing import List, Dict, Optional, Set
 from openai import AsyncOpenAI
 from .semantic_scholar_search import SemanticScholarService
 
+import logging
+logger = logging.getLogger(__name__)
+
 
 class PaperSearchAgent:
     """LLM 驱动的文献检索 Agent"""
@@ -47,8 +50,8 @@ class PaperSearchAgent:
         Returns:
             去重后的论文列表
         """
-        print(f"\n[PaperSearchAgent] 开始检索: {topic}")
-        print(f"  目标: {target_count} 篇, 年限: {search_years} 年")
+        logger.debug(f"\n[PaperSearchAgent] 开始检索: {topic}")
+        logger.debug(f"  目标: {target_count} 篇, 年限: {search_years} 年")
 
         self.search_years = search_years
 
@@ -97,7 +100,7 @@ class PaperSearchAgent:
                     })
 
                 messages.extend(tool_responses)
-                print(f"  [迭代 {iteration}] 已收集 {len(self.collected_papers)} 篇去重论文, 共调用 {self.search_count} 次搜索")
+                logger.debug(f"  [迭代 {iteration}] 已收集 {len(self.collected_papers)} 篇去重论文, 共调用 {self.search_count} 次搜索")
 
                 # 如果已经收集足够多的论文，在下一轮提示 LLM 结束
                 if len(self.collected_papers) >= target_count * 1.5:
@@ -107,7 +110,7 @@ class PaperSearchAgent:
                     })
             else:
                 # LLM 没有调用工具，认为检索完成
-                print(f"[PaperSearchAgent] 检索完成: {len(self.collected_papers)} 篇论文, {self.search_count} 次搜索调用, {iteration} 轮对话")
+                logger.debug(f"[PaperSearchAgent] 检索完成: {len(self.collected_papers)} 篇论文, {self.search_count} 次搜索调用, {iteration} 轮对话")
                 break
 
         # 转换为列表
@@ -116,7 +119,7 @@ class PaperSearchAgent:
         # 按引用量排序
         all_papers.sort(key=lambda p: p.get("cited_by_count", 0), reverse=True)
 
-        print(f"[PaperSearchAgent] 最终: {len(all_papers)} 篇去重论文")
+        logger.debug(f"[PaperSearchAgent] 最终: {len(all_papers)} 篇去重论文")
         return all_papers
 
     # ==================== Prompt 构建 ====================
@@ -265,7 +268,7 @@ class PaperSearchAgent:
         limit = min(args.get("limit", 30), 100)
         sort = args.get("sort", "citationCount:desc")
 
-        print(f"  [搜索] query='{query}', limit={limit}, sort={sort}")
+        logger.debug(f"  [搜索] query='%s', limit=%s, sort=%s", query, limit, sort)
 
         try:
             papers = await self.ss_service.search_papers(
@@ -300,14 +303,14 @@ class PaperSearchAgent:
             }
 
         except Exception as e:
-            print(f"  [搜索错误] {e}")
+            logger.debug(f"  [搜索错误] %s", e)
             return {"error": str(e), "total_returned": 0, "new_papers": 0}
 
     async def _tool_search_by_exact_title(self, args: Dict) -> Dict:
         """执行精确标题搜索"""
         title = args.get("title", "")
 
-        print(f"  [精确搜索] title='{title[:60]}...'")
+        logger.debug(f"  [精确搜索] title='%s...'", title[:60])
 
         try:
             paper = await self.ss_service.search_by_exact_title(title)
@@ -339,5 +342,5 @@ class PaperSearchAgent:
                 return {"found": False, "title": title}
 
         except Exception as e:
-            print(f"  [精确搜索错误] {e}")
+            logger.debug("  [精确搜索错误] %s", e)
             return {"error": str(e), "found": False}

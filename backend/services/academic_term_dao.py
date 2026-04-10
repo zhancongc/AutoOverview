@@ -62,7 +62,7 @@ class AcademicTermDAO:
         self.session.add(term)
         self.session.commit()
         self.session.refresh(term)
-        print(f"[AcademicTermDAO] 创建术语: {chinese_term}")
+        logger.debug(f"[AcademicTermDAO] 创建术语: {chinese_term}")
         return term
 
     def get_term_by_chinese(self, chinese_term: str) -> Optional[AcademicTerm]:
@@ -214,7 +214,7 @@ class AcademicTermDAO:
                 )
                 success_count += 1
             except Exception as e:
-                print(f"[AcademicTermDAO] 导入术语失败: {data.get('chinese_term')} - {e}")
+                logger.debug(f"[AcademicTermDAO] 导入术语失败: {data.get('chinese_term')} - {e}")
                 error_count += 1
 
         return {

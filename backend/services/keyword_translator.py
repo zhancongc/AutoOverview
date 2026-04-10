@@ -13,9 +13,12 @@ warnings.warn(
 )
 import httpx
 import asyncio
+import logging
 from typing import List, Dict, Optional
 import os
 from dotenv import load_dotenv
+
+logger = logging.getLogger(__name__)
 
 load_dotenv()
 
@@ -61,7 +64,7 @@ class KeywordTranslator:
             return {}
 
         if not self.api_key:
-            print("[翻译服务] DEEPSEEK_API_KEY 未配置，跳过翻译")
+            logger.debug("[翻译服务] DEEPSEEK_API_KEY 未配置，跳过翻译")
             return {}
 
         client = await self._get_client()
@@ -134,11 +137,11 @@ code translation -> 代码翻译
                         original = original.split('.', 1)[-1].strip() if '.' in original else original
                         translations[original] = translated
 
-            print(f"[翻译服务] 成功翻译 {len(translations)} 个关键词")
+            logger.debug(f"[翻译服务] 成功翻译 {len(translations)} 个关键词")
             return translations
 
         except Exception as e:
-            print(f"[翻译服务] 翻译失败: {e}")
+            logger.debug(f"[翻译服务] 翻译失败: {e}")
             return {}
 
     async def translate_keyword(
@@ -201,7 +204,7 @@ async def translate_search_queries(
 
     # 中文关键词翻译成英文
     if zh_keywords:
-        print(f"[翻译服务] 翻译 {len(zh_keywords)} 个中文关键词为英文...")
+        logger.debug(f"[翻译服务] 翻译 {len(zh_keywords)} 个中文关键词为英文...")
         translations = await translator.translate_keywords(zh_keywords, "zh", "en")
 
         for original, translated in translations.items():
@@ -219,7 +222,7 @@ async def translate_search_queries(
 
     # 英文关键词翻译成中文
     if en_keywords:
-        print(f"[翻译服务] 翻译 {len(en_keywords)} 个英文关键词为中文...")
+        logger.debug(f"[翻译服务] 翻译 {len(en_keywords)} 个英文关键词为中文...")
         translations = await translator.translate_keywords(en_keywords, "en", "zh")
 
         for original, translated in translations.items():
@@ -235,7 +238,7 @@ async def translate_search_queries(
                         'is_translation': True
                     })
 
-    print(f"[翻译服务] 翻译后总查询数: {len(result_queries)} (原文 {len(queries)} + 翻译 {len(result_queries) - len(queries)})")
+    logger.debug(f"[翻译服务] 翻译后总查询数: {len(result_queries)} (原文 {len(queries)} + 翻译 {len(result_queries) - len(queries)})")
 
     return result_queries
 

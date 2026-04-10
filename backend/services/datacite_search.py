@@ -113,10 +113,10 @@ class DataCiteSearchService:
             return papers
 
         except httpx.HTTPError as e:
-            print(f"[DataCite] API error: {e}")
+            logger.debug("[DataCite] API error: %s", e)
             return []
         except Exception as e:
-            print(f"[DataCite] 搜索失败: {e}")
+            logger.debug("[DataCite] 搜索失败: %s", e)
             return []
 
     async def close(self):
@@ -146,9 +146,9 @@ class DataCiteSearchService:
 # 测试代码
 async def test_datacite_search():
     """测试 DataCite 搜索"""
-    print("=" * 80)
-    print("测试 DataCite 搜索")
-    print("=" * 80)
+    logger.debug("=" * 80)
+    logger.debug("测试 DataCite 搜索")
+    logger.debug("=" * 80)
 
     service = DataCiteSearchService()
 
@@ -159,18 +159,18 @@ async def test_datacite_search():
             limit=5
         )
 
-        print(f"\n找到 {len(papers)} 篇:")
+        logger.debug(f"\n找到 {len(papers)} 篇:")
         for i, paper in enumerate(papers, 1):
-            print(f"\n{i}. {paper.get('title', 'N/A')}")
-            print(f"   作者: {', '.join(paper.get('authors', [])[:3])}")
-            print(f"   年份: {paper.get('year', 'N/A')}")
-            print(f"   类型: {paper.get('type', 'N/A')}")
-            print(f"   DOI: {paper.get('doi', 'N/A')}")
+            logger.debug(f"\n{i}. {paper.get('title', 'N/A')}")
+            logger.debug(f"   作者: {', '.join(paper.get('authors', [])[:3])}")
+            logger.debug(f"   年份: {paper.get('year', 'N/A')}")
+            logger.debug(f"   类型: {paper.get('type', 'N/A')}")
+            logger.debug(f"   DOI: {paper.get('doi', 'N/A')}")
 
     finally:
         await service.close()
 
-    print("\n" + "=" * 80)
+    logger.debug("\n" + "=" * 80)
 
 
 if __name__ == "__main__":

@@ -3,10 +3,13 @@
 通过 ISTIC/万方中文 DOI 系统搜索中文文献
 注意：中文 DOI API 可能需要授权访问
 """
+import logging
 import httpx
 from typing import List, Dict, Optional
 from datetime import datetime, timedelta
 from urllib.parse import quote
+
+logger = logging.getLogger(__name__)
 
 
 class ChineseDoiSearchService:
@@ -89,7 +92,7 @@ class ChineseDoiSearchService:
             return await self._wanfang_api_search(query, from_year, limit)
         else:
             # 否则返回模拟数据（实际使用需要实现爬虫或申请 API）
-            print("[ChineseDOI] 万方 API 需要授权密钥，使用模拟数据")
+            logger.debug("[ChineseDOI] 万方 API 需要授权密钥，使用模拟数据")
             return await self._get_mock_results(query, from_year, limit)
 
     async def _wanfang_api_search(
@@ -141,7 +144,7 @@ class ChineseDoiSearchService:
             return papers
 
         except Exception as e:
-            print(f"[ChineseDOI] 万方 API 搜索失败: {e}")
+            logger.debug(f"[ChineseDOI] 万方 API 搜索失败: {e}")
             return []
 
     async def _search_cnki(
@@ -155,7 +158,7 @@ class ChineseDoiSearchService:
 
         注意：CNKI API 需要授权，这里提供接口框架
         """
-        print("[ChineseDOI] CNKI API 需要授权密钥")
+        logger.debug("[ChineseDOI] CNKI API 需要授权密钥")
         return await self._get_mock_results(query, from_year, limit)
 
     async def _get_mock_results(
@@ -173,7 +176,7 @@ class ChineseDoiSearchService:
         is_chinese = any('\u4e00' <= c <= '\u9fff' for c in query)
 
         if not is_chinese:
-            print(f"[ChineseDOI] 非中文查询，返回空结果")
+            logger.debug("[ChineseDOI] 非中文查询，返回空结果")
             return []
 
         # 模拟一些中文论文结果
@@ -207,9 +210,9 @@ class ChineseDoiSearchService:
 # 测试代码
 async def test_chinese_doi_search():
     """测试中文 DOI 搜索"""
-    print("=" * 80)
-    print("测试中文 DOI 搜索")
-    print("=" * 80)
+    logger.debug("=" * 80)
+    logger.debug("测试中文 DOI 搜索")
+    logger.debug("=" * 80)
 
     # 测试无 API 密钥的情况（使用模拟数据）
     service = ChineseDoiSearchService()
@@ -221,22 +224,22 @@ async def test_chinese_doi_search():
             limit=5
         )
 
-        print(f"\n找到 {len(papers)} 篇:")
+        logger.debug(f"\n找到 {len(papers)} 篇:")
         for i, paper in enumerate(papers, 1):
-            print(f"\n{i}. {paper.get('title', 'N/A')}")
-            print(f"   作者: {', '.join(paper.get('authors', [])[:3])}")
-            print(f"   年份: {paper.get('year', 'N/A')}")
-            print(f"   来源: {paper.get('data_source', 'N/A')}")
-            print(f"   期刊: {paper.get('journal', 'N/A')}")
+            logger.debug(f"\n{i}. {paper.get('title', 'N/A')}")
+            logger.debug(f"   作者: {', '.join(paper.get('authors', [])[:3])}")
+            logger.debug(f"   年份: {paper.get('year', 'N/A')}")
+            logger.debug(f"   来源: {paper.get('data_source', 'N/A')}")
+            logger.debug(f"   期刊: {paper.get('journal', 'N/A')}")
 
-        print("\n注意：当前返回的是模拟数据。实际使用需要申请万方/CNKI API 密钥。")
-        print("- 万方数据: http://www.wanfangdata.com.cn/")
-        print("- CNKI: https://oversea.cnki.net/")
+        logger.debug("\n注意：当前返回的是模拟数据。实际使用需要申请万方/CNKI API 密钥。")
+        logger.debug("- 万方数据: http://www.wanfangdata.com.cn/")
+        logger.debug("- CNKI: https://oversea.cnki.net/")
 
     finally:
         await service.close()
 
-    print("\n" + "=" * 80)
+    logger.debug("\n" + "=" * 80)
 
 
 if __name__ == "__main__":
