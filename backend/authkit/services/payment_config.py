@@ -249,7 +249,7 @@ class DevAlipayService:
         """模拟支付 - 返回包含模拟参数的回调 URL"""
         from urllib.parse import urlencode
         config = get_payment_config()
-        final_return_url = return_url or f"{config['backend_url']}/api/payment/return"
+        final_return_url = return_url or f"{config['frontend_url']}/profile"
         mock_params = {
             "out_trade_no": out_trade_no,
             "trade_no": f"DEV{out_trade_no[-10:]}",

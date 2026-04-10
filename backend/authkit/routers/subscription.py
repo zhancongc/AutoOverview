@@ -130,7 +130,7 @@ def create_subscription(
             out_trade_no=order_no,
             total_amount=plan["price"],
             subject=subject,
-            return_url=f"{config['backend_url']}/api/payment/return",
+            return_url=f"{config['frontend_url']}/profile",
             notify_url=f"{config['backend_url']}/api/payment/webhook/notify",
         )
 
