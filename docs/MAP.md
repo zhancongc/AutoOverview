@@ -17,7 +17,6 @@ PaperOverview/
 ├── 📄 docker-compose.yml           # PostgreSQL 容器配置
 ├── 📄 server-install.sh            # 服务器初始化安装脚本
 ├── 📄 server-update.sh             # 服务器自动更新脚本
-├── 📄 change_model.sh              # Claude 模型切换脚本
 ├── 📁 docs/                        # 项目文档目录
 ├── 📁 backend/                     # FastAPI 后端
 └── 📁 frontend/                    # React 前端

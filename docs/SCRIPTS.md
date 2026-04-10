@@ -14,7 +14,6 @@
 - [Shell 脚本](#shell-脚本)
   - [server-install.sh - 服务器初始化安装](#server-installsh---服务器初始化安装)
   - [server-update.sh - 服务器自动更新](#server-updatesh---服务器自动更新)
-  - [change_model.sh - Claude 模型切换](#change_modelsh---claude-模型切换)
 
 ---
 
@@ -288,52 +287,6 @@ sudo ./server-update.sh
 
 ---
 
-### change_model.sh - Claude 模型切换
-
-**位置**: `change_model.sh`
-
-**功能**:
-快速切换 Claude Code 使用的模型配置。
-
-**前置要求**:
-- Claude Code 已安装
-- 模型配置文件存在于 `~/.claude/models/settings.json.<模型名>`
-
-**支持的模型**:
-- `aliyun` - 阿里云模型
-- `glm` - 智谱 AI 模型
-- `doubao` - 豆包模型
-
-**用法**:
-```bash
-./change_model.sh <模型名>
-```
-
-**示例**:
-```bash
-# 切换到豆包模型
-./change_model.sh doubao
-
-# 切换到智谱模型
-./change_model.sh glm
-
-# 切换到阿里云模型
-./change_model.sh aliyun
-```
-
-**执行流程**:
-1. 检查模型配置文件是否存在
-2. 备份当前的 `settings.json`（如果存在）
-3. 复制选中的模型配置到目标位置
-4. 自动启动 Claude
-
-**配置文件位置**:
-- 源配置: `~/.claude/models/settings.json.<模型名>`
-- 目标配置: `~/.claude/settings.json`
-- Claude 二进制: `~/.local/bin/claude`
-
----
-
 ## 附录
 
 ### 脚本位置总览
@@ -342,7 +295,6 @@ sudo ./server-update.sh
 PaperOverview/
 ├── 📄 server-install.sh       # 服务器初始化安装
 ├── 📄 server-update.sh        # 服务器自动更新
-├── 📄 change_model.sh         # Claude 模型切换
 └── backend/
     ├── 📄 manage_user.py      # 用户管理工具
     ├── 📄 init_db.py          # 数据库初始化
