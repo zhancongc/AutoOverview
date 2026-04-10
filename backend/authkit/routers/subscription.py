@@ -126,12 +126,17 @@ def create_subscription(
         alipay = get_payment_service()
         subject = f"AutoOverview-{plan['name']}"
 
+        return_url = f"{config['frontend_url']}/profile"
+        notify_url = f"{config['backend_url']}/api/payment/webhook/notify"
+
+        logger.info(f"[Payment] Creating order {order_no} with return_url={return_url}")
+
         pay_url = alipay.create_order(
             out_trade_no=order_no,
             total_amount=plan["price"],
             subject=subject,
-            return_url=f"{config['frontend_url']}/profile",
-            notify_url=f"{config['backend_url']}/api/payment/webhook/notify",
+            return_url=return_url,
+            notify_url=notify_url,
         )
 
         if not pay_url:

@@ -211,6 +211,9 @@ def init_alipay():
     config = get_payment_config()
     is_dev = config["is_dev"]
 
+    logger.info(f"[Payment] FRONTEND_URL: {config['frontend_url']}")
+    logger.info(f"[Payment] BACKEND_URL: {config['backend_url']}")
+
     if is_dev:
         logger.info("[Payment] 开发模式 - 模拟支付")
         return DevAlipayService()
