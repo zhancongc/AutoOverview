@@ -117,8 +117,8 @@ echo ""
 echo -e "${YELLOW}[6/10] 检查并执行数据库迁移...${NC}"
 echo ""
 
-# 检查是否有迁移脚本
-MIGRATION_SCRIPTS=$(find "$PROJECT_DIR/backend" -name "migrate_*.py" -type f | sort)
+# 只检查 backend 根目录下的迁移脚本（不包括 archive 子目录）
+MIGRATION_SCRIPTS=$(find "$PROJECT_DIR/backend" -maxdepth 1 -name "migrate_*.py" -type f | sort)
 if [ -n "$MIGRATION_SCRIPTS" ]; then
     echo -e "${BLUE}发现迁移脚本，开始执行...${NC}"
     echo ""
