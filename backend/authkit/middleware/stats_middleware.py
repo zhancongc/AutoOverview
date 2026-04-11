@@ -61,17 +61,20 @@ class StatsMiddleware(BaseHTTPMiddleware):
         # 获取客户端信息
         client_ip = self._get_client_ip(request)
 
+        # 使用共享的 Redis 客户端（类变量）
+        redis_client = self.redis_client or self._shared_redis_client
+
         # 限流检查（防止 DDoS）
-        if self.redis_client and not self._check_rate_limit(client_ip):
+        if redis_client and not self._check_rate_limit(client_ip, redis_client):
             logger.warning(f"[StatsMiddleware] IP {client_ip} 超过限流阈值")
             # 不阻止请求，只记录警告（可选：返回 429）
             # return Response(status_code=429, content="Too Many Requests")
 
         # 使用 Redis 计数（不直接写数据库）
-        if self.redis_client:
+        if redis_client:
             try:
                 import asyncio
-                asyncio.create_task(self._record_visit_async(client_ip, path))
+                asyncio.create_task(self._record_visit_async(client_ip, path, redis_client))
             except Exception as e:
                 logger.error(f"[StatsMiddleware] 异步记录访问失败: {e}")
 
@@ -95,28 +98,28 @@ class StatsMiddleware(BaseHTTPMiddleware):
 
         return "unknown"
 
-    def _check_rate_limit(self, ip_address: str) -> bool:
+    def _check_rate_limit(self, ip_address: str, redis_client) -> bool:
         """检查 IP 是否超过限流阈值"""
         try:
             from datetime import datetime
             key = f"rate_limit:{ip_address}:{datetime.now().strftime('%Y%m%d%H%M')}"
 
-            current = self.redis_client.get(key)
+            current = redis_client.get(key)
             if current is None:
-                self.redis_client.setex(key, 60, 1)
+                redis_client.setex(key, 60, 1)
                 return True
 
             current = int(current)
             if current >= self.rate_limit_per_minute:
                 return False
 
-            self.redis_client.incr(key)
+            redis_client.incr(key)
             return True
         except Exception as e:
             logger.error(f"[StatsMiddleware] 限流检查失败: {e}")
             return True  # 出错时不限流
 
-    async def _record_visit_async(self, ip_address: str, path: str):
+    async def _record_visit_async(self, ip_address: str, path: str, redis_client):
         """异步记录访问（使用 Redis，不直接写数据库）"""
         try:
             from datetime import date
@@ -125,15 +128,15 @@ class StatsMiddleware(BaseHTTPMiddleware):
 
             # 使用 Redis 计数器
             visit_key = f"stats:visits:{today}"
-            self.redis_client.incr(visit_key)
-            self.redis_client.expire(visit_key, 86400 * 7)  # 保留 7 天
+            redis_client.incr(visit_key)
+            redis_client.expire(visit_key, 86400 * 7)  # 保留 7 天
 
             # 如果启用详细日志，采样记录（10% 概率，避免数据爆炸）
             if self.enable_visit_log and hash(ip_address + path) % 10 == 0:
                 log_key = f"stats:logs:{today}"
                 log_data = f"{ip_address}:{path}"
-                self.redis_client.rpush(log_key, log_data)
-                self.redis_client.expire(log_key, 86400 * 7)  # 保留 7 天
+                redis_client.rpush(log_key, log_data)
+                redis_client.expire(log_key, 86400 * 7)  # 保留 7 天
 
         except Exception as e:
             logger.error(f"[StatsMiddleware] Redis 记录失败: {e}")
