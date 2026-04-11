@@ -207,8 +207,9 @@ export function ReviewPage() {
             display: flex;
             flex-direction: column;
             gap: 1rem;
-            max-width: 300px;
+            max-width: 320px;
             margin: 0 auto;
+            align-items: center;
           }
 
           .error-option-btn {
@@ -265,7 +266,13 @@ export function ReviewPage() {
           @media (min-width: 768px) {
             .error-options {
               flex-direction: row;
-              max-width: none;
+              max-width: 420px;
+              justify-content: center;
+            }
+
+            .error-option-btn {
+              min-width: 160px;
+              flex: 0 1 auto;
             }
           }
         `}</style>
@@ -326,6 +333,119 @@ export function ReviewPage() {
             <div className="error-hint">
               提示：综述生成通常需要 1-3 分钟，请稍后刷新页面
             </div>
+
+            <style>{`
+              .error-fallback-container {
+                min-height: 100vh;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                padding: 2rem;
+                background: var(--cream-white, #FFFBF5);
+              }
+
+              .error-icon {
+                font-size: 4rem;
+                margin-bottom: 1rem;
+                animation: float 3s ease-in-out infinite;
+              }
+
+              @keyframes float {
+                0%, 100% { transform: translateY(0px); }
+                50% { transform: translateY(-10px); }
+              }
+
+              .error-title {
+                font-family: 'Playfair Display', Georgia, serif;
+                font-size: 1.8rem;
+                font-weight: 700;
+                color: var(--ink-black, #1A1A1A);
+                margin-bottom: 1rem;
+              }
+
+              .error-message {
+                font-size: 1rem;
+                color: var(--text-gray, #636E72);
+                margin-bottom: 2rem;
+                line-height: 1.6;
+              }
+
+              .error-options {
+                display: flex;
+                flex-direction: column;
+                gap: 1rem;
+                max-width: 320px;
+                margin: 0 auto;
+                align-items: center;
+              }
+
+              .error-option-btn {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 0.75rem;
+                padding: 1rem 1.5rem;
+                border: 2px solid var(--border-gray, #E8ECEF);
+                border-radius: 12px;
+                background: var(--pure-white, #FFFFFF);
+                font-size: 0.95rem;
+                font-weight: 500;
+                transition: all 0.2s;
+                color: var(--charcoal, #2D3436);
+                cursor: pointer;
+              }
+
+              .error-option-btn:hover {
+                border-color: var(--academic-red, #D63031);
+                background: var(--cream-white, #FFFBF5);
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(214, 48, 49, 0.15);
+              }
+
+              .error-option-btn.primary {
+                background: var(--academic-red, #D63031);
+                border-color: var(--academic-red, #D63031);
+                color: white;
+              }
+
+              .error-option-btn.primary:hover {
+                background: var(--academic-red-dark, #B71C1C);
+                border-color: var(--academic-red-dark, #B71C1C);
+              }
+
+              .btn-icon {
+                font-size: 1.1rem;
+                line-height: 1;
+              }
+
+              .btn-text {
+                font-size: 0.95rem;
+                font-weight: 600;
+              }
+
+              .error-hint {
+                margin-top: 2rem;
+                padding: 0.75rem 1.25rem;
+                background: var(--light-gray, #DFE6E9);
+                border-radius: 8px;
+                font-size: 0.85rem;
+                color: var(--text-gray, #636E72);
+              }
+
+              @media (min-width: 768px) {
+                .error-options {
+                  flex-direction: row;
+                  max-width: 420px;
+                  justify-content: center;
+                }
+
+                .error-option-btn {
+                  min-width: 160px;
+                  flex: 0 1 auto;
+                }
+              }
+            `}</style>
           </div>
         </div>
       )
