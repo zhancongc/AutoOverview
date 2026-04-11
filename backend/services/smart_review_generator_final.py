@@ -276,6 +276,15 @@ class SmartReviewGeneratorFinal:
 
         返回: (修复后的内容, 最终参考文献列表)
         """
+        # === 规则 0: 标准化引用格式 ===
+        # 将 [8], [9] 或 [8],[9] 转换为 [8, 9]
+        # 匹配 [数字] 后面跟着可选的逗号和空格，然后是 [数字]
+        import re
+        content = re.sub(r'\[(\d+)\]\s*,\s*\[(\d+)\]', r'[\1, \2]', content)
+        # 处理更多连续的引用：[8], [9], [10] -> [8, 9, 10]
+        while re.search(r'\[(\d+(?:,\s*\d+)*)\],\s*\[\d+\]', content):
+            content = re.sub(r'\[(\d+(?:,\s*\d+)*)\],\s*\[(\d+)\]', r'[\1, \2]', content)
+
         # === 规则 1 & 2: 只保留有效引用 ===
         max_paper_idx = len(all_papers)
 
