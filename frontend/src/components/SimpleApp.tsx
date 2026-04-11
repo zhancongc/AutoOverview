@@ -5,6 +5,7 @@ import { api } from '../api'
 import { isLoggedIn as checkLoggedIn, getLocalUserInfo } from '../authApi'
 import { LoginModal } from './LoginModal'
 import { PaymentModal } from './PaymentModal'
+import { PaddlePaymentModal } from './PaddlePaymentModal'
 import './SimpleApp.css'
 
 interface TaskProgress {
@@ -718,56 +719,62 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
 
       <section id="pricing" className="landing-section section-alt">
         <div className="section-inner">
-          <h2 className="section-title">价格方案</h2>
-          <p className="section-subtitle">按需购买，注册即送 1 篇免费综述</p>
+          <h2 className="section-title">{t('pricing.title')}</h2>
+          <p className="section-subtitle">{t('pricing.note')}</p>
           {plansLoading ? (
             <div className="pricing-grid">
               <div className="pricing-card">
-                <div className="pricing-price">加载中...</div>
+                <div className="pricing-price">Loading...</div>
               </div>
             </div>
           ) : (
             <div className="pricing-grid">
-              {plans.map((plan) => (
-                <div
-                  key={plan.type}
-                  className={`pricing-card ${plan.recommended ? 'pricing-featured' : ''}`}
-                >
-                  {plan.recommended && <div className="pricing-badge">推荐</div>}
-                  <h3 className="pricing-name">{plan.name}</h3>
-                  <div className="pricing-price">
-                    {plan.type === 'single' && (
-                      <span className="pricing-original">{'\u00A539.8'}</span>
-                    )}
-                    {plan.type === 'semester' && (
-                      <span className="pricing-original">{'\u00A5119.4'}</span>
-                    )}
-                    {plan.type === 'yearly' && (
-                      <span className="pricing-original">{'\u00A5238.8'}</span>
-                    )}
-                    {'\u00A5'}
-                    {plan.price}
-                  </div>
-                  <ul className="pricing-features">
-                    {plan.features.map((feature: string, index: number) => (
-                      <li key={index}>{feature}</li>
-                    ))}
-                  </ul>
-                  <button
-                    className="pricing-btn pricing-btn-primary"
-                    onClick={() => {
-                      isLoggedIn ? setShowPaymentModal(plan.type) : setShowLoginModal(true)
-                    }}
+              {plans.map((plan) => {
+                // English pricing (USD)
+                const enPricing: Record<string, { price: number; original: number; name: string; button: string }> = {
+                  single: { price: 5.99, original: 7.99, name: t('pricing.single.name'), button: t('pricing.buy_single') },
+                  semester: { price: 29.99, original: 39.99, name: t('pricing.semester.name'), button: t('pricing.choose_semester') },
+                  yearly: { price: 79.99, original: 109.99, name: t('pricing.yearly.name'), button: t('pricing.choose_yearly') }
+                }
+                const pricing = language === 'en' ? enPricing[plan.type] : { price: plan.price, original: 0, name: plan.name, button: '' }
+                const features = language === 'en' ? (plan.type === 'single' ? t('pricing.single.features', { returnObjects: true }) :
+                  plan.type === 'semester' ? t('pricing.semester.features', { returnObjects: true }) :
+                  t('pricing.yearly.features', { returnObjects: true })) : plan.features
+
+                return (
+                  <div
+                    key={plan.type}
+                    className={`pricing-card ${plan.recommended ? 'pricing-featured' : ''}`}
                   >
-                    {plan.type === 'single' && '立即购买'}
-                    {plan.type === 'semester' && '选择标准包'}
-                    {plan.type === 'yearly' && '选择进阶包'}
-                  </button>
-                </div>
-              ))}
+                    {plan.recommended && <div className="pricing-badge">{language === 'en' ? 'Recommended' : '推荐'}</div>}
+                    <h3 className="pricing-name">{pricing.name}</h3>
+                    <div className="pricing-price">
+                      {language === 'en' && pricing.original > 0 && (
+                        <span className="pricing-original">${pricing.original}</span>
+                      )}
+                      {language === 'en' ? '$' : '¥'}
+                      {pricing.price}
+                      {language === 'en' && <span className="pricing-unit">USD</span>}
+                    </div>
+                    <ul className="pricing-features">
+                      {Array.isArray(features) && features.map((feature: string | any, index: number) => (
+                        <li key={index}>{typeof feature === 'string' ? feature : String(feature)}</li>
+                      ))}
+                    </ul>
+                    <button
+                      className="pricing-btn pricing-btn-primary"
+                      onClick={() => {
+                        isLoggedIn ? setShowPaymentModal(plan.type) : setShowLoginModal(true)
+                      }}
+                    >
+                      {language === 'en' ? pricing.button : (plan.type === 'single' ? '立即购买' : plan.type === 'semester' ? '选择标准包' : '选择进阶包')}
+                    </button>
+                  </div>
+                )
+              })}
             </div>
           )}
-          <p className="pricing-note">额度永久有效，不设过期时间。注册即送 1 篇免费综述额度。</p>
+          <p className="pricing-note">{t('pricing.note')}</p>
 
           <div className="testimonials">
             <div className="testimonial-card">
@@ -822,11 +829,21 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
       )}
 
       {showPaymentModal && (
-        <PaymentModal
-          onClose={() => setShowPaymentModal(false)}
-          onPaymentSuccess={handlePaymentSuccess}
-          planType={showPaymentModal}
-        />
+        <>
+          {language === 'en' ? (
+            <PaddlePaymentModal
+              onClose={() => setShowPaymentModal(false)}
+              onPaymentSuccess={handlePaymentSuccess}
+              planType={showPaymentModal}
+            />
+          ) : (
+            <PaymentModal
+              onClose={() => setShowPaymentModal(false)}
+              onPaymentSuccess={handlePaymentSuccess}
+              planType={showPaymentModal}
+            />
+          )}
+        </>
       )}
 
       {showToast && (

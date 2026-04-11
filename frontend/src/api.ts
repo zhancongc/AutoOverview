@@ -346,4 +346,44 @@ export const api = {
     const response = await axios.get(`${API_BASE}/tasks/active`, { headers });
     return response.data;
   },
+
+  // ==================== Paddle Payment API (International) ====================
+
+  async getPaddlePlans(): Promise<{ plans: Record<string, {
+    name: string;
+    price: number;
+    credits: number;
+    currency: string;
+  }> }> {
+    const response = await axios.get(`${API_BASE}/paddle/plans`);
+    return response.data;
+  },
+
+  async createPaddleSubscription(planType: string): Promise<{
+    order_no: string;
+    checkout_url: string;
+    amount: number;
+    currency: string;
+  }> {
+    const token = localStorage.getItem('auth_token');
+    const response = await axios.post(`${API_BASE}/paddle/create`, {
+      plan_type: planType
+    }, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
+  },
+
+  async queryPaddleSubscription(orderNo: string): Promise<{
+    status: string;
+    payment_time?: string;
+    amount: number;
+    currency: string;
+  }> {
+    const token = localStorage.getItem('auth_token');
+    const response = await axios.get(`${API_BASE}/paddle/query/${orderNo}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
+  },
 };

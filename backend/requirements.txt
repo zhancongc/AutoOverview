@@ -30,6 +30,7 @@ Jinja2==3.1.4
 
 # ==================== 支付 ====================
 alipay-sdk-python==3.7.1018
+# Paddle payments use REST API via httpx (no additional SDK needed)
 
 # ==================== 配置管理 ====================
 python-dotenv==1.0.1
