@@ -8,6 +8,7 @@ import { ProfilePage } from './components/ProfilePage'
 import { DavidPage } from './components/DavidPage'
 import ErrorBoundary from './ErrorBoundary'
 import { api } from './api'
+import './i18n' // 导入 i18n 配置
 import './index.css'
 
 function BackToTop() {

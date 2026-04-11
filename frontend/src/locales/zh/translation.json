@@ -1,0 +1,200 @@
+{
+  "_comment": "中文翻译文件 - 保留原有中文文案",
+  "home": {
+    "hero": {
+      "accent": "深度检索 + 智能综述",
+      "title": "5分钟，生成一份<span class=\"highlight\">高水平文献综述</span>",
+      "subtitle": "告别彻夜查文献的痛苦。AI 深度检索Web of Science、IEEE等权威数据库，自动梳理逻辑框架，生成自带规范引用的专业综述"
+    },
+    "stats": {
+      "papers": "2亿+ 篇文献检索",
+      "time": "5min 综述初稿生成"
+    },
+    "input": {
+      "title": "一键生成论文综述",
+      "subtitle": "输入研究主题，AI 为您生成专业文献综述",
+      "language": "生成语言：",
+      "language_zh": "中文",
+      "language_en": "English",
+      "language_hint_zh": "适用于中文期刊投稿",
+      "language_hint_en": "适用于英文期刊投稿",
+      "placeholder": "请输入您的研究主题，例如：深度学习在图像识别中的应用",
+      "button": "立即生成我的综述初稿",
+      "button_generating": "生成中...",
+      "credits_remaining": "剩余",
+      "retry": "重试"
+    },
+    "social_proof": {
+      "text": "已有 <strong>250+</strong> 位同学通过 AutoOverview 累计节省了 <strong>10,000+</strong> 小时"
+    },
+    "features": {
+      "title": "为什么选择 AutoOverview？",
+      "papers": "检索 2亿+ 真实论文，非 AI 编造",
+      "papers_desc": "每篇综述引用的真实文献均可溯源，拒绝幻觉",
+      "time": "5 分钟拿到初稿，无需两周苦熬",
+      "time_desc": "从选题到成稿，全自动完成，省下时间做更重要的事",
+      "format": "学术规范排版，可直接提交",
+      "format_desc": "自动生成引用编号、参考文献列表，支持 Word 导出"
+    },
+    "comparison": {
+      "free_llm": {
+        "title": "免费大模型",
+        "con1": "❌ 缺乏真实论文数据支撑",
+        "con2": "❌ 无法获取最新研究进展",
+        "con3": "❌ 可能编造引用文献"
+      },
+      "tools": {
+        "title": "Elicit / Scite / Paperpal",
+        "con1": "❌ 功能单一，仅辅助工具",
+        "con2": "❌ 无法生成完整综述",
+        "con3": "❌ 使用门槛高"
+      },
+      "autooverview": {
+        "title": "AutoOverview",
+        "pro1": "✅ 海量真实学术期刊数据源",
+        "pro2": "✅ 2分钟遍历文献，5分钟生成综述",
+        "pro3": "✅ 学术规范，精准引用"
+      },
+      "services": {
+        "title": "第三方人工服务",
+        "con1": "❌ 价格昂贵，质量参差不齐",
+        "con2": "❌ 耗时数天至数周",
+        "con3": "❌ 存在学术合规风险"
+      },
+      "manual": {
+        "title": "知网研学 / 自己写",
+        "con1": "❌ 耗时数周甚至数月",
+        "con2": "❌ 查找文献效率低",
+        "con3": "❌ 难以全面覆盖前沿"
+      }
+    },
+    "pricing": {
+      "title": "灵活定价，按需付费",
+      "note": "额度永久有效，不设过期时间。注册即送 1 篇免费综述额度。",
+      "single": {
+        "name": "单次购买",
+        "price": "5.99",
+        "original": "7.99",
+        "unit": "USD",
+        "features": [
+          "1 次完整文献综述",
+          "AI 智能文献检索",
+          "规范引用格式",
+          "Word 导出",
+          "邮件发送"
+        ]
+      },
+      "semester": {
+        "name": "学期套餐",
+        "price": "29.99",
+        "original": "39.99",
+        "unit": "USD",
+        "features": [
+          "10 次综述额度",
+          "优先处理",
+          "高级引用格式",
+          "包含单次购买所有功能",
+          "有效期 6 个月"
+        ]
+      },
+      "yearly": {
+        "name": "学年套餐",
+        "price": "79.99",
+        "original": "109.99",
+        "unit": "USD",
+        "features": [
+          "30 次综述额度",
+          "优先处理",
+          "高级引用格式",
+          "包含学期套餐所有功能",
+          "有效期 12 个月"
+        ]
+      },
+      "buy_single": "立即购买",
+      "choose_semester": "选择标准包",
+      "choose_yearly": "选择进阶包"
+    },
+    "demo": {
+      "title": "案例展示",
+      "subtitle": "提交前先看质量"
+    },
+    "footer": {
+      "copyright": "© 2026 AutoOverview. All rights reserved."
+    }
+  },
+  "review": {
+    "back": "返回",
+    "regenerate": "重新生成",
+    "tabs": {
+      "content": "正文",
+      "references": "参考文献"
+    },
+    "citation": {
+      "title": "引用格式",
+      "ieee": "IEEE",
+      "apa": "APA",
+      "mla": "MLA",
+      "gb_t_7714": "GB/T 7714"
+    },
+    "export": {
+      "title": "导出",
+      "word": "导出 Word",
+      "pdf": "导出 PDF"
+    },
+    "sidebar": {
+      "close": "关闭",
+      "title": "目录",
+      "actions": "操作",
+      "format": "引用格式",
+      "generate": "生成综述"
+    },
+    "error": {
+      "loading_failed": "加载失败",
+      "no_content": "暂无综述内容",
+      "error_occurred": "发生错误",
+      "try_again": "请稍后重试",
+      "go_home": "返回首页",
+      "reload": "重新加载",
+      "hint": "提示：综述生成通常需要 1-3 分钟，请稍后刷新页面"
+    }
+  },
+  "nav": {
+    "logo": "AutoOverview",
+    "home": "首页",
+    "pricing": "定价",
+    "profile": "我的综述",
+    "login": "登录 / 注册",
+    "logout": "退出登录"
+  },
+  "auth": {
+    "login": "登录",
+    "register": "注册",
+    "email": "邮箱",
+    "code": "验证码",
+    "send_code": "发送验证码",
+    "resend": "重新发送",
+    "resend_hint": "后可重发",
+    "login_title": "欢迎回来",
+    "register_title": "创建账户",
+    "login_desc": "请输入邮箱获取验证码",
+    "register_desc": "请输入邮箱获取验证码",
+    "logining": "登录中...",
+    "registering": "注册中..."
+  },
+  "common": {
+    "loading": "加载中...",
+    "error": "错误",
+    "success": "成功",
+    "cancel": "取消",
+    "confirm": "确认",
+    "close": "关闭",
+    "save": "保存",
+    "delete": "删除",
+    "edit": "编辑",
+    "submit": "提交",
+    "back": "返回",
+    "next": "下一步",
+    "previous": "上一步",
+    "done": "完成"
+  }
+}

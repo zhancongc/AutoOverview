@@ -1,0 +1,199 @@
+{
+  "home": {
+    "hero": {
+      "accent": "Deep Search + AI-Powered Review",
+      "title": "Generate a <highlight>High-Quality Literature Review</highlight> in 5 Minutes",
+      "subtitle": "Say goodbye to sleepless nights searching for papers. AI deeply searches authoritative databases like Web of Science and IEEE, automatically organizes logical frameworks, and generates professional reviews with standardized citations."
+    },
+    "stats": {
+      "papers": "200M+ Papers Indexed",
+      "time": "5min to Generate First Draft"
+    },
+    "input": {
+      "title": "Generate Literature Review",
+      "subtitle": "Enter your research topic, AI generates a professional literature review",
+      "language": "Language:",
+      "language_zh": "中文",
+      "language_en": "English",
+      "language_hint_zh": "For Chinese journals",
+      "language_hint_en": "For international journals",
+      "placeholder": "Enter your research topic, e.g., Deep Learning in Image Recognition",
+      "button": "Generate My Review",
+      "button_generating": "Generating...",
+      "credits_remaining": "credits remaining",
+      "retry": "Retry"
+    },
+    "social_proof": {
+      "text": "Already saved <strong>250+</strong> students a total of <strong>10,000+</strong> hours"
+    },
+    "features": {
+      "title": "Why Choose AutoOverview?",
+      "papers": "Search 200M+ Real Papers, No AI Fabrications",
+      "papers_desc": "Every cited paper is verifiable, no hallucinations",
+      "time": "Get First Draft in 5 Minutes, Save Weeks of Struggle",
+      "time_desc": "Automated from topic to completion, save time for what matters",
+      "format": "Professional Academic Formatting, Ready to Submit",
+      "format_desc": "Auto-generated citation numbers, reference lists, Word export supported"
+    },
+    "comparison": {
+      "free_llm": {
+        "title": "Free LLMs",
+        "con1": "❌ Lacks real paper data support",
+        "con2": "❌ Cannot access latest research",
+        "con3": "❌ May fabricate citations"
+      },
+      "tools": {
+        "title": "Elicit / Scite / Paperpal",
+        "con1": "❌ Single-purpose tools only",
+        "con2": "❌ Cannot generate complete reviews",
+        "con3": "❌ High learning curve"
+      },
+      "autooverview": {
+        "title": "AutoOverview",
+        "pro1": "✅ Massive real academic journal data sources",
+        "pro2": "✅ 2min to scan papers, 5min to generate review",
+        "pro3": "✅ Academic standards, accurate citations"
+      },
+      "services": {
+        "title": "Third-party Services",
+        "con1": "❌ Expensive, inconsistent quality",
+        "con2": "❌ Takes days to weeks",
+        "con3": "❌ Academic compliance risks"
+      },
+      "manual": {
+        "title": "CNKI Research / Write Yourself",
+        "con1": "❌ Takes weeks to months",
+        "con2": "❌ Low paper search efficiency",
+        "con3": "❌ Difficult to comprehensively cover cutting-edge research"
+      }
+    },
+    "pricing": {
+      "title": "Flexible Pricing, Pay As You Go",
+      "note": "Credits are valid permanently, no expiration. Register now and get 1 free review credit.",
+      "single": {
+        "name": "Single Review",
+        "price": "5.99",
+        "original": "7.99",
+        "unit": "USD",
+        "features": [
+          "1 complete literature review",
+          "AI-powered paper search",
+          "Standardized citations",
+          "Word export",
+          "Email delivery"
+        ]
+      },
+      "semester": {
+        "name": "Semester Pack",
+        "price": "29.99",
+        "original": "39.99",
+        "unit": "USD",
+        "features": [
+          "10 review credits",
+          "Priority processing",
+          "Advanced citation formats",
+          "All Single features",
+          "Valid for 6 months"
+        ]
+      },
+      "yearly": {
+        "name": "Academic Year Pack",
+        "price": "79.99",
+        "original": "109.99",
+        "unit": "USD",
+        "features": [
+          "30 review credits",
+          "Priority processing",
+          "Advanced citation formats",
+          "All Semester features",
+          "Valid for 12 months"
+        ]
+      },
+      "buy_single": "Buy Now",
+      "choose_semester": "Choose Semester",
+      "choose_yearly": "Choose Yearly"
+    },
+    "demo": {
+      "title": "Sample Reviews",
+      "subtitle": "See the quality before you commit"
+    },
+    "footer": {
+      "copyright": "© 2026 AutoOverview. All rights reserved."
+    }
+  },
+  "review": {
+    "back": "Back",
+    "regenerate": "Regenerate",
+    "tabs": {
+      "content": "Content",
+      "references": "References"
+    },
+    "citation": {
+      "title": "Citation Format",
+      "ieee": "IEEE",
+      "apa": "APA",
+      "mla": "MLA",
+      "gb_t_7714": "GB/T 7714"
+    },
+    "export": {
+      "title": "Export",
+      "word": "Export to Word",
+      "pdf": "Export to PDF"
+    },
+    "sidebar": {
+      "close": "Close",
+      "title": "Table of Contents",
+      "actions": "Actions",
+      "format": "Citation Format",
+      "generate": "Generate Review"
+    },
+    "error": {
+      "loading_failed": "Failed to Load",
+      "no_content": "No Review Content",
+      "error_occurred": "An error occurred",
+      "try_again": "Please try again later",
+      "go_home": "Go to Homepage",
+      "reload": "Reload Page",
+      "hint": "Tip: Review generation typically takes 1-3 minutes, please refresh later"
+    }
+  },
+  "nav": {
+    "logo": "AutoOverview",
+    "home": "Home",
+    "pricing": "Pricing",
+    "profile": "My Reviews",
+    "login": "Login / Register",
+    "logout": "Logout"
+  },
+  "auth": {
+    "login": "Login",
+    "register": "Register",
+    "email": "Email",
+    "code": "Verification Code",
+    "send_code": "Send Code",
+    "resend": "Resend",
+    "resend_hint": "Resend available in",
+    "login_title": "Welcome Back",
+    "register_title": "Create Account",
+    "login_desc": "Enter your email to receive a verification code",
+    "register_desc": "Enter your email to receive a verification code",
+    "logining": "Logging in...",
+    "registering": "Registering..."
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "close": "Close",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "submit": "Submit",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "done": "Done"
+  }
+}
