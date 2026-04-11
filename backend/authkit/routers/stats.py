@@ -13,6 +13,7 @@ router = APIRouter(prefix="/api/stats", tags=["统计"])
 
 # 数据库依赖（需要在主应用中提供）
 _default_get_db = None
+_shared_redis_client = None
 
 
 def get_db():
@@ -30,9 +31,15 @@ def set_get_db(get_db_func):
     _default_get_db = get_db_func
 
 
+def set_redis_client(redis_client):
+    """设置共享 Redis 客户端"""
+    global _shared_redis_client
+    _shared_redis_client = redis_client
+
+
 def get_stats_service(db: Session = Depends(get_db)) -> StatsService:
     """获取统计服务"""
-    return StatsService(db)
+    return StatsService(db, redis_client=_shared_redis_client)
 
 
 @router.get("/overview")

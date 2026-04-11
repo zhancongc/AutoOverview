@@ -1,21 +1,39 @@
 """
-访问量统计中间件
+访问量统计中间件 - DDoS 防护版本
+
+使用 Redis 缓存计数，定期批量写入数据库，避免 DDoS 攻击导致数据库崩溃。
 """
 import logging
 from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import Response
 from typing import Callable
+import os
 
 logger = logging.getLogger(__name__)
 
 
 class StatsMiddleware(BaseHTTPMiddleware):
-    """访问量统计中间件"""
+    """访问量统计中间件（DDoS 防护版本）"""
 
-    def __init__(self, app, get_db_func=None, exclude_paths: list = None):
+    # 类变量，存储共享的 Redis 客户端
+    _shared_redis_client = None
+
+    def __init__(
+        self,
+        app,
+        get_db_func=None,
+        redis_client=None,
+        exclude_paths: list = None,
+        enable_visit_log: bool = False,
+        rate_limit_per_minute: int = 100
+    ):
         super().__init__(app)
         self.get_db_func = get_db_func
+        # 优先使用传入的 redis_client，否则使用共享的
+        self.redis_client = redis_client or self._shared_redis_client
+        self.enable_visit_log = enable_visit_log  # 默认不记录详细日志，避免磁盘爆炸
+
         # 排除的路径（不统计）
         self.exclude_paths = exclude_paths or [
             "/api/health",
@@ -24,6 +42,9 @@ class StatsMiddleware(BaseHTTPMiddleware):
             "/openapi.json",
             "/favicon.ico",
         ]
+
+        # 限流配置（每个 IP 每分钟最大请求数）
+        self.rate_limit_per_minute = rate_limit_per_minute
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         # 检查是否需要统计
@@ -39,28 +60,20 @@ class StatsMiddleware(BaseHTTPMiddleware):
 
         # 获取客户端信息
         client_ip = self._get_client_ip(request)
-        user_agent = request.headers.get("user-agent", "")
-        user_id = None
 
-        # 尝试获取用户ID（从JWT token）
-        auth_header = request.headers.get("Authorization")
-        if auth_header and auth_header.startswith("Bearer "):
+        # 限流检查（防止 DDoS）
+        if self.redis_client and not self._check_rate_limit(client_ip):
+            logger.warning(f"[StatsMiddleware] IP {client_ip} 超过限流阈值")
+            # 不阻止请求，只记录警告（可选：返回 429）
+            # return Response(status_code=429, content="Too Many Requests")
+
+        # 使用 Redis 计数（不直接写数据库）
+        if self.redis_client:
             try:
-                from ..core.security import decode_access_token
-                token = auth_header.split(" ")[1]
-                payload = decode_access_token(token)
-                if payload:
-                    user_id = int(payload.get("sub")) if payload.get("sub") else None
-            except Exception:
-                pass
-
-        # 异步记录访问量（不阻塞请求）
-        try:
-            if self.get_db_func:
                 import asyncio
-                asyncio.create_task(self._record_visit(client_ip, user_agent, path, user_id))
-        except Exception as e:
-            logger.error(f"[StatsMiddleware] 记录访问量失败: {e}")
+                asyncio.create_task(self._record_visit_async(client_ip, path))
+            except Exception as e:
+                logger.error(f"[StatsMiddleware] 异步记录访问失败: {e}")
 
         # 继续处理请求
         return await call_next(request)
@@ -82,27 +95,125 @@ class StatsMiddleware(BaseHTTPMiddleware):
 
         return "unknown"
 
-    async def _record_visit(self, ip_address: str, user_agent: str, path: str, user_id: int = None):
-        """异步记录访问量"""
+    def _check_rate_limit(self, ip_address: str) -> bool:
+        """检查 IP 是否超过限流阈值"""
         try:
-            if not self.get_db_func:
-                return
+            from datetime import datetime
+            key = f"rate_limit:{ip_address}:{datetime.now().strftime('%Y%m%d%H%M')}"
 
-            from ..services.stats_service import StatsService
+            current = self.redis_client.get(key)
+            if current is None:
+                self.redis_client.setex(key, 60, 1)
+                return True
 
-            # 获取数据库会话
+            current = int(current)
+            if current >= self.rate_limit_per_minute:
+                return False
+
+            self.redis_client.incr(key)
+            return True
+        except Exception as e:
+            logger.error(f"[StatsMiddleware] 限流检查失败: {e}")
+            return True  # 出错时不限流
+
+    async def _record_visit_async(self, ip_address: str, path: str):
+        """异步记录访问（使用 Redis，不直接写数据库）"""
+        try:
+            from datetime import date
+
+            today = date.today().isoformat()
+
+            # 使用 Redis 计数器
+            visit_key = f"stats:visits:{today}"
+            self.redis_client.incr(visit_key)
+            self.redis_client.expire(visit_key, 86400 * 7)  # 保留 7 天
+
+            # 如果启用详细日志，采样记录（10% 概率，避免数据爆炸）
+            if self.enable_visit_log and hash(ip_address + path) % 10 == 0:
+                log_key = f"stats:logs:{today}"
+                log_data = f"{ip_address}:{path}"
+                self.redis_client.rpush(log_key, log_data)
+                self.redis_client.expire(log_key, 86400 * 7)  # 保留 7 天
+
+        except Exception as e:
+            logger.error(f"[StatsMiddleware] Redis 记录失败: {e}")
+
+
+class StatsBatchWriter:
+    """
+    批量写入器：定期将 Redis 中的统计数据同步到数据库
+
+    使用方式：
+    在应用启动时启动后台任务：
+        writer = StatsBatchWriter(redis_client=redis, get_db_func=auth_get_db)
+        asyncio.create_task(writer.start())
+    """
+
+    def __init__(self, redis_client, get_db_func, interval_seconds: int = 300):
+        """
+        Args:
+            redis_client: Redis 客户端
+            get_db_func: 数据库会话获取函数
+            interval_seconds: 同步间隔（秒），默认 5 分钟
+        """
+        self.redis_client = redis_client
+        self.get_db_func = get_db_func
+        self.interval_seconds = interval_seconds
+
+    async def start(self):
+        """启动后台同步任务"""
+        import asyncio
+        from datetime import date
+
+        logger.info("[StatsBatchWriter] 启动统计批量写入任务")
+
+        while True:
+            try:
+                await asyncio.sleep(self.interval_seconds)
+                await self._sync_to_db()
+            except Exception as e:
+                logger.error(f"[StatsBatchWriter] 同步失败: {e}")
+
+    async def _sync_to_db(self):
+        """将 Redis 数据同步到数据库"""
+        try:
+            from datetime import date, timedelta
+
+            # 同步最近 7 天的数据
+            today = date.today()
             db_gen = self.get_db_func()
             db = next(db_gen)
 
             try:
+                from ..services.stats_service import StatsService
                 stats_service = StatsService(db)
-                stats_service.increment_visit(
-                    ip_address=ip_address,
-                    user_agent=user_agent,
-                    path=path,
-                    user_id=user_id
-                )
+
+                for i in range(7):
+                    stat_date = (today - timedelta(days=i)).isoformat()
+                    visit_key = f"stats:visits:{stat_date}"
+
+                    # 从 Redis 获取访问量
+                    visits = self.redis_client.get(visit_key)
+                    if visits:
+                        visits = int(visits)
+
+                        # 检查数据库中是否已有该日期的记录
+                        from ..models.stats import SiteStats
+                        existing = db.query(SiteStats).filter_by(stat_date=stat_date).first()
+
+                        if existing:
+                            # 更新现有记录
+                            existing.visit_count = visits
+                        else:
+                            # 创建新记录
+                            new_stat = SiteStats(stat_date=stat_date, visit_count=visits, register_count=0)
+                            db.add(new_stat)
+
+                        db.commit()
+                        logger.debug(f"[StatsBatchWriter] 同步 {stat_date}: {visits} 次访问")
+
             finally:
                 db.close()
+
         except Exception as e:
-            logger.error(f"[StatsMiddleware] 异步记录访问失败: {e}")
+            logger.error(f"[StatsBatchWriter] 同步到数据库失败: {e}")
