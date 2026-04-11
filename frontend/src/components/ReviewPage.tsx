@@ -153,9 +153,127 @@ export function ReviewPage() {
     return (
       <div className="review-page">
         <div className="review-page-header">
-          <button className="back-button" onClick={() => navigate(-1)}>← 返回</button>
+          <button className="back-button" onClick={() => navigate(-1)}>←</button>
         </div>
-        <div style={{ textAlign: 'center', padding: '4rem', color: '#666' }}>{error}</div>
+        <div className="error-fallback-container">
+          <div className="error-icon">⚠️</div>
+          <h2 className="error-title">综述加载失败</h2>
+          <p className="error-message">{error}</p>
+
+          <div className="error-options">
+            <button className="error-option-btn primary" onClick={() => window.location.reload()}>
+              <span className="btn-icon">🔄</span>
+              <span className="btn-text">重新加载</span>
+            </button>
+
+            <button className="error-option-btn" onClick={() => navigate('/')}>
+              <span className="btn-icon">🏠</span>
+              <span className="btn-text">返回首页</span>
+            </button>
+
+            <button className="error-option-btn" onClick={() => navigate('/', { state: { scrollToCases: true } })}>
+              <span className="btn-icon">📄</span>
+              <span className="btn-text">查看案例</span>
+            </button>
+          </div>
+
+          <div className="error-hint">
+            提示：您可以尝试刷新页面，或查看其他案例综述
+          </div>
+        </div>
+
+        <style>{`
+          .error-fallback-container {
+            max-width: 600px;
+            margin: 100px auto;
+            padding: 2rem;
+            text-align: center;
+          }
+
+          .error-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+          }
+
+          .error-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--ink-black, #1A1A1A);
+            margin-bottom: 1rem;
+          }
+
+          .error-message {
+            color: var(--text-gray, #636E72);
+            margin-bottom: 2rem;
+            line-height: 1.6;
+          }
+
+          .error-options {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            max-width: 300px;
+            margin: 0 auto;
+          }
+
+          .error-option-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            padding: 1rem 1.5rem;
+            background: white;
+            border: 2px solid var(--border-gray, #E8ECEF);
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            color: var(--charcoal, #2D3436);
+          }
+
+          .error-option-btn:hover {
+            border-color: var(--academic-red, #D63031);
+            background: var(--cream-white, #FFFBF5);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(214, 48, 49, 0.15);
+          }
+
+          .error-option-btn.primary {
+            background: var(--academic-red, #D63031);
+            border-color: var(--academic-red, #D63031);
+            color: white;
+          }
+
+          .error-option-btn.primary:hover {
+            background: var(--academic-red-dark, #B71C1C);
+            border-color: var(--academic-red-dark, #B71C1C);
+          }
+
+          .btn-icon {
+            font-size: 1.25rem;
+          }
+
+          .btn-text {
+            font-weight: 600;
+          }
+
+          .error-hint {
+            margin-top: 2rem;
+            padding: 1rem;
+            background: var(--light-gray, #DFE6E9);
+            border-radius: 8px;
+            color: var(--text-gray, #636E72);
+            font-size: 0.9rem;
+          }
+
+          @media (min-width: 768px) {
+            .error-options {
+              flex-direction: row;
+              max-width: none;
+            }
+          }
+        `}</style>
       </div>
     )
   }
@@ -164,7 +282,7 @@ export function ReviewPage() {
     return (
       <div className="review-page">
         <div className="review-page-header">
-          <button className="back-button" onClick={() => navigate(-1)}>← 返回</button>
+          <button className="back-button" onClick={() => navigate(-1)}>←</button>
         </div>
         <div style={{ textAlign: 'center', padding: '4rem', color: '#666' }}>加载中...</div>
       </div>
@@ -174,13 +292,50 @@ export function ReviewPage() {
   if (!reviewData || !reviewData.content) {
     // taskId 场景下，数据还在加载中或加载失败（error 已在上面处理）
     if (taskId) {
+      if (loading) {
+        return (
+          <div className="review-page">
+            <div className="review-page-header">
+              <button className="back-button" onClick={() => navigate(-1)}>←</button>
+            </div>
+            <div style={{ textAlign: 'center', padding: '4rem', color: '#666' }}>加载中...</div>
+          </div>
+        )
+      }
+
+      // 数据为空，显示兜底方案
       return (
         <div className="review-page">
           <div className="review-page-header">
-            <button className="back-button" onClick={() => navigate(-1)}>← 返回</button>
+            <button className="back-button" onClick={() => navigate(-1)}>←</button>
           </div>
-          <div style={{ textAlign: 'center', padding: '4rem', color: '#666' }}>
-            {loading ? '加载中...' : '综述数据为空'}
+          <div className="error-fallback-container">
+            <div className="error-icon">📭</div>
+            <h2 className="error-title">暂无综述内容</h2>
+            <p className="error-message">
+              该任务可能正在生成中，或者生成失败了。您可以：
+            </p>
+
+            <div className="error-options">
+              <button className="error-option-btn primary" onClick={() => window.location.reload()}>
+                <span className="btn-icon">🔄</span>
+                <span className="btn-text">刷新页面</span>
+              </button>
+
+              <button className="error-option-btn" onClick={() => navigate('/')}>
+                <span className="btn-icon">🏠</span>
+                <span className="btn-text">返回首页</span>
+              </button>
+
+              <button className="error-option-btn" onClick={() => navigate('/', { state: { scrollToCases: true } })}>
+                <span className="btn-icon">📄</span>
+                <span className="btn-text">查看案例</span>
+              </button>
+            </div>
+
+            <div className="error-hint">
+              提示：综述生成通常需要 1-3 分钟，请稍后刷新页面
+            </div>
           </div>
         </div>
       )
