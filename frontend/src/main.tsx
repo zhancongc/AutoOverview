@@ -126,26 +126,28 @@ function JadeRoute({ children }: { children: React.ReactElement }) {
   return children
 }
 
-// David 路由守卫（只有管理员才能访问）
+// David 路由守卫（只有白名单用户才能访问）
 function DavidRoute({ children }: { children: React.ReactElement }) {
   const [checking, setChecking] = useState(true)
   const [allowed, setAllowed] = useState(false)
 
   useEffect(() => {
-    // 检查用户是否有权限访问
-    const token = localStorage.getItem('auth_token')
-    if (!token) {
-      setChecking(false)
-      return
+    const checkAccess = async () => {
+      try {
+        const res = await fetch('/api/david/access')
+        const data = await res.json()
+        setAllowed(data.allowed || false)
+      } catch {
+        setAllowed(false)
+      } finally {
+        setChecking(false)
+      }
     }
 
-    // 这里可以添加权限检查逻辑
-    // 暂时只检查是否登录
-    setAllowed(true)
-    setChecking(false)
+    checkAccess()
   }, [])
 
   if (checking) return null
-  if (!allowed) return <Navigate to="/login" replace />
+  if (!allowed) return <Navigate to="/" replace />
   return children
 }

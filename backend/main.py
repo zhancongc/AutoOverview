@@ -675,6 +675,33 @@ async def check_jade_access(user_id: Optional[int] = Depends(get_current_user_id
     return {"allowed": False}
 
 
+@app.get("/api/david/access")
+async def check_david_access(user_id: Optional[int] = Depends(get_current_user_id)):
+    """检查当前用户是否有 /david 页面的访问权限"""
+    if not user_id:
+        return {"allowed": False}
+
+    whitelist_str = os.getenv("DAVID_WHITELIST", "")
+    whitelist = {email.strip() for email in whitelist_str.split(",") if email.strip()}
+    if not whitelist:
+        return {"allowed": False}
+
+    from authkit.database import SessionLocal as AuthSessionLocal
+    if not AuthSessionLocal:
+        return {"allowed": False}
+
+    auth_db = AuthSessionLocal()
+    try:
+        from authkit.models import User
+        user = auth_db.query(User).filter(User.id == user_id).first()
+        if user and user.email in whitelist:
+            return {"allowed": True}
+    finally:
+        auth_db.close()
+
+    return {"allowed": False}
+
+
 @app.get("/api/tasks/active")
 async def get_active_task(user_id: Optional[int] = Depends(get_current_user_id)):
     """获取当前用户进行中的任务"""
