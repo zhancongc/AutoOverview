@@ -238,7 +238,7 @@
   }
 
   .back-button::after {
-    content: '';
+    content: '返回';
     margin-left: 0.25rem;
   }
 
