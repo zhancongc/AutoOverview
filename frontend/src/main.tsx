@@ -134,7 +134,11 @@ function DavidRoute({ children }: { children: React.ReactElement }) {
   useEffect(() => {
     const checkAccess = async () => {
       try {
-        const res = await fetch('/api/david/access')
+        const token = localStorage.getItem('auth_token')
+        const headers: Record<string, string> = {}
+        if (token) headers.Authorization = `Bearer ${token}`
+
+        const res = await fetch('/api/david/access', { headers })
         const data = await res.json()
         setAllowed(data.allowed || false)
       } catch {
