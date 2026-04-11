@@ -240,8 +240,7 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
           }
 
           pollCount++
-          const elapsed = Date.now() - startTime
-          const elapsedMinutes = elapsed / (60 * 1000)
+          // elapsedMinutes 已在上面计算，直接使用
 
           // 优化轮询间隔，减少服务端压力
           let nextInterval: number
