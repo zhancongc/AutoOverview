@@ -1,0 +1,576 @@
+/* International Academic Version Styles */
+/* Clean, professional blue-white theme with generous whitespace */
+
+:root {
+  /* Academic Blue Color Palette */
+  --academic-blue-primary: #1a365d;
+  --academic-blue-secondary: #2c5282;
+  --academic-blue-light: #ebf8ff;
+  --academic-blue-border: #bee3f8;
+
+  /* Neutral Colors */
+  --ink-black: #1a202c;
+  --charcoal: #2d3748;
+  --text-gray: #4a5568;
+  --light-gray: #e2e8f0;
+  --cream-white: #ffffff;
+
+  /* Accent Colors */
+  --accent-blue: #3182ce;
+  --accent-green: #38a169;
+
+  /* Spacing */
+  --spacing-xs: 0.5rem;
+  --spacing-sm: 1rem;
+  --spacing-md: 2rem;
+  --spacing-lg: 4rem;
+  --spacing-xl: 6rem;
+}
+
+/* Global Styles for International Version */
+.simple-home-international {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', 'Roboto', 'Oxygen', sans-serif;
+  color: var(--ink-black);
+  background: var(--cream-white);
+  line-height: 1.6;
+}
+
+/* Navigation */
+.simple-home-international .home-nav {
+  background: var(--cream-white);
+  border-bottom: 1px solid var(--light-gray);
+  padding: 1rem 2rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.simple-home-international .nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-weight: 600;
+  font-size: 1.25rem;
+  color: var(--academic-blue-primary);
+}
+
+.simple-home-international .nav-links {
+  display: flex;
+  gap: 2rem;
+}
+
+.simple-home-international .nav-links a {
+  color: var(--text-gray);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.simple-home-international .nav-links a:hover {
+  color: var(--academic-blue-primary);
+}
+
+/* Hero Section */
+.simple-home-international .home-hero-wrapper {
+  padding: var(--spacing-xl) 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-lg);
+  align-items: center;
+}
+
+.simple-home-international .home-title {
+  font-size: clamp(2.5rem, 5vw, 3.5rem);
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--academic-blue-primary);
+  margin-bottom: var(--spacing-md);
+}
+
+.simple-home-international .home-subtitle {
+  font-size: 1.125rem;
+  color: var(--text-gray);
+  line-height: 1.7;
+  margin-bottom: var(--spacing-lg);
+  max-width: 600px;
+}
+
+.simple-home-international .hero-accent {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  background: var(--academic-blue-light);
+  color: var(--academic-blue-primary);
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-bottom: var(--spacing-sm);
+}
+
+/* Visual Stats Card */
+.simple-home-international .visual-card {
+  background: linear-gradient(135deg, var(--academic-blue-light) 0%, #fff 100%);
+  border: 1px solid var(--academic-blue-border);
+  border-radius: 16px;
+  padding: var(--spacing-lg);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.simple-home-international .visual-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-md);
+}
+
+.simple-home-international .visual-stat {
+  text-align: center;
+}
+
+.simple-home-international .visual-stat-number {
+  display: block;
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--academic-blue-primary);
+  margin-bottom: 0.25rem;
+}
+
+.simple-home-international .visual-stat-label {
+  font-size: 0.875rem;
+  color: var(--text-gray);
+}
+
+/* Data Sources Section */
+.simple-home-international .data-sources-section {
+  background: var(--academic-blue-light);
+  padding: var(--spacing-md) 0;
+  border-top: 1px solid var(--academic-blue-border);
+  border-bottom: 1px solid var(--academic-blue-border);
+}
+
+.simple-home-international .data-sources-title {
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--text-gray);
+  margin-bottom: var(--spacing-sm);
+  font-weight: 500;
+}
+
+.simple-home-international .data-sources-logos {
+  display: flex;
+  justify-content: center;
+  gap: var(--spacing-lg);
+  flex-wrap: wrap;
+}
+
+.simple-home-international .data-source-logo {
+  padding: 0.5rem 1rem;
+  background: var(--cream-white);
+  border: 1px solid var(--academic-blue-border);
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--academic-blue-secondary);
+}
+
+/* Input Section */
+.simple-home-international .home-input-section {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: var(--spacing-xl) 2rem;
+}
+
+.simple-home-international .input-section-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--academic-blue-primary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.simple-home-international .input-section-subtitle {
+  color: var(--text-gray);
+  margin-bottom: var(--spacing-md);
+}
+
+.simple-home-international .topic-input {
+  width: 100%;
+  padding: 1rem;
+  border: 2px solid var(--light-gray);
+  border-radius: 12px;
+  font-size: 1rem;
+  font-family: inherit;
+  resize: vertical;
+  transition: border-color 0.2s;
+}
+
+.simple-home-international .topic-input:focus {
+  outline: none;
+  border-color: var(--academic-blue-primary);
+}
+
+.simple-home-international .generate-btn {
+  background: var(--academic-blue-primary);
+  color: var(--cream-white);
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.simple-home-international .generate-btn:hover {
+  background: var(--academic-blue-secondary);
+}
+
+.simple-home-international .secondary-btn {
+  background: transparent;
+  color: var(--academic-blue-primary);
+  border: 2px solid var(--academic-blue-primary);
+  padding: 1rem 2rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.simple-home-international .secondary-btn:hover {
+  background: var(--academic-blue-light);
+}
+
+/* Comparison Section */
+.simple-home-international .comparison-grid-simple {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-md);
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.simple-home-international .comparison-card {
+  background: var(--cream-white);
+  border: 2px solid var(--light-gray);
+  border-radius: 16px;
+  padding: var(--spacing-lg);
+  transition: all 0.2s;
+}
+
+.simple-home-international .comparison-card.highlight {
+  border-color: var(--academic-blue-primary);
+  box-shadow: 0 8px 16px rgba(26, 54, 93, 0.1);
+}
+
+.simple-home-international .comparison-item {
+  padding: 0.75rem 0;
+  font-size: 0.9375rem;
+}
+
+.simple-home-international .comparison-item.positive {
+  color: var(--accent-green);
+}
+
+.simple-home-international .comparison-item.negative {
+  color: var(--text-gray);
+}
+
+/* Features Section */
+.simple-home-international .home-features {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-lg);
+  margin-top: var(--spacing-lg);
+}
+
+.simple-home-international .feature-item {
+  text-align: center;
+  padding: var(--spacing-md);
+}
+
+.simple-home-international .feature-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--academic-blue-primary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.simple-home-international .feature-desc {
+  color: var(--text-gray);
+  line-height: 1.6;
+}
+
+/* Process Steps */
+.simple-home-international .process-steps-simple {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-md);
+  text-align: center;
+}
+
+.simple-home-international .step-number {
+  width: 48px;
+  height: 48px;
+  background: var(--academic-blue-primary);
+  color: var(--cream-white);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0 auto var(--spacing-sm);
+}
+
+/* Pricing */
+.simple-home-international .pricing-grid-international {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-md);
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.simple-home-international .pricing-card-english {
+  background: var(--cream-white);
+  border: 2px solid var(--light-gray);
+  border-radius: 16px;
+  padding: var(--spacing-lg);
+  text-align: center;
+  transition: all 0.2s;
+}
+
+.simple-home-international .pricing-card-english:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+}
+
+.simple-home-international .pricing-card-english.pricing-featured {
+  border-color: var(--academic-blue-primary);
+  position: relative;
+}
+
+.simple-home-international .pricing-badge {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--academic-blue-primary);
+  color: var(--cream-white);
+  padding: 0.25rem 1rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.simple-home-international .pricing-name {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--academic-blue-primary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.simple-home-international .pricing-price {
+  margin: var(--spacing-md) 0;
+}
+
+.simple-home-international .pricing-price .currency {
+  font-size: 1.5rem;
+  color: var(--text-gray);
+}
+
+.simple-home-international .pricing-price .amount {
+  font-size: 3rem;
+  font-weight: 700;
+  color: var(--academic-blue-primary);
+}
+
+.simple-home-international .pricing-features {
+  list-style: none;
+  padding: 0;
+  margin: var(--spacing-md) 0;
+  text-align: left;
+}
+
+.simple-home-international .pricing-features li {
+  padding: 0.5rem 0;
+  color: var(--text-gray);
+}
+
+.simple-home-international .pricing-btn {
+  width: 100%;
+  background: var(--academic-blue-primary);
+  color: var(--cream-white);
+  border: none;
+  padding: 1rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.simple-home-international .pricing-btn:hover {
+  background: var(--academic-blue-secondary);
+}
+
+/* Academic Integrity Section */
+.simple-home-international .academic-integrity-section {
+  background: var(--academic-blue-light);
+  padding: var(--spacing-lg) 2rem;
+}
+
+.simple-home-international .integrity-notice {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  max-width: 800px;
+  margin: 0 auto;
+  padding: var(--spacing-md);
+  background: var(--cream-white);
+  border: 1px solid var(--academic-blue-border);
+  border-radius: 12px;
+}
+
+.simple-home-international .integrity-icon {
+  font-size: 2.5rem;
+}
+
+.simple-home-international .integrity-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--academic-blue-primary);
+  margin-bottom: 0.5rem;
+}
+
+.simple-home-international .integrity-description {
+  color: var(--text-gray);
+  margin-bottom: var(--spacing-sm);
+}
+
+.simple-home-international .integrity-link {
+  color: var(--academic-blue-primary);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.simple-home-international .integrity-link:hover {
+  text-decoration: underline;
+}
+
+/* Footer */
+.simple-home-international .home-footer-international {
+  background: var(--academic-blue-primary);
+  color: var(--cream-white);
+  padding: var(--spacing-lg) 2rem;
+  text-align: center;
+}
+
+.simple-home-international .footer-copyright {
+  font-size: 0.875rem;
+  margin-bottom: var(--spacing-sm);
+}
+
+.simple-home-international .footer-legal,
+.simple-home-international .footer-databases {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: var(--spacing-xs);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .simple-home-international .home-hero-wrapper {
+    grid-template-columns: 1fr;
+    padding: var(--spacing-lg) 1rem;
+  }
+
+  .simple-home-international .visual-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .simple-home-international .comparison-grid-simple {
+    grid-template-columns: 1fr;
+  }
+
+  .simple-home-international .home-features {
+    grid-template-columns: 1fr;
+  }
+
+  .simple-home-international .process-steps-simple {
+    grid-template-columns: 1fr;
+  }
+
+  .simple-home-international .pricing-grid-international {
+    grid-template-columns: 1fr;
+  }
+
+  .simple-home-international .nav-links {
+    display: none;
+  }
+}
+
+/* Typography Improvements */
+.simple-home-international h1,
+.simple-home-international h2,
+.simple-home-international h3 {
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.simple-home-international p {
+  line-height: 1.7;
+}
+
+/* Button Hover Effects */
+.simple-home-international button:hover {
+  transform: translateY(-2px);
+  transition: transform 0.2s, background 0.2s;
+}
+
+/* Card Hover Effects */
+.simple-home-international .case-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s;
+}
+
+/* Clean, minimal design */
+.simple-home-international .landing-section {
+  padding: var(--spacing-xl) 1rem;
+}
+
+.simple-home-international .section-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.simple-home-international .section-title {
+  font-size: 2.5rem;
+  text-align: center;
+  color: var(--academic-blue-primary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.simple-home-international .section-subtitle {
+  text-align: center;
+  color: var(--text-gray);
+  margin-bottom: var(--spacing-lg);
+}
+
+/* Remove unnecessary decorations */
+.simple-home-international::before,
+.simple-home-international::after {
+  display: none;
+}
+
+/* Focus states for accessibility */
+.simple-home-international button:focus-visible,
+.simple-home-international a:focus-visible {
+  outline: 2px solid var(--academic-blue-primary);
+  outline-offset: 2px;
+}
+
+/* Smooth transitions */
+.simple-home-international * {
+  transition-timing-function: ease-in-out;
+  transition-duration: 0.2s;
+}

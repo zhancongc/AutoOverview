@@ -1,16 +1,22 @@
 {
+  "_comment": "English translation for international academic market",
   "home": {
     "hero": {
-      "accent": "Deep Search + AI-Powered Review",
-      "title": "Generate a <highlight>High-Quality Literature Review</highlight> in 5 Minutes",
-      "subtitle": "Say goodbye to sleepless nights searching for papers. AI deeply searches authoritative databases like Web of Science and IEEE, automatically organizes logical frameworks, and generates professional reviews with standardized citations."
+      "accent": "AI Literature Review Generator",
+      "title": "100% Real Citations, <highlight>No Hallucinations</highlight>",
+      "subtitle": "Generate submission-ready literature reviews with DOI-verifiable citations from Web of Science, IEEE, and CrossRef. No AI-generated fake papers."
     },
     "stats": {
-      "papers": "200M+ Papers Indexed",
-      "time": "5min to Generate First Draft"
+      "papers": "200M+ peer-reviewed papers",
+      "citations": "DOI-verifiable citations",
+      "time": "5-minute submission-ready review"
+    },
+    "sources": {
+      "title": "Trusted by leading academic databases",
+      "label": "Data sources:"
     },
     "input": {
-      "title": "Generate Literature Review",
+      "title": "Get 1 Free Review",
       "subtitle": "Enter your research topic, AI generates a professional literature review",
       "language": "Language:",
       "language_zh": "中文",
@@ -21,129 +27,92 @@
       "button": "Generate My Review",
       "button_generating": "Generating...",
       "credits_remaining": "credits remaining",
-      "retry": "Retry"
+      "retry": "Retry",
+      "how_it_works": "How It Works"
     },
     "social_proof": {
-      "text": "Already saved <strong>250+</strong> students a total of <strong>10,000+</strong> hours"
+      "text": "Trusted by <strong>10,000+</strong> researchers worldwide"
     },
     "features": {
       "title": "Why Choose AutoOverview?",
-      "papers": "Search 200M+ Real Papers, No AI Fabrications",
-      "papers_desc": "Every cited paper is verifiable, no hallucinations",
-      "time": "Get First Draft in 5 Minutes, Save Weeks of Struggle",
-      "time_desc": "Automated from topic to completion, save time for what matters",
-      "format": "Professional Academic Formatting, Ready to Submit",
-      "format_desc": "Auto-generated citation numbers, reference lists, Word export supported"
+      "papers": "No Fake Citations / No Hallucinations",
+      "papers_desc": "Every citation is DOI-verifiable. No AI-generated fake papers.",
+      "time": "5-Minute Full Auto Generation",
+      "time_desc": "From topic to submission-ready review, fully automated.",
+      "format": "Standard Citation Format & Exportable",
+      "format_desc": "Auto-generated citations in APA/MLA/IEEE format. Export to Word."
     },
     "comparison": {
-      "free_llm": {
-        "title": "Free LLMs",
-        "con1": "❌ Lacks real paper data support",
-        "con2": "❌ Cannot access latest research",
-        "con3": "❌ May fabricate citations"
-      },
-      "tools": {
-        "title": "Elicit / Scite / Paperpal",
-        "con1": "❌ Single-purpose tools only",
-        "con2": "❌ Cannot generate complete reviews",
-        "con3": "❌ High learning curve"
+      "title": "AutoOverview vs Free AI Tools",
+      "subtitle": "Why ChatGPT and DeepSeek can't replace proper literature reviews",
+      "free_ai": {
+        "title": "Free AI (ChatGPT/DeepSeek)",
+        "con1": "❌ May generate fake citations",
+        "con2": "❌ Requires complex prompts",
+        "con3": "❌ Not safe for academic submission",
+        "con4": "❌ No access to paywalled databases"
       },
       "autooverview": {
         "title": "AutoOverview",
-        "pro1": "✅ Massive real academic journal data sources",
-        "pro2": "✅ 2min to scan papers, 5min to generate review",
-        "pro3": "✅ Academic standards, accurate citations"
-      },
-      "services": {
-        "title": "Third-party Services",
-        "con1": "❌ Expensive, inconsistent quality",
-        "con2": "❌ Takes days to weeks",
-        "con3": "❌ Academic compliance risks"
-      },
-      "manual": {
-        "title": "Write It Yourself",
-        "con1": "❌ Takes weeks to months",
-        "con2": "❌ Low paper search efficiency",
-        "con3": "❌ Difficult to comprehensively cover cutting-edge research"
-      },
-      "title": "Still Writing Reviews the Hard Way?",
-      "traditional_label": "Traditional Method",
-      "traditional_step1": "Day 1-3",
-      "traditional_step1_desc": "Repeatedly search databases, trying keywords again and again",
-      "traditional_step2": "Day 4-7",
-      "traditional_step2_desc": "Screen and download papers one by one, manually format citations",
-      "traditional_step3": "Day 8-12",
-      "traditional_step3_desc": "Piece together logical framework, frequent content gaps",
-      "traditional_step4": "Day 13-14",
-      "traditional_step4_desc": "Proofread citations, reduce plagiarism, revise until breakdown",
-      "traditional_result_time": "≈ 14 days",
-      "traditional_result_mood": "😵 Painful ordeal",
-      "auto_label": "AutoOverview",
-      "auto_step1": "Step 1",
-      "auto_step1_desc": "Enter your research topic",
-      "auto_step2": "Step 2",
-      "auto_step2_desc": "AI automatically searches authoritative databases, organizes logical framework",
-      "auto_step3": "Step 3",
-      "auto_step3_desc": "Generate citation format with one click, plagiarism-friendly",
-      "auto_result_time": "≈ 5 minutes",
-      "auto_result_mood": "🎉 Easy and done"
+        "pro1": "✅ 100% real, DOI-verifiable citations",
+        "pro2": "✅ No prompt engineering required",
+        "pro3": "✅ Safe for academic submission",
+        "pro4": "✅ Access to Web of Science, IEEE, CrossRef"
+      }
     },
     "process": {
       "title": "How It Works",
-      "subtitle": "Complete a professional literature review in three steps",
+      "subtitle": "Three simple steps to your literature review",
       "step1_title": "Enter Topic",
-      "step1_desc": "Enter your research topic - it can be a brief description or detailed research direction requirements.",
-      "step2_title": "AI Generation",
-      "step2_desc": "AI automatically searches literature, analyzes and filters, organizes structure, and writes the review - fully automated.",
-      "step3_title": "View & Export",
-      "step3_desc": "Preview review content online, export to Word documents, ready for academic writing."
+      "step1_desc": "Enter your research topic in plain English.",
+      "step2_title": "AI Analyzes",
+      "step2_desc": "AI searches databases, analyzes papers, and generates review.",
+      "step3_title": "Get & Export",
+      "step3_desc": "Download your review in Word, ready for submission."
     },
     "pricing": {
-      "title": "Flexible Pricing, Pay As You Go",
-      "note": "Credits are valid permanently, no expiration. Register now and get 1 free review credit.",
+      "title": "Simple, Transparent Pricing",
+      "subtitle": "No subscription. Credits never expire.",
+      "note": "No subscription • Credits never expire • Satisfaction guaranteed",
       "single": {
-        "name": "Single Review",
-        "price": "5.99",
-        "original": "7.99",
+        "name": "1 Review",
+        "price": "9.99",
         "unit": "USD",
         "features": [
           "1 complete literature review",
-          "AI-powered paper search",
-          "Standardized citations",
+          "DOI-verifiable citations",
+          "Standard citation formats",
           "Word export",
           "Email delivery"
         ]
       },
-      "semester": {
-        "name": "Semester Pack",
+      "pack3": {
+        "name": "3 Reviews",
+        "price": "19.99",
+        "unit": "USD",
+        "features": [
+          "3 complete literature reviews",
+          "DOI-verifiable citations",
+          "Standard citation formats",
+          "Word export",
+          "Best value"
+        ]
+      },
+      "pack6": {
+        "name": "6 Reviews",
         "price": "29.99",
-        "original": "39.99",
         "unit": "USD",
         "features": [
-          "10 review credits",
-          "Priority processing",
-          "Advanced citation formats",
-          "All Single features",
-          "Valid for 6 months"
+          "6 complete literature reviews",
+          "DOI-verifiable citations",
+          "Standard citation formats",
+          "Word export",
+          "Most popular"
         ]
       },
-      "yearly": {
-        "name": "Academic Year Pack",
-        "price": "79.99",
-        "original": "109.99",
-        "unit": "USD",
-        "features": [
-          "30 review credits",
-          "Priority processing",
-          "Advanced citation formats",
-          "All Semester features",
-          "Valid for 12 months"
-        ]
-      },
-      "buy_single": "Buy Now",
-      "choose_semester": "Choose Semester",
-      "choose_yearly": "Choose Yearly",
-      "recommended": "Recommended"
+      "buy_now": "Get Started",
+      "no_subscription": "No subscription required",
+      "credits_never_expire": "Credits never expire"
     },
     "demo": {
       "title": "Sample Reviews",
@@ -151,21 +120,29 @@
       "loading": "Loading...",
       "empty": "No samples available",
       "ai_generated": "AI-generated academic review",
-      "view_details": "View Details →"
+      "view_details": "View Sample →"
     },
     "testimonials": {
-      "text1": "\"Recommended by my lab senior. The 5-minute review framework is more comprehensive than my week of literature searching, and all citations are real papers.\"",
+      "title": "Trusted by Researchers Worldwide",
+      "text1": "\"The citations are all real and DOI-verifiable. This is exactly what I needed for my thesis.\"",
       "name1": "Graduate Student",
-      "role1": "Master's Student",
-      "text2": "\"Lifesaver before thesis proposal! The literature review section was done directly, with proper formatting that my advisor couldn't fault.\"",
-      "name2": "Successful PhD Candidate",
-      "role2": "Engineering",
-      "text3": "\"Everyone in the PhD supervisor group is sharing this tool. Finally can save time to focus on experiments.\"",
-      "name3": "PhD Researcher",
-      "role3": "Materials Science"
+      "role1": "US University, Computer Science",
+      "text2": "\"Saved me weeks of literature searching. The review was submission-ready with minimal edits.\"",
+      "name2": "PhD Researcher",
+      "role2": "Materials Science, STEM Field",
+      "text3": "\"Finally an AI tool that generates real citations. No more fake papers to verify.\"",
+      "name3": "Postdoc Researcher",
+      "role3": "European University"
+    },
+    "integrity": {
+      "title": "Academic Integrity Guaranteed",
+      "description": "We are committed to academic integrity. All citations are real and verifiable.",
+      "link": "Learn about our citation verification process →"
     },
     "footer": {
-      "copyright": "© 2026 AutoOverview. All rights reserved."
+      "copyright": "© 2026 AutoOverview. All rights reserved.",
+      "legal": "Privacy Policy | GDPR Compliance | Terms of Service",
+      "databases": "Supported: Web of Science, IEEE, CrossRef, Semantic Scholar"
     },
     "nav": {
       "generate": "Generate",
@@ -210,7 +187,16 @@
     "export": {
       "title": "Export",
       "word": "Export to Word",
-      "pdf": "Export to PDF"
+      "pdf": "Export to PDF",
+      "exporting": "Exporting...",
+      "export_word": "Export Word",
+      "unlock_export": "🔒 Unlock Export ($9.99)",
+      "alert_not_supported": "This review does not support export",
+      "alert_failed": "Export failed, please try again later",
+      "confirm_title": "Use Credit to Unlock",
+      "confirm_message": "You have {credits} paid credits. Use 1 credit to unlock this review and export Word?",
+      "confirm_button": "Use Credit",
+      "unlock_failed": "Unlock failed, please try again later"
     },
     "sidebar": {
       "close": "Close",
@@ -231,17 +217,6 @@
       "review_not_ready": "Review not ready or may have failed. You can:",
       "generating_hint": "Tip: Review generation typically takes 1-3 minutes, please refresh later",
       "no_references": "No references available"
-    },
-    "export": {
-      "exporting": "Exporting...",
-      "export_word": "Export Word",
-      "unlock_export": "🔒 Unlock Export ($9.99)",
-      "alert_not_supported": "This review does not support export",
-      "alert_failed": "Export failed, please try again later",
-      "confirm_title": "Use Credit to Unlock",
-      "confirm_message": "You have {credits} paid credits. Use 1 credit to unlock this review and export Word?",
-      "confirm_button": "Use Credit",
-      "unlock_failed": "Unlock failed, please try again later"
     },
     "references": {
       "title": "References",

@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client'
 import { BrowserRouter, Routes, Route, Navigate, useSearchParams } from 'react-router-dom'
 import App from './App'
 import { SimpleApp } from './components/SimpleApp'
+import { SimpleAppInternational } from './components/SimpleAppInternational'
 import { ReviewPage } from './components/ReviewPage'
 import { ProfilePage } from './components/ProfilePage'
 import { DavidPage } from './components/DavidPage'
@@ -10,6 +11,9 @@ import ErrorBoundary from './ErrorBoundary'
 import { api } from './api'
 import './i18n' // 导入 i18n 配置
 import './index.css'
+
+// 检测是否为英文版
+const isEnglishVersion = typeof __BUILD_VERSION__ !== 'undefined' && __BUILD_VERSION__ === 'english'
 
 function BackToTop() {
   const [visible, setVisible] = useState(false)
@@ -37,8 +41,8 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   <ErrorBoundary>
     <BrowserRouter>
       <Routes>
-        <Route path="/login" element={<SimpleApp autoShowLogin />} />
-        <Route path="/" element={<SimpleApp />} />
+        <Route path="/login" element={isEnglishVersion ? <SimpleAppInternational autoShowLogin /> : <SimpleApp autoShowLogin />} />
+        <Route path="/" element={isEnglishVersion ? <SimpleAppInternational /> : <SimpleApp />} />
         <Route path="/profile" element={
           <ProtectedRoute>
             <ProfilePage />
