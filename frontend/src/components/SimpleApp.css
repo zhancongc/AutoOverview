@@ -1147,6 +1147,15 @@
   gap: 2rem;
 }
 
+.cases-loading,
+.cases-empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 3rem;
+  color: var(--text-gray);
+  font-size: 1.1rem;
+}
+
 .case-card {
   background: white;
   border-radius: 20px;

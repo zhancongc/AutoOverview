@@ -648,6 +648,76 @@ async def health_check():
     }
 
 
+@app.get("/api/cases")
+async def get_demo_cases():
+    """
+    获取案例展示列表
+
+    从 DEMO_TASK_IDS 配置中读取案例 ID，并返回完整的案例信息
+    """
+    from database import get_db
+    from models import ReviewTask, ReviewRecord
+
+    demo_task_ids = [s.strip() for s in os.getenv("DEMO_TASK_IDS", "").split(",") if s.strip()]
+    cases = []
+
+    db = next(get_db())
+    try:
+        for task_id in demo_task_ids:
+            # 从数据库获取任务信息
+            task = db.query(ReviewTask).filter(ReviewTask.id == task_id).first()
+            if not task:
+                continue
+
+            # 获取对应的综述记录
+            record = None
+            if task.review_record_id:
+                record = db.query(ReviewRecord).filter(ReviewRecord.id == task.review_record_id).first()
+
+            # 确定案例信息（优先使用数据库中的数据，否则使用硬编码的默认值）
+            case_info = {
+                "task_id": task_id,
+                "title": task.topic if task.topic else "AI 生成的学术综述",
+                "description": "",
+                "tags": [],
+                "icon": "📄"
+            }
+
+            # 如果有综述记录，提取更详细的信息
+            if record and record.review:
+                case_info["title"] = record.topic
+                # 尝试从统计信息中提取标签
+                if record.statistics:
+                    stats = record.statistics if isinstance(record.statistics, dict) else {}
+                    if stats.get("categories"):
+                        case_info["tags"] = stats["categories"]
+                    if stats.get("main_field"):
+                        case_info["tags"] = [stats["main_field"]]
+
+            # 根据主题关键词设置图标
+            topic_lower = case_info["title"].lower()
+            if "计算机" in topic_lower or "algorithm" in topic_lower or "代数" in topic_lower:
+                case_info["icon"] = "🧮"
+                case_info["tags"] = case_info["tags"] or ["计算机科学"]
+            elif "光催化" in topic_lower or "材料" in topic_lower:
+                case_info["icon"] = "🔬"
+                case_info["tags"] = case_info["tags"] or ["材料科学"]
+            elif "脑机" in topic_lower or "卒中" in topic_lower or "康复" in topic_lower:
+                case_info["icon"] = "🧠"
+                case_info["tags"] = case_info["tags"] or ["医学"]
+
+            cases.append(case_info)
+    finally:
+        db.close()
+
+    return {
+        "success": True,
+        "data": {
+            "cases": cases
+        }
+    }
+
+
 @app.get("/api/jade/access")
 async def check_jade_access(user_id: Optional[int] = Depends(get_current_user_id)):
     """检查当前用户是否有 /jade 页面的访问权限"""

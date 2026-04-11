@@ -29,6 +29,8 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
   const [toastMessage, setToastMessage] = useState('')
   const [plans, setPlans] = useState<any[]>([])
   const [plansLoading, setPlansLoading] = useState(true)
+  const [demoCases, setDemoCases] = useState<any[]>([])
+  const [casesLoading, setCasesLoading] = useState(true)
 
   useEffect(() => {
     const loggedIn = checkLoggedIn()
@@ -62,6 +64,20 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
       console.error('获取套餐失败:', err)
       setPlansLoading(false)
     })
+
+    // 获取案例展示列表
+    fetch('/api/cases')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.data.cases) {
+          setDemoCases(data.data.cases)
+        }
+        setCasesLoading(false)
+      })
+      .catch(err => {
+        console.error('获取案例失败:', err)
+        setCasesLoading(false)
+      })
   }, [])
 
   const pollTask = (taskId: string) => {
@@ -612,36 +628,33 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
           <h2 className="section-title">案例展示</h2>
           <p className="section-subtitle">看看 AI 生成的综述效果</p>
           <div className="cases-grid">
-            <div className="case-card" onClick={() => navigate('/review?task_id=81fac90d')} role="button" tabIndex={0}>
-              <div className="case-icon">🧮</div>
-              <h3 className="case-title">Computer Algebra System 的算法实现及应用</h3>
-              <p className="case-desc">涵盖了计算机代数系统中的多项式运算、符号计算、Groebner 基等核心算法，以及在密码学和机器人学中的应用。</p>
-              <div className="case-tags">
-                <span className="case-tag">计算机科学</span>
-                <span className="case-tag">代数算法</span>
-              </div>
-              <div className="case-action">查看详情 &rarr;</div>
-            </div>
-            <div className="case-card" onClick={() => navigate('/review?task_id=59c01cc4')} role="button" tabIndex={0}>
-              <div className="case-icon">🔬</div>
-              <h3 className="case-title">光催化杀菌技术的机理、影响因素及应用前景研究</h3>
-              <p className="case-desc">系统综述了 TiO₂ 等光催化材料的杀菌机理、影响催化效率的关键因素，以及在医疗卫生、食品保鲜等领域的前沿应用。</p>
-              <div className="case-tags">
-                <span className="case-tag">材料科学</span>
-                <span className="case-tag">光催化</span>
-              </div>
-              <div className="case-action">查看详情 &rarr;</div>
-            </div>
-            <div className="case-card" onClick={() => navigate('/review?task_id=2a90e24d')} role="button" tabIndex={0}>
-              <div className="case-icon">🧠</div>
-              <h3 className="case-title">脑机接口在卒中运动康复中的研究进展与临床转化</h3>
-              <p className="case-desc">全面梳理了脑机接口技术在卒中患者运动功能康复中的最新研究进展，包括信号解码算法、神经可塑性机制及临床转化挑战。</p>
-              <div className="case-tags">
-                <span className="case-tag">医学</span>
-                <span className="case-tag">脑机接口</span>
-              </div>
-              <div className="case-action">查看详情 &rarr;</div>
-            </div>
+            {casesLoading ? (
+              <div className="cases-loading">加载中...</div>
+            ) : demoCases.length === 0 ? (
+              <div className="cases-empty">暂无案例</div>
+            ) : (
+              demoCases.map((case_item) => (
+                <div
+                  key={case_item.task_id}
+                  className="case-card"
+                  onClick={() => navigate(`/review?task_id=${case_item.task_id}`)}
+                  role="button"
+                  tabIndex={0}
+                >
+                  <div className="case-icon">{case_item.icon}</div>
+                  <h3 className="case-title">{case_item.title}</h3>
+                  <p className="case-desc">{case_item.description || 'AI 生成的学术综述'}</p>
+                  {case_item.tags && case_item.tags.length > 0 && (
+                    <div className="case-tags">
+                      {case_item.tags.map((tag: string, idx: number) => (
+                        <span key={idx} className="case-tag">{tag}</span>
+                      ))}
+                    </div>
+                  )}
+                  <div className="case-action">查看详情 &rarr;</div>
+                </div>
+              ))
+            )}
           </div>
         </div>
       </section>
