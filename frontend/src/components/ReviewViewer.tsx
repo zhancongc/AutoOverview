@@ -65,6 +65,14 @@ export function ReviewViewer({ content, papers = [], hasPurchased = false, onToc
     // 清理：去掉引用标记前面不必要的逗号和空格（如 ", [1]" -> "[1]"）
     let cleanedText = text.replace(/,\s*(?=\[\d+\])/g, ' ')
 
+    // 清理嵌套的方括号格式：[[11],[14]] -> [11][14] -> 后续会合并为 [11, 14]
+    // 匹配 [[开头，]] 结尾，中间是 [数字],[数字]... 格式
+    cleanedText = cleanedText.replace(/\[\[([\d,\[\]\s]+)\]\]/g, (_, content) => {
+      // content 如 "[11],[14]" 或 "[11],[14],[15]"
+      // 去掉外层方括号后变成 [11],[14]，后续步骤会处理
+      return content
+    })
+
     // 检测并排序连续的引用标记
     // 匹配连续的 [数字] 引用，如 [5][8][4]
     const consecutiveCitationsPattern = /(\[\d+\]\s*){2,}/g
