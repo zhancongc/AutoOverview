@@ -522,7 +522,7 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
             <div className="feature-item">
               <span className="feature-icon">📚</span>
               <div>
-                <h3 className="feature-title">检索 100+ 真实论文，非 AI 编造</h3>
+                <h3 className="feature-title">检索 2亿+ 真实论文，非 AI 编造</h3>
                 <p className="feature-desc">每篇综述引用的真实文献均可溯源，拒绝幻觉</p>
               </div>
             </div>
