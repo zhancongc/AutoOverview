@@ -499,7 +499,7 @@
   order: 3;
 }
 
-/* ==================== 社会证明条 ==================== */
+/* ==================== 社交证明条 ==================== */
 
 .social-proof-bar {
   display: flex;
@@ -511,6 +511,8 @@
   border-radius: 12px;
   margin-top: 1.5rem;
   border: 1px solid rgba(214, 48, 49, 0.12);
+  grid-column: 1 / -1;
+  order: 4;
 }
 
 .social-proof-icon {
