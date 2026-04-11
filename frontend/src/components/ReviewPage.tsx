@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { ReviewViewer } from './ReviewViewer'
 import { PaymentModal } from './PaymentModal'
 import { ConfirmModal } from './ConfirmModal'
@@ -28,6 +29,7 @@ interface TocItem {
 }
 
 export function ReviewPage() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const location = useLocation()
   const [searchParams] = useSearchParams()
@@ -157,23 +159,23 @@ export function ReviewPage() {
         </div>
         <div className="error-fallback-container">
           <div className="error-icon">⚠️</div>
-          <h2 className="error-title">综述加载失败</h2>
+          <h2 className="error-title">{t('review.error.loading_failed')}</h2>
           <p className="error-message">{error}</p>
 
           <div className="error-options">
             <button className="error-option-btn primary" onClick={() => window.location.reload()}>
               <span className="btn-icon">🔄</span>
-              <span className="btn-text">重新加载</span>
+              <span className="btn-text">{t('review.error.reload')}</span>
             </button>
 
             <button className="error-option-btn" onClick={() => navigate('/')}>
               <span className="btn-icon">🏠</span>
-              <span className="btn-text">返回首页</span>
+              <span className="btn-text">{t('review.error.go_home')}</span>
             </button>
           </div>
 
           <div className="error-hint">
-            提示：您可以尝试刷新页面，或查看其他案例综述
+            {t('review.error.hint')}
           </div>
         </div>
 
@@ -286,7 +288,7 @@ export function ReviewPage() {
         <div className="review-page-header">
           <button className="back-button" onClick={() => navigate(-1)}>←</button>
         </div>
-        <div style={{ textAlign: 'center', padding: '4rem', color: '#666' }}>加载中...</div>
+        <div style={{ textAlign: 'center', padding: '4rem', color: '#666' }}>{t('common.loading')}</div>
       </div>
     )
   }
@@ -300,7 +302,7 @@ export function ReviewPage() {
             <div className="review-page-header">
               <button className="back-button" onClick={() => navigate(-1)}>←</button>
             </div>
-            <div style={{ textAlign: 'center', padding: '4rem', color: '#666' }}>加载中...</div>
+            <div style={{ textAlign: 'center', padding: '4rem', color: '#666' }}>{t('common.loading')}</div>
           </div>
         )
       }
@@ -313,25 +315,25 @@ export function ReviewPage() {
           </div>
           <div className="error-fallback-container">
             <div className="error-icon">📭</div>
-            <h2 className="error-title">暂无综述内容</h2>
+            <h2 className="error-title">{t('review.error.no_content')}</h2>
             <p className="error-message">
-              该任务可能正在生成中，或者生成失败了。您可以：
+              {t('review.error.review_not_ready')}
             </p>
 
             <div className="error-options">
               <button className="error-option-btn primary" onClick={() => window.location.reload()}>
                 <span className="btn-icon">🔄</span>
-                <span className="btn-text">刷新页面</span>
+                <span className="btn-text">{t('review.error.reload')}</span>
               </button>
 
               <button className="error-option-btn" onClick={() => navigate('/')}>
                 <span className="btn-icon">🏠</span>
-                <span className="btn-text">返回首页</span>
+                <span className="btn-text">{t('review.error.go_home')}</span>
               </button>
             </div>
 
             <div className="error-hint">
-              提示：综述生成通常需要 1-3 分钟，请稍后刷新页面
+              {t('review.error.generating_hint')}
             </div>
 
             <style>{`
@@ -466,7 +468,7 @@ export function ReviewPage() {
 
   const doExport = async () => {
     if (!reviewData.recordId) {
-      alert('该综述暂不支持导出')
+      alert(t('review.export.alert_not_supported'))
       return
     }
     setExporting(true)
@@ -479,7 +481,7 @@ export function ReviewPage() {
         headers,
         body: JSON.stringify({ record_id: reviewData.recordId })
       })
-      if (!response.ok) throw new Error('导出失败')
+      if (!response.ok) throw new Error(t('review.export.alert_failed'))
       const blob = await response.blob()
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
@@ -491,7 +493,7 @@ export function ReviewPage() {
       document.body.removeChild(a)
       URL.revokeObjectURL(url)
     } catch (err) {
-      alert('导出失败，请稍后重试')
+      alert(t('review.export.alert_failed'))
       console.error(err)
     } finally {
       setExporting(false)
@@ -531,11 +533,11 @@ export function ReviewPage() {
         // 直接导出
         await doExport()
       } else {
-        alert(result.message || '解锁失败，请稍后重试')
+        alert(result.message || t('review.export.unlock_failed'))
       }
     } catch (err) {
       console.error('解锁失败:', err)
-      alert('解锁失败，请稍后重试')
+      alert(t('review.export.unlock_failed'))
     } finally {
       setExporting(false)
     }
@@ -613,13 +615,13 @@ export function ReviewPage() {
             className={`segmented-tab ${activeTab === 'content' ? 'active' : ''}`}
             onClick={() => setActiveTab('content')}
           >
-            正文
+            {t('review.tabs.content')}
           </button>
           <button
             className={`segmented-tab ${activeTab === 'references' ? 'active' : ''}`}
             onClick={() => setActiveTab('references')}
           >
-            参考文献
+            {t('review.tabs.references')}
           </button>
         </div>
         <div className="header-actions">
@@ -629,13 +631,13 @@ export function ReviewPage() {
             disabled={!canSwitchFormat || formatLoading || loading}
           />
           <button className="regenerate-button" onClick={handleRegenerate}>
-            重新生成
+            {t('review.regenerate')}
           </button>
 
           <button className={`export-button export-word-btn ${!canExportDirectly ? 'export-word-premium' : ''}`} onClick={handleExportWord} disabled={exporting}>
-            {exporting ? '导出中...' :
-             canExportDirectly ? '导出 Word' :
-             '🔒 解锁导出 (29.8元)'}
+            {exporting ? t('review.export.exporting') :
+             canExportDirectly ? t('review.export.export_word') :
+             '🔒 ' + t('review.export.unlock_export')}
           </button>
         </div>
         <button
@@ -673,9 +675,9 @@ export function ReviewPage() {
       ) : (
         reviewData.papers.length > 0 ? (
           <div className="review-references" style={{ maxWidth: 960, margin: '80px auto 0', padding: '2rem' }}>
-            <h2>参考文献</h2>
+            <h2>{t('review.references.title')}</h2>
             <p className="references-summary">
-              共 {reviewData.papers.length} 篇文献
+              {t('review.references.total', { count: reviewData.papers.length })}
               {(() => {
                 const currentYear = new Date().getFullYear()
                 const recentCount = reviewData.papers.filter(p => p.year >= currentYear - 5).length
@@ -683,8 +685,8 @@ export function ReviewPage() {
                 const total = reviewData.papers.length
                 const parts = []
                 if (total > 0) {
-                  parts.push(`近5年 ${Math.round(recentCount / total * 100)}%`)
-                  parts.push(`英文 ${Math.round(englishCount / total * 100)}%`)
+                  parts.push(t('review.references.recent_5_years', { percent: Math.round(recentCount / total * 100) }))
+                  parts.push(t('review.references.english', { percent: Math.round(englishCount / total * 100) }))
                 }
                 return parts.length > 0 ? ` · ${parts.join(' · ')}` : ''
               })()}
@@ -692,7 +694,7 @@ export function ReviewPage() {
             <div className="references-notice">
               <span className="notice-icon">💡</span>
               <span className="notice-text">
-                点击文献标题或右侧平台图标，可在第三方平台验证文献真实性
+                {t('review.references.verify_notice')}
               </span>
             </div>
             <ol className="references-list">
@@ -715,7 +717,7 @@ export function ReviewPage() {
                             target="_blank"
                             rel="noopener noreferrer"
                             className="verification-link"
-                            title={`在 ${link.name} 中验证`}
+                            title={t('review.references.verify_on', { platform: link.name })}
                             style={{ '--link-color': link.color } as any}
                           >
                             <span className="link-icon">{link.icon}</span>
@@ -730,7 +732,7 @@ export function ReviewPage() {
                         target="_blank"
                         rel="noopener noreferrer"
                         className="ref-title-link"
-                        title="点击在第三方平台查看"
+                        title={t('review.references.view_on', { platform: verificationLinks[0]?.name || 'third-party platform' })}
                       >
                         {paper.title}
                       </a>
@@ -746,7 +748,7 @@ export function ReviewPage() {
           </div>
         ) : (
           <div style={{ textAlign: 'center', padding: '4rem', color: '#666' }}>
-            暂无参考文献
+            {t('review.error.no_references')}
           </div>
         )
       )}
@@ -792,10 +794,10 @@ export function ReviewPage() {
       {/* 使用额度确认弹窗 */}
       {showCreditConfirmModal && (
         <ConfirmModal
-          title="使用套餐额度解锁"
-          message={`您有 ${credits} 个付费额度。\n是否使用 1 个额度解锁此综述并导出 Word？`}
-          confirmText="使用额度解锁"
-          cancelText="取消"
+          title={t('review.export.confirm_title')}
+          message={t('review.export.confirm_message', { credits })}
+          confirmText={t('review.export.confirm_button')}
+          cancelText={t('common.cancel')}
           onConfirm={handleConfirmUseCredit}
           onCancel={() => setShowCreditConfirmModal(false)}
           type="warning"
@@ -810,13 +812,13 @@ export function ReviewPage() {
       {/* 移动端侧边栏 */}
       <aside className={`mobile-sidebar ${mobileMenuOpen ? 'sidebar-open' : ''}`}>
         <div className="sidebar-header">
-          <span className="sidebar-header-title">操作与目录</span>
+          <span className="sidebar-header-title">{t('review.sidebar.actions')}</span>
           <button className="sidebar-close" onClick={() => setMobileMenuOpen(false)}>&times;</button>
         </div>
         <div className="sidebar-actions">
           {/* 引用格式选择 */}
           <div className="sidebar-format-section">
-            <div className="sidebar-format-label">引用格式</div>
+            <div className="sidebar-format-label">{t('review.sidebar.format')}</div>
             <div className="sidebar-format-options">
               {(['ieee', 'apa', 'mla', 'gb_t_7714'] as const).map((format) => (
                 <button
@@ -839,18 +841,18 @@ export function ReviewPage() {
             onClick={() => { setMobileMenuOpen(false); handleExportWord() }}
             disabled={exporting}
           >
-            {exporting ? '导出中...' : canExportDirectly ? '导出 Word' : '🔒 解锁导出'}
+            {exporting ? t('review.export.exporting') : canExportDirectly ? t('review.export.export_word') : '🔒 ' + t('review.export.unlock_export')}
           </button>
           <button
             className="sidebar-action-btn sidebar-action-secondary"
             onClick={() => { setMobileMenuOpen(false); handleRegenerate() }}
           >
-            重新生成
+            {t('review.regenerate')}
           </button>
         </div>
         {tocItems.length > 0 && (
           <div className="sidebar-toc">
-            <div className="sidebar-toc-title">目录</div>
+            <div className="sidebar-toc-title">{t('review.sidebar.toc')}</div>
             <ul className="sidebar-toc-list">
               {tocItems.map(renderSidebarTocItem)}
             </ul>

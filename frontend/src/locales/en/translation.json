@@ -215,9 +215,10 @@
     "sidebar": {
       "close": "Close",
       "title": "Table of Contents",
-      "actions": "Actions",
+      "actions": "Actions & TOC",
       "format": "Citation Format",
-      "generate": "Generate Review"
+      "generate": "Generate Review",
+      "toc": "Table of Contents"
     },
     "error": {
       "loading_failed": "Failed to Load",
@@ -226,7 +227,30 @@
       "try_again": "Please try again later",
       "go_home": "Go to Homepage",
       "reload": "Reload Page",
-      "hint": "Tip: Review generation typically takes 1-3 minutes, please refresh later"
+      "hint": "Tip: Review generation typically takes 1-3 minutes, please refresh later",
+      "review_not_ready": "Review not ready or may have failed. You can:",
+      "generating_hint": "Tip: Review generation typically takes 1-3 minutes, please refresh later",
+      "no_references": "No references available"
+    },
+    "export": {
+      "exporting": "Exporting...",
+      "export_word": "Export Word",
+      "unlock_export": "🔒 Unlock Export ($9.99)",
+      "alert_not_supported": "This review does not support export",
+      "alert_failed": "Export failed, please try again later",
+      "confirm_title": "Use Credit to Unlock",
+      "confirm_message": "You have {credits} paid credits. Use 1 credit to unlock this review and export Word?",
+      "confirm_button": "Use Credit",
+      "unlock_failed": "Unlock failed, please try again later"
+    },
+    "references": {
+      "title": "References",
+      "total": "Total {count} papers",
+      "recent_5_years": "Recent 5 years {percent}%",
+      "english": "English {percent}%",
+      "verify_notice": "Click paper title or platform icon to verify authenticity on third-party platforms",
+      "verify_on": "Verify on {platform}",
+      "view_on": "View on {platform}"
     }
   },
   "nav": {
