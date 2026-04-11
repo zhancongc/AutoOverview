@@ -81,6 +81,11 @@ class AuthService:
             new_user.set_meta("has_purchased", False)
             self.db.commit()
 
+            # 增加注册量统计
+            from ..services.stats_service import StatsService
+            stats_service = StatsService(self.db)
+            stats_service.increment_register()
+
             # 发送欢迎邮件
             email_service.send_welcome_email(email, new_user.nickname)
 
@@ -204,7 +209,8 @@ class AuthService:
 
         # 查找或创建用户
         user = self.db.query(User).filter(User.email == email).first()
-        if not user:
+        is_new_user = user is None
+        if is_new_user:
             # 自动注册
             user = User(
                 email=email,
@@ -221,6 +227,11 @@ class AuthService:
             user.set_meta("review_credits", 0)
             user.set_meta("has_purchased", False)
             self.db.commit()
+
+            # 增加注册量统计
+            from ..services.stats_service import StatsService
+            stats_service = StatsService(self.db)
+            stats_service.increment_register()
         else:
             # 更新最后登录时间
             user.last_login_at = datetime.utcnow()

@@ -32,6 +32,8 @@ import authkit.routers.auth
 authkit.routers.auth.set_get_db(auth_get_db)
 
 from authkit.routers import router as auth_router
+from authkit.routers import stats_router
+from authkit.middleware import StatsMiddleware
 
 # 支付模块
 from authkit.routers import subscription as sub_router
@@ -147,6 +149,11 @@ async def lifespan(app: FastAPI):
         init_plans_in_db(session)
     logger.debug("[Startup] 套餐数据已初始化")
 
+    # 初始化统计数据库表
+    from authkit.models.stats import StatsBase
+    StatsBase.metadata.create_all(bind=db.engine)
+    logger.debug("[Startup] 统计数据库表已创建")
+
     # 从 Redis 恢复重启前的活跃任务
     task_manager.restore_from_redis()
 
@@ -168,8 +175,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# 添加统计中间件（在 CORS 之后）
+app.add_middleware(StatsMiddleware, get_db_func=auth_get_db)
+
 # 集成认证路由
 app.include_router(auth_router)
+
+# 集成统计路由
+stats_router.set_get_db(auth_get_db)
+app.include_router(stats_router)
 
 # 集成支付路由
 app.include_router(sub_router.router)
