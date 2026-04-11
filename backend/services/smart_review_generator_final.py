@@ -189,10 +189,11 @@ class SmartReviewGeneratorFinal:
         papers: List[Dict],
         model: str,
         search_params: Dict[str, Any] = None,
-        total_papers_count: int = 0
+        total_papers_count: int = 0,
+        language: str = "zh"
     ) -> Tuple[str, Set[int]]:
         """生成初始综述（不进行引用映射）"""
-        paper_titles_list = self._format_paper_titles_list(papers)
+        paper_titles_list = self._format_paper_titles_list(papers, language)
         logger.debug(f"[准备] 论文标题列表 ({len(papers)} 篇)")
 
         system_prompt = self._build_system_prompt(len(papers), language)
@@ -616,14 +617,24 @@ class SmartReviewGeneratorFinal:
 
     # ========== 辅助方法 ==========
 
-    def _format_paper_titles_list(self, papers: List[Dict]) -> str:
-        lines = ["【参考文献列表】"]
-        for i, paper in enumerate(papers, 1):
-            title = paper.get("title", "")
-            year = paper.get("year", "Unknown")
-            authors = paper.get("authors", [])
-            first_author = authors[0] if authors else "Unknown"
-            lines.append(f"{i}. {title} ({year}) - {first_author}等")
+    def _format_paper_titles_list(self, papers: List[Dict], language: str = "zh") -> str:
+        if language == "en":
+            lines = ["[Reference List]"]
+            for i, paper in enumerate(papers, 1):
+                title = paper.get("title", "")
+                year = paper.get("year", "Unknown")
+                authors = paper.get("authors", [])
+                first_author = authors[0] if authors else "Unknown"
+                et_al = " et al." if len(authors) > 1 else ""
+                lines.append(f"{i}. {title} ({year}) - {first_author}{et_al}")
+        else:
+            lines = ["【参考文献列表】"]
+            for i, paper in enumerate(papers, 1):
+                title = paper.get("title", "")
+                year = paper.get("year", "Unknown")
+                authors = paper.get("authors", [])
+                first_author = authors[0] if authors else "Unknown"
+                lines.append(f"{i}. {title} ({year}) - {first_author}等")
         return "\n".join(lines)
 
     def _build_system_prompt(self, paper_count: int, language: str = "zh") -> str:
