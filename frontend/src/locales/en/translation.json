@@ -4,7 +4,9 @@
     "hero": {
       "accent": "AI Literature Review Generator",
       "title": "100% Real Citations, <highlight>No Hallucinations</highlight>",
-      "subtitle": "Generate submission-ready literature reviews with DOI-verifiable citations from Web of Science, IEEE, and CrossRef. No AI-generated fake papers."
+      "subtitle": "Generate submission-ready literature reviews with DOI-verifiable citations from Web of Science, IEEE, and CrossRef. No AI-generated fake papers.",
+      "cta_button": "Start Generating Now",
+      "cta_hint": "Free to try • No credit card required"
     },
     "stats": {
       "papers": "200M+ peer-reviewed papers",
