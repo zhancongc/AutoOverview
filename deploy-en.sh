@@ -1,23 +1,36 @@
 #!/bin/bash
 # ============================================
 # AutoOverview 英文版前端 - 首次部署脚本
-# 在服务器本地运行 (14.103.210.88)
+# 在服务器本地运行
 # 域名: autooverview.plainkit.top
+# 证书: 复用 Cloudflare *.plainkit.top 通配符证书
 # ============================================
 
 set -e
 
 # ---------- 配置 ----------
 DOMAIN="autooverview.plainkit.top"
-EMAIL="zhancongc@icloud.com"
 APP_DIR="/opt/autooverview-en"
-DIST_DIR="$APP_DIR/dist"
+DIST_DIR="$APP_DIR/frontend/dist-en"
 BACKEND_PORT=8006
+SSL_CERT="/etc/ssl/cloudflare/plainkit.top.pem"
+SSL_KEY="/etc/ssl/cloudflare/plainkit.top-key.pem"
+CADDY_SITE_CONF="/etc/caddy/sites/autooverview.plainkit.top.conf"
 
 echo "=========================================="
 echo " AutoOverview 英文版 - 首次部署"
 echo " 域名: $DOMAIN"
 echo "=========================================="
+
+# ---------- 0. 检查证书 ----------
+echo ""
+echo "[0/4] 检查 Cloudflare 证书..."
+if [ ! -f "$SSL_CERT" ] || [ ! -f "$SSL_KEY" ]; then
+    echo "✗ 证书不存在: $SSL_CERT 或 $SSL_KEY"
+    echo "  请先部署 Cloudflare Origin 证书"
+    exit 1
+fi
+echo "✓ 证书就绪"
 
 # ---------- 1. 拉取代码 ----------
 echo ""
@@ -43,26 +56,24 @@ echo "✓ 构建完成: $DIST_DIR"
 echo ""
 echo "[3/4] 配置 Caddy..."
 
-# 安装 Caddy（如果未安装）
-if ! command -v caddy &> /dev/null; then
-    echo "安装 Caddy..."
-    yum install -y yum-utils
-    yum-config-manager --add-repo https://caddyserver.com/api/download?dist=el&arch=amd64
-    yum install -y caddy
-fi
+mkdir -p /etc/caddy/sites
 
-# 写入 Caddy 配置
-cat > /etc/caddy/Caddyfile << CADDYCONF
+# 写入 Caddy 站点配置（与现有 plainkit.top.conf 同级）
+cat > "$CADDY_SITE_CONF" << CADDYCONF
 $DOMAIN {
+    tls $SSL_CERT $SSL_KEY
+
+    # API 反向代理到后端
+    reverse_proxy /api/* 127.0.0.1:$BACKEND_PORT
+
+    # 静态文件服务
     root * $DIST_DIR
     file_server
-    encode gzip
 
     # SPA 路由：非文件请求返回 index.html
     try_files {path} /index.html
 
-    # API 反向代理到后端
-    reverse_proxy /api/* 127.0.0.1:$BACKEND_PORT
+    encode gzip
 
     # 静态资源缓存
     @static path *.js *.css *.png *.jpg *.svg *.woff *.woff2
@@ -75,28 +86,24 @@ $DOMAIN {
     # 安全头
     header X-Content-Type-Options "nosniff"
     header X-Frame-Options "DENY"
-
-    tls $EMAIL
 }
 CADDYCONF
 
-# 验证并启动
+# 验证并重载
 caddy validate --config /etc/caddy/Caddyfile
-systemctl enable caddy
-systemctl restart caddy
+systemctl reload caddy
 echo "✓ Caddy 配置完成"
 
 # ---------- 4. 验证 ----------
 echo ""
 echo "[4/4] 验证部署..."
-sleep 3
+sleep 2
 HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" https://$DOMAIN 2>/dev/null || echo "000")
 if [ "$HTTP_CODE" = "200" ]; then
     echo "✓ 部署成功！访问 https://$DOMAIN"
 else
-    echo "⚠ HTTP 状态码: $HTTP_CODE，请检查 Caddy 和 DNS 配置"
-    echo "  - 确保 DNS 已将 $DOMAIN 指向本机"
-    echo "  - 检查防火墙是否开放 80/443 端口"
+    echo "⚠ HTTP 状态码: $HTTP_CODE"
+    echo "  检查: systemctl status caddy && journalctl -u caddy -n 20"
 fi
 
 echo ""
@@ -104,4 +111,5 @@ echo "=========================================="
 echo " 部署完成"
 echo " 网站: https://$DOMAIN"
 echo " 文件: $DIST_DIR"
+echo " Caddy: $CADDY_SITE_CONF"
 echo "=========================================="

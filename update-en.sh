@@ -1,14 +1,14 @@
 #!/bin/bash
 # ============================================
 # AutoOverview 英文版前端 - 更新脚本
-# 在服务器本地运行 (14.103.210.88)
+# 在服务器本地运行
 # git pull → 构建 → 直接生效
 # ============================================
 
 set -e
 
 APP_DIR="/opt/autooverview-en"
-DIST_DIR="$APP_DIR/dist"
+DIST_DIR="$APP_DIR/frontend/dist-en"
 
 echo "=========================================="
 echo " AutoOverview 英文版 - 更新"
@@ -29,7 +29,7 @@ npm install
 npm run build:en
 echo "✓ 构建完成"
 
-# Caddy 直接读 dist 目录，静态文件更新后自动生效
+# Caddy 直接读 dist-en 目录，静态文件更新后自动生效
 echo "✓ 已更新，访问 https://autooverview.plainkit.top"
 echo ""
 echo "=========================================="
