@@ -18,7 +18,7 @@ interface PaddlePaymentModalProps {
 const PADDLE_PRICING = {
   single: {
     type: 'single',
-    name: 'Single Review',
+    name: 'Starter',
     price: 5.99,
     credits: 1,
     currency: 'USD',
@@ -31,26 +31,26 @@ const PADDLE_PRICING = {
   },
   semester: {
     type: 'semester',
-    name: 'Semester Pack',
-    price: 29.99,
-    credits: 10,
+    name: 'Semester Pro',
+    price: 27.99,
+    credits: 12,
     currency: 'USD',
     features: [
-      '10 review credits',
+      '12 review credits',
       'Priority processing',
       'Advanced citation formats',
-      'All Single features',
+      'All Starter features',
       'Valid for 6 months'
     ]
   },
   yearly: {
     type: 'yearly',
-    name: 'Academic Year Pack',
-    price: 79.99,
-    credits: 30,
+    name: 'Annual Premium',
+    price: 64.99,
+    credits: 36,
     currency: 'USD',
     features: [
-      '30 review credits',
+      '36 review credits',
       'Priority processing',
       'Advanced citation formats',
       'All Semester features',

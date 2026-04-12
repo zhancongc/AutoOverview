@@ -706,7 +706,7 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
               </div>
             ) : (
               <div className="pricing-grid pricing-grid-international">
-                {/* Plan 1: Single Review */}
+                {/* Plan 1: Starter */}
                 <div className="pricing-card pricing-card-english">
                   <h3 className="pricing-name">{t('home.pricing.single.name')}</h3>
                   <div className="pricing-price">
@@ -728,7 +728,7 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
                   </button>
                 </div>
 
-                {/* Plan 2: Semester Pack */}
+                {/* Plan 2: Semester Pro */}
                 <div className="pricing-card pricing-card-english pricing-featured">
                   <div className="pricing-badge">{t('home.pricing.semester.badge')}</div>
                   <h3 className="pricing-name">{t('home.pricing.semester.name')}</h3>
@@ -751,7 +751,7 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
                   </button>
                 </div>
 
-                {/* Plan 3: Academic Year Pack */}
+                {/* Plan 3: Annual Premium */}
                 <div className="pricing-card pricing-card-english">
                   <div className="pricing-badge">{t('home.pricing.yearly.badge')}</div>
                   <h3 className="pricing-name">{t('home.pricing.yearly.name')}</h3>

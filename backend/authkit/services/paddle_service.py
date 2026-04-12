@@ -213,21 +213,21 @@ class DevPaddleService:
 # Pricing in USD for international market
 PADDLE_PRICING = {
     "single": {
-        "name": "Single Review",
+        "name": "Starter",
         "price": 5.99,
         "credits": 1,
         "currency": "USD",
     },
     "semester": {
-        "name": "Semester Pack",
-        "price": 29.99,
-        "credits": 10,
+        "name": "Semester Pro",
+        "price": 27.99,
+        "credits": 12,
         "currency": "USD",
     },
     "yearly": {
-        "name": "Academic Year Pack",
-        "price": 79.99,
-        "credits": 30,
+        "name": "Annual Premium",
+        "price": 64.99,
+        "credits": 36,
         "currency": "USD",
     },
     "unlock": {

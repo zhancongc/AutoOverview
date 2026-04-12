@@ -78,7 +78,7 @@
       "subtitle": "No subscription. Credits never expire.",
       "note": "No subscription • Credits never expire • Customer satisfaction focused",
       "single": {
-        "name": "Single Review",
+        "name": "Starter",
         "price": "5.99",
         "unit": "USD",
         "features": [
@@ -89,25 +89,25 @@
         ]
       },
       "semester": {
-        "name": "Semester Pack",
+        "name": "Semester Pro",
         "badge": "Popular",
-        "price": "29.99",
+        "price": "27.99",
         "unit": "USD",
         "features": [
-          "10 review credits",
+          "12 review credits",
           "Priority processing",
           "Advanced citation formats",
-          "All Single features",
+          "All Starter features",
           "Valid for 6 months"
         ]
       },
       "yearly": {
-        "name": "Academic Year Pack",
+        "name": "Annual Premium",
         "badge": "Best Value",
-        "price": "79.99",
+        "price": "64.99",
         "unit": "USD",
         "features": [
-          "30 review credits",
+          "36 review credits",
           "Priority processing",
           "Advanced citation formats",
           "All Semester features",
