@@ -4,6 +4,10 @@ import LanguageDetector from 'i18next-browser-languagedetector'
 import enTranslation from './locales/en/translation.json'
 import zhTranslation from './locales/zh/translation.json'
 
+// 根据构建版本确定默认语言
+const isEnglishVersion = typeof __BUILD_VERSION__ !== 'undefined' && __BUILD_VERSION__ === 'english'
+const defaultLanguage = isEnglishVersion ? 'en' : 'zh'
+
 // 支持的语言列表
 const SUPPORTED_LANGUAGES = ['en', 'zh']
 
@@ -21,8 +25,8 @@ i18n
   .use(initReactI18next)
   .init({
     resources,
-    fallbackLng: 'en',
-    lng: 'en',
+    fallbackLng: defaultLanguage,
+    lng: defaultLanguage,
     supportedLngs: SUPPORTED_LANGUAGES,
 
     interpolation: {
