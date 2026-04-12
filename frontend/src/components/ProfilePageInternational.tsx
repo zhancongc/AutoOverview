@@ -27,6 +27,7 @@ export function ProfilePageInternational() {
   const [showCreditConfirmModal, setShowCreditConfirmModal] = useState(false)
   const [confirmRecordId, setConfirmRecordId] = useState<number | null>(null)
   const [showCloseAccountModal, setShowCloseAccountModal] = useState(false)
+  const [closeAccountEmail, setCloseAccountEmail] = useState('')
   const [showEditProfileModal, setShowEditProfileModal] = useState(false)
   const [editNickname, setEditNickname] = useState('')
 
@@ -264,25 +265,11 @@ export function ProfilePageInternational() {
               <button className="edit-profile-button" onClick={handleEditProfile}>
                 ✏️ Edit
               </button>
-            </div>
-            <p className="user-email">{userInfo?.email || ''}</p>
-          </div>
-        </div>
-
-        {/* Account Settings */}
-        <div className="profile-settings">
-          <h2 className="settings-title">⚙️ Account Settings</h2>
-          <div className="settings-section">
-            <div className="settings-danger-zone">
-              <h3 className="settings-danger-title">⚠️ Danger Zone</h3>
-              <p className="settings-danger-desc">These actions are irreversible. Please be careful.</p>
-              <button
-                className="settings-danger-button"
-                onClick={() => setShowCloseAccountModal(true)}
-              >
+              <button className="close-account-button" onClick={() => { setShowCloseAccountModal(true); setCloseAccountEmail(''); }}>
                 Close Account
               </button>
             </div>
+            <p className="user-email">{userInfo?.email || ''}</p>
           </div>
         </div>
 
@@ -443,14 +430,48 @@ export function ProfilePageInternational() {
 
       {/* Close Account Confirmation Modal */}
       {showCloseAccountModal && (
-        <ConfirmModalInternational
-          message="Are you sure you want to close your account?\n\nThis action is irreversible and:\n• You will lose access to all your reviews\n• Your credits will be forfeited\n• Your data will be deleted within 30 days\n\nIf you have concerns, please contact support@snappicker.com first."
-          confirmText="Close Account"
-          cancelText="Cancel"
-          onConfirm={handleCloseAccount}
-          onCancel={() => setShowCloseAccountModal(false)}
-          type="danger"
-        />
+        <div className="modal-overlay" onClick={() => setShowCloseAccountModal(false)}>
+          <div className="close-account-modal" onClick={e => e.stopPropagation()}>
+            <div className="close-account-header">
+              <h2>Close Account</h2>
+              <button className="modal-close-btn" onClick={() => setShowCloseAccountModal(false)}>×</button>
+            </div>
+            <div className="close-account-body">
+              <p className="close-account-warning">⚠️ These actions are irreversible. Please be careful.</p>
+              <ul className="close-account-consequences">
+                <li>You will lose access to all your reviews</li>
+                <li>Your credits will be forfeited</li>
+                <li>Your data will be deleted within 30 days</li>
+              </ul>
+              <label className="close-account-label">
+                Type your email <strong>{userInfo?.email}</strong> to confirm:
+              </label>
+              <input
+                type="email"
+                className="close-account-input"
+                value={closeAccountEmail}
+                onChange={e => setCloseAccountEmail(e.target.value)}
+                placeholder="Enter your email"
+                autoFocus
+              />
+            </div>
+            <div className="close-account-footer">
+              <button
+                className="close-account-btn close-account-btn-cancel"
+                onClick={() => setShowCloseAccountModal(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className="close-account-btn close-account-btn-confirm"
+                onClick={handleCloseAccount}
+                disabled={closeAccountEmail !== userInfo?.email}
+              >
+                Close Account
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Edit Profile Modal */}

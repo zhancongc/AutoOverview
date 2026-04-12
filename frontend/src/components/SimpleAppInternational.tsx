@@ -257,71 +257,11 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
           <span className="logo-text">AutoOverview</span>
         </div>
         <div className="nav-links">
-          <a
-            href="#generate"
-            onClick={(e) => {
-              e.preventDefault()
-              const el = document.getElementById('generate')
-              if (el) {
-                const navHeight = 60
-                const elPosition = el.getBoundingClientRect().top + window.pageYOffset
-                window.location.hash = 'generate'
-                window.scrollTo({ top: elPosition - navHeight, behavior: 'smooth' })
-              }
-            }}
-          >{t('home.nav.generate')}</a>
-          <a
-            href="#features"
-            onClick={(e) => {
-              e.preventDefault()
-              const el = document.getElementById('features')
-              if (el) {
-                const navHeight = 60
-                const elPosition = el.getBoundingClientRect().top + window.pageYOffset
-                window.location.hash = 'features'
-                window.scrollTo({ top: elPosition - navHeight, behavior: 'smooth' })
-              }
-            }}
-          >{t('home.nav.features')}</a>
-          <a
-            href="#process"
-            onClick={(e) => {
-              e.preventDefault()
-              const el = document.getElementById('process')
-              if (el) {
-                const navHeight = 60
-                const elPosition = el.getBoundingClientRect().top + window.pageYOffset
-                window.location.hash = 'process'
-                window.scrollTo({ top: elPosition - navHeight, behavior: 'smooth' })
-              }
-            }}
-          >{t('home.nav.process')}</a>
-          <a
-            href="#cases"
-            onClick={(e) => {
-              e.preventDefault()
-              const el = document.getElementById('cases')
-              if (el) {
-                const navHeight = 60
-                const elPosition = el.getBoundingClientRect().top + window.pageYOffset
-                window.location.hash = 'cases'
-                window.scrollTo({ top: elPosition - navHeight, behavior: 'smooth' })
-              }
-            }}
-          >{t('home.nav.cases')}</a>
-          <a
-            href="#pricing"
-            onClick={(e) => {
-              e.preventDefault()
-              const el = document.getElementById('pricing')
-              if (el) {
-                const navHeight = 60
-                const elPosition = el.getBoundingClientRect().top + window.pageYOffset
-                window.location.hash = 'pricing'
-                window.scrollTo({ top: elPosition - navHeight, behavior: 'smooth' })
-              }
-            }}
-          >{t('home.nav.pricing')}</a>
+          <a href="#generate" onClick={(e) => { e.preventDefault(); document.getElementById('generate')?.scrollIntoView({ behavior: 'smooth' }) }}>{t('home.nav.generate')}</a>
+          <a href="#features" onClick={(e) => { e.preventDefault(); document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' }) }}>{t('home.nav.features')}</a>
+          <a href="#process" onClick={(e) => { e.preventDefault(); document.getElementById('process')?.scrollIntoView({ behavior: 'smooth' }) }}>{t('home.nav.process')}</a>
+          <a href="#cases" onClick={(e) => { e.preventDefault(); document.getElementById('cases')?.scrollIntoView({ behavior: 'smooth' }) }}>{t('home.nav.cases')}</a>
+          <a href="#pricing" onClick={(e) => { e.preventDefault(); document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' }) }}>{t('home.nav.pricing')}</a>
         </div>
         <div className="nav-actions">
           {isLoggedIn ? (

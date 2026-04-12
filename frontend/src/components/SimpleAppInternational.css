@@ -159,7 +159,7 @@
   grid-template-columns: 1.1fr 0.9fr;
   gap: 2rem;
   align-items: start;
-  scroll-margin-top: 100px;
+  scroll-margin-top: 80px;
 }
 
 .simple-home-international .home-hero {
@@ -351,6 +351,10 @@
 .simple-home-international .data-sources-section .section-inner {
   max-width: 1000px;
   margin: 0 auto;
+}
+
+.simple-home-international .landing-section {
+  scroll-margin-top: 80px;
 }
 
 .simple-home-international .data-sources-title {

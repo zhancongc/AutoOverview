@@ -51,8 +51,7 @@ export function CookieConsentBanner() {
   }
 
   return (
-    <div className="cookie-banner-overlay">
-      <div className="cookie-banner">
+    <div className="cookie-banner">
         <div className="cookie-header">
           <span className="cookie-icon">🍪</span>
           <h3 className="cookie-title">Cookie & Privacy Preferences</h3>
@@ -102,7 +101,6 @@ export function CookieConsentBanner() {
             Terms & Conditions
           </a>
         </div>
-      </div>
     </div>
   )
 }

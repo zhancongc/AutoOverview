@@ -893,4 +893,163 @@
   transform: translateY(-1px);
 }
 
+/* Close Account Button (next to Edit) */
+.close-account-button {
+  background: none;
+  border: 1.5px solid #e2e8f0;
+  color: #a0aec0;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  font-family: 'Source Sans Pro', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.close-account-button:hover {
+  border-color: #e53e3e;
+  color: #e53e3e;
+  background: #fff5f5;
+}
+
+/* Close Account Modal */
+.close-account-modal {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+  width: 420px;
+  max-width: 90vw;
+  overflow: hidden;
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px) scale(0.95); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+.close-account-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.close-account-header h2 {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #1a202c;
+  font-family: 'Source Sans Pro', sans-serif;
+}
+
+.modal-close-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #a0aec0;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  transition: color 0.2s;
+}
+
+.modal-close-btn:hover {
+  color: #2d3748;
+}
+
+.close-account-body {
+  padding: 1.25rem 1.5rem;
+}
+
+.close-account-warning {
+  margin: 0 0 0.75rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #c53030;
+  font-family: 'Source Sans Pro', sans-serif;
+}
+
+.close-account-consequences {
+  margin: 0 0 1rem;
+  padding-left: 1.25rem;
+  font-size: 0.875rem;
+  line-height: 1.7;
+  color: #4a5568;
+  font-family: 'Source Sans Pro', sans-serif;
+}
+
+.close-account-label {
+  display: block;
+  font-size: 0.875rem;
+  color: #2d3748;
+  margin-bottom: 0.5rem;
+  font-family: 'Source Sans Pro', sans-serif;
+  line-height: 1.5;
+}
+
+.close-account-input {
+  width: 100%;
+  padding: 0.625rem 0.875rem;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.9375rem;
+  font-family: 'Source Sans Pro', sans-serif;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+
+.close-account-input:focus {
+  outline: none;
+  border-color: #c53030;
+  box-shadow: 0 0 0 3px rgba(197, 48, 48, 0.1);
+}
+
+.close-account-footer {
+  display: flex;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  background: #f7fafc;
+  border-top: 1px solid #e2e8f0;
+}
+
+.close-account-btn {
+  flex: 1;
+  padding: 0.625rem 1rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  font-family: 'Source Sans Pro', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.close-account-btn-cancel {
+  background: white;
+  color: #4a5568;
+  border: 1.5px solid #e2e8f0;
+}
+
+.close-account-btn-cancel:hover {
+  background: #edf2f7;
+}
+
+.close-account-btn-confirm {
+  background: #e53e3e;
+  color: white;
+}
+
+.close-account-btn-confirm:hover:not(:disabled) {
+  background: #c53030;
+}
+
+.close-account-btn-confirm:disabled {
+  background: #e2e8f0;
+  color: #a0aec0;
+  cursor: not-allowed;
+}
+
 
