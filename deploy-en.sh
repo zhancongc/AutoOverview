@@ -12,6 +12,8 @@ set -e
 DOMAIN="autooverview.plainkit.top"
 APP_DIR="/opt/autooverview-en"
 DIST_DIR="$APP_DIR/frontend/dist-en"
+# 上海后端服务器
+BACKEND_HOST="14.103.210.88"
 BACKEND_PORT=8006
 SSL_CERT="/etc/ssl/cloudflare/plainkit.top.pem"
 SSL_KEY="/etc/ssl/cloudflare/plainkit.top-key.pem"
@@ -58,13 +60,26 @@ echo "[3/4] 配置 Caddy..."
 
 mkdir -p /etc/caddy/sites
 
+# 确保主 Caddyfile 使用 import 模式（不覆盖现有站点）
+if ! grep -q "import sites" /etc/caddy/Caddyfile 2>/dev/null; then
+    echo "初始化主 Caddyfile..."
+    cp /etc/caddy/Caddyfile /etc/caddy/Caddyfile.bak
+    cat > /etc/caddy/Caddyfile << 'MAINCONF'
+{
+    email zhancongc@icloud.com
+}
+
+import sites/*.conf
+MAINCONF
+fi
+
 # 写入 Caddy 站点配置（与现有 plainkit.top.conf 同级）
 cat > "$CADDY_SITE_CONF" << CADDYCONF
 $DOMAIN {
     tls $SSL_CERT $SSL_KEY
 
-    # API 反向代理到后端
-    reverse_proxy /api/* 127.0.0.1:$BACKEND_PORT
+    # API 反向代理到上海后端
+    reverse_proxy /api/* $BACKEND_HOST:$BACKEND_PORT
 
     # 静态文件服务
     root * $DIST_DIR
