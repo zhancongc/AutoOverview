@@ -25,6 +25,8 @@ export function LoginModalInternational({ onClose, onLoginSuccess, pendingTopic 
   const [message, setMessage] = useState('')
   const [countdown, setCountdown] = useState(0)
   const [agreedToTerms, setAgreedToTerms] = useState(false)
+  const [showTermsHint, setShowTermsHint] = useState(false)
+  const [shakeCheckbox, setShakeCheckbox] = useState(false)
 
   // Click outside to close
   useEffect(() => {
@@ -100,9 +102,11 @@ export function LoginModalInternational({ onClose, onLoginSuccess, pendingTopic 
       return
     }
 
-    // Validate agreement
+    // Validate agreement - show friendly hint instead of error
     if (!agreedToTerms) {
-      setError(t('auth.agreement_required'))
+      setShowTermsHint(true)
+      setShakeCheckbox(true)
+      setTimeout(() => setShakeCheckbox(false), 500)
       return
     }
 
@@ -187,13 +191,18 @@ export function LoginModalInternational({ onClose, onLoginSuccess, pendingTopic 
           </div>
 
           {/* Agreement checkbox */}
-          <div className="modal-form-group modal-agreement-group">
+          <div className={`modal-form-group modal-agreement-group ${shakeCheckbox ? 'shake-animation' : ''}`}>
             <label className="modal-agreement-label">
               <input
                 type="checkbox"
                 className="modal-agreement-checkbox"
                 checked={agreedToTerms}
-                onChange={(e) => setAgreedToTerms(e.target.checked)}
+                onChange={(e) => {
+                  setAgreedToTerms(e.target.checked)
+                  if (e.target.checked) {
+                    setShowTermsHint(false)
+                  }
+                }}
                 disabled={loading}
               />
               <span className="modal-agreement-text">
@@ -210,6 +219,14 @@ export function LoginModalInternational({ onClose, onLoginSuccess, pendingTopic 
                 </a>
               </span>
             </label>
+
+            {/* Friendly hint for agreement */}
+            {showTermsHint && (
+              <div className="modal-agreement-hint">
+                <span className="hint-icon">💡</span>
+                <span className="hint-text">Please agree to the Terms & Conditions to continue</span>
+              </div>
+            )}
           </div>
 
           {/* Error message */}
@@ -229,8 +246,8 @@ export function LoginModalInternational({ onClose, onLoginSuccess, pendingTopic 
           {/* Submit button */}
           <button
             type="submit"
-            className={`modal-submit-button ${!agreedToTerms ? 'modal-submit-button-disabled' : ''}`}
-            disabled={loading || !agreedToTerms}
+            className="modal-submit-button"
+            disabled={loading}
           >
             {loading ? t('auth.processing') : t('auth.login_button')}
           </button>

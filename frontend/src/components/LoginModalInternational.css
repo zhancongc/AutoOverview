@@ -327,6 +327,69 @@
   display: none;
 }
 
+/* ==================== Agreement Hint & Animation ==================== */
+
+.modal-agreement-hint {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: linear-gradient(135deg, #FFF9E6 0%, #FFF3CD 100%);
+  border-left: 3px solid #FFC107;
+  border-radius: 8px;
+  animation: hintSlideIn 0.3s ease-out;
+}
+
+@keyframes hintSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.hint-icon {
+  font-size: 1.1rem;
+}
+
+.hint-text {
+  font-size: 0.85rem;
+  color: #856404;
+  font-weight: 500;
+  font-family: 'Source Sans Pro', sans-serif;
+}
+
+/* Shake animation for checkbox */
+.shake-animation {
+  animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+@keyframes shake {
+  10%, 90% {
+    transform: translate3d(-1px, 0, 0);
+  }
+  20%, 80% {
+    transform: translate3d(2px, 0, 0);
+  }
+  30%, 50%, 70% {
+    transform: translate3d(-4px, 0, 0);
+  }
+  40%, 60% {
+    transform: translate3d(4px, 0, 0);
+  }
+}
+
+/* Highlight checkbox during shake */
+.shake-animation .modal-agreement-checkbox {
+  border-color: #FFC107 !important;
+  box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.3) !important;
+}
+
+
 /* Divider */
 .login-modal-divider {
   display: flex;
