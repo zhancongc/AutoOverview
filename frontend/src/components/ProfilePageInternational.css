@@ -3,9 +3,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Source+Sans+Pro:wght@300;400;600;700&display=swap');
 
 :root {
-  --academic-red: #D63031;
-  --academic-red-dark: #B71C1C;
-  --academic-red-light: #FF5252;
+  --academic-blue: #0988E3;
+  --academic-blue-dark: #0770BD;
+  --academic-blue-light: #4AA3F0;
   --cream-white: #FFFBF5;
   --pure-white: #FFFFFF;
   --ink-black: #1A1A1A;
@@ -46,7 +46,7 @@
 
 .profile-page-international .logo-icon {
   font-size: 1.75rem;
-  filter: drop-shadow(0 2px 4px rgba(214, 48, 49, 0.2));
+  filter: drop-shadow(0 2px 4px rgba(9, 136, 227, 0.2));
 }
 
 .profile-page-international .logo-text {
@@ -82,8 +82,8 @@
 
 .profile-page-international .nav-btn-home:hover {
   background: var(--cream-white);
-  border-color: var(--academic-red);
-  color: var(--academic-red);
+  border-color: var(--academic-blue);
+  color: var(--academic-blue);
   transform: translateY(-1px);
 }
 
@@ -95,8 +95,8 @@
 
 .profile-page-international .nav-btn-logout:hover {
   background: var(--cream-white);
-  border-color: var(--academic-red);
-  color: var(--academic-red);
+  border-color: var(--academic-blue);
+  color: var(--academic-blue);
 }
 
 /* ==================== Main Container ==================== */
@@ -131,9 +131,9 @@
   align-items: center;
   justify-content: center;
   background: transparent;
-  border: 3px solid var(--academic-red);
+  border: 3px solid var(--academic-blue);
   border-radius: 20px;
-  box-shadow: 0 8px 24px rgba(214, 48, 49, 0.15);
+  box-shadow: 0 8px 24px rgba(9, 136, 227, 0.15);
 }
 
 .profile-page-international .user-info-section {
@@ -199,7 +199,7 @@
   font-family: 'Playfair Display', Georgia, serif;
   font-size: 3rem;
   font-weight: 700;
-  color: var(--academic-red);
+  color: var(--academic-blue);
   line-height: 1;
   margin-bottom: 0.5rem;
 }
@@ -246,7 +246,7 @@
   width: 40px;
   height: 40px;
   border: 3px solid var(--light-gray);
-  border-top-color: var(--academic-red);
+  border-top-color: var(--academic-blue);
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin: 0 auto 1rem;
@@ -294,18 +294,18 @@
   font-size: 1rem;
   font-weight: 600;
   color: white;
-  background: linear-gradient(135deg, var(--academic-red) 0%, var(--academic-red-dark) 100%);
+  background: linear-gradient(135deg, var(--academic-blue) 0%, var(--academic-blue-dark) 100%);
   border: none;
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.3s;
   font-family: 'Source Sans Pro', sans-serif;
-  box-shadow: 0 4px 16px rgba(214, 48, 49, 0.3);
+  box-shadow: 0 4px 16px rgba(9, 136, 227, 0.3);
 }
 
 .profile-page-international .empty-button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 24px rgba(214, 48, 49, 0.4);
+  box-shadow: 0 6px 24px rgba(9, 136, 227, 0.4);
 }
 
 /* ==================== Records List ==================== */
@@ -330,8 +330,8 @@
 
 .profile-page-international .record-item:hover {
   background: white;
-  border-color: var(--academic-red);
-  box-shadow: 0 4px 20px rgba(214, 48, 49, 0.1);
+  border-color: var(--academic-blue);
+  box-shadow: 0 4px 20px rgba(9, 136, 227, 0.1);
   transform: translateY(-2px);
 }
 
@@ -394,7 +394,7 @@
 /* Export button styles */
 .profile-page-international .export-button {
   padding: 0.4rem 0.9rem;
-  background: linear-gradient(135deg, var(--academic-red) 0%, var(--academic-red-dark) 100%);
+  background: linear-gradient(135deg, var(--academic-blue) 0%, var(--academic-blue-dark) 100%);
   color: white;
   border: none;
   border-radius: 8px;
@@ -403,14 +403,14 @@
   font-weight: 600;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   font-family: 'Source Sans Pro', sans-serif;
-  box-shadow: 0 2px 8px rgba(214, 48, 49, 0.2);
+  box-shadow: 0 2px 8px rgba(9, 136, 227, 0.2);
   white-space: nowrap;
   flex-shrink: 0;
 }
 
 .profile-page-international .export-button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(214, 48, 49, 0.35);
+  box-shadow: 0 8px 20px rgba(9, 136, 227, 0.35);
 }
 
 .profile-page-international .export-button:active {
@@ -459,8 +459,8 @@
 .profile-page-international .status-failed {
   display: inline-block;
   padding: 0.35rem 0.75rem;
-  background: rgba(214, 48, 49, 0.1);
-  color: var(--academic-red);
+  background: rgba(9, 136, 227, 0.1);
+  color: var(--academic-blue);
   border-radius: 8px;
   font-size: 0.8rem;
   font-weight: 600;
@@ -531,7 +531,7 @@
 }
 
 .profile-page-international .profile-footer .footer-link:hover {
-  color: var(--academic-red);
+  color: var(--academic-blue);
 }
 
 .profile-page-international .profile-footer .footer-separator {
@@ -548,7 +548,7 @@
 }
 
 .profile-page-international .profile-footer .footer-icp:hover {
-  color: var(--academic-red);
+  color: var(--academic-blue);
 }
 
 /* ==================== Responsive Design ==================== */
@@ -666,17 +666,17 @@
 }
 
 .profile-page-international .settings-danger-zone {
-  border: 2px solid #FEE2E2;
+  border: 2px solid #E1F0FF;
   border-radius: 12px;
   padding: 1.5rem;
-  background: #FEF2F2;
+  background: #F8FBFF;
 }
 
 .profile-page-international .settings-danger-title {
   font-size: 1.1rem;
   font-weight: 700;
   font-family: 'Source Sans Pro', sans-serif;
-  color: #DC2626;
+  color: #0988E3;
   margin-bottom: 0.5rem;
 }
 
@@ -688,7 +688,7 @@
 }
 
 .profile-page-international .settings-danger-button {
-  background: #DC2626;
+  background: #0988E3;
   color: white;
   border: none;
   padding: 0.75rem 1.5rem;
@@ -701,9 +701,9 @@
 }
 
 .profile-page-international .settings-danger-button:hover {
-  background: #B91C1C;
+  background: #0770BD;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+  box-shadow: 0 4px 12px rgba(9, 136, 227, 0.3);
 }
 
 .profile-page-international .settings-danger-button:active {

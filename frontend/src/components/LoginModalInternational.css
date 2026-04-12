@@ -3,9 +3,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Source+Sans+Pro:wght@300;400;600;700&display=swap');
 
 :root {
-  --academic-red: #D63031;
-  --academic-red-dark: #B71C1C;
-  --academic-blue: #0984e3;
+  --academic-blue: #0988E3;
+  --academic-blue-dark: #0770BD;
+  --academic-blue-light: #4AA3F0;
   --cream-white: #FFFBF5;
   --pure-white: #FFFFFF;
   --ink-black: #1A1A1A;
@@ -80,7 +80,7 @@
 }
 
 .login-modal-close:hover {
-  background: var(--academic-red);
+  background: var(--academic-blue);
   color: white;
   transform: rotate(90deg);
 }
@@ -246,7 +246,7 @@
   padding: 0.875rem 1rem;
   background: rgba(214, 48, 49, 0.08);
   border: 1px solid rgba(214, 48, 49, 0.15);
-  color: var(--academic-red-dark);
+  color: var(--academic-blue-dark);
   border-radius: 12px;
   font-size: 0.875rem;
   text-align: center;

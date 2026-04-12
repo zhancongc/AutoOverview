@@ -3,9 +3,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Source+Sans+Pro:wght@300;400;600;700&display=swap');
 
 :root {
-  --academic-red: #D63031;
-  --academic-red-dark: #B71C1C;
-  --academic-red-light: #FF5252;
+  --academic-blue: #0988E3;
+  --academic-blue-dark: #0770BD;
+  --academic-blue-light: #4AA3F0;
   --cream-white: #FFFBF5;
   --pure-white: #FFFFFF;
   --ink-black: #1A1A1A;
@@ -32,7 +32,7 @@
   justify-content: space-between;
   gap: 0.75rem;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
-  border-bottom: 2px solid var(--academic-red);
+  border-bottom: 2px solid var(--academic-blue);
   position: fixed;
   top: 0;
   left: 0;
@@ -108,7 +108,7 @@
 
 .export-button {
   padding: 0.625rem 1.5rem;
-  background: linear-gradient(135deg, var(--academic-red) 0%, var(--academic-red-dark) 100%);
+  background: linear-gradient(135deg, var(--academic-blue) 0%, var(--academic-blue-dark) 100%);
   color: white;
   border: none;
   border-radius: 10px;
@@ -117,7 +117,7 @@
   font-weight: 700;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   font-family: 'Source Sans Pro', sans-serif;
-  box-shadow: 0 4px 12px rgba(214, 48, 49, 0.25);
+  box-shadow: 0 4px 12px rgba(9, 136, 227, 0.25);
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -144,13 +144,13 @@
 
 .regenerate-button:hover {
   background: white;
-  border-color: var(--academic-red);
-  color: var(--academic-red);
+  border-color: var(--academic-blue);
+  color: var(--academic-blue);
 }
 
 .export-button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(214, 48, 49, 0.35);
+  box-shadow: 0 8px 20px rgba(9, 136, 227, 0.35);
 }
 
 .export-button:active {
@@ -232,8 +232,8 @@
 
   .back-button:hover {
     background: white;
-    border-color: var(--academic-red);
-    color: var(--academic-red);
+    border-color: var(--academic-blue);
+    color: var(--academic-blue);
     transform: translateX(-3px);
   }
 
@@ -397,14 +397,14 @@
 
 .sidebar-format-btn:hover {
   background: var(--cream-white);
-  border-color: var(--academic-red);
-  color: var(--academic-red);
+  border-color: var(--academic-blue);
+  color: var(--academic-blue);
 }
 
 .sidebar-format-btn.active {
-  background: var(--academic-red);
+  background: var(--academic-blue);
   color: white;
-  border-color: var(--academic-red);
+  border-color: var(--academic-blue);
 }
 
 .sidebar-format-btn:disabled {
@@ -423,7 +423,7 @@
   cursor: pointer;
   transition: all 0.2s;
   font-family: 'Source Sans Pro', sans-serif;
-  background: var(--academic-red);
+  background: var(--academic-blue);
   color: white;
   line-height: 1.4;
   box-sizing: border-box;
@@ -433,7 +433,7 @@
 }
 
 .sidebar-action-btn:hover {
-  background: var(--academic-red-dark);
+  background: var(--academic-blue-dark);
 }
 
 .sidebar-action-btn:disabled {
@@ -526,7 +526,7 @@
 }
 
 .sidebar-toc-item a:hover {
-  color: var(--academic-red);
+  color: var(--academic-blue);
 }
 
 .sidebar-toc-level-1 a { font-weight: 600; }
@@ -582,6 +582,6 @@
 
 .segmented-tab.active {
   background: white;
-  color: var(--academic-red);
+  color: var(--academic-blue);
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
 }
