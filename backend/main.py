@@ -1862,3 +1862,110 @@ async def get_search_history_search_sources(
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/account/close")
+async def close_account(
+    user_id: Optional[int] = Depends(get_current_user_id),
+    auth_db: Session = Depends(auth_get_db)
+):
+    """
+    Close user account
+
+    This will:
+    - Mark the account as inactive
+    - Revoke all active sessions
+    - Schedule data for deletion within 30 days
+
+    Returns:
+    - Success message with deletion timeline
+    """
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Please login first")
+
+    try:
+        from authkit.models import User
+        from datetime import datetime, timedelta
+
+        # Get user
+        user = auth_db.query(User).filter(User.id == user_id).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        # Mark account as inactive (soft delete)
+        user.is_active = False
+        user.set_meta("account_closed_at", datetime.now().isoformat())
+        user.set_meta("account_deletion_scheduled", (datetime.now() + timedelta(days=30)).isoformat())
+
+        # Revoke all tokens by changing token version
+        user.set_meta("token_version", str(int(user.get_meta("token_version", "0")) + 1))
+
+        auth_db.commit()
+
+        return {
+            "success": True,
+            "message": "Account closed successfully. Your data will be permanently deleted within 30 days.",
+            "deletion_date": (datetime.now() + timedelta(days=30)).strftime("%Y-%m-%d")
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Failed to close account: {str(e)}")
+
+
+
+@app.put("/api/user/profile")
+async def update_user_profile(
+    request: dict,
+    user_id: Optional[int] = Depends(get_current_user_id),
+    auth_db: Session = Depends(auth_get_db)
+):
+    """
+    Update user profile information
+
+    Accepts:
+    - nickname: Display name for the user
+
+    Returns:
+    - Updated user information
+    """
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Please login first")
+
+    try:
+        from authkit.models import User
+
+        # Get user
+        user = auth_db.query(User).filter(User.id == user_id).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        # Update nickname if provided
+        if "nickname" in request:
+            nickname = request["nickname"]
+            if not nickname or not nickname.strip():
+                raise HTTPException(status_code=400, detail="Nickname cannot be empty")
+            user.nickname = nickname.strip()
+
+        auth_db.commit()
+
+        return {
+            "success": True,
+            "message": "Profile updated successfully",
+            "user": {
+                "id": user.id,
+                "email": user.email,
+                "nickname": user.nickname
+            }
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Failed to update profile: {str(e)}")
+

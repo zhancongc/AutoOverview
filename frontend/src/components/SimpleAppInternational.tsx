@@ -7,24 +7,25 @@ import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { api } from '../api'
 import { isLoggedIn as checkLoggedIn, getLocalUserInfo } from '../authApi'
-import { LoginModal } from './LoginModal'
+import { LoginModalInternational } from './LoginModalInternational'
 import { PaymentModal } from './PaymentModal'
 import { PaddlePaymentModal } from './PaddlePaymentModal'
-import './SimpleApp.css'
+import { CookieConsentBanner } from './CookieConsentBanner'
+import './SimpleAppInternational.css'
 
 interface TaskProgress {
   step: string
   message: string
 }
 
-export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
+export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const [topic, setTopic] = useState('')
-  const [language, setLanguage] = useState<'zh' | 'en'>('en') // Default to English
+  const [language] = useState<'zh' | 'en'>('en')
   const [isGenerating, setIsGenerating] = useState(false)
   const [progress, setProgress] = useState<TaskProgress | null>(null)
-  const [error, setError] = useState('')
+  const [, setError] = useState('')
   const [showLoginModal, setShowLoginModal] = useState(false)
   const [showPaymentModal, setShowPaymentModal] = useState<string | false>(false)
   const [isLoggedIn, setIsLoggedIn] = useState(false)
@@ -35,7 +36,7 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
   const [prevCredits, setPrevCredits] = useState<number>(0)
   const [showToast, setShowToast] = useState(false)
   const [toastMessage, setToastMessage] = useState('')
-  const [plans, setPlans] = useState<any[]>([])
+  const [, setPlans] = useState<any[]>([])
   const [plansLoading, setPlansLoading] = useState(true)
   const [demoCases, setDemoCases] = useState<any[]>([])
   const [casesLoading, setCasesLoading] = useState(true)
@@ -43,6 +44,10 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
   useEffect(() => {
     const loggedIn = checkLoggedIn()
     setIsLoggedIn(loggedIn)
+    // Auto show login modal if not logged in and autoShowLogin is true
+    if (!loggedIn && autoShowLogin) {
+      setShowLoginModal(true)
+    }
     if (loggedIn) {
       setUserInfo(getLocalUserInfo())
       api.getCredits().then(data => {
@@ -70,24 +75,23 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
     })
 
     // Get demo cases
-    api.checkHealth().then(data => {
-      const cases = (data.demo_cases || []).map((item: any) => ({
-        task_id: item.task_id,
-        title: item.title || 'Sample Review',
-        description: item.description,
-        icon: item.icon || '📄'
-      }))
-      setDemoCases(cases)
-      setCasesLoading(false)
-    }).catch(err => {
-      console.error(t('home.errors.cases_fetch_failed'), err)
-      setCasesLoading(false)
-    })
+    fetch('/api/cases')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.data.cases) {
+          setDemoCases(data.data.cases)
+        }
+        setCasesLoading(false)
+      })
+      .catch(err => {
+        console.error('Failed to fetch demo cases:', err)
+        setCasesLoading(false)
+      })
   }, [t])
 
   const handleGenerate = async () => {
     if (!topic.trim()) {
-      setError('Please enter a research topic')
+      alert('Please enter a research topic')
       return
     }
 
@@ -248,10 +252,71 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
           <span className="logo-text">AutoOverview</span>
         </div>
         <div className="nav-links">
-          <a href="#generate">{t('home.nav.generate')}</a>
-          <a href="#features">{t('home.nav.features')}</a>
-          <a href="#process">{t('home.nav.process')}</a>
-          <a href="#pricing">{t('home.nav.pricing')}</a>
+          <a
+            href="#generate"
+            onClick={(e) => {
+              e.preventDefault()
+              const el = document.getElementById('generate')
+              if (el) {
+                const navHeight = 60
+                const elPosition = el.getBoundingClientRect().top + window.pageYOffset
+                window.location.hash = 'generate'
+                window.scrollTo({ top: elPosition - navHeight, behavior: 'smooth' })
+              }
+            }}
+          >{t('home.nav.generate')}</a>
+          <a
+            href="#features"
+            onClick={(e) => {
+              e.preventDefault()
+              const el = document.getElementById('features')
+              if (el) {
+                const navHeight = 60
+                const elPosition = el.getBoundingClientRect().top + window.pageYOffset
+                window.location.hash = 'features'
+                window.scrollTo({ top: elPosition - navHeight, behavior: 'smooth' })
+              }
+            }}
+          >{t('home.nav.features')}</a>
+          <a
+            href="#process"
+            onClick={(e) => {
+              e.preventDefault()
+              const el = document.getElementById('process')
+              if (el) {
+                const navHeight = 60
+                const elPosition = el.getBoundingClientRect().top + window.pageYOffset
+                window.location.hash = 'process'
+                window.scrollTo({ top: elPosition - navHeight, behavior: 'smooth' })
+              }
+            }}
+          >{t('home.nav.process')}</a>
+          <a
+            href="#cases"
+            onClick={(e) => {
+              e.preventDefault()
+              const el = document.getElementById('cases')
+              if (el) {
+                const navHeight = 60
+                const elPosition = el.getBoundingClientRect().top + window.pageYOffset
+                window.location.hash = 'cases'
+                window.scrollTo({ top: elPosition - navHeight, behavior: 'smooth' })
+              }
+            }}
+          >{t('home.nav.cases')}</a>
+          <a
+            href="#pricing"
+            onClick={(e) => {
+              e.preventDefault()
+              const el = document.getElementById('pricing')
+              if (el) {
+                const navHeight = 60
+                const elPosition = el.getBoundingClientRect().top + window.pageYOffset
+                window.location.hash = 'pricing'
+                window.scrollTo({ top: elPosition - navHeight, behavior: 'smooth' })
+              }
+            }}
+          >{t('home.nav.pricing')}</a>
         </div>
         <div className="nav-actions">
           {isLoggedIn ? (
@@ -275,7 +340,112 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
             </div>
           )}
         </div>
+        <button className="mobile-menu-toggle" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+          <span className={`hamburger ${mobileMenuOpen ? 'open' : ''}`} />
+        </button>
       </nav>
+
+      {/* Mobile sidebar overlay */}
+      {mobileMenuOpen && (
+        <div className="mobile-sidebar-overlay" onClick={() => setMobileMenuOpen(false)} />
+      )}
+
+      {/* Mobile sidebar */}
+      <aside className={`mobile-sidebar ${mobileMenuOpen ? 'sidebar-open' : ''}`}>
+        <div className="sidebar-header">
+          <span className="logo-icon">📚</span>
+          <span className="logo-text">AutoOverview</span>
+          <button className="sidebar-close" onClick={() => setMobileMenuOpen(false)}>&times;</button>
+        </div>
+        <nav className="sidebar-links">
+          <a
+            href="#generate"
+            onClick={(e) => {
+              e.preventDefault()
+              setMobileMenuOpen(false)
+              const el = document.getElementById('generate')
+              if (el) {
+                window.location.hash = 'generate'
+                el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+              }
+            }}
+          >{t('home.nav.generate')}</a>
+          <a
+            href="#features"
+            onClick={(e) => {
+              e.preventDefault()
+              setMobileMenuOpen(false)
+              const el = document.getElementById('features')
+              if (el) {
+                window.location.hash = 'features'
+                el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+              }
+            }}
+          >{t('home.nav.features')}</a>
+          <a
+            href="#process"
+            onClick={(e) => {
+              e.preventDefault()
+              setMobileMenuOpen(false)
+              const el = document.getElementById('process')
+              if (el) {
+                window.location.hash = 'process'
+                el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+              }
+            }}
+          >{t('home.nav.process')}</a>
+          <a
+            href="#cases"
+            onClick={(e) => {
+              e.preventDefault()
+              setMobileMenuOpen(false)
+              const el = document.getElementById('cases')
+              if (el) {
+                window.location.hash = 'cases'
+                el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+              }
+            }}
+          >{t('home.nav.cases')}</a>
+          <a
+            href="#pricing"
+            onClick={(e) => {
+              e.preventDefault()
+              setMobileMenuOpen(false)
+              const el = document.getElementById('pricing')
+              if (el) {
+                window.location.hash = 'pricing'
+                el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+              }
+            }}
+          >{t('home.nav.pricing')}</a>
+        </nav>
+        <div className="sidebar-bottom">
+          {isLoggedIn ? (
+            <>
+              <button
+                className="sidebar-user-btn"
+                onClick={() => { setMobileMenuOpen(false); navigate('/profile') }}
+              >
+                <span className="user-avatar">👤</span>
+                <span className="user-name">{t('home.nav.profile')}</span>
+              </button>
+              <button
+                className="nav-btn nav-btn-logout"
+                onClick={() => { setMobileMenuOpen(false); handleLogout() }}
+              >
+                {t('home.nav.logout')}
+              </button>
+            </>
+          ) : (
+            <button
+              className="nav-btn nav-btn-register"
+              onClick={() => { setMobileMenuOpen(false); setShowLoginModal(true) }}
+            >
+              {t('home.nav.login_register')}
+            </button>
+          )}
+        </div>
+      </aside>
 
       <div className="home-container">
         {/* Hero Section */}
@@ -309,7 +479,7 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
         </div>
 
         {/* Data Sources Section */}
-        <div className="data-sources-section">
+        <div id="generate" className="data-sources-section">
           <div className="section-inner">
             <p className="data-sources-title">{t('home.sources.title')}</p>
             <div className="data-sources-logos">
@@ -322,7 +492,7 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
         </div>
 
         {/* Input Section */}
-        <div className="home-input-section">
+        <div id="input-section" className="home-input-section">
           {isLoggedIn && (
             <span className={`credits-badge ${prevCredits !== credits ? 'credits-updated' : ''}`}>
               {t('home.input.credits_remaining')} <span className="credits-number">{credits}</span>
@@ -472,6 +642,21 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
                 <p className="step-desc">{t('home.process.step3_desc')}</p>
               </div>
             </div>
+            <div className="process-cta">
+              <button
+                className="generate-btn"
+                onClick={() => {
+                  const el = document.getElementById('generate')
+                  if (el) {
+                    const navHeight = 60
+                    const elPosition = el.getBoundingClientRect().top + window.pageYOffset
+                    window.scrollTo({ top: elPosition - navHeight, behavior: 'smooth' })
+                  }
+                }}
+              >
+                {t('home.input.button')}
+              </button>
+            </div>
           </div>
         </section>
 
@@ -501,6 +686,21 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
                   </div>
                 ))
               )}
+            </div>
+            <div className="cases-cta">
+              <button
+                className="secondary-btn"
+                onClick={() => {
+                  const el = document.getElementById('pricing')
+                  if (el) {
+                    const navHeight = 60
+                    const elPosition = el.getBoundingClientRect().top + window.pageYOffset
+                    window.scrollTo({ top: elPosition - navHeight, behavior: 'smooth' })
+                  }
+                }}
+              >
+                {t('home.pricing.title')}
+              </button>
             </div>
           </div>
         </section>
@@ -567,7 +767,7 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
                     <span className="amount">{t('home.pricing.single.price')}</span>
                   </div>
                   <ul className="pricing-features">
-                    {t('home.pricing.single.features', { returnObjects: true }).map((feature: string, index: number) => (
+                    {(t('home.pricing.single.features', { returnObjects: true }) as string[]).map((feature: string, index: number) => (
                       <li key={index}>✓ {feature}</li>
                     ))}
                   </ul>
@@ -590,7 +790,7 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
                     <span className="amount">{t('home.pricing.pack3.price')}</span>
                   </div>
                   <ul className="pricing-features">
-                    {t('home.pricing.pack3.features', { returnObjects: true }).map((feature: string, index: number) => (
+                    {(t('home.pricing.pack3.features', { returnObjects: true }) as string[]).map((feature: string, index: number) => (
                       <li key={index}>✓ {feature}</li>
                     ))}
                   </ul>
@@ -613,7 +813,7 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
                     <span className="amount">{t('home.pricing.pack6.price')}</span>
                   </div>
                   <ul className="pricing-features">
-                    {t('home.pricing.pack6.features', { returnObjects: true }).map((feature: string, index: number) => (
+                    {(t('home.pricing.pack6.features', { returnObjects: true }) as string[]).map((feature: string, index: number) => (
                       <li key={index}>✓ {feature}</li>
                     ))}
                   </ul>
@@ -649,7 +849,13 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
         <footer className="home-footer home-footer-international">
           <div className="footer-content">
             <p className="footer-copyright">{t('home.footer.copyright')}</p>
-            <p className="footer-legal">{t('home.footer.legal')}</p>
+            <div className="footer-links">
+              <a href="/terms-and-conditions" className="footer-link">{t('home.footer.terms')}</a>
+              <span className="footer-separator">•</span>
+              <a href="/privacy-policy" className="footer-link">{t('home.footer.privacy')}</a>
+              <span className="footer-separator">•</span>
+              <a href="/refund-policy" className="footer-link">{t('home.footer.refund')}</a>
+            </div>
             <p className="footer-databases">{t('home.footer.databases')}</p>
           </div>
         </footer>
@@ -657,7 +863,7 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
 
       {/* Modals */}
       {showLoginModal && (
-        <LoginModal
+        <LoginModalInternational
           onClose={() => setShowLoginModal(false)}
           onLoginSuccess={handleLoginSuccess}
           pendingTopic={topic}
@@ -688,6 +894,8 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
           <span className="toast-message">{toastMessage}</span>
         </div>
       )}
+
+      <CookieConsentBanner />
     </div>
   )
 

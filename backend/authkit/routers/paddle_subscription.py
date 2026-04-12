@@ -58,6 +58,10 @@ class PaddleSubscriptionCreate(BaseModel):
     plan_type: str
 
 
+class PaddleUnlockCreate(BaseModel):
+    record_id: int
+
+
 class PaddlePaymentResponse(BaseModel):
     order_no: str
     checkout_url: str
@@ -210,16 +214,32 @@ async def paddle_webhook(request: Request, db: Session = Depends(get_db)):
                 subscription.payment_time = datetime.now()
                 subscription.trade_no = event_data.get("transaction_id", "")
 
-                # Add credits to user
-                from ..models import User
-                user = db.query(User).filter(User.id == subscription.user_id).first()
-                if user:
-                    plan = PADDLE_PRICING.get(subscription.plan_type, {})
-                    credits_to_add = plan.get("credits", 1)
-                    current_credits = user.get_meta("review_credits", 0)
-                    user.set_meta("review_credits", current_credits + credits_to_add)
-                    user.set_meta("has_purchased", True)
-                    logger.info(f"[Paddle] Added {credits_to_add} credits to user {user.id}")
+                # Handle unlock vs subscription plans
+                if subscription.plan_type == "unlock":
+                    # Unlock specific review record
+                    record_id = subscription.get_meta("record_id")
+                    if record_id:
+                        from models import ReviewRecord
+                        record = db.query(ReviewRecord).filter(
+                            ReviewRecord.id == int(record_id),
+                            ReviewRecord.user_id == subscription.user_id
+                        ).first()
+                        if record:
+                            record.is_paid = True
+                            logger.info(f"[Paddle] Unlocked record {record_id} for user {subscription.user_id}")
+                        else:
+                            logger.warning(f"[Paddle] Record {record_id} not found for unlock")
+                else:
+                    # Add credits to user for subscription plans
+                    from ..models import User
+                    user = db.query(User).filter(User.id == subscription.user_id).first()
+                    if user:
+                        plan = PADDLE_PRICING.get(subscription.plan_type, {})
+                        credits_to_add = plan.get("credits", 1)
+                        current_credits = user.get_meta("review_credits", 0)
+                        user.set_meta("review_credits", current_credits + credits_to_add)
+                        user.set_meta("has_purchased", True)
+                        logger.info(f"[Paddle] Added {credits_to_add} credits to user {user.id}")
 
                 db.commit()
 
@@ -255,3 +275,118 @@ def query_paddle_subscription(
         "amount": subscription.amount,
         "currency": "USD",
     }
+
+
+@router.post("/unlock", response_model=PaddlePaymentResponse)
+def create_paddle_unlock(
+    data: PaddleUnlockCreate,
+    current_user: UserResponse = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Create Paddle unlock session for single review export"""
+    user_id = current_user.id
+    record_id = data.record_id
+
+    # Verify record exists and belongs to user
+    from models import ReviewRecord
+    record = db.query(ReviewRecord).filter(
+        ReviewRecord.id == record_id,
+        ReviewRecord.user_id == user_id
+    ).first()
+
+    if not record:
+        raise HTTPException(status_code=404, detail="Review record not found")
+
+    if record.is_paid:
+        return PaddlePaymentResponse(
+            order_no="",
+            checkout_url="",
+            amount=0,
+            currency="USD",
+        )
+
+    # Get unlock plan details
+    plan = PADDLE_PRICING.get("unlock")
+    if not plan:
+        raise HTTPException(status_code=500, detail="Unlock plan not configured")
+
+    # Generate order number
+    order_no = f"PD{datetime.now().strftime('%Y%m%d%H%M%S')}{uuid.uuid4().hex[:8].upper()}"
+
+    # Create subscription record for unlock
+    subscription = Subscription(
+        user_id=user_id,
+        order_no=order_no,
+        plan_type="unlock",
+        amount=plan["price"],
+        status="pending",
+        payment_method="paddle",
+    )
+    db.add(subscription)
+    db.commit()
+    db.refresh(subscription)
+
+    # Store record_id in subscription metadata for webhook processing
+    subscription.set_meta("record_id", record_id)
+    db.commit()
+
+    # Log creation
+    log = PaymentLog(
+        subscription_id=subscription.id,
+        user_id=user_id,
+        action="paddle_unlock_create",
+        request_data=f"record_id={record_id}, amount={plan['price']} USD",
+    )
+    db.add(log)
+    db.commit()
+
+    try:
+        import os
+
+        paddle = get_paddle_service()
+
+        # Create price
+        price_id = paddle.create_price(plan["price"], plan["currency"])
+
+        # Create checkout link
+        success_url = os.getenv("FRONTEND_URL", "http://localhost:3006")
+        checkout_url = paddle.create_checkout_link(
+            price_id=price_id,
+            customer_email=current_user.email,
+            custom_data={
+                "order_no": order_no,
+                "user_id": str(user_id),
+                "plan_type": "unlock",
+                "record_id": str(record_id),
+            },
+            success_url=f"{success_url}/profile?payment=success",
+        )
+
+        # Log success
+        log = PaymentLog(
+            subscription_id=subscription.id,
+            user_id=user_id,
+            action="paddle_unlock_create_success",
+            response_data=f"checkout_url={checkout_url[:100]}...",
+        )
+        db.add(log)
+        db.commit()
+
+        return PaddlePaymentResponse(
+            order_no=order_no,
+            checkout_url=checkout_url,
+            amount=plan["price"],
+            currency=plan["currency"],
+        )
+
+    except Exception as e:
+        logger.error(f"Failed to create Paddle unlock checkout: {e}")
+        log = PaymentLog(
+            subscription_id=subscription.id,
+            user_id=user_id,
+            action="paddle_unlock_create_failed",
+            response_data=str(e),
+        )
+        db.add(log)
+        db.commit()
+        raise HTTPException(status_code=500, detail="Failed to create unlock session")

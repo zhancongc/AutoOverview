@@ -1,0 +1,199 @@
+/**
+ * Terms & Conditions Page - International Version
+ * Legal terms for AutoOverview SaaS service
+ */
+import { Link } from 'react-router-dom'
+import './LegalPages.css'
+
+export function TermsAndConditionsPage() {
+  return (
+    <div className="legal-page">
+      <div className="legal-container">
+        <Link to="/" className="legal-back-link">← Back to Home</Link>
+
+        <h1 className="legal-title">Terms & Conditions</h1>
+        <p className="legal-effective">Last Updated: April 12, 2026</p>
+
+        <section className="legal-section">
+          <h2>1. Acceptance of Terms</h2>
+          <p>
+            By accessing or using AutoOverview (the "Service"), you agree to be bound by these Terms & Conditions.
+            If you do not agree to these terms, please do not use our Service.
+          </p>
+        </section>
+
+        <section className="legal-section">
+          <h2>2. Service Description</h2>
+          <p>
+            AutoOverview is an AI-powered literature review generation service designed for academic and research purposes.
+            The Service automatically searches academic databases and generates comprehensive literature reviews
+            based on user-provided research topics.
+          </p>
+          <p><strong>Key Features:</strong></p>
+          <ul>
+            <li>Automated paper search from academic databases</li>
+            <li>AI-generated literature reviews with proper citations</li>
+            <li>Export functionality in multiple formats</li>
+            <li>Credit-based usage system</li>
+          </ul>
+        </section>
+
+        <section className="legal-section">
+          <h2>3. User Responsibilities</h2>
+          <p>As a user of the Service, you agree to:</p>
+          <ul>
+            <li>Provide accurate and complete information when registering</li>
+            <li>Use the Service only for legitimate academic purposes</li>
+            <li>Not attempt to circumvent usage limits or credit restrictions</li>
+            <li>Not share your account credentials with others</li>
+            <li>Verify generated content before submission or publication</li>
+            <li>Properly cite AI-generated content according to academic standards</li>
+          </ul>
+        </section>
+
+        <section className="legal-section">
+          <h2>4. Intellectual Property</h2>
+          <p><strong>4.1 Service Ownership</strong></p>
+          <p>
+            The AutoOverview platform, technology, and all content (excluding user-submitted topics) are owned by
+            AutoOverview and protected by intellectual property laws.
+          </p>
+
+          <p><strong>4.2 Generated Content</strong></p>
+          <p>
+            You retain ownership of the literature reviews generated through the Service. However, you acknowledge
+            that such content is AI-generated and should be verified and properly attributed.
+          </p>
+
+          <p><strong>4.3 Academic Integrity</strong></p>
+          <p>
+            Users are responsible for ensuring compliance with their institution's academic integrity policies.
+            AI-generated content should be used as a research aid, not as a substitute for original work.
+          </p>
+        </section>
+
+        <section className="legal-section">
+          <h2>5. Payment & Credits</h2>
+          <p><strong>5.1 Credit-Based System</strong></p>
+          <p>
+            The Service operates on a credit-based system. Each literature review generation consumes one credit.
+            Credits can be purchased in various packages (Single, Semester, Academic Year).
+          </p>
+
+          <p><strong>5.2 Payment Terms</strong></p>
+          <ul>
+            <li>Payments are processed securely through Paddle (for international users)</li>
+            <li>All prices are displayed in USD</li>
+            <li>Credits are non-refundable once used</li>
+            <li>Unused credits expire according to the purchased package terms</li>
+          </ul>
+
+          <p><strong>5.3 Service Availability</strong></p>
+          <p>
+            While we strive for 99.9% uptime, we do not guarantee uninterrupted access to the Service.
+            Scheduled maintenance may occur with advance notice when possible.
+          </p>
+        </section>
+
+        <section className="legal-section">
+          <h2>6. Limitation of Liability</h2>
+          <p><strong>6.1 Service Accuracy</strong></p>
+          <p>
+            The Service uses AI and automated systems to search and synthesize information. While we strive for
+            accuracy, we cannot guarantee that all generated content is error-free. Users must verify all information
+            before relying on it for academic or professional purposes.
+          </p>
+
+          <p><strong>6.2 Damages</strong></p>
+          <p>
+            In no event shall AutoOverview be liable for any indirect, incidental, special, consequential, or
+            punitive damages, including without limitation, loss of profits, data, use, goodwill, or other
+            intangible losses.
+          </p>
+
+          <p><strong>6.3 Maximum Liability</strong></p>
+          <p>
+            Our total liability shall not exceed the amount you paid for the Service in the twelve (12) months
+            preceding the claim.
+          </p>
+        </section>
+
+        <section className="legal-section">
+          <h2>7. Prohibited Uses</h2>
+          <p>You may not use the Service to:</p>
+          <ul>
+            <li>Generate content for fraudulent or deceptive purposes</li>
+            <li>Violate any applicable laws or regulations</li>
+            <li>Infringe on the intellectual property rights of others</li>
+            <li>Attempt to gain unauthorized access to our systems</li>
+            <li>Use the Service for commercial purposes without proper licensing</li>
+            <li>Represent AI-generated work as entirely your own without attribution</li>
+          </ul>
+        </section>
+
+        <section className="legal-section">
+          <h2>8. Account Suspension & Termination</h2>
+          <p><strong>8.1 Suspension</strong></p>
+          <p>
+            We reserve the right to suspend or terminate your account if you violate these terms or engage in
+            fraudulent activity.
+          </p>
+
+          <p><strong>8.2 Refunds</strong></p>
+          <p>
+            Suspended or terminated accounts are not entitled to refunds for unused credits, except as required
+            by applicable law. Please refer to our Refund Policy for details.
+          </p>
+        </section>
+
+        <section className="legal-section">
+          <h2>9. Modifications to Service</h2>
+          <p>
+            We reserve the right to modify, suspend, or discontinue the Service (or any part thereof) at any time
+            with or without notice. We will not be liable to you or any third party for any modification,
+            suspension, or discontinuation of the Service.
+          </p>
+        </section>
+
+        <section className="legal-section">
+          <h2>10. Privacy & Data</h2>
+          <p>
+            Your privacy is important to us. Please review our Privacy Policy to understand how we collect, use,
+            and protect your information.
+          </p>
+        </section>
+
+        <section className="legal-section">
+          <h2>11. Governing Law</h2>
+          <p>
+            These terms shall be governed by and construed in accordance with the laws of the jurisdiction in
+            which AutoOverview is established, without regard to its conflict of law provisions.
+          </p>
+        </section>
+
+        <section className="legal-section">
+          <h2>12. Changes to These Terms</h2>
+          <p>
+            We may update these Terms & Conditions from time to time. We will notify users of significant changes
+            via email or through the Service. Continued use after changes constitutes acceptance of the new terms.
+          </p>
+        </section>
+
+        <section className="legal-section">
+          <h2>13. Contact Information</h2>
+          <p>
+            For questions about these Terms & Conditions, please contact us at:
+            <br />
+            <a href="mailto:support@snappicker.com" className="legal-link">
+              support@snappicker.com
+            </a>
+          </p>
+        </section>
+
+        <footer className="legal-footer">
+          <p>© 2026 AutoOverview. All rights reserved.</p>
+        </footer>
+      </div>
+    </div>
+  )
+}

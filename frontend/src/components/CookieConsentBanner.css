@@ -1,0 +1,241 @@
+/* ==================== Cookie Consent Banner ==================== */
+
+.cookie-banner-overlay {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  padding: 1rem;
+  animation: cookieSlideUp 0.3s ease-out;
+}
+
+@keyframes cookieSlideUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.cookie-banner {
+  max-width: 600px;
+  margin: 0 auto;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+}
+
+.cookie-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.25rem 1.5rem;
+  background: linear-gradient(135deg, #0988E3 0%, #0770BD 100%);
+  color: white;
+  position: relative;
+}
+
+.cookie-icon {
+  font-size: 1.5rem;
+}
+
+.cookie-title {
+  flex: 1;
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  font-family: 'Source Sans Pro', sans-serif;
+}
+
+.cookie-minimize {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.cookie-minimize:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.cookie-content {
+  padding: 1.5rem;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.cookie-description {
+  margin: 0 0 1.25rem 0;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: #2D3436;
+  font-family: 'Source Sans Pro', sans-serif;
+}
+
+.cookie-info {
+  margin-bottom: 1.25rem;
+  padding: 1rem;
+  background: #F8F9FA;
+  border-radius: 8px;
+  border-left: 3px solid #0988E3;
+}
+
+.cookie-info-title {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  font-family: 'Source Sans Pro', sans-serif;
+  color: #0988E3;
+}
+
+.cookie-info-desc {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: #636E72;
+  font-family: 'Source Sans Pro', sans-serif;
+}
+
+.cookie-actions {
+  display: flex;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  background: #F8F9FA;
+  border-top: 1px solid #E8ECEF;
+}
+
+.cookie-button {
+  flex: 1;
+  padding: 0.875rem 1.25rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  font-family: 'Source Sans Pro', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cookie-button-reject {
+  background: white;
+  color: #636E72;
+  border: 2px solid #E8ECEF;
+}
+
+.cookie-button-reject:hover {
+  background: #F8F9FA;
+  border-color: #B2BEC3;
+}
+
+.cookie-button-accept {
+  background: linear-gradient(135deg, #0988E3 0%, #0770BD 100%);
+  color: white;
+}
+
+.cookie-button-accept:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(9, 136, 227, 0.3);
+}
+
+.cookie-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: white;
+  border-top: 1px solid #E8ECEF;
+}
+
+.cookie-link {
+  font-size: 0.8rem;
+  color: #0988E3;
+  text-decoration: none;
+  font-family: 'Source Sans Pro', sans-serif;
+}
+
+.cookie-link:hover {
+  text-decoration: underline;
+}
+
+.cookie-divider {
+  color: #B2BEC3;
+  font-size: 0.8rem;
+}
+
+/* Minimized Banner */
+.cookie-banner-minimized {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  z-index: 9999;
+  background: white;
+  border-radius: 50px;
+  padding: 0.75rem 1.25rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  animation: cookiePopIn 0.3s ease-out;
+}
+
+@keyframes cookiePopIn {
+  from {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.cookie-banner-minimized:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.2);
+}
+
+.cookie-banner-minimized .cookie-icon {
+  font-size: 1.25rem;
+}
+
+.cookie-banner-minimized .cookie-text {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #2D3436;
+  font-family: 'Source Sans Pro', sans-serif;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .cookie-banner {
+    margin: 0;
+    border-radius: 12px 12px 0 0;
+  }
+
+  .cookie-actions {
+    flex-direction: column;
+  }
+
+  .cookie-banner-minimized {
+    bottom: 1rem;
+    right: 1rem;
+  }
+}

@@ -1,0 +1,229 @@
+/* ==================== Legal Pages Styles ==================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@300;400;600;700&family=Merriweather:wght@400;700&display=swap');
+
+:root {
+  --academic-red: #D63031;
+  --academic-red-dark: #B71C1C;
+  --cream-white: #FFFBF5;
+  --pure-white: #FFFFFF;
+  --ink-black: #1A1A1A;
+  --charcoal: #2D3436;
+  --text-gray: #636E72;
+  --light-gray: #DFE6E9;
+  --border-gray: #E8ECEF;
+}
+
+/* ==================== Page Container ==================== */
+
+.legal-page {
+  min-height: 100vh;
+  background: var(--cream-white);
+  padding: 2rem 1rem;
+}
+
+.legal-container {
+  max-width: 800px;
+  margin: 0 auto;
+  background: var(--pure-white);
+  border-radius: 16px;
+  padding: 3rem 4rem;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--border-gray);
+}
+
+/* ==================== Header ==================== */
+
+.legal-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-gray);
+  text-decoration: none;
+  font-family: 'Source Sans Pro', sans-serif;
+  font-size: 0.95rem;
+  margin-bottom: 2rem;
+  transition: color 0.2s;
+}
+
+.legal-back-link:hover {
+  color: var(--academic-red);
+}
+
+.legal-title {
+  font-family: 'Merriweather', Georgia, serif;
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--ink-black);
+  margin: 0 0 0.5rem 0;
+  line-height: 1.2;
+}
+
+.legal-effective {
+  font-family: 'Source Sans Pro', sans-serif;
+  font-size: 0.95rem;
+  color: var(--text-gray);
+  margin: 0 0 3rem 0;
+  font-style: italic;
+}
+
+/* ==================== Sections ==================== */
+
+.legal-section {
+  margin-bottom: 2.5rem;
+  padding-bottom: 2.5rem;
+  border-bottom: 1px solid var(--border-gray);
+}
+
+.legal-section:last-of-type {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.legal-section h2 {
+  font-family: 'Merriweather', Georgia, serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--ink-black);
+  margin: 0 0 1rem 0;
+}
+
+.legal-section h3 {
+  font-family: 'Source Sans Pro', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--charcoal);
+  margin: 1.5rem 0 0.75rem 0;
+}
+
+.legal-section p {
+  font-family: 'Source Sans Pro', sans-serif;
+  font-size: 1rem;
+  line-height: 1.7;
+  color: var(--charcoal);
+  margin: 0 0 1rem 0;
+}
+
+.legal-section p:last-child {
+  margin-bottom: 0;
+}
+
+/* ==================== Lists ==================== */
+
+.legal-section ul {
+  margin: 0.75rem 0 1rem 0;
+  padding-left: 1.5rem;
+}
+
+.legal-section li {
+  font-family: 'Source Sans Pro', sans-serif;
+  font-size: 1rem;
+  line-height: 1.7;
+  color: var(--charcoal);
+  margin-bottom: 0.5rem;
+}
+
+/* ==================== Links ==================== */
+
+.legal-link {
+  color: var(--academic-red);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.legal-link:hover {
+  color: var(--academic-red-dark);
+  text-decoration: underline;
+}
+
+/* ==================== Highlights & Notes ==================== */
+
+.policy-highlight {
+  background: rgba(214, 48, 49, 0.05);
+  border-left: 3px solid var(--academic-red);
+  padding: 1rem 1.25rem;
+  border-radius: 8px;
+  margin: 1rem 0;
+}
+
+.policy-highlight strong {
+  color: var(--academic-red);
+}
+
+.policy-note {
+  background: rgba(255, 152, 0, 0.05);
+  border-left: 3px solid #FF9800;
+  padding: 1rem 1.25rem;
+  border-radius: 8px;
+  margin: 1rem 0;
+}
+
+.policy-note strong {
+  color: #E65100;
+}
+
+/* ==================== Footer ==================== */
+
+.legal-footer {
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 2px solid var(--border-gray);
+  text-align: center;
+}
+
+.legal-footer p {
+  font-family: 'Source Sans Pro', sans-serif;
+  font-size: 0.9rem;
+  color: var(--text-gray);
+  margin: 0;
+}
+
+/* ==================== Responsive Design ==================== */
+
+@media (max-width: 768px) {
+  .legal-page {
+    padding: 1rem 0.5rem;
+  }
+
+  .legal-container {
+    padding: 2rem 1.5rem;
+    border-radius: 12px;
+  }
+
+  .legal-title {
+    font-size: 2rem;
+  }
+
+  .legal-section h2 {
+    font-size: 1.25rem;
+  }
+
+  .legal-section h3 {
+    font-size: 1rem;
+  }
+
+  .legal-section p,
+  .legal-section li {
+    font-size: 0.95rem;
+  }
+
+  .policy-highlight,
+  .policy-note {
+    padding: 0.875rem 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .legal-container {
+    padding: 1.5rem 1rem;
+  }
+
+  .legal-title {
+    font-size: 1.75rem;
+  }
+
+  .legal-section ul {
+    padding-left: 1.25rem;
+  }
+}

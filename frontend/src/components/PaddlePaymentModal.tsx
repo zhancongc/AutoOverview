@@ -3,7 +3,6 @@
  * Supports USD payments via Paddle checkout overlay
  */
 import { useState, useEffect, useCallback } from 'react'
-import { useTranslation } from 'react-i18next'
 import { api } from '../api'
 import './PaymentModal.css'
 
@@ -11,6 +10,7 @@ interface PaddlePaymentModalProps {
   onClose: () => void
   onPaymentSuccess: (addedCredits?: number) => void
   planType: string
+  recordId?: number  // For unlock mode
 }
 
 // Paddle pricing in USD (from backend)
@@ -56,21 +56,34 @@ const PADDLE_PRICING = {
       'All Semester features',
       'Valid for 12 months'
     ]
+  },
+  unlock: {
+    type: 'unlock',
+    name: 'Unlock Single Export',
+    price: 9.99,
+    credits: 0,
+    currency: 'USD',
+    features: [
+      'Unlock Word export for this review',
+      'No watermark',
+      'Professional formatting',
+      'Instant access'
+    ]
   }
 }
 
 const IS_DEV = window.location.hostname === 'localhost' ||
   window.location.hostname === '127.0.0.1'
 
-export function PaddlePaymentModal({ onClose, onPaymentSuccess, planType }: PaddlePaymentModalProps) {
-  const { t } = useTranslation()
-  const [loading, setLoading] = useState(false)
+export function PaddlePaymentModal({ onClose, onPaymentSuccess, planType, recordId }: PaddlePaymentModalProps) {
+  const [, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [paymentStatus, setPaymentStatus] = useState<'idle' | 'creating' | 'waiting' | 'paid' | 'failed'>('idle')
   const [orderNo, setOrderNo] = useState('')
-  const [checkoutUrl, setCheckoutUrl] = useState('')
+  const [, setCheckoutUrl] = useState('')
 
   const plan = PADDLE_PRICING[planType as keyof typeof PADDLE_PRICING] || PADDLE_PRICING.single
+  const isUnlockMode = planType === 'unlock' && recordId !== undefined
 
   // Esc 关闭弹窗
   useEffect(() => {
@@ -88,7 +101,16 @@ export function PaddlePaymentModal({ onClose, onPaymentSuccess, planType }: Padd
     setPaymentStatus('creating')
 
     try {
-      const result = await api.createPaddleSubscription(planType)
+      let result
+
+      if (isUnlockMode && recordId !== undefined) {
+        // Unlock mode: use unlock API
+        result = await api.createPaddleUnlock(recordId)
+      } else {
+        // Subscription mode: use subscription API
+        result = await api.createPaddleSubscription(planType)
+      }
+
       setOrderNo(result.order_no)
       setCheckoutUrl(result.checkout_url)
       setPaymentStatus('waiting')
@@ -118,7 +140,7 @@ export function PaddlePaymentModal({ onClose, onPaymentSuccess, planType }: Padd
     } finally {
       setLoading(false)
     }
-  }, [planType])
+  }, [planType, isUnlockMode, recordId])
 
   // 轮询支付状态
   useEffect(() => {
@@ -216,7 +238,7 @@ export function PaddlePaymentModal({ onClose, onPaymentSuccess, planType }: Padd
             <div className="payment-modal-success">
               <span className="payment-success-icon">✓</span>
               <h3>Payment Successful</h3>
-              <p>You now have {plan.credits} review credits</p>
+              <p>{isUnlockMode ? 'Your review is now unlocked for Word export' : `You now have ${plan.credits} review credits`}</p>
               <button className="payment-modal-btn" onClick={handleClose}>Done</button>
             </div>
           )}

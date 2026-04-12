@@ -5,8 +5,13 @@ import App from './App'
 import { SimpleApp } from './components/SimpleApp'
 import { SimpleAppInternational } from './components/SimpleAppInternational'
 import { ReviewPage } from './components/ReviewPage'
+import { ReviewPageInternational } from './components/ReviewPageInternational'
 import { ProfilePage } from './components/ProfilePage'
+import { ProfilePageInternational } from './components/ProfilePageInternational'
 import { DavidPage } from './components/DavidPage'
+import { TermsAndConditionsPage } from './components/TermsAndConditionsPage'
+import { PrivacyPolicyPage } from './components/PrivacyPolicyPage'
+import { RefundPolicyPage } from './components/RefundPolicyPage'
 import ErrorBoundary from './ErrorBoundary'
 import { api } from './api'
 import './i18n' // 导入 i18n 配置
@@ -45,12 +50,12 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         <Route path="/" element={isEnglishVersion ? <SimpleAppInternational /> : <SimpleApp />} />
         <Route path="/profile" element={
           <ProtectedRoute>
-            <ProfilePage />
+            {isEnglishVersion ? <ProfilePageInternational /> : <ProfilePage />}
           </ProtectedRoute>
         } />
         <Route path="/review" element={
           <ReviewRoute>
-            <ReviewPage />
+            {isEnglishVersion ? <ReviewPageInternational /> : <ReviewPage />}
           </ReviewRoute>
         } />
         <Route path="/david" element={
@@ -63,6 +68,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
             <App />
           </JadeRoute>
         } />
+        <Route path="/terms-and-conditions" element={<TermsAndConditionsPage />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+        <Route path="/refund-policy" element={<RefundPolicyPage />} />
       </Routes>
       <BackToTop />
     </BrowserRouter>

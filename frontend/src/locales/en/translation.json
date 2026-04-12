@@ -44,9 +44,9 @@
     },
     "comparison": {
       "title": "AutoOverview vs Free AI Tools",
-      "subtitle": "Why ChatGPT and DeepSeek can't replace proper literature reviews",
+      "subtitle": "Why general-purpose AI tools aren't ideal for literature reviews",
       "free_ai": {
-        "title": "Free AI (ChatGPT/DeepSeek)",
+        "title": "Free AI Tools",
         "con1": "❌ May generate fake citations",
         "con2": "❌ Requires complex prompts",
         "con3": "❌ Not safe for academic submission",
@@ -73,7 +73,7 @@
     "pricing": {
       "title": "Simple, Transparent Pricing",
       "subtitle": "No subscription. Credits never expire.",
-      "note": "No subscription • Credits never expire • Satisfaction guaranteed",
+      "note": "No subscription • Credits never expire • Customer satisfaction focused",
       "single": {
         "name": "1 Review",
         "price": "9.99",
@@ -135,13 +135,15 @@
       "role3": "European University"
     },
     "integrity": {
-      "title": "Academic Integrity Guaranteed",
-      "description": "We are committed to academic integrity. All citations are real and verifiable.",
+      "title": "Academic Integrity Commitment",
+      "description": "We are committed to academic integrity. All citations are designed to be real and verifiable.",
       "link": "Learn about our citation verification process →"
     },
     "footer": {
       "copyright": "© 2026 AutoOverview. All rights reserved.",
-      "legal": "Privacy Policy | GDPR Compliance | Terms of Service",
+      "terms": "Terms & Conditions",
+      "privacy": "Privacy Policy",
+      "refund": "Refund Policy",
       "databases": "Supported: Web of Science, IEEE, CrossRef, Semantic Scholar"
     },
     "nav": {
@@ -249,7 +251,25 @@
     "login_desc": "Enter your email to receive a verification code",
     "register_desc": "Enter your email to receive a verification code",
     "logining": "Logging in...",
-    "registering": "Registering..."
+    "registering": "Registering...",
+    "welcome": "Welcome to AutoOverview",
+    "email_placeholder": "Enter your email",
+    "code_placeholder": "Enter 6-digit code",
+    "login_button": "Login",
+    "sending": "Sending...",
+    "seconds": "seconds",
+    "processing": "Processing...",
+    "error_email_required": "Please enter your email",
+    "error_code_required": "Please enter verification code",
+    "error_send_failed": "Failed to send, please try again later",
+    "error_operation_failed": "Operation failed, please try again later",
+    "success_code_sent": "Verification code sent",
+    "agreement_required": "Please agree to the Terms & Conditions to continue",
+    "agreement_label": "I have read and agree to the",
+    "agreement_and": "and",
+    "other_methods": "Other login methods",
+    "wechat_coming": "WeChat login coming soon",
+    "alipay_coming": "Alipay login coming soon"
   },
   "common": {
     "loading": "Loading...",

@@ -1,14 +1,18 @@
+/**
+ * ProfilePage Component - International Academic Version
+ * Designed for overseas market with clean, professional academic style
+ */
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { api } from '../api'
 import { getLocalUserInfo, isLoggedIn } from '../authApi'
-import { PaymentModal } from './PaymentModal'
-import { ConfirmModal } from './ConfirmModal'
+import { PaddlePaymentModal } from './PaddlePaymentModal'
+import { ConfirmModalInternational } from './ConfirmModalInternational'
 import type { ReviewRecord } from '../types'
-import './ProfilePage.css'
+import './ProfilePageInternational.css'
 
-export function ProfilePage() {
+export function ProfilePageInternational() {
   const { i18n } = useTranslation()
   const navigate = useNavigate()
   const [records, setRecords] = useState<ReviewRecord[]>([])
@@ -19,9 +23,12 @@ export function ProfilePage() {
   const [showPayModal, setShowPayModal] = useState(false)
   const [pendingExportRecordId, setPendingExportRecordId] = useState<number | null>(null)
   const [exportingId, setExportingId] = useState<number | null>(null)
-  const [unlockMode, setUnlockMode] = useState(false)  // true=单次解锁, false=购买套餐
+  const [unlockMode, setUnlockMode] = useState(false)  // true=single unlock, false=purchase plan
   const [showCreditConfirmModal, setShowCreditConfirmModal] = useState(false)
   const [confirmRecordId, setConfirmRecordId] = useState<number | null>(null)
+  const [showCloseAccountModal, setShowCloseAccountModal] = useState(false)
+  const [showEditProfileModal, setShowEditProfileModal] = useState(false)
+  const [editNickname, setEditNickname] = useState('')
 
   useEffect(() => {
     if (!isLoggedIn()) {
@@ -33,8 +40,8 @@ export function ProfilePage() {
     api.getCredits().then(data => {
       setCredits(data.credits)
       setFreeCredits(data.free_credits)
-    }).catch(err => console.error('获取额度失败:', err))
-  }, [])
+    }).catch(err => console.error('Failed to fetch credits:', err))
+  }, [navigate])
 
   const loadRecords = async () => {
     setLoading(true)
@@ -44,7 +51,7 @@ export function ProfilePage() {
         setRecords(response.records)
       }
     } catch (err) {
-      console.error('加载历史记录失败:', err)
+      console.error('Failed to load history:', err)
     } finally {
       setLoading(false)
     }
@@ -52,7 +59,7 @@ export function ProfilePage() {
 
   const handleViewRecord = (record: ReviewRecord) => {
     if (record.status === 'processing' || record.status === 'failed') {
-      // 生成中或失败的任务，引导重新生成
+      // Processing or failed tasks, guide to regenerate
       sessionStorage.setItem('pending_topic', record.topic)
       navigate('/')
       return
@@ -77,21 +84,21 @@ export function ProfilePage() {
     const record = records.find(r => r.id === id)
     if (!record) return
 
-    // 已付费生成的综述，直接导出
+    // Paid reviews, export directly
     if (record.is_paid) {
       await doExport(id, record)
       return
     }
 
-    // 免费生成的综述，检查是否有付费额度
+    // Free reviews, check if has paid credits
     if (credits > 0) {
-      // 有额度，弹出确认框
+      // Has credits, show confirmation
       setConfirmRecordId(id)
       setShowCreditConfirmModal(true)
       return
     }
 
-    // 没有额度，直接弹出支付弹窗
+    // No credits, show payment modal
     setUnlockMode(true)
     setPendingExportRecordId(id)
     setShowPayModal(true)
@@ -111,8 +118,8 @@ export function ProfilePage() {
       document.body.removeChild(a)
       URL.revokeObjectURL(url)
     } catch (err) {
-      console.error('导出失败:', err)
-      alert('导出失败，请稍后重试')
+      console.error('Export failed:', err)
+      alert('Export failed, please try again later')
     } finally {
       setExportingId(null)
     }
@@ -129,19 +136,19 @@ export function ProfilePage() {
     try {
       const result = await api.unlockRecordWithCredit(confirmRecordId)
       if (result.success) {
-        // 刷新记录列表和额度
+        // Refresh records and credits
         await loadRecords()
         const creditsData = await api.getCredits()
         setCredits(creditsData.credits)
 
-        // 直接导出
+        // Export directly
         await doExport(confirmRecordId, record)
       } else {
-        alert(result.message || '解锁失败，请稍后重试')
+        alert(result.message || 'Unlock failed, please try again later')
       }
     } catch (err) {
-      console.error('解锁失败:', err)
-      alert('解锁失败，请稍后重试')
+      console.error('Unlock failed:', err)
+      alert('Unlock failed, please try again later')
     } finally {
       setExportingId(null)
       setConfirmRecordId(null)
@@ -152,6 +159,69 @@ export function ProfilePage() {
     localStorage.removeItem('auth_token')
     localStorage.removeItem('user_info')
     navigate('/')
+  }
+
+  const handleCloseAccount = async () => {
+    try {
+      const token = localStorage.getItem('auth_token')
+      const response = await fetch('/api/account/close', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      })
+      const data = await response.json()
+      if (data.success) {
+        // Logout and redirect
+        localStorage.removeItem('auth_token')
+        localStorage.removeItem('user_info')
+        alert('Your account has been closed successfully.')
+        navigate('/')
+      } else {
+        alert(data.message || 'Failed to close account. Please try again.')
+      }
+    } catch (err) {
+      console.error('Close account error:', err)
+      alert('Failed to close account. Please contact support@snappicker.com')
+    }
+  }
+
+  const handleEditProfile = () => {
+    setEditNickname(userInfo?.nickname || '')
+    setShowEditProfileModal(true)
+  }
+
+  const handleSaveProfile = async () => {
+    if (!editNickname.trim()) {
+      alert('Nickname cannot be empty')
+      return
+    }
+    try {
+      const token = localStorage.getItem('auth_token')
+      const response = await fetch('/api/user/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ nickname: editNickname.trim() })
+      })
+      const data = await response.json()
+      if (data.success) {
+        // Update local storage and state
+        const updatedUserInfo = { ...userInfo, nickname: editNickname.trim() }
+        localStorage.setItem('user_info', JSON.stringify(updatedUserInfo))
+        setUserInfo(updatedUserInfo)
+        setShowEditProfileModal(false)
+        alert('Profile updated successfully')
+      } else {
+        alert(data.message || 'Failed to update profile')
+      }
+    } catch (err) {
+      console.error('Update profile error:', err)
+      alert('Failed to update profile. Please try again.')
+    }
   }
 
   const formatDate = (dateString: string) => {
@@ -167,8 +237,8 @@ export function ProfilePage() {
   }
 
   return (
-    <div className="profile-page">
-      {/* 顶部导航栏 */}
+    <div className="profile-page-international">
+      {/* Top Navigation */}
       <nav className="profile-nav">
         <div className="nav-logo" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
           <span className="logo-icon">📚</span>
@@ -176,56 +246,78 @@ export function ProfilePage() {
         </div>
         <div className="nav-actions">
           <button className="nav-btn nav-btn-home" onClick={() => navigate('/')}>
-            首页
+            Home
           </button>
           <button className="nav-btn nav-btn-logout" onClick={handleLogout}>
-            退出登录
+            Logout
           </button>
         </div>
       </nav>
 
       <div className="profile-container">
-        {/* 用户信息区域 */}
+        {/* User Info Section */}
         <div className="profile-header">
           <div className="user-avatar-large">👤</div>
           <div className="user-info-section">
-            <h1 className="user-name">{userInfo?.nickname || '用户'}</h1>
+            <div className="user-info-row">
+              <h1 className="user-name">{userInfo?.nickname || 'User'}</h1>
+              <button className="edit-profile-button" onClick={handleEditProfile}>
+                ✏️ Edit
+              </button>
+            </div>
             <p className="user-email">{userInfo?.email || ''}</p>
           </div>
         </div>
 
-        {/* 统计信息 */}
-        <div className="profile-stats">
-          <div className="stat-card">
-            <div className="stat-number">{records.length}</div>
-            <div className="stat-label">综述数量</div>
-          </div>
-          <div className="stat-card stat-card-free">
-            <div className="stat-number">{freeCredits}</div>
-            <div className="stat-label">免费额度</div>
-          </div>
-          <div className="stat-card stat-card-paid">
-            <div className="stat-number">{credits - freeCredits}</div>
-            <div className="stat-label">套餐额度</div>
+        {/* Account Settings */}
+        <div className="profile-settings">
+          <h2 className="settings-title">⚙️ Account Settings</h2>
+          <div className="settings-section">
+            <div className="settings-danger-zone">
+              <h3 className="settings-danger-title">⚠️ Danger Zone</h3>
+              <p className="settings-danger-desc">These actions are irreversible. Please be careful.</p>
+              <button
+                className="settings-danger-button"
+                onClick={() => setShowCloseAccountModal(true)}
+              >
+                Close Account
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* 历史记录列表 */}
+        {/* Stats */}
+        <div className="profile-stats">
+          <div className="stat-card">
+            <div className="stat-number">{records.length}</div>
+            <div className="stat-label">Reviews</div>
+          </div>
+          <div className="stat-card stat-card-free">
+            <div className="stat-number">{freeCredits}</div>
+            <div className="stat-label">Free Credits</div>
+          </div>
+          <div className="stat-card stat-card-paid">
+            <div className="stat-number">{credits - freeCredits}</div>
+            <div className="stat-label">Plan Credits</div>
+          </div>
+        </div>
+
+        {/* History List */}
         <div className="profile-history">
-          <h2 className="history-title">📖 我的综述</h2>
+          <h2 className="history-title">📖 My Reviews</h2>
 
           {loading ? (
             <div className="history-loading">
               <div className="spinner"></div>
-              <p>加载历史记录中...</p>
+              <p>Loading history...</p>
             </div>
           ) : records.length === 0 ? (
             <div className="history-empty">
               <div className="empty-icon">📝</div>
-              <p className="empty-title">还没有生成过综述</p>
-              <p className="empty-desc">输入研究主题，AI 为您自动搜索文献并生成专业综述</p>
+              <p className="empty-title">No reviews yet</p>
+              <p className="empty-desc">Enter a research topic and AI will automatically search papers and generate a professional review</p>
               <button className="empty-button" onClick={() => navigate('/')}>
-                去生成第一篇综述
+                Generate Your First Review
               </button>
             </div>
           ) : (
@@ -240,18 +332,18 @@ export function ProfilePage() {
                     <div className="record-top">
                       <h3 className="record-topic">{record.topic}</h3>
                       {record.status === 'success' ? (
-                        <span className="status-success">✓ 完成</span>
+                        <span className="status-success">✓ Complete</span>
                       ) : record.status === 'failed' ? (
-                        <span className="status-failed">✗ 失败</span>
+                        <span className="status-failed">✗ Failed</span>
                       ) : (
-                        <span className="status-processing">⏳ 进行中</span>
+                        <span className="status-processing">⏳ Processing</span>
                       )}
                     </div>
                     <div className="record-bottom">
                       <div className="record-meta">
                         <span className="record-time">{formatDate(record.created_at)}</span>
                         {record.statistics && (
-                          <span className="record-stats-inline">📄 {record.statistics.total || 0} 篇文献</span>
+                          <span className="record-stats-inline">📄 {record.statistics.total || 0} papers</span>
                         )}
                       </div>
                       {record.status === 'success' && (
@@ -260,9 +352,9 @@ export function ProfilePage() {
                           onClick={(e) => handleExportRecord(record.id, e)}
                           disabled={exportingId === record.id}
                         >
-                          {exportingId === record.id ? '导出中...' :
-                           record.is_paid ? '导出 Word' :
-                           '🔓 解锁导出'}
+                          {exportingId === record.id ? 'Exporting...' :
+                           record.is_paid ? 'Export Word' :
+                           '🔓 Unlock Export'}
                         </button>
                       )}
                     </div>
@@ -274,19 +366,23 @@ export function ProfilePage() {
         </div>
       </div>
 
-      {/* 页脚 */}
+      {/* Footer */}
       <footer className="profile-footer">
         <div className="footer-content">
           <p className="footer-copyright">© 2026 AutoOverview. All rights reserved.</p>
-          <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer" className="footer-icp">
-            沪ICP备2023018158号-4
-          </a>
+          <div className="footer-links">
+            <a href="/terms-and-conditions" className="footer-link">Terms & Conditions</a>
+            <span className="footer-separator">•</span>
+            <a href="/privacy-policy" className="footer-link">Privacy Policy</a>
+            <span className="footer-separator">•</span>
+            <a href="/refund-policy" className="footer-link">Refund Policy</a>
+          </div>
         </div>
       </footer>
 
-      {/* 支付弹窗 */}
+      {/* Payment Modal */}
       {showPayModal && unlockMode && pendingExportRecordId !== null && (
-        <PaymentModal
+        <PaddlePaymentModal
           onClose={() => {
             setShowPayModal(false)
             setUnlockMode(false)
@@ -295,9 +391,9 @@ export function ProfilePage() {
           onPaymentSuccess={async () => {
             setShowPayModal(false)
             setUnlockMode(false)
-            // 刷新记录列表
+            // Refresh records
             await loadRecords()
-            // 继续导出
+            // Continue export
             if (pendingExportRecordId !== null) {
               handleExportRecord(pendingExportRecordId, { stopPropagation: () => {} } as React.MouseEvent)
               setPendingExportRecordId(null)
@@ -308,19 +404,19 @@ export function ProfilePage() {
         />
       )}
       {showPayModal && !unlockMode && (
-        <PaymentModal
+        <PaddlePaymentModal
           onClose={() => {
             setShowPayModal(false)
             setPendingExportRecordId(null)
           }}
           onPaymentSuccess={async () => {
             setShowPayModal(false)
-            // 刷新用户状态和记录列表
+            // Refresh user status and records
             const creditsData = await api.getCredits()
             setCredits(creditsData.credits)
             setFreeCredits(creditsData.free_credits)
             await loadRecords()
-            // 如果有待导出的记录，继续导出
+            // If has pending export, continue
             if (pendingExportRecordId !== null) {
               handleExportRecord(pendingExportRecordId, { stopPropagation: () => {} } as React.MouseEvent)
               setPendingExportRecordId(null)
@@ -330,13 +426,12 @@ export function ProfilePage() {
         />
       )}
 
-      {/* 使用额度确认弹窗 */}
+      {/* Credit Confirmation Modal */}
       {showCreditConfirmModal && confirmRecordId !== null && (
-        <ConfirmModal
-          title="使用套餐额度解锁"
-          message={`您有 ${credits} 个付费额度。\n是否使用 1 个额度解锁此综述并导出 Word？`}
-          confirmText="使用额度解锁"
-          cancelText="取消"
+        <ConfirmModalInternational
+          message={`You have ${credits} paid credits.\nUse 1 credit to unlock this review and export Word?`}
+          confirmText="Unlock with Credit"
+          cancelText="Cancel"
           onConfirm={handleConfirmUseCredit}
           onCancel={() => {
             setShowCreditConfirmModal(false)
@@ -344,6 +439,57 @@ export function ProfilePage() {
           }}
           type="warning"
         />
+      )}
+
+      {/* Close Account Confirmation Modal */}
+      {showCloseAccountModal && (
+        <ConfirmModalInternational
+          message="Are you sure you want to close your account?\n\nThis action is irreversible and:\n• You will lose access to all your reviews\n• Your credits will be forfeited\n• Your data will be deleted within 30 days\n\nIf you have concerns, please contact support@snappicker.com first."
+          confirmText="Close Account"
+          cancelText="Cancel"
+          onConfirm={handleCloseAccount}
+          onCancel={() => setShowCloseAccountModal(false)}
+          type="danger"
+        />
+      )}
+
+      {/* Edit Profile Modal */}
+      {showEditProfileModal && (
+        <div className="modal-overlay" onClick={() => setShowEditProfileModal(false)}>
+          <div className="edit-profile-modal" onClick={e => e.stopPropagation()}>
+            <div className="edit-profile-header">
+              <h2>Edit Profile</h2>
+              <button className="modal-close-btn" onClick={() => setShowEditProfileModal(false)}>
+                ×
+              </button>
+            </div>
+            <div className="edit-profile-body">
+              <label className="edit-profile-label">Nickname</label>
+              <input
+                type="text"
+                className="edit-profile-input"
+                value={editNickname}
+                onChange={e => setEditNickname(e.target.value)}
+                placeholder="Enter your nickname"
+                maxLength={50}
+              />
+            </div>
+            <div className="edit-profile-footer">
+              <button
+                className="edit-profile-btn edit-profile-btn-cancel"
+                onClick={() => setShowEditProfileModal(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className="edit-profile-btn edit-profile-btn-save"
+                onClick={handleSaveProfile}
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

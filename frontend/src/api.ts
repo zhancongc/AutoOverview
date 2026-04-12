@@ -408,4 +408,19 @@ export const api = {
     });
     return response.data;
   },
+
+  async createPaddleUnlock(recordId: number): Promise<{
+    order_no: string;
+    checkout_url: string;
+    amount: number;
+    currency: string;
+  }> {
+    const token = localStorage.getItem('auth_token');
+    const response = await axios.post(`${API_BASE}/paddle/unlock`, {
+      record_id: recordId
+    }, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
+  },
 };
