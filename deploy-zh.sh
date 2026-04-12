@@ -77,7 +77,10 @@ if ! command -v nginx &> /dev/null; then
     apt-get update -qq && apt-get install -y nginx
 fi
 
-# 写入 Nginx 站点配置
+# 写入 Nginx 站点配置（仅首次，不覆盖已有 HTTPS 配置）
+if [ -f /etc/nginx/sites-available/autooverview ]; then
+    echo "✓ Nginx 配置已存在，跳过（如需更新请手动编辑）"
+else
 cat > /etc/nginx/sites-available/autooverview << 'NGINXCONF'
 upstream autooverview_backend {
     server 127.0.0.1:8006;
@@ -142,6 +145,8 @@ server {
     add_header X-Content-Type-Options "nosniff" always;
 }
 NGINXCONF
+
+fi
 
 ln -sf /etc/nginx/sites-available/autooverview /etc/nginx/sites-enabled/autooverview
 rm -f /etc/nginx/sites-enabled/default
