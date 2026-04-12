@@ -164,6 +164,41 @@
   box-shadow: none;
 }
 
+/* Export error with retry */
+.export-error-inline {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #fff5f5;
+  border: 1px solid #feb2b2;
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8125rem;
+  color: #c53030;
+  margin-left: 0.5rem;
+}
+
+.export-error-inline span {
+  flex: 1;
+}
+
+.export-retry-btn {
+  background: #c53030;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s;
+}
+
+.export-retry-btn:hover {
+  background: #9b2c2c;
+}
+
 .export-pdf-btn {
   background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
   box-shadow: 0 4px 12px rgba(108, 117, 125, 0.25);

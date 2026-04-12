@@ -380,6 +380,11 @@
   color: var(--charcoal);
   opacity: 0.7;
   transition: opacity 0.2s;
+  cursor: pointer;
+}
+
+.simple-home-international .data-source-logo:hover {
+  opacity: 1;
 }
 
 .simple-home-international .input-section-header {
@@ -418,6 +423,10 @@
   resize: vertical;
   transition: border-color 0.2s, box-shadow 0.2s;
   margin-bottom: 1.125rem;
+}
+
+.simple-home-international .topic-input:hover {
+  border-color: var(--academic-blue-border, #bee3f8);
 }
 
 .simple-home-international .topic-input:focus {
@@ -863,6 +872,10 @@
     gap: var(--spacing-md);
   }
 
+  .simple-home-international .topic-input {
+    rows: 2;
+    min-height: 60px;
+  }
   .simple-home-international .integrity-notice {
     flex-direction: column;
     text-align: center;

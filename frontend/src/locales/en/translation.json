@@ -3,8 +3,8 @@
   "home": {
     "hero": {
       "accent": "AI Literature Review Generator",
-      "title": "100% Real Citations, <highlight>No Hallucinations</highlight>",
-      "subtitle": "Generate submission-ready literature reviews with DOI-verifiable citations from Web of Science, IEEE, and CrossRef. No AI-generated fake papers.",
+      "title": "100% Real Citations — <highlight>No Hallucinations</highlight>",
+      "subtitle": "Generate submission-ready literature reviews with real, DOI-verifiable citations. No fake AI-generated papers.",
       "cta_button": "Start Generating Now",
       "cta_hint": "Free to try • No credit card required"
     },
@@ -18,8 +18,8 @@
       "label": "Data sources:"
     },
     "input": {
-      "title": "Get 1 Free Review",
-      "subtitle": "Enter your research topic, AI generates a professional literature review",
+      "title": "Generate Your First Review",
+      "subtitle": "Sign up and get 1 free review. Enter a topic, AI does the rest.",
       "language": "Language:",
       "language_zh": "中文",
       "language_en": "English",
@@ -30,7 +30,8 @@
       "button_generating": "Generating...",
       "credits_remaining": "credits remaining",
       "retry": "Retry",
-      "how_it_works": "How It Works"
+      "how_it_works": "How It Works",
+      "alert_empty_topic": "Please enter a research topic"
     },
     "social_proof": {
       "text": "Trusted by <strong>10,000+</strong> researchers worldwide"
@@ -77,39 +78,40 @@
       "subtitle": "No subscription. Credits never expire.",
       "note": "No subscription • Credits never expire • Customer satisfaction focused",
       "single": {
-        "name": "1 Review",
-        "price": "9.99",
+        "name": "Single Review",
+        "price": "5.99",
         "unit": "USD",
         "features": [
           "1 complete literature review",
           "DOI-verifiable citations",
           "Standard citation formats",
-          "Word export",
-          "Email delivery"
+          "Word & PDF export"
         ]
       },
-      "pack3": {
-        "name": "3 Reviews",
-        "price": "19.99",
-        "unit": "USD",
-        "features": [
-          "3 complete literature reviews",
-          "DOI-verifiable citations",
-          "Standard citation formats",
-          "Word export",
-          "Best value"
-        ]
-      },
-      "pack6": {
-        "name": "6 Reviews",
+      "semester": {
+        "name": "Semester Pack",
+        "badge": "Best Value",
         "price": "29.99",
         "unit": "USD",
         "features": [
-          "6 complete literature reviews",
-          "DOI-verifiable citations",
-          "Standard citation formats",
-          "Word export",
-          "Most popular"
+          "10 review credits",
+          "Priority processing",
+          "Advanced citation formats",
+          "All Single features",
+          "Valid for 6 months"
+        ]
+      },
+      "yearly": {
+        "name": "Academic Year Pack",
+        "badge": "Popular",
+        "price": "79.99",
+        "unit": "USD",
+        "features": [
+          "30 review credits",
+          "Priority processing",
+          "Advanced citation formats",
+          "All Semester features",
+          "Valid for 12 months"
         ]
       },
       "buy_now": "Get Started",
@@ -171,7 +173,8 @@
       "plans_fetch_failed": "Failed to fetch plans",
       "cases_fetch_failed": "Failed to fetch cases",
       "credits_refresh_failed": "Failed to refresh credits",
-      "no_credits": "No credits remaining"
+      "no_credits": "No credits remaining",
+      "no_credits_hint": "No credits remaining. Please purchase a plan to continue."
     }
   },
   "review": {
@@ -217,17 +220,17 @@
       "try_again": "Please try again later",
       "go_home": "Go to Homepage",
       "reload": "Reload Page",
-      "hint": "Tip: Review generation typically takes 1-3 minutes, please refresh later",
+      "hint": "Reviews typically take 1–3 minutes to generate. Please check back later.",
       "review_not_ready": "Review not ready or may have failed. You can:",
-      "generating_hint": "Tip: Review generation typically takes 1-3 minutes, please refresh later",
+      "generating_hint": "Reviews typically take 1–3 minutes to generate. Please check back later.",
       "no_references": "No references available"
     },
     "references": {
       "title": "References",
-      "total": "Total {count} papers",
-      "recent_5_years": "Recent 5 years {percent}%",
-      "english": "English {percent}%",
-      "verify_notice": "Click paper title or platform icon to verify authenticity on third-party platforms",
+      "total": "{count} papers total",
+      "recent_5_years": "Recent 5 years: {percent}%",
+      "english": "English: {percent}%",
+      "verify_notice": "Click paper title or platform icon to verify on third-party databases",
       "verify_on": "Verify on {platform}",
       "view_on": "View on {platform}"
     }
@@ -288,6 +291,24 @@
     "next": "Next",
     "previous": "Previous",
     "done": "Done",
-    "payment_success": "🎉 Payment successful! Credits added to your account"
+    "payment_success": "Payment successful! Credits added to your account"
+  },
+  "payment": {
+    "buy": "Buy {{name}}",
+    "credits_info": "{{credits}} review credits",
+    "creating": "Creating payment session...",
+    "processing": "Processing payment...",
+    "waiting": "Waiting for payment completion...",
+    "auto_payment": "Development Mode · Auto-payment in 3 seconds",
+    "order_no": "Order: {{orderNo}}",
+    "pay_hint": "Complete your payment securely via Paddle",
+    "order_info": "Order: {{orderNo}} · Amount: ${{amount}}",
+    "pay_now": "Pay Now",
+    "cancel": "Cancel Payment",
+    "success_title": "Payment Successful",
+    "success_credits": "You now have {{credits}} review credits",
+    "success_unlock": "Your review is now unlocked for Word export",
+    "failed": "Failed to create payment session. Please try again.",
+    "retry": "Retry"
   }
 }

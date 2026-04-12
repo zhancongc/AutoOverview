@@ -55,6 +55,7 @@ export function ReviewPageInternational() {
   const [activeTab, setActiveTab] = useState<TabType>('content')
   const [showPayModal, setShowPayModal] = useState(false)
   const [exporting, setExporting] = useState(false)
+  const [exportError, setExportError] = useState('')
   const [unlockMode, setUnlockMode] = useState(false)
   const [showCreditConfirmModal, setShowCreditConfirmModal] = useState(false)
   const [credits, setCredits] = useState<number>(0)
@@ -232,10 +233,11 @@ export function ReviewPageInternational() {
 
   const doExport = async () => {
     if (!reviewData.recordId) {
-      alert(t('review.export.alert_not_supported'))
+      setExportError(t('review.export.alert_not_supported'))
       return
     }
     setExporting(true)
+    setExportError('')
     try {
       const token = localStorage.getItem('auth_token')
       const headers: Record<string, string> = { 'Content-Type': 'application/json' }
@@ -257,7 +259,7 @@ export function ReviewPageInternational() {
       document.body.removeChild(a)
       URL.revokeObjectURL(url)
     } catch (err) {
-      alert(t('review.export.alert_failed'))
+      setExportError(t('review.export.alert_failed'))
       console.error(err)
     } finally {
       setExporting(false)
@@ -273,6 +275,7 @@ export function ReviewPageInternational() {
     try {
       const result = await api.unlockRecordWithCredit(reviewData.recordId)
       if (result.success) {
+        setExportError('')
         const creditsData = await api.getCredits()
         setCredits(creditsData.credits)
         setFreeCredits(creditsData.free_credits)
@@ -294,11 +297,11 @@ export function ReviewPageInternational() {
 
         await doExport()
       } else {
-        alert(result.message || t('review.export.unlock_failed'))
+        setExportError(result.message || t('review.export.unlock_failed'))
       }
     } catch (err) {
       console.error('Unlock failed:', err)
-      alert(t('review.export.unlock_failed'))
+      setExportError(t('review.export.unlock_failed'))
     } finally {
       setExporting(false)
     }
@@ -391,6 +394,12 @@ export function ReviewPageInternational() {
              canExportDirectly ? t('review.export.export_word') :
              '🔒 ' + t('review.export.unlock_export')}
           </button>
+          {exportError && (
+            <div className="export-error-inline">
+              <span>{exportError}</span>
+              <button className="export-retry-btn" onClick={() => { setExportError(''); handleExportWord(); }}>{t('payment.retry')}</button>
+            </div>
+          )}
         </div>
         <button
           className="mobile-menu-toggle review-mobile-toggle"
@@ -587,6 +596,12 @@ export function ReviewPageInternational() {
           >
             {exporting ? t('review.export.exporting') : canExportDirectly ? t('review.export.export_word') : '🔒 ' + t('review.export.unlock_export')}
           </button>
+          {exportError && (
+            <div className="export-error-inline">
+              <span>{exportError}</span>
+              <button className="export-retry-btn" onClick={() => { setExportError(''); handleExportWord(); }}>{t('payment.retry')}</button>
+            </div>
+          )}
           <button
             className="sidebar-action-btn sidebar-action-secondary"
             onClick={() => { setMobileMenuOpen(false); handleRegenerate() }}

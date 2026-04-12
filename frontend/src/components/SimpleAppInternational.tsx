@@ -91,7 +91,9 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
 
   const handleGenerate = async () => {
     if (!topic.trim()) {
-      alert('Please enter a research topic')
+      setToastMessage(t('home.input.alert_empty_topic'))
+      setShowToast(true)
+      setTimeout(() => setShowToast(false), 3000)
       return
     }
 
@@ -116,7 +118,9 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
       if (!submitResponse.success || !submitResponse.data?.task_id) {
         const msg = submitResponse.message || ''
         if (msg.includes('credits') || msg.includes('额度')) {
-          setError(msg)
+          setToastMessage(t('home.errors.no_credits_hint'))
+          setShowToast(true)
+          setTimeout(() => setShowToast(false), 3000)
           setShowPaymentModal('single')
         } else {
           setError(msg || t('home.errors.task_failed'))
@@ -356,7 +360,7 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
         <div className="sidebar-header">
           <span className="logo-icon">📚</span>
           <span className="logo-text">AutoOverview</span>
-          <button className="sidebar-close" onClick={() => setMobileMenuOpen(false)}>&times;</button>
+          <button className="sidebar-close" onClick={() => setMobileMenuOpen(false)} aria-label="Close menu">&times;</button>
         </div>
         <nav className="sidebar-links">
           <a
@@ -677,8 +681,10 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
                     key={case_item.task_id}
                     className="case-card"
                     onClick={() => navigate(`/review?task_id=${case_item.task_id}`)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') navigate(`/review?task_id=${case_item.task_id}`) }}
                     role="button"
                     tabIndex={0}
+                    aria-label={`${case_item.title} - ${t('home.demo.view_details')}`}
                   >
                     <div className="case-icon">{case_item.icon}</div>
                     <h3 className="case-title">{case_item.title}</h3>
@@ -782,46 +788,46 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
                   </button>
                 </div>
 
-                {/* Plan 2: 3 Reviews */}
+                {/* Plan 2: Semester Pack */}
                 <div className="pricing-card pricing-card-english pricing-featured">
-                  <div className="pricing-badge">Best Value</div>
-                  <h3 className="pricing-name">{t('home.pricing.pack3.name')}</h3>
+                  <div className="pricing-badge">{t('home.pricing.semester.badge')}</div>
+                  <h3 className="pricing-name">{t('home.pricing.semester.name')}</h3>
                   <div className="pricing-price">
                     <span className="currency">$</span>
-                    <span className="amount">{t('home.pricing.pack3.price')}</span>
+                    <span className="amount">{t('home.pricing.semester.price')}</span>
                   </div>
                   <ul className="pricing-features">
-                    {(t('home.pricing.pack3.features', { returnObjects: true }) as string[]).map((feature: string, index: number) => (
+                    {(t('home.pricing.semester.features', { returnObjects: true }) as string[]).map((feature: string, index: number) => (
                       <li key={index}>✓ {feature}</li>
                     ))}
                   </ul>
                   <button
                     className="pricing-btn pricing-btn-primary"
                     onClick={() => {
-                      isLoggedIn ? setShowPaymentModal('pack3') : setShowLoginModal(true)
+                      isLoggedIn ? setShowPaymentModal('semester') : setShowLoginModal(true)
                     }}
                   >
                     {t('home.pricing.buy_now')}
                   </button>
                 </div>
 
-                {/* Plan 3: 6 Reviews */}
+                {/* Plan 3: Academic Year Pack */}
                 <div className="pricing-card pricing-card-english">
-                  <div className="pricing-badge">Popular</div>
-                  <h3 className="pricing-name">{t('home.pricing.pack6.name')}</h3>
+                  <div className="pricing-badge">{t('home.pricing.yearly.badge')}</div>
+                  <h3 className="pricing-name">{t('home.pricing.yearly.name')}</h3>
                   <div className="pricing-price">
                     <span className="currency">$</span>
-                    <span className="amount">{t('home.pricing.pack6.price')}</span>
+                    <span className="amount">{t('home.pricing.yearly.price')}</span>
                   </div>
                   <ul className="pricing-features">
-                    {(t('home.pricing.pack6.features', { returnObjects: true }) as string[]).map((feature: string, index: number) => (
+                    {(t('home.pricing.yearly.features', { returnObjects: true }) as string[]).map((feature: string, index: number) => (
                       <li key={index}>✓ {feature}</li>
                     ))}
                   </ul>
                   <button
                     className="pricing-btn pricing-btn-primary"
                     onClick={() => {
-                      isLoggedIn ? setShowPaymentModal('pack6') : setShowLoginModal(true)
+                      isLoggedIn ? setShowPaymentModal('yearly') : setShowLoginModal(true)
                     }}
                   >
                     {t('home.pricing.buy_now')}

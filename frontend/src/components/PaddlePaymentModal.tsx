@@ -3,6 +3,7 @@
  * Supports USD payments via Paddle checkout overlay
  */
 import { useState, useEffect, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import { api } from '../api'
 import './PaymentModal.css'
 
@@ -13,7 +14,7 @@ interface PaddlePaymentModalProps {
   recordId?: number  // For unlock mode
 }
 
-// Paddle pricing in USD (from backend)
+// Pricing aligned with backend PADDLE_PRICING
 const PADDLE_PRICING = {
   single: {
     type: 'single',
@@ -23,10 +24,9 @@ const PADDLE_PRICING = {
     currency: 'USD',
     features: [
       '1 complete literature review',
-      'AI-powered paper search',
-      'Standardized citations',
-      'Word export',
-      'Email delivery'
+      'DOI-verifiable citations',
+      'Standard citation formats',
+      'Word & PDF export',
     ]
   },
   semester: {
@@ -75,17 +75,25 @@ const PADDLE_PRICING = {
 const IS_DEV = window.location.hostname === 'localhost' ||
   window.location.hostname === '127.0.0.1'
 
+// Extend Window type for Paddle.js
+declare global {
+  interface Window {
+    Paddle?: any
+  }
+}
+
 export function PaddlePaymentModal({ onClose, onPaymentSuccess, planType, recordId }: PaddlePaymentModalProps) {
+  const { t } = useTranslation()
   const [, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [paymentStatus, setPaymentStatus] = useState<'idle' | 'creating' | 'waiting' | 'paid' | 'failed'>('idle')
   const [orderNo, setOrderNo] = useState('')
-  const [, setCheckoutUrl] = useState('')
+  const [checkoutUrl, setCheckoutUrl] = useState('')
 
   const plan = PADDLE_PRICING[planType as keyof typeof PADDLE_PRICING] || PADDLE_PRICING.single
   const isUnlockMode = planType === 'unlock' && recordId !== undefined
 
-  // Esc 关闭弹窗
+  // Esc to close
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose()
@@ -94,7 +102,7 @@ export function PaddlePaymentModal({ onClose, onPaymentSuccess, planType, record
     return () => document.removeEventListener('keydown', handleEscape)
   }, [onClose])
 
-  // 创建 Paddle 支付会话
+  // Create Paddle payment session
   const createPayment = useCallback(async () => {
     setLoading(true)
     setError('')
@@ -104,10 +112,8 @@ export function PaddlePaymentModal({ onClose, onPaymentSuccess, planType, record
       let result
 
       if (isUnlockMode && recordId !== undefined) {
-        // Unlock mode: use unlock API
         result = await api.createPaddleUnlock(recordId)
       } else {
-        // Subscription mode: use subscription API
         result = await api.createPaddleSubscription(planType)
       }
 
@@ -115,34 +121,36 @@ export function PaddlePaymentModal({ onClose, onPaymentSuccess, planType, record
       setCheckoutUrl(result.checkout_url)
       setPaymentStatus('waiting')
 
-      // 初始化 Paddle checkout
-      if (!IS_DEV && window.Paddle) {
-        // 生产环境：使用 Paddle.js 打开 checkout overlay
-        // 注意：这里需要根据实际的 Paddle.js API 调整
-        // Paddle.Initialize({ ... })
-        // Paddle.Checkout.open({ ... })
+      if (!IS_DEV && result.checkout_url) {
+        // Production: open Paddle checkout
+        if (window.Paddle) {
+          window.Paddle.Checkout.open({
+            url: result.checkout_url,
+          })
+        } else {
+          // Fallback: redirect to checkout URL
+          window.open(result.checkout_url, '_blank')
+        }
       } else if (IS_DEV) {
-        // 开发环境：自动触发模拟支付
+        // Development: auto-trigger mock payment
         setTimeout(async () => {
           try {
-            // 调用模拟支付回调 URL
             await fetch(result.checkout_url.replace(window.location.origin, ''))
-            // 轮询会检测到支付成功
           } catch (err) {
-            console.error('模拟支付失败:', err)
+            console.error('Mock payment failed:', err)
           }
         }, 3000)
       }
     } catch (err: any) {
-      const msg = err?.response?.data?.detail || err?.message || 'Failed to create payment. Please try again.'
+      const msg = err?.response?.data?.detail || err?.message || t('payment.failed')
       setError(msg)
       setPaymentStatus('failed')
     } finally {
       setLoading(false)
     }
-  }, [planType, isUnlockMode, recordId])
+  }, [planType, isUnlockMode, recordId, t])
 
-  // 轮询支付状态
+  // Poll payment status
   useEffect(() => {
     if (!orderNo || paymentStatus === 'paid') return
 
@@ -155,14 +163,14 @@ export function PaddlePaymentModal({ onClose, onPaymentSuccess, planType, record
           onPaymentSuccess(plan.credits)
         }
       } catch {
-        // 忽略轮询错误，继续轮询
+        // Continue polling
       }
     }, 3000)
 
     return () => clearInterval(pollingInterval)
   }, [orderNo, paymentStatus, onPaymentSuccess, plan.credits])
 
-  // 自动创建订单
+  // Auto-create order on mount
   useEffect(() => {
     createPayment()
   }, [createPayment])
@@ -178,17 +186,19 @@ export function PaddlePaymentModal({ onClose, onPaymentSuccess, planType, record
   return (
     <div className="payment-modal-overlay" onClick={handleClose}>
       <div className="payment-modal" onClick={e => e.stopPropagation()}>
-        <button className="payment-modal-close" onClick={handleClose}>&times;</button>
+        <button className="payment-modal-close" onClick={handleClose} aria-label="Close">&times;</button>
 
         {/* Header: Plan Information */}
         <div className="payment-modal-header">
           <span className="payment-modal-icon">💳</span>
-          <h2 className="payment-modal-title">Buy {plan.name}</h2>
+          <h2 className="payment-modal-title">{t('payment.buy', { name: plan.name })}</h2>
           <p className="payment-modal-price">
             <span className="amount">${plan.price}</span>
-            <span className="currency">{plan.currency}</span>
+            <span className="currency"> {plan.currency}</span>
           </p>
-          <p className="payment-modal-credits">{plan.credits} review credits</p>
+          {plan.credits > 0 && (
+            <p className="payment-modal-credits">{t('payment.credits_info', { credits: plan.credits })}</p>
+          )}
           <ul className="payment-modal-features">
             {plan.features.map((f: string, i: number) => (
               <li key={i}>✓ {f}</li>
@@ -201,7 +211,7 @@ export function PaddlePaymentModal({ onClose, onPaymentSuccess, planType, record
           {paymentStatus === 'creating' && (
             <div className="payment-modal-loading">
               <div className="payment-spinner"></div>
-              <p>Creating payment session...</p>
+              <p>{t('payment.creating')}</p>
             </div>
           )}
 
@@ -210,26 +220,38 @@ export function PaddlePaymentModal({ onClose, onPaymentSuccess, planType, record
               {IS_DEV ? (
                 <div className="payment-modal-devpay">
                   <p className="payment-dev-hint">
-                    🔧 Development Mode · Auto-payment in 3 seconds
+                    {t('payment.auto_payment')}
                   </p>
-                  <p className="payment-dev-order">Order: {orderNo}</p>
+                  <p className="payment-dev-order">{t('payment.order_no', { orderNo })}</p>
                   <div className="payment-modal-polling">
                     <div className="payment-spinner small"></div>
-                    <p>Processing payment...</p>
+                    <p>{t('payment.processing')}</p>
                   </div>
                 </div>
               ) : (
                 <div className="payment-modal-paddle">
-                  <p className="payment-pay-hint">Complete your payment securely via Paddle</p>
-                  <p className="payment-order-info">Order: {orderNo} · Amount: ${plan.price}</p>
+                  <p className="payment-pay-hint">{t('payment.pay_hint')}</p>
+                  <p className="payment-order-info">
+                    {t('payment.order_info', { orderNo, amount: plan.price })}
+                  </p>
+                  {checkoutUrl && !window.Paddle && (
+                    <a
+                      href={checkoutUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="payment-modal-btn primary"
+                    >
+                      {t('payment.pay_now')}
+                    </a>
+                  )}
                   <div className="payment-modal-polling">
                     <div className="payment-spinner small"></div>
-                    <p>Waiting for payment completion...</p>
+                    <p>{t('payment.waiting')}</p>
                   </div>
                 </div>
               )}
               <button className="payment-cancel-btn" onClick={handleClose}>
-                Cancel
+                {t('payment.cancel')}
               </button>
             </div>
           )}
@@ -237,16 +259,21 @@ export function PaddlePaymentModal({ onClose, onPaymentSuccess, planType, record
           {paymentStatus === 'paid' && (
             <div className="payment-modal-success">
               <span className="payment-success-icon">✓</span>
-              <h3>Payment Successful</h3>
-              <p>{isUnlockMode ? 'Your review is now unlocked for Word export' : `You now have ${plan.credits} review credits`}</p>
-              <button className="payment-modal-btn" onClick={handleClose}>Done</button>
+              <h3>{t('payment.success_title')}</h3>
+              <p>
+                {isUnlockMode
+                  ? t('payment.success_unlock')
+                  : t('payment.success_credits', { credits: plan.credits })
+                }
+              </p>
+              <button className="payment-modal-btn" onClick={handleClose}>{t('common.done')}</button>
             </div>
           )}
 
           {paymentStatus === 'failed' && error && (
             <div className="payment-modal-error">
               <p className="payment-error-text">{error}</p>
-              <button className="payment-modal-btn" onClick={handleRetry}>Retry</button>
+              <button className="payment-modal-btn" onClick={handleRetry}>{t('payment.retry')}</button>
             </div>
           )}
         </div>

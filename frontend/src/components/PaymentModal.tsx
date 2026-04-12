@@ -155,7 +155,7 @@ export function PaymentModal({ onClose, onPaymentSuccess, planType, recordId }: 
   return (
     <div className="payment-modal-overlay" onClick={handleClose}>
       <div className="payment-modal" onClick={e => e.stopPropagation()}>
-        <button className="payment-modal-close" onClick={handleClose}>&times;</button>
+        <button className="payment-modal-close" onClick={handleClose} aria-label="Close">&times;</button>
 
         {/* 头部：套餐信息 */}
         <div className="payment-modal-header">
