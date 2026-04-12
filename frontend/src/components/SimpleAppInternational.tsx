@@ -114,11 +114,12 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
       })
 
       if (!submitResponse.success || !submitResponse.data?.task_id) {
-        if (submitResponse.message?.includes('credits')) {
-          setError(submitResponse.message)
+        const msg = submitResponse.message || ''
+        if (msg.includes('credits') || msg.includes('额度')) {
+          setError(msg)
           setShowPaymentModal('single')
         } else {
-          setError(submitResponse.message || t('home.errors.task_failed'))
+          setError(msg || t('home.errors.task_failed'))
         }
         setIsGenerating(false)
         return
@@ -448,8 +449,8 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
       </aside>
 
       <div className="home-container">
-        {/* Hero Section */}
-        <div className="home-hero-wrapper">
+        {/* Hero Section with Input */}
+        <div id="generate" className="home-hero-wrapper">
           <div className="home-hero">
             <span className="hero-accent">{t('home.hero.accent')}</span>
             <h1 className="home-title">
@@ -476,10 +477,51 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
               </div>
             </div>
           </div>
+
+          {/* Input Section - Directly in Hero */}
+          <div className="home-input-section">
+            {isLoggedIn && (
+              <span className={`credits-badge ${prevCredits !== credits ? 'credits-updated' : ''}`}>
+                {t('home.input.credits_remaining')} <span className="credits-number">{credits}</span>
+              </span>
+            )}
+            <div className="input-section-header">
+              <div className="input-section-title-row">
+                <h2 className="input-section-title">{t('home.input.title')}</h2>
+              </div>
+              <p className="input-section-subtitle">{t('home.input.subtitle')}</p>
+            </div>
+
+            <div className="input-wrapper">
+              <textarea
+                className="topic-input"
+                placeholder={t('home.input.placeholder')}
+                value={topic}
+                onChange={(e) => setTopic(e.target.value)}
+                disabled={isGenerating}
+                rows={3}
+              />
+              <div className="input-actions">
+                <button
+                  className="generate-btn"
+                  onClick={handleGenerate}
+                  disabled={isGenerating || !topic.trim()}
+                >
+                  {isGenerating ? t('home.input.button_generating') : t('home.input.button')}
+                </button>
+                <button
+                  className="secondary-btn"
+                  onClick={() => document.getElementById('process')?.scrollIntoView({ behavior: 'smooth' })}
+                >
+                  {t('home.input.how_it_works')}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Data Sources Section */}
-        <div id="generate" className="data-sources-section">
+        <div className="data-sources-section">
           <div className="section-inner">
             <p className="data-sources-title">{t('home.sources.title')}</p>
             <div className="data-sources-logos">
@@ -487,47 +529,6 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
               <div className="data-source-logo">IEEE Xplore</div>
               <div className="data-source-logo">CrossRef</div>
               <div className="data-source-logo">Semantic Scholar</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Input Section - Integrated in Hero */}
-        <div className="home-input-section">
-          {isLoggedIn && (
-            <span className={`credits-badge ${prevCredits !== credits ? 'credits-updated' : ''}`}>
-              {t('home.input.credits_remaining')} <span className="credits-number">{credits}</span>
-            </span>
-          )}
-          <div className="input-section-header">
-            <div className="input-section-title-row">
-              <h2 className="input-section-title">{t('home.input.title')}</h2>
-            </div>
-            <p className="input-section-subtitle">{t('home.input.subtitle')}</p>
-          </div>
-
-          <div className="input-wrapper">
-            <textarea
-              className="topic-input"
-              placeholder={t('home.input.placeholder')}
-              value={topic}
-              onChange={(e) => setTopic(e.target.value)}
-              disabled={isGenerating}
-              rows={3}
-            />
-            <div className="input-actions">
-              <button
-                className="generate-btn"
-                onClick={handleGenerate}
-                disabled={isGenerating || !topic.trim()}
-              >
-                {isGenerating ? t('home.input.button_generating') : t('home.input.button')}
-              </button>
-              <button
-                className="secondary-btn"
-                onClick={() => document.getElementById('process')?.scrollIntoView({ behavior: 'smooth' })}
-              >
-                {t('home.input.how_it_works')}
-              </button>
             </div>
           </div>
         </div>

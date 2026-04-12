@@ -93,7 +93,8 @@ class SmartReviewGeneratorFinal:
             papers=papers,
             model=model,
             search_params=search_params,
-            total_papers_count=len(papers)
+            total_papers_count=len(papers),
+            language=language
         )
 
         # === 步骤 3: 提取并排序引用 ===
@@ -114,7 +115,8 @@ class SmartReviewGeneratorFinal:
         references_formatted = self._format_references_ieee(final_references)
 
         # === 步骤 6: 合并最终内容 ===
-        final_review = final_content + "\n\n## References\n\n" + references_formatted
+        references_title = "## References" if language == "en" else "## 参考文献"
+        final_review = final_content + f"\n\n{references_title}\n\n" + references_formatted
 
         # === 步骤 7: 最终验证 ===
         logger.debug("\n[步骤 7] 最终验证...")

@@ -61,7 +61,7 @@
 
 /* Add padding to hero section to account for fixed nav */
 .simple-home-international .home-hero-wrapper {
-  padding-top: calc(var(--spacing-xl) + 60px);
+  padding-top: calc(var(--spacing-lg) + 60px);
 }
 
 .simple-home-international .nav-logo {
@@ -152,44 +152,45 @@
 
 /* Hero Section */
 .simple-home-international .home-hero-wrapper {
-  padding: var(--spacing-xl) 2rem;
+  padding: 3rem 2rem;
   max-width: 1200px;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: 1.2fr 0.8fr;
-  gap: var(--spacing-xl);
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 2rem;
   align-items: start;
+  scroll-margin-top: 100px;
 }
 
 .simple-home-international .home-hero {
-  padding-top: 1rem;
+  padding-top: 0.5rem;
 }
 
 .simple-home-international .home-title {
-  font-size: clamp(2.5rem, 5vw, 3.5rem);
+  font-size: clamp(2.25rem, 4.5vw, 3rem);
   font-weight: 700;
   line-height: 1.15;
   color: var(--academic-blue-primary);
-  margin-bottom: var(--spacing-md);
+  margin-bottom: 1rem;
 }
 
 .simple-home-international .home-subtitle {
-  font-size: 1.125rem;
+  font-size: 1rem;
   color: var(--text-gray);
-  line-height: 1.7;
-  margin-bottom: var(--spacing-md);
+  line-height: 1.6;
+  margin-bottom: 0;
   max-width: 540px;
 }
 
 .simple-home-international .hero-accent {
   display: inline-block;
-  padding: 0.5rem 1rem;
+  padding: 0.4rem 0.9rem;
   background: var(--academic-blue-light);
   color: var(--academic-blue-primary);
   border-radius: 20px;
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   font-weight: 600;
-  margin-bottom: var(--spacing-md);
+  margin-bottom: 1rem;
 }
 
 /* Hero CTA Button */
@@ -275,8 +276,34 @@
 
 /* Input Section - Integrated in Hero */
 .simple-home-international .home-input-section {
-  margin-top: var(--spacing-xl);
-  padding: 0;
+  grid-column: 1 / -1;
+  margin-top: 1.5rem;
+  padding: 2rem 2.5rem 2.25rem;
+  background: white;
+  border-radius: 24px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.06);
+  border: 1px solid var(--light-gray);
+  position: relative;
+  max-width: 900px;
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+}
+
+/* Credits Badge - Blue Theme for International */
+.simple-home-international .credits-badge {
+  background: linear-gradient(135deg, var(--academic-blue-primary) 0%, var(--academic-blue-secondary) 100%);
+  color: #fff;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', 'Roboto', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.3rem 0.85rem;
+  border-radius: 0 24px 0 12px;
+  white-space: nowrap;
+  position: absolute;
+  right: -1px;
+  top: -1px;
+  box-shadow: 0 4px 12px rgba(26, 54, 93, 0.3);
 }
 
 /* Visual Stats Card */
@@ -284,31 +311,31 @@
   background: linear-gradient(135deg, var(--academic-blue-light) 0%, #fff 100%);
   border: 1px solid var(--academic-blue-border);
   border-radius: 16px;
-  padding: var(--spacing-lg);
+  padding: 1.5rem;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
 }
 
 .simple-home-international .visual-stats {
   display: grid;
   grid-template-columns: 1fr;
-  gap: var(--spacing-lg);
+  gap: 1rem;
 }
 
 .simple-home-international .visual-stat {
   text-align: center;
-  padding: 0.5rem 0;
+  padding: 0.25rem 0;
 }
 
 .simple-home-international .visual-stat-number {
   display: block;
-  font-size: 2.5rem;
+  font-size: 2rem;
   font-weight: 700;
   color: var(--academic-blue-primary);
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.15rem;
 }
 
 .simple-home-international .visual-stat-label {
-  font-size: 0.9375rem;
+  font-size: 0.8125rem;
   color: var(--text-gray);
   font-weight: 500;
 }
@@ -355,48 +382,42 @@
   transition: opacity 0.2s;
 }
 
-/* Input Section */
-.simple-home-international .home-input-section {
-  max-width: 900px;
-  margin: 0 auto;
-  padding: var(--spacing-xl) 2rem;
-}
-
 .simple-home-international .input-section-header {
   text-align: center;
-  margin-bottom: var(--spacing-lg);
+  margin-bottom: 1.25rem;
 }
 
 .simple-home-international .input-section-title {
-  font-size: 2rem;
+  font-size: 1.75rem;
   font-weight: 700;
   color: var(--academic-blue-primary);
-  margin-bottom: var(--spacing-sm);
+  margin-bottom: 0.75rem;
 }
 
 .simple-home-international .input-section-subtitle {
   color: var(--text-gray);
   margin-bottom: 0;
+  font-size: 1rem;
 }
 
 .simple-home-international .input-wrapper {
   background: var(--cream-white);
   border: 2px solid var(--light-gray);
   border-radius: 16px;
-  padding: var(--spacing-md);
+  padding: 1.25rem;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 .simple-home-international .topic-input {
   width: 100%;
-  padding: 1rem;
+  padding: 1rem 1.125rem;
   border: 1px solid var(--light-gray);
   border-radius: 12px;
-  font-size: 1rem;
+  font-size: 1.0625rem;
   font-family: inherit;
   resize: vertical;
   transition: border-color 0.2s, box-shadow 0.2s;
-  margin-bottom: var(--spacing-md);
+  margin-bottom: 1.125rem;
 }
 
 .simple-home-international .topic-input:focus {
@@ -416,10 +437,10 @@
   background: var(--academic-blue-primary);
   color: var(--cream-white);
   border: none;
-  padding: 1rem 2.5rem;
+  padding: 1rem 2.25rem;
   border-radius: 10px;
-  font-size: 1rem;
-  font-weight: 600;
+  font-size: 1.0625rem;
+  font-weight: 700;
   cursor: pointer;
   transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
   box-shadow: 0 4px 12px rgba(26, 54, 93, 0.2);
@@ -837,9 +858,6 @@
     padding: var(--spacing-lg) 1rem;
   }
 
-  .simple-home-international .home-input-section {
-    padding: var(--spacing-lg) 1rem;
-  }
 
   .simple-home-international .data-sources-logos {
     gap: var(--spacing-md);
