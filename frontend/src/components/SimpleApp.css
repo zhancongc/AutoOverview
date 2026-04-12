@@ -561,9 +561,9 @@
 }
 
 .comparison-flow-auto {
-  background: #F0FFF4;
-  border: 1.5px solid #9AE6B4;
-  box-shadow: 0 8px 24px rgba(39, 103, 73, 0.1);
+  background: rgba(214, 48, 49, 0.04);
+  border: 1.5px solid rgba(214, 48, 49, 0.25);
+  box-shadow: 0 8px 24px rgba(214, 48, 49, 0.1);
 }
 
 .comparison-flow-label {
@@ -579,7 +579,7 @@
 }
 
 .comparison-flow-auto .comparison-flow-label {
-  color: #276749;
+  color: var(--academic-red);
 }
 
 .comparison-flow-steps {
@@ -620,8 +620,8 @@
 }
 
 .comparison-flow-auto .comparison-flow-step-num {
-  background: rgba(39, 103, 73, 0.1);
-  color: #276749;
+  background: rgba(214, 48, 49, 0.1);
+  color: var(--academic-red);
 }
 
 .comparison-flow-result {
@@ -645,7 +645,7 @@
 }
 
 .comparison-flow-auto .comparison-flow-time {
-  color: #276749;
+  color: var(--academic-red);
 }
 
 .comparison-flow-mood {
@@ -1831,13 +1831,13 @@
 }
 
 .toast-success {
-  border-left: 4px solid #00b894;
+  border-left: 4px solid var(--academic-red);
 }
 
 .toast-icon {
   width: 24px;
   height: 24px;
-  background: #00b894;
+  background: var(--academic-red);
   color: #fff;
   border-radius: 50%;
   display: flex;

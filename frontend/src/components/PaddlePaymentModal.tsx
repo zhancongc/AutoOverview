@@ -26,7 +26,7 @@ const PADDLE_PRICING = {
       '1 complete literature review',
       'DOI-verifiable citations',
       'Standard citation formats',
-      'Word & PDF export',
+      'Word export',
     ]
   },
   semester: {
