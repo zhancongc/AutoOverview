@@ -294,5 +294,55 @@
     "previous": "上一步",
     "done": "完成",
     "payment_success": "支付成功！额度已充值到您的账户"
+  },
+  "input": {
+    "title": "一键生成论文综述",
+    "subtitle": "输入研究主题，AI 为您生成专业文献综述",
+    "language": "生成语言：",
+    "language_zh": "中文",
+    "language_en": "English",
+    "language_hint_zh": "适用于中文期刊投稿",
+    "language_hint_en": "适用于英文期刊投稿",
+    "placeholder": "请输入您的研究主题，例如：深度学习在图像识别中的应用",
+    "button": "立即生成我的综述初稿",
+    "button_generating": "生成中...",
+    "credits_remaining": "剩余",
+    "retry": "重试"
+  },
+  "pricing": {
+    "title": "灵活定价，按需付费",
+    "note": "额度永久有效，不设过期时间。注册即送 1 篇免费综述额度。",
+    "single": {
+      "name": "单次购买",
+      "features": [
+        "1 次完整文献综述",
+        "AI 智能文献检索",
+        "规范引用格式",
+        "Word 导出"
+      ]
+    },
+    "semester": {
+      "name": "学期套餐",
+      "features": [
+        "10 次综述额度",
+        "优先处理",
+        "高级引用格式",
+        "包含单次购买所有功能",
+        "有效期 6 个月"
+      ]
+    },
+    "yearly": {
+      "name": "学年套餐",
+      "features": [
+        "30 次综述额度",
+        "优先处理",
+        "高级引用格式",
+        "包含学期套餐所有功能",
+        "有效期 12 个月"
+      ]
+    },
+    "buy_single": "立即购买",
+    "choose_semester": "选择标准包",
+    "choose_yearly": "选择进阶包"
   }
 }
