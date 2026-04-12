@@ -24,6 +24,8 @@ ENV/
 # Node
 node_modules/
 dist/
+dist-en/
+dist-zh/
 build/
 *.log
 .DS_Store

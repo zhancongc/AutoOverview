@@ -90,7 +90,7 @@
       },
       "semester": {
         "name": "Semester Pack",
-        "badge": "Best Value",
+        "badge": "Popular",
         "price": "29.99",
         "unit": "USD",
         "features": [
@@ -103,7 +103,7 @@
       },
       "yearly": {
         "name": "Academic Year Pack",
-        "badge": "Popular",
+        "badge": "Best Value",
         "price": "79.99",
         "unit": "USD",
         "features": [
