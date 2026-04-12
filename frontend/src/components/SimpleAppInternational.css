@@ -273,6 +273,12 @@
   font-family: 'Source Sans Pro', sans-serif;
 }
 
+/* Input Section - Integrated in Hero */
+.simple-home-international .home-input-section {
+  margin-top: var(--spacing-xl);
+  padding: 0;
+}
+
 /* Visual Stats Card */
 .simple-home-international .visual-card {
   background: linear-gradient(135deg, var(--academic-blue-light) 0%, #fff 100%);

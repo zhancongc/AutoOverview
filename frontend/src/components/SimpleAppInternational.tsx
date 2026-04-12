@@ -456,31 +456,6 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
               <span dangerouslySetInnerHTML={{ __html: t('home.hero.title') }} />
             </h1>
             <p className="home-subtitle">{t('home.hero.subtitle')}</p>
-
-            {/* Hero CTA Button */}
-            <div className="hero-cta">
-              <button
-                className="hero-cta-btn"
-                onClick={() => {
-                  const inputSection = document.getElementById('input-section')
-                  const textarea = document.querySelector('.topic-input') as HTMLTextAreaElement
-                  if (inputSection) {
-                    const navHeight = 60
-                    const elPosition = inputSection.getBoundingClientRect().top + window.pageYOffset
-                    window.scrollTo({ top: elPosition - navHeight, behavior: 'smooth' })
-                    // Auto focus textarea after scroll
-                    setTimeout(() => {
-                      textarea?.focus()
-                    }, 500)
-                  }
-                }}
-              >
-                <span className="hero-cta-icon">✨</span>
-                <span className="hero-cta-text">{t('home.hero.cta_button')}</span>
-                <span className="hero-cta-arrow">↓</span>
-              </button>
-              <p className="hero-cta-hint">{t('home.hero.cta_hint')}</p>
-            </div>
           </div>
 
           <div className="hero-visual">
@@ -516,8 +491,8 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
           </div>
         </div>
 
-        {/* Input Section */}
-        <div id="input-section" className="home-input-section">
+        {/* Input Section - Integrated in Hero */}
+        <div className="home-input-section">
           {isLoggedIn && (
             <span className={`credits-badge ${prevCredits !== credits ? 'credits-updated' : ''}`}>
               {t('home.input.credits_remaining')} <span className="credits-number">{credits}</span>
