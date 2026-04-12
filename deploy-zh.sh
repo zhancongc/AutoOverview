@@ -115,7 +115,7 @@ server {
     location /redoc { proxy_pass http://autooverview_backend; }
 
     # Frontend static files
-    root /app/AutoOverview/frontend/dist;
+    root /app/AutoOverview/frontend/dist-zh;
     index index.html;
 
     location /assets {
