@@ -182,7 +182,7 @@
 .cookie-banner-minimized {
   position: fixed;
   bottom: 1.5rem;
-  right: 1.5rem;
+  left: 1.5rem;
   z-index: 9999;
   background: white;
   border-radius: 50px;
@@ -236,6 +236,6 @@
 
   .cookie-banner-minimized {
     bottom: 1rem;
-    right: 1rem;
+    left: 1rem;
   }
 }
