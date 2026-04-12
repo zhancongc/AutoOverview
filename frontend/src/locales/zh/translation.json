@@ -168,7 +168,10 @@
       "role3": "高校教师"
     },
     "footer": {
-      "copyright": "© 2026 AutoOverview. All rights reserved."
+      "copyright": "© 2026 AutoOverview. All rights reserved.",
+      "terms": "用户协议",
+      "privacy": "隐私政策",
+      "refund": "退款政策"
     },
     "nav": {
       "generate": "生成综述",
@@ -276,7 +279,25 @@
     "login_desc": "请输入邮箱获取验证码",
     "register_desc": "请输入邮箱获取验证码",
     "logining": "登录中...",
-    "registering": "注册中..."
+    "registering": "注册中...",
+    "welcome": "欢迎使用 AutoOverview",
+    "email_placeholder": "请输入邮箱",
+    "code_placeholder": "请输入6位验证码",
+    "login_button": "登录",
+    "sending": "发送中...",
+    "seconds": "秒",
+    "processing": "处理中...",
+    "error_email_required": "请输入邮箱",
+    "error_code_required": "请输入验证码",
+    "error_send_failed": "发送失败，请稍后重试",
+    "error_operation_failed": "操作失败，请稍后重试",
+    "success_code_sent": "验证码已发送",
+    "agreement_required": "请先同意用户协议和隐私政策",
+    "agreement_label": "我已阅读并同意",
+    "agreement_and": "和",
+    "other_methods": "其他登录方式",
+    "wechat_coming": "微信登录即将上线",
+    "alipay_coming": "支付宝登录即将上线"
   },
   "common": {
     "loading": "加载中...",

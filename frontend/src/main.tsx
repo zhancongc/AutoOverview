@@ -20,6 +20,9 @@ import './index.css'
 // 检测是否为英文版
 const isEnglishVersion = typeof __BUILD_VERSION__ !== 'undefined' && __BUILD_VERSION__ === 'english'
 
+// 设置根元素版本标识，用于 CSS 作用域隔离
+document.documentElement.classList.add(isEnglishVersion ? 'intl' : 'zh')
+
 function BackToTop() {
   const [visible, setVisible] = useState(false)
 
