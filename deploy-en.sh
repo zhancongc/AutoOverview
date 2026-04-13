@@ -79,7 +79,9 @@ $DOMAIN {
     tls $SSL_CERT $SSL_KEY
 
     # API 反向代理到上海后端
-    reverse_proxy /api/* $BACKEND_HOST:$BACKEND_PORT
+    handle /api/* {
+        reverse_proxy $BACKEND_HOST:$BACKEND_PORT
+    }
 
     # 静态文件服务
     root * $DIST_DIR
