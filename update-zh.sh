@@ -34,8 +34,8 @@ echo ""
 echo "[3/3] 重启后端..."
 cd "$APP_DIR/backend"
 
-# 安装新增依赖
-[ -f "requirements.txt" ] && pip3 install -q -r requirements.txt
+# 安装新增依赖（使用 venv）
+[ -f "requirements.txt" ] && "$APP_DIR/backend/.venv/bin/pip" install -q -r requirements.txt
 
 systemctl restart autooverview
 echo "✓ 后端已重启"
