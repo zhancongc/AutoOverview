@@ -377,6 +377,12 @@
   box-shadow: none;
 }
 
+.modal-submit-success {
+  background: linear-gradient(135deg, #00C853 0%, #009624 100%) !important;
+  box-shadow: 0 8px 24px rgba(0, 200, 83, 0.35) !important;
+  opacity: 1 !important;
+}
+
 /* Divider */
 .login-modal-divider {
   display: flex;

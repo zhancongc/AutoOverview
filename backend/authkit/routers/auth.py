@@ -126,7 +126,7 @@ async def send_code(
     - **email**: 邮箱地址
     - **purpose**: 用途 (login/register/reset_password)
     """
-    success, message = auth_service.send_verification_code(request.email, request.purpose)
+    success, message = auth_service.send_verification_code(request.email, request.purpose, request.language)
 
     if success:
         # 隐藏邮箱中间部分

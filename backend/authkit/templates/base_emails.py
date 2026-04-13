@@ -16,6 +16,7 @@ class EmailTemplateConfig:
         self.app_url = os.getenv("AUTH_EMAIL_APP_URL", "#")
         self.logo_emoji = os.getenv("AUTH_EMAIL_LOGO_EMOJI", "📚")
         self.contact_email = os.getenv("AUTH_EMAIL_CONTACT_EMAIL", "support@example.com")
+        self.contact_email_en = os.getenv("AUTH_EMAIL_CONTACT_EMAIL_EN", "service@plainkit.top")
         self.primary_color = os.getenv("AUTH_EMAIL_PRIMARY_COLOR", "#C0392B")
         self.secondary_color = os.getenv("AUTH_EMAIL_SECONDARY_COLOR", "#8E1A1A")
 
@@ -67,20 +68,39 @@ VERIFICATION_CODE_TEMPLATE = Template("""
             <h1>{{ app_name }}</h1>
         </div>
         <div class="content">
+            {% if language == 'en' %}
+            <p class="greeting">Hello!</p>
+            <p>You are verifying your identity for <strong>{{ purpose }}</strong>. Here is your verification code:</p>
+            {% else %}
             <p class="greeting">您好！</p>
             <p>您正在进行 <strong>{{ purpose }}</strong> 操作，验证码如下：</p>
+            {% endif %}
             <div class="code-box">
                 <div class="code">{{ code }}</div>
             </div>
+            {% if language == 'en' %}
+            <p class="expire-notice">
+                This code expires in <strong>{{ expire_minutes }}</strong> minutes. Please verify promptly.
+            </p>
+            <div class="warning">
+                ⚠️ If you did not request this code, please ignore this email. Your account is safe.
+            </div>
+            {% else %}
             <p class="expire-notice">
                 验证码有效期为 <strong>{{ expire_minutes }}</strong> 分钟，请尽快完成验证。
             </p>
             <div class="warning">
                 ⚠️ 如果这不是您的操作，请忽略此邮件，您的账号安全不会受到影响。
             </div>
+            {% endif %}
             <div class="footer">
+                {% if language == 'en' %}
+                <p>This email was sent automatically by <a href="{{ app_url }}">{{ app_name }}</a>. Please do not reply.</p>
+                <p>Questions? Contact us at {{ contact_email }}</p>
+                {% else %}
                 <p>此邮件由 <a href="{{ app_url }}">{{ app_name }}</a> 自动发送，请勿直接回复</p>
                 <p>如有疑问，请联系我们：{{ contact_email }}</p>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -123,12 +143,32 @@ WELCOME_TEMPLATE = Template("""
         </div>
         <div class="content">
             <p class="welcome-text">
+                {% if language == 'en' %}
+                {% if nickname %}
+                Dear <strong>{{ nickname }}</strong>,
+                {% else %}
+                Hello!
+                {% endif %}
+                {% else %}
                 {% if nickname %}
                 亲爱的 <strong>{{ nickname }}</strong>，
                 {% else %}
                 您好！
                 {% endif %}
+                {% endif %}
             </p>
+            {% if language == 'en' %}
+            <p>Thank you for signing up! Your account has been created successfully.</p>
+            <p>You can now start using our services.</p>
+
+            <div style="text-align: center;">
+                <a href="{{ app_url }}" class="cta-button">Get Started</a>
+            </div>
+
+            <p style="color: #666; font-size: 14px; margin-top: 25px;">
+                If you have any questions, feel free to contact us.
+            </p>
+            {% else %}
             <p>感谢您注册！您的账号已成功创建。</p>
             <p>现在您可以开始使用我们的服务了。</p>
 
@@ -139,10 +179,16 @@ WELCOME_TEMPLATE = Template("""
             <p style="color: #666; font-size: 14px; margin-top: 25px;">
                 如有任何问题，欢迎随时联系我们。
             </p>
+            {% endif %}
 
             <div class="footer">
+                {% if language == 'en' %}
+                <p>This email was sent automatically by <a href="{{ app_url }}">{{ app_name }}</a>. Please do not reply.</p>
+                <p>Contact us: {{ contact_email }}</p>
+                {% else %}
                 <p>此邮件由 <a href="{{ app_url }}">{{ app_name }}</a> 自动发送，请勿直接回复</p>
                 <p>联系我们：{{ contact_email }}</p>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -187,16 +233,37 @@ PASSWORD_RESET_TEMPLATE = Template("""
     <div class="container">
         <div class="header">
             <div class="logo">🔐</div>
-            <h1>重置密码</h1>
+            <h1>{% if language == 'en' %}Reset Password{% else %}重置密码{% endif %}</h1>
         </div>
         <div class="content">
+            {% if language == 'en' %}
+            <p>Hello!</p>
+            <p>We received a password reset request for your account. Here is your verification code:</p>
+            {% else %}
             <p>您好！</p>
             <p>我们收到了您的密码重置请求，验证码如下：</p>
+            {% endif %}
 
             <div class="code-box">
                 <div class="code">{{ code }}</div>
             </div>
 
+            {% if language == 'en' %}
+            <p>This code expires in <strong>{{ expire_minutes }}</strong> minutes.</p>
+
+            <div class="steps">
+                <strong>Reset Steps:</strong>
+                <ol>
+                    <li>Copy the code above</li>
+                    <li>Return to the app and enter the code</li>
+                    <li>Set your new password</li>
+                </ol>
+            </div>
+
+            <div class="warning">
+                ⚠️ If you did not request this, please ignore this email. Your account is safe.
+            </div>
+            {% else %}
             <p>验证码有效期为 <strong>{{ expire_minutes }}</strong> 分钟。</p>
 
             <div class="steps">
@@ -211,10 +278,16 @@ PASSWORD_RESET_TEMPLATE = Template("""
             <div class="warning">
                 ⚠️ 如果这不是您的操作，请忽略此邮件，您的账号安全不会受到影响。
             </div>
+            {% endif %}
 
             <div class="footer">
+                {% if language == 'en' %}
+                <p>This email was sent automatically by {{ app_name }}. Please do not reply.</p>
+                <p>Questions? Contact: {{ contact_email }}</p>
+                {% else %}
                 <p>此邮件由 {{ app_name }} 自动发送，请勿直接回复</p>
                 <p>如有疑问，请联系：{{ contact_email }}</p>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -223,28 +296,51 @@ PASSWORD_RESET_TEMPLATE = Template("""
 """)
 
 
-def get_verification_code_email(code: str, purpose: str = "登录", expire_minutes: int = 10) -> str:
+def _get_contact_email(language: str = "zh") -> str:
+    """根据语言返回联系邮箱"""
+    if language == "en":
+        return email_config.contact_email_en
+    return email_config.contact_email
+
+
+def get_verification_code_email(code: str, purpose: str = "登录", expire_minutes: int = 10, language: str = "zh") -> str:
     """获取验证码邮件 HTML"""
     return VERIFICATION_CODE_TEMPLATE.render(
         code=code,
         purpose=purpose,
         expire_minutes=expire_minutes,
-        **email_config.__dict__
+        language=language,
+        contact_email=_get_contact_email(language),
+        app_name=email_config.app_name,
+        app_url=email_config.app_url,
+        logo_emoji=email_config.logo_emoji,
+        primary_color=email_config.primary_color,
     )
 
 
-def get_welcome_email(nickname: Optional[str] = None) -> str:
+def get_welcome_email(nickname: Optional[str] = None, language: str = "zh") -> str:
     """获取欢迎邮件 HTML"""
     return WELCOME_TEMPLATE.render(
-        nickname=nickname or "用户",
-        **email_config.__dict__
+        nickname=nickname or ("User" if language == "en" else "用户"),
+        language=language,
+        contact_email=_get_contact_email(language),
+        app_name=email_config.app_name,
+        app_url=email_config.app_url,
+        logo_emoji=email_config.logo_emoji,
+        primary_color=email_config.primary_color,
+        gradient=email_config.gradient,
     )
 
 
-def get_password_reset_email(code: str, expire_minutes: int = 10) -> str:
+def get_password_reset_email(code: str, expire_minutes: int = 10, language: str = "zh") -> str:
     """获取密码重置邮件 HTML"""
     return PASSWORD_RESET_TEMPLATE.render(
         code=code,
         expire_minutes=expire_minutes,
-        **email_config.__dict__
+        language=language,
+        contact_email=_get_contact_email(language),
+        app_name=email_config.app_name,
+        app_url=email_config.app_url,
+        logo_emoji=email_config.logo_emoji,
+        primary_color=email_config.primary_color,
     )

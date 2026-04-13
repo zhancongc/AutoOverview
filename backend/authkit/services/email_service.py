@@ -84,7 +84,8 @@ class EmailService:
         self,
         to_email: str,
         code: str,
-        purpose: str = "login"
+        purpose: str = "login",
+        language: str = "zh"
     ) -> bool:
         """
         发送验证码邮件（使用通用模板）
@@ -93,28 +94,35 @@ class EmailService:
             to_email: 收件人邮箱
             code: 验证码
             purpose: 用途（登录/注册/重置密码）
+            language: 语言（zh/en）
 
         Returns:
             bool: 是否发送成功
         """
-        purpose_map = {
-            "login": "登录",
-            "register": "注册",
-            "reset_password": "重置密码"
-        }
-        purpose_text = purpose_map.get(purpose, purpose)
+        if language == "en":
+            purpose_map = {
+                "login": "Sign In",
+                "register": "Sign Up",
+                "reset_password": "Reset Password"
+            }
+            purpose_text = purpose_map.get(purpose, purpose)
+            subject = f"Verification Code - {purpose_text}"
+            text_content = f"""
+Your verification code is: {code}
 
-        subject = f"验证码 - {purpose_text}"
+This code expires in {config.VERIFICATION_CODE_EXPIRE_MINUTES} minutes.
 
-        # 使用通用模板
-        html_content = get_verification_code_email(
-            code=code,
-            purpose=purpose_text,
-            expire_minutes=config.VERIFICATION_CODE_EXPIRE_MINUTES
-        )
-
-        # 纯文本内容
-        text_content = f"""
+If you did not request this code, please ignore this email.
+"""
+        else:
+            purpose_map = {
+                "login": "登录",
+                "register": "注册",
+                "reset_password": "重置密码"
+            }
+            purpose_text = purpose_map.get(purpose, purpose)
+            subject = f"验证码 - {purpose_text}"
+            text_content = f"""
 您的验证码是：{code}
 
 验证码有效期为 {config.VERIFICATION_CODE_EXPIRE_MINUTES} 分钟。
@@ -122,26 +130,42 @@ class EmailService:
 如果这不是您的操作，请忽略此邮件。
 """
 
+        # 使用通用模板
+        html_content = get_verification_code_email(
+            code=code,
+            purpose=purpose_text,
+            expire_minutes=config.VERIFICATION_CODE_EXPIRE_MINUTES,
+            language=language
+        )
+
         return self.send_email(to_email, subject, html_content, text_content)
 
-    def send_welcome_email(self, to_email: str, nickname: Optional[str] = None) -> bool:
+    def send_welcome_email(self, to_email: str, nickname: Optional[str] = None, language: str = "zh") -> bool:
         """
         发送欢迎邮件（使用通用模板）
 
         Args:
             to_email: 收件人邮箱
             nickname: 昵称
+            language: 语言 (zh/en)
 
         Returns:
             bool: 是否发送成功
         """
-        subject = "欢迎注册！"
+        if language == "en":
+            subject = "Welcome to AutoOverview!"
+            text_content = f"""
+{'Dear ' + (nickname or 'User') + ',' if nickname else 'Hello!'}
 
-        # 使用通用模板
-        html_content = get_welcome_email(nickname=nickname or "用户")
+Thank you for signing up! Your account has been created successfully.
 
-        # 纯文本内容
-        text_content = f"""
+You can now start using our services.
+
+If you have any questions, feel free to contact us.
+"""
+        else:
+            subject = "欢迎注册！"
+            text_content = f"""
 {'亲爱的 ' + (nickname or '用户') + '，' if nickname else '您好！'}
 
 欢迎注册！您的账号已成功创建。
@@ -151,29 +175,37 @@ class EmailService:
 如有任何问题，欢迎随时联系我们。
 """
 
+        # 使用通用模板
+        html_content = get_welcome_email(nickname=nickname, language=language)
+
         return self.send_email(to_email, subject, html_content, text_content)
 
-    def send_password_reset_email(self, to_email: str, code: str) -> bool:
+    def send_password_reset_email(self, to_email: str, code: str, language: str = "zh") -> bool:
         """
         发送密码重置邮件（使用通用模板）
 
         Args:
             to_email: 收件人邮箱
             code: 验证码
+            language: 语言 (zh/en)
 
         Returns:
             bool: 是否发送成功
         """
-        subject = "重置密码"
+        if language == "en":
+            subject = "Reset Your Password"
+            text_content = f"""
+Hello!
 
-        # 使用通用模板
-        html_content = get_password_reset_email(
-            code=code,
-            expire_minutes=config.VERIFICATION_CODE_EXPIRE_MINUTES
-        )
+We received a password reset request. Your verification code is: {code}
 
-        # 纯文本内容
-        text_content = f"""
+This code expires in {config.VERIFICATION_CODE_EXPIRE_MINUTES} minutes.
+
+If you did not request this, please ignore this email.
+"""
+        else:
+            subject = "重置密码"
+            text_content = f"""
 您好！
 
 我们收到了您的密码重置请求，验证码如下：{code}
@@ -182,6 +214,13 @@ class EmailService:
 
 如果这不是您的操作，请忽略此邮件。
 """
+
+        # 使用通用模板
+        html_content = get_password_reset_email(
+            code=code,
+            expire_minutes=config.VERIFICATION_CODE_EXPIRE_MINUTES,
+            language=language
+        )
 
         return self.send_email(to_email, subject, html_content, text_content)
 

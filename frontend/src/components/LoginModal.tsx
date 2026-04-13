@@ -21,6 +21,8 @@ export function LoginModal({ onClose, onLoginSuccess, pendingTopic }: LoginModal
   const [message, setMessage] = useState('')
   const [countdown, setCountdown] = useState(0)
   const [agreedToTerms, setAgreedToTerms] = useState(false)
+  const isSubmitting = useRef(false)
+  const [loginSuccess, setLoginSuccess] = useState(false)
 
   // 点击外部关闭
   useEffect(() => {
@@ -62,7 +64,7 @@ export function LoginModal({ onClose, onLoginSuccess, pendingTopic }: LoginModal
     setMessage('')
 
     try {
-      const response = await authApi.sendCode(email, 'login')
+      const response = await authApi.sendCode(email, 'login', 'zh')
       if (response.success) {
         setMessage(t('auth.success_code_sent'))
         // 开始倒计时
@@ -88,17 +90,24 @@ export function LoginModal({ onClose, onLoginSuccess, pendingTopic }: LoginModal
   // 处理登录/注册
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    // 防抖：阻止重复提交
+    if (isSubmitting.current || loading) return
+    isSubmitting.current = true
+
     setError('')
     setMessage('')
 
     if (!email.trim()) {
       setError(t('auth.error_email_required'))
+      isSubmitting.current = false
       return
     }
 
     // 验证协议同意
     if (!agreedToTerms) {
       setError(t('auth.agreement_required'))
+      isSubmitting.current = false
       return
     }
 
@@ -109,6 +118,7 @@ export function LoginModal({ onClose, onLoginSuccess, pendingTopic }: LoginModal
       if (!code.trim()) {
         setError(t('auth.error_code_required'))
         setLoading(false)
+        isSubmitting.current = false
         return
       }
       const data = await authApi.loginWithCode(email, code)
@@ -121,11 +131,15 @@ export function LoginModal({ onClose, onLoginSuccess, pendingTopic }: LoginModal
         sessionStorage.setItem('pending_topic', pendingTopic)
       }
 
-      onLoginSuccess()
+      // 显示登录成功反馈
+      setLoginSuccess(true)
+      setTimeout(() => {
+        onLoginSuccess()
+      }, 800)
     } catch (err: any) {
       setError(err.response?.data?.detail || t('auth.error_operation_failed'))
-    } finally {
       setLoading(false)
+      isSubmitting.current = false
     }
   }
 
@@ -223,10 +237,10 @@ export function LoginModal({ onClose, onLoginSuccess, pendingTopic }: LoginModal
           {/* 提交按钮 */}
           <button
             type="submit"
-            className="modal-submit-button"
-            disabled={loading}
+            className={`modal-submit-button ${loginSuccess ? 'modal-submit-success' : ''}`}
+            disabled={loading || loginSuccess}
           >
-            {loading ? t('auth.processing') : t('auth.login_button')}
+            {loginSuccess ? t('common.success') : loading ? t('auth.processing') : t('auth.login_button')}
           </button>
         </form>
 
@@ -241,8 +255,9 @@ export function LoginModal({ onClose, onLoginSuccess, pendingTopic }: LoginModal
             </svg>
           </button>
           <button className="oauth-btn oauth-alipay" disabled title={t('auth.alipay_coming')}>
-            <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
-              <path d="M21.088.001H2.912C1.305.001 0 1.306 0 2.914V21.09c0 1.607 1.305 2.912 2.912 2.912h18.176c1.607 0 2.912-1.305 2.912-2.912V2.914c0-1.608-1.305-2.913-2.912-2.913zM7.13 18.293c-2.826 0-4.81-1.956-4.81-4.078 0-1.473.748-2.668 2.122-3.432.84-.454 1.988-.862 3.483-1.223-.652-1.276-1.178-2.48-1.178-3.582 0-1.73 1.256-3.096 3.23-3.096 1.703 0 2.97 1.178 2.97 2.786 0 1.472-1.06 2.548-2.544 3.398.574.916 1.238 1.845 1.935 2.72.76-.498 1.406-1.082 1.926-1.748l1.4 1.6c-.678.82-1.468 1.528-2.342 2.12 1.088 1.118 2.196 2.006 3.116 2.578l-1.168 2.104c-1.144-.804-2.308-1.84-3.408-3.026-1.114 1.456-2.612 2.68-4.692 2.68zm.396-2.17c1.32 0 2.38-.702 3.244-1.844a24.5 24.5 0 01-2.8-3.568c-1.63.444-2.532.92-2.98 1.396-.452.48-.612 1.02-.612 1.56 0 1.318 1.106 2.456 3.148 2.456z"/>
+            <svg viewBox="0 0 24 24" width="28" height="28">
+              <rect x="2" y="2" width="20" height="20" rx="4.5" fill="#1677FF"/>
+              <path fill="#fff" d="M7 8h10v1.8H7zm4.5-3.5h1.8v8h-1.8zM7.5 18c1.5-2.5 3.8-5 6.2-6.2l.8 1.4c-2.2 1.2-4.2 3.3-5.5 5.5zm5-7l1.5-.8c1.8 2.8 3 5 3.8 7l-1.6.6c-.7-1.8-2-4-3.7-6.8z"/>
             </svg>
           </button>
         </div>

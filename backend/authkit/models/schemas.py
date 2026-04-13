@@ -106,6 +106,7 @@ class SendCodeRequest(BaseModel):
     """发送验证码请求"""
     email: EmailStr
     purpose: str = Field(..., description="用途: register/login/reset_password")
+    language: str = Field(default="zh", description="语言: zh/en")
 
 
 class APIResponse(BaseModel):

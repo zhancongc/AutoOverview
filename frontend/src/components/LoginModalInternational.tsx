@@ -27,6 +27,8 @@ export function LoginModalInternational({ onClose, onLoginSuccess, pendingTopic 
   const [agreedToTerms, setAgreedToTerms] = useState(false)
   const [showTermsHint, setShowTermsHint] = useState(false)
   const [shakeCheckbox, setShakeCheckbox] = useState(false)
+  const isSubmitting = useRef(false)
+  const [loginSuccess, setLoginSuccess] = useState(false)
 
   // Click outside to close
   useEffect(() => {
@@ -68,7 +70,7 @@ export function LoginModalInternational({ onClose, onLoginSuccess, pendingTopic 
     setMessage('')
 
     try {
-      const response = await authApi.sendCode(email, 'login')
+      const response = await authApi.sendCode(email, 'login', 'en')
       if (response.success) {
         setMessage(t('auth.success_code_sent'))
         // Start countdown
@@ -94,11 +96,17 @@ export function LoginModalInternational({ onClose, onLoginSuccess, pendingTopic 
   // Handle login/register
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    // Debounce: prevent double clicks
+    if (isSubmitting.current || loading) return
+    isSubmitting.current = true
+
     setError('')
     setMessage('')
 
     if (!email.trim()) {
       setError(t('auth.error_email_required'))
+      isSubmitting.current = false
       return
     }
 
@@ -107,6 +115,7 @@ export function LoginModalInternational({ onClose, onLoginSuccess, pendingTopic 
       setShowTermsHint(true)
       setShakeCheckbox(true)
       setTimeout(() => setShakeCheckbox(false), 500)
+      isSubmitting.current = false
       return
     }
 
@@ -117,6 +126,7 @@ export function LoginModalInternational({ onClose, onLoginSuccess, pendingTopic 
       if (!code.trim()) {
         setError(t('auth.error_code_required'))
         setLoading(false)
+        isSubmitting.current = false
         return
       }
       const data = await authApi.loginWithCode(email, code)
@@ -129,11 +139,15 @@ export function LoginModalInternational({ onClose, onLoginSuccess, pendingTopic 
         sessionStorage.setItem('pending_topic', pendingTopic)
       }
 
-      onLoginSuccess()
+      // Show success feedback before closing
+      setLoginSuccess(true)
+      setTimeout(() => {
+        onLoginSuccess()
+      }, 800)
     } catch (err: any) {
       setError(err.response?.data?.detail || t('auth.error_operation_failed'))
-    } finally {
       setLoading(false)
+      isSubmitting.current = false
     }
   }
 
@@ -246,10 +260,10 @@ export function LoginModalInternational({ onClose, onLoginSuccess, pendingTopic 
           {/* Submit button */}
           <button
             type="submit"
-            className="modal-submit-button"
-            disabled={loading}
+            className={`modal-submit-button ${loginSuccess ? 'modal-submit-success' : ''}`}
+            disabled={loading || loginSuccess}
           >
-            {loading ? t('auth.processing') : t('auth.login_button')}
+            {loginSuccess ? t('common.success') : loading ? t('auth.processing') : t('auth.login_button')}
           </button>
         </form>
 

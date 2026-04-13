@@ -139,13 +139,14 @@ class AuthService:
             "user": UserResponse.from_user(user)
         }
 
-    def send_verification_code(self, email: str, purpose: str = "login") -> Tuple[bool, str]:
+    def send_verification_code(self, email: str, purpose: str = "login", language: str = "zh") -> Tuple[bool, str]:
         """
         发送验证码
 
         Args:
             email: 邮箱
             purpose: 用途 (login/register/reset_password)
+            language: 语言 (zh/en)
 
         Returns:
             (success, message)
@@ -182,7 +183,7 @@ class AuthService:
             return False, "验证码保存失败，请稍后重试"
 
         # 发送邮件
-        if not email_service.send_verification_code(email, code, purpose):
+        if not email_service.send_verification_code(email, code, purpose, language):
             return False, "邮件发送失败，请稍后重试"
 
         # 标记已发送

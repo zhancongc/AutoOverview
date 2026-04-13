@@ -67,10 +67,11 @@ authAxios.interceptors.response.use(
 
 export const authApi = {
   // 发送验证码
-  async sendCode(email: string, purpose: string = 'login'): Promise<APIResponse> {
+  async sendCode(email: string, purpose: string = 'login', language: string = 'zh'): Promise<APIResponse> {
     const response = await authAxios.post('/auth/send-code', {
       email,
-      purpose
+      purpose,
+      language
     })
     return response.data
   },
