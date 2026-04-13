@@ -39,9 +39,15 @@ echo ""
 echo "[3/4] 配置后端..."
 cd "$APP_DIR/backend"
 
+# Python 虚拟环境
+if [ ! -d ".venv" ]; then
+    python3 -m venv .venv
+fi
+source .venv/bin/activate
+
 # Python 依赖
 if [ -f "requirements.txt" ]; then
-    pip3 install -r requirements.txt
+    pip install -r requirements.txt
 fi
 
 # systemd 服务
@@ -54,7 +60,7 @@ After=network.target
 Type=simple
 User=root
 WorkingDirectory=$APP_DIR/backend
-ExecStart=/usr/bin/python3 -m uvicorn main:app --host 0.0.0.0 --port $BACKEND_PORT --reload
+ExecStart=$APP_DIR/backend/.venv/bin/python -m uvicorn main:app --host 0.0.0.0 --port $BACKEND_PORT --reload
 Restart=always
 RestartSec=5
 Environment=IS_DEV=false
