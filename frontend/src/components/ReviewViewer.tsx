@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef, useCallback, Fragment } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { CitationMarker } from './CitationTooltip'
+import { CitationMarker, CitationRangeMarker } from './CitationTooltip'
 import './ReviewViewer.css'
 
 interface TableOfContents {
@@ -81,17 +81,49 @@ export function ReviewViewer({ content, papers = [], hasPurchased = false, onToc
       const citations = match.match(/\[(\d+)\]/g)
       if (citations) {
         const numbers = citations.map(c => parseInt(c.replace(/[\[\]]/g, '')))
-        // 排序
+        // 排序去重
         numbers.sort((a, b) => a - b)
-        // 重新组合为 [1, 2, 3] 格式
-        return `[${numbers.join(', ')}]`
+        const unique = [...new Set(numbers)]
+        // 将连续数字合并为范围：[7, 8, 9, 11, 12] → "7-9, 11, 12"
+        const ranges: string[] = []
+        let rangeStart = unique[0]
+        let rangeEnd = unique[0]
+        for (let i = 1; i < unique.length; i++) {
+          if (unique[i] === rangeEnd + 1) {
+            rangeEnd = unique[i]
+          } else {
+            ranges.push(rangeStart === rangeEnd ? `${rangeStart}` : `${rangeStart}-${rangeEnd}`)
+            rangeStart = unique[i]
+            rangeEnd = unique[i]
+          }
+        }
+        ranges.push(rangeStart === rangeEnd ? `${rangeStart}` : `${rangeStart}-${rangeEnd}`)
+        return `[${ranges.join(', ')}]`
       }
       return match
     })
 
-    // 匹配 [数字] 或 [数字, 数字, ...] 格式的引用
+    // 匹配 [数字] 或 [数字, 数字, ...] 或 [数字-数字] 等格式的引用
     // 使用捕获组保留分隔符
-    const parts = cleanedText.split(/(\[\d+(?:,\s*\d+)*\])/g)
+    const parts = cleanedText.split(/(\[\d[\d,\s\-]*\d\]|\[\d+\])/g)
+
+    // 展开引用范围：[7-9, 11] → [7, 8, 9, 11]
+    const expandRange = (str: string): number[] => {
+      const nums: number[] = []
+      str.split(',').forEach(seg => {
+        const trimmed = seg.trim()
+        const rangeMatch = trimmed.match(/^(\d+)\s*-\s*(\d+)$/)
+        if (rangeMatch) {
+          const start = parseInt(rangeMatch[1])
+          const end = parseInt(rangeMatch[2])
+          for (let i = start; i <= end; i++) nums.push(i)
+        } else {
+          const n = parseInt(trimmed)
+          if (!isNaN(n)) nums.push(n)
+        }
+      })
+      return nums
+    }
 
     return parts.map((part, index) => {
       // 跳过空字符串
@@ -100,31 +132,19 @@ export function ReviewViewer({ content, papers = [], hasPurchased = false, onToc
       }
 
       // 检查是否是引用标记
-      const match = part.match(/\[(\d+(?:,\s*\d+)*)\]/)
+      const match = part.match(/\[(.+)\]/)
       if (match) {
-        const indices = match[1].split(',').map((s) => parseInt(s.trim()))
+        const indices = expandRange(match[1])
         // 如果是单个引用
         if (indices.length === 1) {
           const citationIndex = indices[0] - 1
           const paper = papers[citationIndex]
-          console.log(`[ReviewViewer] Single citation [${indices[0]}]`, { citationIndex, paper, papersLength: papers.length })
           return <CitationMarker key={`${index}-${indices[0]}`} index={indices[0]} paper={paper} />
         }
-        // 如果是多个引用 [1,2,3]，分别渲染
+        // 多引用：渲染一个可点击的 span，弹窗显示所有文献
+        const citedPapers = indices.map(idx => ({ index: idx, paper: papers[idx - 1] }))
         return (
-          <span key={index}>
-            {indices.map((idx, i) => {
-              const citationIndex = idx - 1
-              const paper = papers[citationIndex]
-              console.log(`[ReviewViewer] Multi citation [${idx}]`, { citationIndex, paper, papersLength: papers.length })
-              return (
-                <Fragment key={`${index}-${i}-${idx}`}>
-                  {i > 0 && ', '}
-                  <CitationMarker index={idx} paper={paper} />
-                </Fragment>
-              )
-            })}
-          </span>
+          <CitationRangeMarker key={`range-${index}`} display={part} citations={citedPapers} />
         )
       }
       return part

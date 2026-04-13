@@ -216,3 +216,71 @@
     max-height: 150px;
   }
 }
+
+/* 多引用范围弹窗 */
+.citation-range-popup {
+  position: fixed;
+  z-index: 10000;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  border: 1px solid #e5e7eb;
+  max-width: 420px;
+  max-height: 400px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.citation-range-popup-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 0.85rem;
+  color: #666;
+  font-weight: 500;
+}
+
+.citation-range-popup-list {
+  overflow-y: auto;
+  padding: 0.5rem 0;
+}
+
+.citation-range-popup-item {
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.citation-range-popup-item:last-child {
+  border-bottom: none;
+}
+
+.citation-range-popup-index {
+  color: #D63031;
+  font-weight: 600;
+  margin-right: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.citation-range-popup-title {
+  font-size: 0.875rem;
+  line-height: 1.4;
+  color: #1a1a1a;
+}
+
+.citation-range-popup-title a {
+  color: #2563eb;
+  text-decoration: none;
+}
+
+.citation-range-popup-title a:hover {
+  text-decoration: underline;
+}
+
+.citation-range-popup-meta {
+  font-size: 0.8rem;
+  color: #666;
+  margin-top: 0.2rem;
+}

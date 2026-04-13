@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import './CitationTooltip.css'
 
 interface Paper {
@@ -284,6 +285,88 @@ export function CitationMarker({ index, paper }: CitationMarkerProps) {
           isFixed={isFixed}
           onClose={handleClose}
         />
+      )}
+    </>
+  )
+}
+
+// 多引用范围标记组件，如 [7-9] 或 [7-9, 11, 12]
+interface CitationRangeItem {
+  index: number
+  paper: Paper | null
+}
+
+interface CitationRangeMarkerProps {
+  display: string
+  citations: CitationRangeItem[]
+}
+
+export function CitationRangeMarker({ display, citations }: CitationRangeMarkerProps) {
+  const { t } = useTranslation()
+  const [showPopup, setShowPopup] = useState(false)
+  const [position, setPosition] = useState({ x: 0, y: 0 })
+  const popupRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!showPopup) return
+    const handleClickOutside = (e: MouseEvent) => {
+      if (popupRef.current && !popupRef.current.contains(e.target as Node)) {
+        setShowPopup(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [showPopup])
+
+  const handleClick = (e: any) => {
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+    setPosition({ x: rect.left, y: rect.bottom + 4 })
+    setShowPopup(!showPopup)
+  }
+
+  return (
+    <>
+      <span
+        className="citation-marker citation-range-marker"
+        onClick={handleClick}
+      >
+        {display}
+      </span>
+      {showPopup && (
+        <div
+          ref={popupRef}
+          className="citation-range-popup"
+          style={{ left: `${position.x}px`, top: `${position.y}px` }}
+        >
+          <div className="citation-range-popup-header">
+            <span>{citations.length} {t('review.references.title', 'References').toLowerCase()}</span>
+            <button className="citation-tooltip-close" onClick={() => setShowPopup(false)}>✕</button>
+          </div>
+          <div className="citation-range-popup-list">
+            {citations.map(({ index, paper }) => (
+              <div key={index} className="citation-range-popup-item">
+                <span className="citation-range-popup-index">[{index}]</span>
+                {paper ? (
+                  <>
+                    <div className="citation-range-popup-title">
+                      {paper.url ? (
+                        <a href={paper.url} target="_blank" rel="noopener noreferrer">{paper.title}</a>
+                      ) : (
+                        paper.title
+                      )}
+                    </div>
+                    <div className="citation-range-popup-meta">
+                      {paper.authors.length > 0 && <span>{paper.authors.slice(0, 3).join(', ')}{paper.authors.length > 3 ? ' et al.' : ''}</span>}
+                      {paper.year && <span> ({paper.year})</span>}
+                    </div>
+                  </>
+                ) : (
+                  <span style={{ color: '#999' }}>Reference not available</span>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
       )}
     </>
   )
