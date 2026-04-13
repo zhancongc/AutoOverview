@@ -78,27 +78,27 @@ cat > "$CADDY_SITE_CONF" << CADDYCONF
 $DOMAIN {
     tls $SSL_CERT $SSL_KEY
 
+    encode gzip
+
     # API 反向代理到上海后端
     handle /api/* {
         reverse_proxy $BACKEND_HOST:$BACKEND_PORT
     }
 
-    # 静态文件服务
-    root * $DIST_DIR
-    file_server
+    # 静态文件服务 + SPA 路由
+    handle {
+        root * $DIST_DIR
+        try_files {path} /index.html
+        file_server
 
-    # SPA 路由：非文件请求返回 index.html
-    try_files {path} /index.html
+        # 静态资源缓存
+        @static path *.js *.css *.png *.jpg *.svg *.woff *.woff2
+        header @static Cache-Control "public, max-age=31536000, immutable"
 
-    encode gzip
-
-    # 静态资源缓存
-    @static path *.js *.css *.png *.jpg *.svg *.woff *.woff2
-    header @static Cache-Control "public, max-age=31536000, immutable"
-
-    # HTML 不缓存
-    @html path *.html /
-    header @html Cache-Control "no-cache, no-store, must-revalidate"
+        # HTML 不缓存
+        @html path *.html /
+        header @html Cache-Control "no-cache, no-store, must-revalidate"
+    }
 
     # 安全头
     header X-Content-Type-Options "nosniff"
