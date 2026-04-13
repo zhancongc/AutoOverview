@@ -734,9 +734,9 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
               {plans.map((plan) => {
                 // English pricing (USD)
                 const enPricing: Record<string, { price: number; original: number; name: string; button: string; badge?: string | null }> = {
-                  single: { price: 5.99, original: 7.99, name: t('pricing.single.name'), button: t('pricing.buy_single') },
-                  semester: { price: 29.99, original: 39.99, name: t('pricing.semester.name'), button: t('pricing.choose_semester') },
-                  yearly: { price: 79.99, original: 109.99, name: t('pricing.yearly.name'), button: t('pricing.choose_yearly') }
+                  single: { price: 9.99, original: 14.99, name: t('pricing.single.name'), button: t('pricing.buy_single') },
+                  semester: { price: 24.99, original: 39.99, name: t('pricing.semester.name'), button: t('pricing.choose_semester') },
+                  yearly: { price: 44.99, original: 69.99, name: t('pricing.yearly.name'), button: t('pricing.choose_yearly') }
                 }
                 // Chinese pricing with original prices based on 29.8 per single
                 const zhPricing: Record<string, { price: number; original: number; name: string; button: string; badge: string | null }> = {

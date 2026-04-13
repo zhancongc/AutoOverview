@@ -136,6 +136,8 @@ DEFAULT_PLANS = [
         "features": [
             "1 篇综述生成额度",
             "在线查看 + Word 导出",
+            "参考文献包含真实文献 DOI 链接",
+            "支持导出 BibTeX、XML、RIS 格式",
         ]
     },
     {
@@ -148,6 +150,8 @@ DEFAULT_PLANS = [
         "features": [
             "3 篇综述生成额度",
             "在线查看 + Word 导出",
+            "参考文献包含真实文献 DOI 链接",
+            "支持导出 BibTeX、XML、RIS 格式",
             "约 ¥23.3/篇",
         ]
     },
@@ -161,6 +165,8 @@ DEFAULT_PLANS = [
         "features": [
             "6 篇综述生成额度",
             "在线查看 + Word 导出",
+            "参考文献包含真实文献 DOI 链接",
+            "支持导出 BibTeX、XML、RIS 格式",
             "约 ¥18.3/篇",
         ]
     },
@@ -191,26 +197,34 @@ def get_plans_from_db(session):
 
 def init_plans_in_db(session):
     """
-    初始化套餐数据到数据库
+    初始化或更新套餐数据到数据库
 
     Args:
         session: 数据库会话
     """
-    existing_plans = session.query(Plan).count()
-    if existing_plans > 0:
-        return  # 已经初始化过
-
     import json
+
     for plan_data in DEFAULT_PLANS:
-        plan = Plan(
-            type=plan_data["type"],
-            name=plan_data["name"],
-            price=plan_data["price"],
-            credits=plan_data["credits"],
-            recommended=plan_data["recommended"],
-            features=json.dumps(plan_data["features"]),  # 存储 JSON
-            sort_order=plan_data.get("sort_order", 0)
-        )
-        session.add(plan)
+        existing = session.query(Plan).filter_by(type=plan_data["type"]).first()
+        if existing:
+            # 已存在则更新
+            existing.name = plan_data["name"]
+            existing.price = plan_data["price"]
+            existing.credits = plan_data["credits"]
+            existing.recommended = plan_data["recommended"]
+            existing.features = json.dumps(plan_data["features"])
+            existing.sort_order = plan_data.get("sort_order", 0)
+        else:
+            # 不存在则创建
+            plan = Plan(
+                type=plan_data["type"],
+                name=plan_data["name"],
+                price=plan_data["price"],
+                credits=plan_data["credits"],
+                recommended=plan_data["recommended"],
+                features=json.dumps(plan_data["features"]),
+                sort_order=plan_data.get("sort_order", 0)
+            )
+            session.add(plan)
     session.commit()
-    print("[Init] 已初始化套餐数据到数据库")
+    print("[Init] 已同步套餐数据到数据库")
