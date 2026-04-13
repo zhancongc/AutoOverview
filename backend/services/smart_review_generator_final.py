@@ -281,6 +281,11 @@ class SmartReviewGeneratorFinal:
 
         返回: (修复后的内容, 最终参考文献列表)
         """
+        # === 移除 LLM 生成的原始参考文献部分（避免重复）===
+        # 匹配 "## References" 或 "## 参考文献" 及其后面的所有内容
+        import re
+        content = re.split(r'\n##\s*(References|参考文献)\n', content, maxsplit=1)[0]
+
         # === 规则 0: 标准化引用格式 ===
         # 将 [8], [9] 或 [8],[9] 转换为 [8, 9]
         # 匹配 [数字] 后面跟着可选的逗号和空格，然后是 [数字]
