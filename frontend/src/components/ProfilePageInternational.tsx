@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next'
 import { api } from '../api'
 import { getLocalUserInfo, isLoggedIn } from '../authApi'
 import { PaddlePaymentModal } from './PaddlePaymentModal'
+import { PayPalPaymentModal } from './PayPalPaymentModal'
 import { ConfirmModalInternational } from './ConfirmModalInternational'
 import type { ReviewRecord } from '../types'
 import './ProfilePageInternational.css'
@@ -24,6 +25,7 @@ export function ProfilePageInternational() {
   const [pendingExportRecordId, setPendingExportRecordId] = useState<number | null>(null)
   const [exportingId, setExportingId] = useState<number | null>(null)
   const [unlockMode, setUnlockMode] = useState(false)  // true=single unlock, false=purchase plan
+  const [paymentProvider, setPaymentProvider] = useState<'paypal' | 'paddle'>('paypal') // Default to PayPal
   const [showCreditConfirmModal, setShowCreditConfirmModal] = useState(false)
   const [confirmRecordId, setConfirmRecordId] = useState<number | null>(null)
   const [showCloseAccountModal, setShowCloseAccountModal] = useState(false)
@@ -369,48 +371,104 @@ export function ProfilePageInternational() {
 
       {/* Payment Modal */}
       {showPayModal && unlockMode && pendingExportRecordId !== null && (
-        <PaddlePaymentModal
-          onClose={() => {
-            setShowPayModal(false)
-            setUnlockMode(false)
-            setPendingExportRecordId(null)
-          }}
-          onPaymentSuccess={async () => {
-            setShowPayModal(false)
-            setUnlockMode(false)
-            // Refresh records
-            await loadRecords()
-            // Continue export
-            if (pendingExportRecordId !== null) {
-              handleExportRecord(pendingExportRecordId, { stopPropagation: () => {} } as React.MouseEvent)
-              setPendingExportRecordId(null)
-            }
-          }}
-          planType="unlock"
-          recordId={pendingExportRecordId}
-        />
+        <>
+          {paymentProvider === 'paypal' ? (
+            <PayPalPaymentModal
+              onClose={() => {
+                setShowPayModal(false)
+                setUnlockMode(false)
+                setPendingExportRecordId(null)
+              }}
+              onPaymentSuccess={async () => {
+                setShowPayModal(false)
+                setUnlockMode(false)
+                // Refresh records
+                await loadRecords()
+                // Continue export
+                if (pendingExportRecordId !== null) {
+                  handleExportRecord(pendingExportRecordId, { stopPropagation: () => {} } as React.MouseEvent)
+                  setPendingExportRecordId(null)
+                }
+              }}
+              planType="unlock"
+              recordId={pendingExportRecordId}
+              showPaddleOption={true}
+              onSwitchToPaddle={() => setPaymentProvider('paddle')}
+            />
+          ) : (
+            <PaddlePaymentModal
+              onClose={() => {
+                setShowPayModal(false)
+                setUnlockMode(false)
+                setPendingExportRecordId(null)
+                setPaymentProvider('paypal')
+              }}
+              onPaymentSuccess={async () => {
+                setShowPayModal(false)
+                setUnlockMode(false)
+                // Refresh records
+                await loadRecords()
+                // Continue export
+                if (pendingExportRecordId !== null) {
+                  handleExportRecord(pendingExportRecordId, { stopPropagation: () => {} } as React.MouseEvent)
+                  setPendingExportRecordId(null)
+                }
+              }}
+              planType="unlock"
+              recordId={pendingExportRecordId}
+            />
+          )}
+        </>
       )}
       {showPayModal && !unlockMode && (
-        <PaddlePaymentModal
-          onClose={() => {
-            setShowPayModal(false)
-            setPendingExportRecordId(null)
-          }}
-          onPaymentSuccess={async () => {
-            setShowPayModal(false)
-            // Refresh user status and records
-            const creditsData = await api.getCredits()
-            setCredits(creditsData.credits)
-            setFreeCredits(creditsData.free_credits)
-            await loadRecords()
-            // If has pending export, continue
-            if (pendingExportRecordId !== null) {
-              handleExportRecord(pendingExportRecordId, { stopPropagation: () => {} } as React.MouseEvent)
-              setPendingExportRecordId(null)
-            }
-          }}
-          planType="single"
-        />
+        <>
+          {paymentProvider === 'paypal' ? (
+            <PayPalPaymentModal
+              onClose={() => {
+                setShowPayModal(false)
+                setPendingExportRecordId(null)
+              }}
+              onPaymentSuccess={async () => {
+                setShowPayModal(false)
+                // Refresh user status and records
+                const creditsData = await api.getCredits()
+                setCredits(creditsData.credits)
+                setFreeCredits(creditsData.free_credits)
+                await loadRecords()
+                // If has pending export, continue
+                if (pendingExportRecordId !== null) {
+                  handleExportRecord(pendingExportRecordId, { stopPropagation: () => {} } as React.MouseEvent)
+                  setPendingExportRecordId(null)
+                }
+              }}
+              planType="single"
+              showPaddleOption={true}
+              onSwitchToPaddle={() => setPaymentProvider('paddle')}
+            />
+          ) : (
+            <PaddlePaymentModal
+              onClose={() => {
+                setShowPayModal(false)
+                setPendingExportRecordId(null)
+                setPaymentProvider('paypal')
+              }}
+              onPaymentSuccess={async () => {
+                setShowPayModal(false)
+                // Refresh user status and records
+                const creditsData = await api.getCredits()
+                setCredits(creditsData.credits)
+                setFreeCredits(creditsData.free_credits)
+                await loadRecords()
+                // If has pending export, continue
+                if (pendingExportRecordId !== null) {
+                  handleExportRecord(pendingExportRecordId, { stopPropagation: () => {} } as React.MouseEvent)
+                  setPendingExportRecordId(null)
+                }
+              }}
+              planType="single"
+            />
+          )}
+        </>
       )}
 
       {/* Credit Confirmation Modal */}

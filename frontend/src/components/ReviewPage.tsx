@@ -3,6 +3,8 @@ import { useNavigate, useLocation, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { ReviewViewer } from './ReviewViewer'
 import { PaymentModal } from './PaymentModal'
+import { PaddlePaymentModal } from './PaddlePaymentModal'
+import { PayPalPaymentModal } from './PayPalPaymentModal'
 import { ConfirmModal } from './ConfirmModal'
 import { CitationFormatSelector } from './CitationFormatSelector'
 import { api } from '../api'
@@ -53,6 +55,8 @@ export function ReviewPage() {
   const [showPayModal, setShowPayModal] = useState(false)
   const [exporting, setExporting] = useState(false)
   const [unlockMode, setUnlockMode] = useState(false)
+  const [paymentProvider, setPaymentProvider] = useState<'paypal' | 'paddle'>('paypal') // Default to PayPal
+  const [language, setLanguage] = useState<'zh' | 'en'>('zh')
   const [showCreditConfirmModal, setShowCreditConfirmModal] = useState(false)
   const [credits, setCredits] = useState<number>(0)
   const [, setFreeCredits] = useState<number>(0)
@@ -74,12 +78,22 @@ export function ReviewPage() {
   // 判断是否可以使用引用格式切换（有 taskId 或 recordId）
   const canSwitchFormat = !!(taskId || state?.recordId || recordIdParam || taskData?.recordId)
 
-  // 加载用户额度
+  // 加载用户额度和检测语言
   useEffect(() => {
     api.getCredits().then(data => {
       setCredits(data.credits)
       setFreeCredits(data.free_credits)
     }).catch(err => console.error('获取额度失败:', err))
+
+    // Detect language from i18n or browser
+    const storedLang = localStorage.getItem('i18nextLng')
+    if (storedLang === 'en' || storedLang === 'zh') {
+      setLanguage(storedLang)
+    } else {
+      // Fallback to browser language
+      const browserLang = navigator.language.toLowerCase()
+      setLanguage(browserLang.startsWith('zh') ? 'zh' : 'en')
+    }
   }, [])
 
   // 如果 URL 中有 taskId 或 recordId，从后端加载完整数据
@@ -753,42 +767,138 @@ export function ReviewPage() {
         )
       )}
       {showPayModal && unlockMode && (
-        <PaymentModal
-          onClose={() => {
-            setShowPayModal(false)
-            setUnlockMode(false)
-          }}
-          onPaymentSuccess={async () => {
-            setShowPayModal(false)
-            setUnlockMode(false)
-            // 刷新任务数据（is_paid 状态已更新）
-            if (taskId) {
-              api.getTaskReview(taskId).then(res => {
-                if (res.success && res.data) {
-                  setTaskData({
-                    title: res.data.topic,
-                    content: res.data.review,
-                    papers: res.data.papers || [],
-                    recordId: res.data.record_id,
-                    isPublic: res.data.is_public,
-                    isPaid: res.data.is_paid,
-                  })
+        <>
+          {language === 'en' ? (
+            <>
+              {paymentProvider === 'paypal' ? (
+                <PayPalPaymentModal
+                  onClose={() => {
+                    setShowPayModal(false)
+                    setUnlockMode(false)
+                  }}
+                  onPaymentSuccess={async () => {
+                    setShowPayModal(false)
+                    setUnlockMode(false)
+                    // Refresh task data (is_paid status updated)
+                    if (taskId) {
+                      api.getTaskReview(taskId).then(res => {
+                        if (res.success && res.data) {
+                          setTaskData({
+                            title: res.data.topic,
+                            content: res.data.review,
+                            papers: res.data.papers || [],
+                            recordId: res.data.record_id,
+                            isPublic: res.data.is_public,
+                            isPaid: res.data.is_paid,
+                          })
+                        }
+                      }).catch(err => console.error('Failed to refresh task status:', err))
+                    }
+                  }}
+                  planType="unlock"
+                  recordId={reviewData.recordId}
+                  showPaddleOption={true}
+                  onSwitchToPaddle={() => setPaymentProvider('paddle')}
+                />
+              ) : (
+                <PaddlePaymentModal
+                  onClose={() => {
+                    setShowPayModal(false)
+                    setUnlockMode(false)
+                    setPaymentProvider('paypal')
+                  }}
+                  onPaymentSuccess={async () => {
+                    setShowPayModal(false)
+                    setUnlockMode(false)
+                    // Refresh task data (is_paid status updated)
+                    if (taskId) {
+                      api.getTaskReview(taskId).then(res => {
+                        if (res.success && res.data) {
+                          setTaskData({
+                            title: res.data.topic,
+                            content: res.data.review,
+                            papers: res.data.papers || [],
+                            recordId: res.data.record_id,
+                            isPublic: res.data.is_public,
+                            isPaid: res.data.is_paid,
+                          })
+                        }
+                      }).catch(err => console.error('Failed to refresh task status:', err))
+                    }
+                  }}
+                  planType="unlock"
+                  recordId={reviewData.recordId}
+                />
+              )}
+            </>
+          ) : (
+            <PaymentModal
+              onClose={() => {
+                setShowPayModal(false)
+                setUnlockMode(false)
+              }}
+              onPaymentSuccess={async () => {
+                setShowPayModal(false)
+                setUnlockMode(false)
+                // Refresh task data (is_paid status updated)
+                if (taskId) {
+                  api.getTaskReview(taskId).then(res => {
+                    if (res.success && res.data) {
+                      setTaskData({
+                        title: res.data.topic,
+                        content: res.data.review,
+                        papers: res.data.papers || [],
+                        recordId: res.data.record_id,
+                        isPublic: res.data.is_public,
+                        isPaid: res.data.is_paid,
+                      })
+                    }
+                  }).catch(err => console.error('Failed to refresh task status:', err))
                 }
-              }).catch(err => console.error('轮询任务状态失败:', err))
-            }
-          }}
-          planType="unlock"
-          recordId={reviewData.recordId}
-        />
+              }}
+              planType="unlock"
+              recordId={reviewData.recordId}
+            />
+          )}
+        </>
       )}
       {showPayModal && !unlockMode && (
-        <PaymentModal
-          onClose={() => setShowPayModal(false)}
-          onPaymentSuccess={async () => {
-            setShowPayModal(false)
-          }}
-          planType="single"
-        />
+        <>
+          {language === 'en' ? (
+            <>
+              {paymentProvider === 'paypal' ? (
+                <PayPalPaymentModal
+                  onClose={() => setShowPayModal(false)}
+                  onPaymentSuccess={async () => {
+                    setShowPayModal(false)
+                  }}
+                  planType="single"
+                  showPaddleOption={true}
+                  onSwitchToPaddle={() => setPaymentProvider('paddle')}
+                />
+              ) : (
+                <PaddlePaymentModal
+                  onClose={() => {
+                    setShowPayModal(false)
+                    setPaymentProvider('paypal')
+                  }}
+                  onPaymentSuccess={async () => {
+                    setShowPayModal(false)
+                  }}
+                  planType="single"
+                />
+              )}
+            </>
+          ) : (
+            <PaymentModal
+              onClose={() => setShowPayModal(false)}
+              onPaymentSuccess={async () => {
+                setShowPayModal(false)
+              }}
+              planType="single"
+            />
+          )}
+        </>
       )}
 
       {/* 使用额度确认弹窗 */}

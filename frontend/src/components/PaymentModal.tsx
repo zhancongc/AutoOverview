@@ -13,7 +13,7 @@ interface PaymentModalProps {
 const UNLOCK_PLAN = {
   type: 'unlock',
   name: '单次解锁',
-  price: 29.8,
+  price: 39.8,
   credits: 0,
   features: [
     '解锁当前综述 Word 导出权限',
@@ -114,7 +114,7 @@ export function PaymentModal({ onClose, onPaymentSuccess, planType, recordId }: 
         }
         setOrderNo(result.order_no || '')
         setPayUrl(result.pay_url || '')
-        setAmount(29.8)
+        setAmount(39.8)
         // 统一进入等待状态，开发环境5秒后自动触发支付
         setPaymentStatus('waiting')
       } else {

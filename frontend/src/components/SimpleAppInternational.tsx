@@ -10,6 +10,7 @@ import { isLoggedIn as checkLoggedIn, getLocalUserInfo } from '../authApi'
 import { LoginModalInternational } from './LoginModalInternational'
 import { PaymentModal } from './PaymentModal'
 import { PaddlePaymentModal } from './PaddlePaymentModal'
+import { PayPalPaymentModal } from './PayPalPaymentModal'
 import { CookieConsentBanner } from './CookieConsentBanner'
 import './SimpleAppInternational.css'
 
@@ -28,6 +29,7 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
   const [, setError] = useState('')
   const [showLoginModal, setShowLoginModal] = useState(false)
   const [showPaymentModal, setShowPaymentModal] = useState<string | false>(false)
+  const [paymentProvider, setPaymentProvider] = useState<'paypal' | 'paddle'>('paypal') // Default to PayPal
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [, setActiveTaskId] = useState<string | null>(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -459,12 +461,6 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
                 >
                   {isGenerating ? t('home.input.button_generating') : t('home.input.button')}
                 </button>
-                <button
-                  className="secondary-btn"
-                  onClick={() => document.getElementById('process')?.scrollIntoView({ behavior: 'smooth' })}
-                >
-                  {t('home.input.how_it_works')}
-                </button>
               </div>
             </div>
           </div>
@@ -826,11 +822,26 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
       {showPaymentModal && (
         <>
           {language === 'en' ? (
-            <PaddlePaymentModal
-              onClose={() => setShowPaymentModal(false)}
-              onPaymentSuccess={handlePaymentSuccess}
-              planType={showPaymentModal}
-            />
+            <>
+              {paymentProvider === 'paypal' ? (
+                <PayPalPaymentModal
+                  onClose={() => setShowPaymentModal(false)}
+                  onPaymentSuccess={handlePaymentSuccess}
+                  planType={showPaymentModal}
+                  showPaddleOption={true}
+                  onSwitchToPaddle={() => setPaymentProvider('paddle')}
+                />
+              ) : (
+                <PaddlePaymentModal
+                  onClose={() => {
+                    setShowPaymentModal(false)
+                    setPaymentProvider('paypal')
+                  }}
+                  onPaymentSuccess={handlePaymentSuccess}
+                  planType={showPaymentModal}
+                />
+              )}
+            </>
           ) : (
             <PaymentModal
               onClose={() => setShowPaymentModal(false)}

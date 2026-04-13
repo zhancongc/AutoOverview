@@ -135,7 +135,7 @@ DEFAULT_PLANS = [
         "sort_order": 1,
         "features": [
             "1 篇综述生成额度",
-            "在线查看 + PDF 导出",
+            "在线查看 + Word 导出",
         ]
     },
     {
@@ -147,8 +147,8 @@ DEFAULT_PLANS = [
         "sort_order": 2,
         "features": [
             "3 篇综述生成额度",
-            "在线查看 + PDF 导出",
-            "约 ¥23.2/篇",
+            "在线查看 + Word 导出",
+            "约 ¥23.3/篇",
         ]
     },
     {
@@ -160,7 +160,7 @@ DEFAULT_PLANS = [
         "sort_order": 3,
         "features": [
             "6 篇综述生成额度",
-            "在线查看 + PDF 导出",
+            "在线查看 + Word 导出",
             "约 ¥18.3/篇",
         ]
     },

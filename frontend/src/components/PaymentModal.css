@@ -284,3 +284,67 @@
   color: var(--text-gray);
   margin: 12px 0;
 }
+
+/* PayPal specific styles */
+.payment-modal-paypal {
+  text-align: center;
+  padding: 10px 0;
+}
+
+.paypal-button-container {
+  margin: 16px 0;
+  min-height: 48px;
+}
+
+/* Paddle specific styles */
+.payment-modal-paddle {
+  text-align: center;
+  padding: 10px 0;
+}
+
+/* Alternative payment option */
+.payment-alternative {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--light-gray);
+}
+
+.payment-alternative-text {
+  font-size: 13px;
+  color: var(--text-gray);
+  margin: 0 0 12px;
+}
+
+.payment-alternative-btn {
+  display: inline-block;
+  padding: 10px 24px;
+  background: white;
+  color: var(--academic-blue);
+  border: 1px solid var(--academic-blue);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.payment-alternative-btn:hover {
+  background: var(--academic-blue-light);
+}
+
+.payment-error-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.payment-modal-btn.secondary {
+  background: white;
+  color: var(--academic-blue);
+  border: 1px solid var(--academic-blue);
+}
+
+.payment-modal-btn.secondary:hover {
+  background: var(--academic-blue-light);
+}

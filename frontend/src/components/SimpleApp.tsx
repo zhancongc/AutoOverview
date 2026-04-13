@@ -6,6 +6,7 @@ import { isLoggedIn as checkLoggedIn, getLocalUserInfo } from '../authApi'
 import { LoginModal } from './LoginModal'
 import { PaymentModal } from './PaymentModal'
 import { PaddlePaymentModal } from './PaddlePaymentModal'
+import { PayPalPaymentModal } from './PayPalPaymentModal'
 import './SimpleApp.css'
 
 interface TaskProgress {
@@ -23,6 +24,7 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
   const [error, setError] = useState('')
   const [showLoginModal, setShowLoginModal] = useState(false)
   const [showPaymentModal, setShowPaymentModal] = useState<string | false>(false)
+  const [paymentProvider, setPaymentProvider] = useState<'paypal' | 'paddle'>('paypal') // Default to PayPal
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [, setActiveTaskId] = useState<string | null>(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -731,26 +733,38 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
             <div className="pricing-grid">
               {plans.map((plan) => {
                 // English pricing (USD)
-                const enPricing: Record<string, { price: number; original: number; name: string; button: string }> = {
+                const enPricing: Record<string, { price: number; original: number; name: string; button: string; badge?: string | null }> = {
                   single: { price: 5.99, original: 7.99, name: t('pricing.single.name'), button: t('pricing.buy_single') },
                   semester: { price: 29.99, original: 39.99, name: t('pricing.semester.name'), button: t('pricing.choose_semester') },
                   yearly: { price: 79.99, original: 109.99, name: t('pricing.yearly.name'), button: t('pricing.choose_yearly') }
                 }
-                const pricing = language === 'en' ? enPricing[plan.type] : { price: plan.price, original: 0, name: plan.name, button: '' }
+                // Chinese pricing with original prices based on 29.8 per single
+                const zhPricing: Record<string, { price: number; original: number; name: string; button: string; badge: string | null }> = {
+                  single: { price: 29.8, original: 39.8, name: '体验包', button: '', badge: null },
+                  semester: { price: 69.8, original: 89.4, name: '标准包', button: '', badge: '热门' },
+                  yearly: { price: 109.8, original: 178.8, name: '进阶包', button: '', badge: '超值' }
+                }
+                const pricing = language === 'en' ? enPricing[plan.type] : zhPricing[plan.type] || { price: plan.price, original: 0, name: plan.name, button: '', badge: null }
                 const features = language === 'en' ? (plan.type === 'single' ? t('pricing.single.features', { returnObjects: true }) :
                   plan.type === 'semester' ? t('pricing.semester.features', { returnObjects: true }) :
                   t('pricing.yearly.features', { returnObjects: true })) : plan.features
 
+                const isFeatured = language === 'en' ? plan.recommended : !!pricing.badge
+
                 return (
                   <div
                     key={plan.type}
-                    className={`pricing-card ${plan.recommended ? 'pricing-featured' : ''}`}
+                    className={`pricing-card ${isFeatured ? 'pricing-featured' : ''}`}
                   >
-                    {plan.recommended && <div className="pricing-badge">{language === 'en' ? 'Recommended' : '推荐'}</div>}
+                    {language === 'en' ? (
+                      plan.recommended && <div className="pricing-badge">Recommended</div>
+                    ) : (
+                      pricing.badge && <div className="pricing-badge">{pricing.badge}</div>
+                    )}
                     <h3 className="pricing-name">{pricing.name}</h3>
                     <div className="pricing-price">
-                      {language === 'en' && pricing.original > 0 && (
-                        <span className="pricing-original">${pricing.original}</span>
+                      {pricing.original > 0 && (
+                        <span className="pricing-original">{language === 'en' ? '$' : '¥'}{pricing.original}</span>
                       )}
                       {language === 'en' ? '$' : '¥'}
                       {pricing.price}
@@ -831,11 +845,26 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
       {showPaymentModal && (
         <>
           {language === 'en' ? (
-            <PaddlePaymentModal
-              onClose={() => setShowPaymentModal(false)}
-              onPaymentSuccess={handlePaymentSuccess}
-              planType={showPaymentModal}
-            />
+            <>
+              {paymentProvider === 'paypal' ? (
+                <PayPalPaymentModal
+                  onClose={() => setShowPaymentModal(false)}
+                  onPaymentSuccess={handlePaymentSuccess}
+                  planType={showPaymentModal}
+                  showPaddleOption={true}
+                  onSwitchToPaddle={() => setPaymentProvider('paddle')}
+                />
+              ) : (
+                <PaddlePaymentModal
+                  onClose={() => {
+                    setShowPaymentModal(false)
+                    setPaymentProvider('paypal') // Reset to PayPal for next time
+                  }}
+                  onPaymentSuccess={handlePaymentSuccess}
+                  planType={showPaymentModal}
+                />
+              )}
+            </>
           ) : (
             <PaymentModal
               onClose={() => setShowPaymentModal(false)}

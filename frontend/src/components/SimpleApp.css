@@ -787,6 +787,12 @@
     padding: 0.45rem 1rem;
     font-size: 0.85rem;
   }
+
+  .language-option.active {
+    background: var(--academic-red) !important;
+    color: white !important;
+    box-shadow: 0 2px 8px rgba(214, 48, 49, 0.25);
+  }
 }
 
 .home-input {

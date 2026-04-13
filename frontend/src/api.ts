@@ -423,4 +423,70 @@ export const api = {
     });
     return response.data;
   },
+
+  // ==================== PayPal Payment API (International Default) ====================
+
+  async getPayPalConfig(): Promise<{ client_id: string; sandbox: boolean }> {
+    const response = await axios.get(`${API_BASE}/paypal/config`);
+    return response.data;
+  },
+
+  async createPayPalSubscription(planType: string): Promise<{
+    order_no: string;
+    paypal_order_id: string;
+    approval_link: string;
+    amount: number;
+    currency: string;
+  }> {
+    const token = localStorage.getItem('auth_token');
+    const response = await axios.post(`${API_BASE}/paypal/create`, {
+      plan_type: planType
+    }, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
+  },
+
+  async capturePayPalOrder(paypalOrderId: string): Promise<{
+    status: string;
+    order_no: string;
+    payment_time?: string;
+  }> {
+    const token = localStorage.getItem('auth_token');
+    const response = await axios.post(`${API_BASE}/paypal/capture`, {
+      order_id: paypalOrderId
+    }, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
+  },
+
+  async queryPayPalSubscription(orderNo: string): Promise<{
+    status: string;
+    payment_time?: string;
+    amount: number;
+    currency: string;
+  }> {
+    const token = localStorage.getItem('auth_token');
+    const response = await axios.get(`${API_BASE}/paypal/query/${orderNo}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
+  },
+
+  async createPayPalUnlock(recordId: number): Promise<{
+    order_no: string;
+    paypal_order_id: string;
+    approval_link: string;
+    amount: number;
+    currency: string;
+  }> {
+    const token = localStorage.getItem('auth_token');
+    const response = await axios.post(`${API_BASE}/paypal/unlock`, {
+      record_id: recordId
+    }, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
+  },
 };

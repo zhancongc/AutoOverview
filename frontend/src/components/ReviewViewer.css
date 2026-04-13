@@ -77,17 +77,17 @@
 
 .review-content-wrapper {
   display: flex;
-  max-width: 1400px;
+  max-width: 1600px;
   margin: 0 auto;
   padding: 80px 2rem 2rem;
-  gap: 2rem;
+  gap: 2.5rem;
   align-items: flex-start;
   overflow: visible;
 }
 
 /* 侧边栏目录 */
 .review-sidebar {
-  width: 280px;
+  width: 320px;
   flex-shrink: 0;
   background: white;
   border-radius: 8px;
