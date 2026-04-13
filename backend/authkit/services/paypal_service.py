@@ -287,20 +287,20 @@ class DevPayPalService:
 PAYPAL_PRICING = {
     "single": {
         "name": "Starter",
-        "price": 5.99,
-        "credits": 1,
+        "price": 9.99,
+        "credits": 3,
         "currency": "USD",
     },
     "semester": {
         "name": "Semester Pro",
-        "price": 27.99,
-        "credits": 12,
+        "price": 24.99,
+        "credits": 10,
         "currency": "USD",
     },
     "yearly": {
         "name": "Annual Premium",
-        "price": 64.99,
-        "credits": 36,
+        "price": 44.99,
+        "credits": 30,
         "currency": "USD",
     },
     "unlock": {

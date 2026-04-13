@@ -56,15 +56,18 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
         setCredits(data.credits)
         setPrevCredits(data.credits)
       }).catch(err => console.error(t('home.errors.credits_fetch_failed'), err))
-    }
-
-    // Check for active task
-    const activeTaskId = sessionStorage.getItem('active_task_id')
-    const activeTaskTopic = sessionStorage.getItem('active_task_topic')
-    if (activeTaskId && activeTaskTopic) {
-      setActiveTaskId(activeTaskId)
-      setTopic(activeTaskTopic)
-      setProgress({ step: 'processing', message: t('home.progress.restoring') })
+      // Check for active task from server
+      api.getActiveTask().then(data => {
+        if (data.active && data.task_id) {
+          setActiveTaskId(data.task_id)
+          setTopic(data.topic || '')
+          setIsGenerating(true)
+          setProgress({ step: 'processing', message: t('home.progress.restoring') })
+          sessionStorage.setItem('active_task_id', data.task_id)
+          sessionStorage.setItem('active_task_topic', data.topic || '')
+          pollTask(data.task_id)
+        }
+      }).catch(err => console.error('Failed to get active task:', err))
     }
 
     // Get pricing plans
@@ -90,6 +93,69 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
         setCasesLoading(false)
       })
   }, [t])
+
+  const pollTask = (taskId: string) => {
+    const startTime = Date.now()
+    const doPoll = async () => {
+      try {
+        const statusResponse = await api.getTaskStatus(taskId)
+        if (!statusResponse.success) {
+          sessionStorage.removeItem('active_task_id')
+          sessionStorage.removeItem('active_task_topic')
+          setIsGenerating(false)
+          setActiveTaskId(null)
+          return
+        }
+
+        const taskInfo = statusResponse.data
+        if (taskInfo.status === 'completed' && taskInfo.result) {
+          sessionStorage.removeItem('active_task_id')
+          sessionStorage.removeItem('active_task_topic')
+          navigate(`/review?task_id=${taskId}`)
+          return
+        } else if (taskInfo.status === 'failed') {
+          sessionStorage.removeItem('active_task_id')
+          sessionStorage.removeItem('active_task_topic')
+          setError(taskInfo.error || t('home.errors.task_failed'))
+          setIsGenerating(false)
+          setActiveTaskId(null)
+          return
+        }
+
+        const elapsedMinutes = (Date.now() - startTime) / 1000 / 60
+        let expectedRemainingMinutes = Math.max(0, Math.round(5 - elapsedMinutes))
+
+        let progressMessage = taskInfo.progress?.message || t('home.progress.processing')
+        if (expectedRemainingMinutes > 0) {
+          progressMessage += ` (${expectedRemainingMinutes} min remaining)`
+        }
+
+        setProgress({
+          step: taskInfo.progress?.step || 'processing',
+          message: progressMessage
+        })
+
+        // Dynamic polling interval
+        const elapsed = Date.now() - startTime
+        const elapsedPollMinutes = elapsed / (60 * 1000)
+        let nextInterval: number
+        if (elapsedPollMinutes < 1) {
+          nextInterval = 20000
+        } else if (elapsedPollMinutes < 3) {
+          nextInterval = 15000
+        } else {
+          nextInterval = 10000
+        }
+        setTimeout(doPoll, nextInterval)
+      } catch {
+        sessionStorage.removeItem('active_task_id')
+        sessionStorage.removeItem('active_task_topic')
+        setIsGenerating(false)
+        setActiveTaskId(null)
+      }
+    }
+    setTimeout(doPoll, 5000)
+  }
 
   const handleGenerate = async () => {
     if (!topic.trim()) {
@@ -136,56 +202,7 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
       sessionStorage.setItem('active_task_id', taskId)
       sessionStorage.setItem('active_task_topic', topic)
 
-      // Start polling
-      const startTime = Date.now()
-      const doPoll = async () => {
-        try {
-          const statusResponse = await api.getTaskStatus(taskId)
-
-          if (!statusResponse.success) {
-            setError(t('home.errors.task_failed'))
-            setIsGenerating(false)
-            return
-          }
-
-          const taskInfo = statusResponse.data
-          const elapsedMinutes = (Date.now() - startTime) / 1000 / 60
-          let expectedRemainingMinutes = Math.max(0, Math.round(5 - elapsedMinutes))
-
-          let progressMessage = taskInfo.progress?.message || t('home.progress.processing')
-          if (expectedRemainingMinutes > 0) {
-            progressMessage += ` (${expectedRemainingMinutes} min remaining)`
-          }
-
-          setProgress({
-            step: taskInfo.progress?.step || 'processing',
-            message: progressMessage
-          })
-
-          if (taskInfo.status === 'completed' && taskInfo.result) {
-            setProgress({ step: 'completed', message: 'Complete! Redirecting...' })
-            sessionStorage.removeItem('active_task_id')
-            sessionStorage.removeItem('active_task_topic')
-            setTimeout(() => {
-              navigate(`/review?task_id=${taskId}`)
-            }, 500)
-            return
-          } else if (taskInfo.status === 'failed') {
-            sessionStorage.removeItem('active_task_id')
-            sessionStorage.removeItem('active_task_topic')
-            setError(taskInfo.error || t('home.errors.task_failed'))
-            setIsGenerating(false)
-            setActiveTaskId(null)
-            return
-          }
-
-          // Continue polling
-          setTimeout(doPoll, 3000)
-        } catch {
-        }
-      }
-
-      setTimeout(doPoll, 3000)
+      pollTask(taskId)
     } catch (err) {
       setError(t('home.errors.task_failed'))
       setIsGenerating(false)

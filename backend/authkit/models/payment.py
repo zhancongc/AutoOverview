@@ -86,6 +86,29 @@ class Subscription(PaymentBase):
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
 
+    def get_metadata(self) -> dict:
+        import json
+        if self.extra_data:
+            try:
+                return json.loads(self.extra_data)
+            except Exception:
+                return {}
+        return {}
+
+    def set_metadata(self, data: dict):
+        import json
+        self.extra_data = json.dumps(data)
+
+    def get_meta(self, key: str, default=None):
+        return self.get_metadata().get(key, default)
+
+    def set_meta(self, key: str, value):
+        data = self.get_metadata()
+        data[key] = value
+        self.set_metadata(data)
+        from sqlalchemy.orm.attributes import flag_modified
+        flag_modified(self, "extra_data")
+
 
 class PaymentLog(PaymentBase):
     """支付日志模型"""
