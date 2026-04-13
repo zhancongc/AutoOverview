@@ -31,8 +31,9 @@ docs/
 ├── 📄 INDEX.md           # 文档首页（渐进式导航）
 ├── 📄 MAP.md             # 本文档（项目文件目录）
 ├── 📄 SCRIPTS.md         # 辅助脚本使用说明
+├── 📄 DEPLOYMENT.md      # 服务器部署配置（新增）
 ├── 📄 CREDIT_SYSTEM.md  # 额度体系设计
-├── 📄 STATS.md          # 统计功能文档（新增）
+├── 📄 STATS.md          # 统计功能文档
 ├── 📄 async_api.md       # 异步 API 设计
 ├── 📄 review_generation_flow.md  # 综述生成流程
 ├── 📄 smart_review_generator.md  # 综述生成器文档

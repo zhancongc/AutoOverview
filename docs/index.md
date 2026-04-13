@@ -31,6 +31,7 @@
 - [../CLAUDE.md](../CLAUDE.md) - Claude Code 项目指引（关键约定）
 - [../AUTH_INTEGRATION.md](../AUTH_INTEGRATION.md) - AuthKit 集成指南
 - [../backend/authkit/README.md](../backend/authkit/README.md) - AuthKit 认证模块文档
+- [DEPLOYMENT.md](DEPLOYMENT.md) - 服务器部署配置（跨服务器通信、防火墙配置）
 - [SCRIPTS.md](SCRIPTS.md) - 辅助脚本使用说明（用户管理、服务器部署等）
 
 ---
