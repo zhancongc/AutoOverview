@@ -2,24 +2,24 @@
   "_comment": "中文翻译文件 - 保留原有中文文案",
   "home": {
     "hero": {
-      "accent": "深度检索 + 智能综述",
-      "title": "5分钟，生成一份<span class=\"highlight\">高水平文献综述</span>",
-      "subtitle": "告别彻夜查文献的痛苦。AI 深度检索Web of Science、IEEE等权威数据库，自动梳理逻辑框架，生成自带规范引用的专业综述"
+      "accent": "生产工具 · 非检索助手",
+      "title": "交付<span class=\"highlight\">可直接投稿的综述初稿</span>",
+      "subtitle": "不是片段摘要，而是完整结构化初稿。基于 CrossRef/Semantic Scholar 真实元数据构建骨架，AI 填充内容。所有引用 DOI 可验证，拒绝幻觉"
     },
     "stats": {
-      "papers": "2亿+ 篇文献检索",
-      "time": "5min 综述初稿生成"
+      "papers": "基于 2亿+ 真实论文元数据",
+      "time": "聚焦近 6 年前沿研究"
     },
     "input": {
-      "title": "一键生成论文综述",
-      "subtitle": "输入研究主题，AI 为您生成专业文献综述",
+      "title": "一键生成结构化综述初稿",
+      "subtitle": "输入研究主题，获得可直接投稿的综述初稿",
       "language": "生成语言：",
       "language_zh": "中文",
       "language_en": "English",
       "language_hint_zh": "适用于中文期刊投稿",
       "language_hint_en": "适用于英文期刊投稿",
       "placeholder": "请输入您的研究主题，例如：深度学习在图像识别中的应用",
-      "button": "立即生成我的综述初稿",
+      "button": "生成我的结构化初稿",
       "button_generating": "生成中...",
       "credits_remaining": "剩余",
       "retry": "重试"
@@ -29,12 +29,12 @@
     },
     "features": {
       "title": "为什么选择 AutoOverview？",
-      "papers": "检索 2亿+ 真实论文，非 AI 编造",
-      "papers_desc": "每篇综述引用的真实文献均可溯源，拒绝幻觉",
-      "time": "5 分钟拿到初稿，无需两周苦熬",
-      "time_desc": "从选题到成稿，全自动完成，省下时间做更重要的事",
-      "format": "学术规范排版，可直接提交",
-      "format_desc": "自动生成引用编号、参考文献列表，支持 Word 导出"
+      "papers": "基于真实论文元数据，LLM 仅填充内容",
+      "papers_desc": "综述骨架由确定存在的论文构建，附 Anti-Hallucination Report（DOI 验证列表）",
+      "time": "聚焦近 6 年前沿研究，精准时效",
+      "time_desc": "海外科研看重 Recency。我们专注最新文献，拒绝泛泛而谈",
+      "format": "完整结构化初稿，直接放入 Word",
+      "format_desc": "背景、现状、争论点、结论、未来方向 — 学术级 Outline 逻辑"
     },
     "comparison": {
       "title": "AutoOverview vs 传统方式",
@@ -66,15 +66,15 @@
       },
       "tools": {
         "title": "Elicit / Scite / Paperpal",
-        "con1": "❌ 功能单一，仅辅助工具",
-        "con2": "❌ 无法生成完整综述",
-        "con3": "❌ 使用门槛高"
+        "con1": "❌ 片段化摘要汇总，非结构化初稿",
+        "con2": "❌ 无法直接投稿，需大量人工整理",
+        "con3": "❌ 缺乏学术级 Outline 逻辑"
       },
       "autooverview": {
         "title": "AutoOverview",
-        "pro1": "✅ 海量真实学术期刊数据源",
-        "pro2": "✅ 2分钟遍历文献，5分钟生成综述",
-        "pro3": "✅ 学术规范，精准引用"
+        "pro1": "✅ 交付可直接投稿的结构化初稿",
+        "pro2": "✅ 基于真实论文元数据，附 DOI 验证",
+        "pro3": "✅ 学术级 Outline：背景→争论点→结论"
       },
       "services": {
         "title": "第三方人工服务",
@@ -91,13 +91,13 @@
     },
     "process": {
       "title": "使用流程",
-      "subtitle": "三步生成您的文献综述",
-      "step1_title": "输入主题",
-      "step1_desc": "输入您的研究主题，AI 自动分析。",
-      "step2_title": "AI 分析生成",
-      "step2_desc": "AI 检索数据库、分析论文、生成综述。",
-      "step3_title": "获取 & 导出",
-      "step3_desc": "下载综述 Word 文档，可直接提交。"
+      "subtitle": "三步生成结构化综述初稿",
+      "step1_title": "输入研究主题",
+      "step1_desc": "输入您的研究主题，AI 自动分析并检索近 6 年前沿文献。",
+      "step2_title": "AI 构建骨架 & 填充内容",
+      "step2_desc": "基于真实论文元数据构建 Outline（背景→争论点→结论），AI 填充内容。",
+      "step3_title": "获取初稿 & 验证报告",
+      "step3_desc": "下载 Word 初稿 + Anti-Hallucination Report（DOI 验证列表），可直接投稿。"
     },
     "pricing": {
       "title": "灵活定价，按需付费",
@@ -157,13 +157,13 @@
     },
     "testimonials": {
       "title": "用户好评",
-      "text1": "\"引用全是真实的，DOI 可验证，写论文正好需要这个。\"",
+      "text1": "\"生成的初稿结构完整，从背景到争论点都有，稍作修改就能放入 Word。\"",
       "name1": "研究生",
       "role1": "计算机科学",
-      "text2": "\"省了我好几周的文献检索时间，生成的综述稍作修改就能用。\"",
+      "text2": "\"Anti-Hallucination Report 很有用，所有 DOI 一键验证，省了大量时间。\"",
       "name2": "博士研究员",
       "role2": "材料科学",
-      "text3": "\"终于有一个不编造引用的AI工具了，省去了逐条验证的麻烦。\"",
+      "text3": "\"聚焦近 6 年文献的设置很专业，生成的综述时效性强，直接可用。\"",
       "name3": "博士后研究员",
       "role3": "高校教师"
     },

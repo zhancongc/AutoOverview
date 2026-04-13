@@ -2,31 +2,31 @@
   "_comment": "English translation for international academic market",
   "home": {
     "hero": {
-      "accent": "AI Literature Review Generator",
-      "title": "100% Real Citations — <highlight>No Hallucinations</highlight>",
-      "subtitle": "Generate submission-ready literature reviews with real, DOI-verifiable citations. No fake AI-generated papers.",
+      "accent": "Production Tool · Not Just a Search Assistant",
+      "title": "Deliver <highlight>Submission-Ready Structured Drafts</highlight>",
+      "subtitle": "Not fragmented summaries, but complete structured drafts. Built on verified CrossRef/Semantic Scholar metadata, AI fills the content. All citations DOI-verifiable.",
       "cta_button": "Start Generating Now",
       "cta_hint": "Free to try • No credit card required"
     },
     "stats": {
-      "papers": "200M+ peer-reviewed papers",
+      "papers": "Based on 200M+ real paper metadata",
       "citations": "DOI-verifiable citations",
-      "time": "5-minute submission-ready review"
+      "time": "Focus on Last 6 Years - Frontier Research Only"
     },
     "sources": {
       "title": "Trusted by leading academic databases",
       "label": "Data sources:"
     },
     "input": {
-      "title": "Generate Your First Review",
-      "subtitle": "Sign up and get 1 free review. Enter a topic, AI does the rest.",
+      "title": "Generate Your Structured Draft",
+      "subtitle": "Sign up and get 1 free review. Enter a topic, get a submission-ready draft.",
       "language": "Language:",
       "language_zh": "中文",
       "language_en": "English",
       "language_hint_zh": "For Chinese journals",
       "language_hint_en": "For international journals",
       "placeholder": "Enter your research topic, e.g., Deep Learning in Image Recognition",
-      "button": "Generate My Review",
+      "button": "Generate My Structured Draft",
       "button_generating": "Generating...",
       "credits_remaining": "credits remaining",
       "retry": "Retry",
@@ -38,40 +38,40 @@
     },
     "features": {
       "title": "Why Choose AutoOverview?",
-      "papers": "No Fake Citations / No Hallucinations",
-      "papers_desc": "Every citation is DOI-verifiable. No AI-generated fake papers.",
-      "time": "5-Minute Full Auto Generation",
-      "time_desc": "From topic to submission-ready review, fully automated.",
-      "format": "Standard Citation Format & Exportable",
-      "format_desc": "Auto-generated citations in APA/MLA/IEEE format. Export to Word."
+      "papers": "Built on Real Paper Metadata, AI Only Fills Content",
+      "papers_desc": "Review skeleton built on verified papers. Includes Anti-Hallucination Report (DOI verification list).",
+      "time": "Focus on Last 6 Years - Frontier Research Only",
+      "time_desc": "Academic research prioritizes recency. We focus on the latest literature, not generic overviews.",
+      "format": "Complete Structured Draft, Ready for Word",
+      "format_desc": "Background → Current Status → Debates → Conclusions → Future Directions. Academic-grade Outline logic."
     },
     "comparison": {
-      "title": "AutoOverview vs Free AI Tools",
-      "subtitle": "Why general-purpose AI tools aren't ideal for literature reviews",
+      "title": "AutoOverview vs Elicit",
+      "subtitle": "Why we're a production tool, not just a search assistant",
       "free_ai": {
-        "title": "Free AI Tools",
-        "con1": "❌ May generate fake citations",
-        "con2": "❌ Requires complex prompts",
-        "con3": "❌ Not safe for academic submission",
-        "con4": "❌ No access to paywalled databases"
+        "title": "Elicit / Scite / Paperpal",
+        "con1": "❌ Fragmented summary aggregation, not structured drafts",
+        "con2": "❌ Cannot submit directly, requires manual assembly",
+        "con3": "❌ Lacks academic-grade Outline logic",
+        "con4": "❌ Just a search assistant, not a production tool"
       },
       "autooverview": {
         "title": "AutoOverview",
-        "pro1": "✅ 100% real, DOI-verifiable citations",
-        "pro2": "✅ No prompt engineering required",
-        "pro3": "✅ Safe for academic submission",
-        "pro4": "✅ Access to Web of Science, IEEE, CrossRef"
+        "pro1": "✅ Delivers submission-ready structured drafts",
+        "pro2": "✅ Built on real paper metadata, with DOI verification",
+        "pro3": "✅ Academic-grade Outline: Background → Debates → Conclusions",
+        "pro4": "✅ Production tool for researchers, not just a search aid"
       }
     },
     "process": {
       "title": "How It Works",
-      "subtitle": "Three simple steps to your literature review",
-      "step1_title": "Enter Topic",
-      "step1_desc": "Enter your research topic in plain English.",
-      "step2_title": "AI Analyzes",
-      "step2_desc": "AI searches databases, analyzes papers, and generates review.",
-      "step3_title": "Get & Export",
-      "step3_desc": "Download your review in Word, ready for submission."
+      "subtitle": "Three steps to your structured draft",
+      "step1_title": "Enter Research Topic",
+      "step1_desc": "Enter your topic. AI analyzes and retrieves frontier research from the last 6 years.",
+      "step2_title": "AI Builds Skeleton & Fills Content",
+      "step2_desc": "Builds Outline from real paper metadata (Background → Debates → Conclusions), AI fills content.",
+      "step3_title": "Get Draft & Verification Report",
+      "step3_desc": "Download Word draft + Anti-Hallucination Report (DOI verification list), ready for submission."
     },
     "pricing": {
       "title": "Simple, Transparent Pricing",
@@ -128,13 +128,13 @@
     },
     "testimonials": {
       "title": "Trusted by Researchers Worldwide",
-      "text1": "\"The citations are all real and DOI-verifiable. This is exactly what I needed for my thesis.\"",
+      "text1": "\"The generated draft has complete structure — from background to debates. Just minor edits and it's ready for Word.\"",
       "name1": "Graduate Student",
       "role1": "US University, Computer Science",
-      "text2": "\"Saved me weeks of literature searching. The review was submission-ready with minimal edits.\"",
+      "text2": "\"The Anti-Hallucination Report is incredibly useful. All DOIs verifiable with one click. Saved me hours.\"",
       "name2": "PhD Researcher",
       "role2": "Materials Science, STEM Field",
-      "text3": "\"Finally an AI tool that generates real citations. No more fake papers to verify.\"",
+      "text3": "\"The 6-year focus is professional. The review is current and directly usable for my paper.\"",
       "name3": "Postdoc Researcher",
       "role3": "European University"
     },

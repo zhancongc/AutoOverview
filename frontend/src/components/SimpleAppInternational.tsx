@@ -194,6 +194,7 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
   const handleLoginSuccess = () => {
     const loggedIn = checkLoggedIn()
     setIsLoggedIn(loggedIn)
+    setShowLoginModal(false)
     if (loggedIn) {
       setUserInfo(getLocalUserInfo())
       api.getCredits().then(data => {
@@ -207,6 +208,11 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
       setTopic(pendingTopic)
       sessionStorage.removeItem('pending_topic')
       handleGenerate()
+    } else {
+      // 登录成功后滚动到生成区域
+      setTimeout(() => {
+        document.getElementById('generate')?.scrollIntoView({ behavior: 'smooth' })
+      }, 300)
     }
   }
 
@@ -257,11 +263,11 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
           <span className="logo-text">AutoOverview</span>
         </div>
         <div className="nav-links">
-          <a href="#generate" onClick={(e) => { e.preventDefault(); document.getElementById('generate')?.scrollIntoView({ behavior: 'smooth' }) }}>{t('home.nav.generate')}</a>
-          <a href="#features" onClick={(e) => { e.preventDefault(); document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' }) }}>{t('home.nav.features')}</a>
-          <a href="#process" onClick={(e) => { e.preventDefault(); document.getElementById('process')?.scrollIntoView({ behavior: 'smooth' }) }}>{t('home.nav.process')}</a>
-          <a href="#cases" onClick={(e) => { e.preventDefault(); document.getElementById('cases')?.scrollIntoView({ behavior: 'smooth' }) }}>{t('home.nav.cases')}</a>
-          <a href="#pricing" onClick={(e) => { e.preventDefault(); document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' }) }}>{t('home.nav.pricing')}</a>
+          <a href="#generate">{t('home.nav.generate')}</a>
+          <a href="#features">{t('home.nav.features')}</a>
+          <a href="#process">{t('home.nav.process')}</a>
+          <a href="#cases">{t('home.nav.cases')}</a>
+          <a href="#pricing">{t('home.nav.pricing')}</a>
         </div>
         <div className="nav-actions">
           {isLoggedIn ? (
