@@ -272,7 +272,7 @@ html.intl {
     }
 
     .back-button::after {
-      content: '返回';
+      content: 'Back';
       margin-left: 0.25rem;
     }
 

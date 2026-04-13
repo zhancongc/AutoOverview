@@ -265,11 +265,17 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
           <span className="logo-text">AutoOverview</span>
         </div>
         <div className="nav-links">
-          <a href="#generate">{t('home.nav.generate')}</a>
-          <a href="#features">{t('home.nav.features')}</a>
-          <a href="#process">{t('home.nav.process')}</a>
-          <a href="#cases">{t('home.nav.cases')}</a>
-          <a href="#pricing">{t('home.nav.pricing')}</a>
+          {['generate', 'features', 'process', 'cases', 'pricing'].map((id) => (
+            <a key={id} href={`#${id}`} onClick={(e) => {
+              e.preventDefault()
+              const el = document.getElementById(id)
+              if (el) {
+                const navHeight = 60
+                const elPosition = el.getBoundingClientRect().top + window.pageYOffset
+                window.scrollTo({ top: elPosition - navHeight, behavior: 'smooth' })
+              }
+            }}>{t(`home.nav.${id}`)}</a>
+          ))}
         </div>
         <div className="nav-actions">
           {isLoggedIn ? (
@@ -366,8 +372,9 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
               setMobileMenuOpen(false)
               const el = document.getElementById('pricing')
               if (el) {
-                window.location.hash = 'pricing'
-                el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                const navHeight = 60
+                const elPosition = el.getBoundingClientRect().top + window.pageYOffset
+                window.scrollTo({ top: elPosition - navHeight, behavior: 'smooth' })
               }
             }}
           >{t('home.nav.pricing')}</a>

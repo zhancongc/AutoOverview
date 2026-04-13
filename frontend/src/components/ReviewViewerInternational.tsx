@@ -379,7 +379,7 @@ export function ReviewViewerInternational({ content, papers = [], hasPurchased =
       <div className="review-content-wrapper">
         {/* 侧边栏目录 */}
         <aside className="review-sidebar">
-          <div className="toc-header">目录</div>
+          <div className="toc-header">Table of Contents</div>
           <ul className="toc-list">
             {toc.map(renderTocItem)}
           </ul>

@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import './CitationFormatSelector.css'
 
 type CitationFormat = 'ieee' | 'apa' | 'mla' | 'gb_t_7714'
@@ -9,30 +10,19 @@ interface CitationFormatSelectorProps {
   disabled?: boolean
 }
 
-const FORMAT_LABELS: Record<CitationFormat, string> = {
-  ieee: 'IEEE',
-  apa: 'APA',
-  mla: 'MLA',
-  gb_t_7714: 'GB/T 7714'
-}
-
-const FORMAT_DESCRIPTIONS: Record<CitationFormat, string> = {
-  ieee: '工程技术领域常用格式',
-  apa: '心理学、教育学等领域常用格式',
-  mla: '人文学科常用格式',
-  gb_t_7714: '中国国家标准引用格式'
-}
+const FORMAT_KEYS: CitationFormat[] = ['ieee', 'apa', 'mla', 'gb_t_7714']
 
 export function CitationFormatSelector({
   currentFormat,
   onFormatChange,
   disabled = false
 }: CitationFormatSelectorProps) {
-  const formats = useMemo(() => Object.keys(FORMAT_LABELS) as CitationFormat[], [])
+  const { t } = useTranslation()
+  const formats = useMemo(() => FORMAT_KEYS, [])
 
   return (
     <div className="citation-format-selector">
-      <label className="format-label">引用格式：</label>
+      <label className="format-label">{t('review.citation.title')}：</label>
       <div className="format-options">
         {formats.map((format) => (
           <button
@@ -40,9 +30,9 @@ export function CitationFormatSelector({
             className={`format-button ${currentFormat === format ? 'active' : ''}`}
             onClick={() => onFormatChange(format)}
             disabled={disabled}
-            title={FORMAT_DESCRIPTIONS[format]}
+            title={t(`review.citation.${format}`)}
           >
-            {FORMAT_LABELS[format]}
+            {format.toUpperCase()}
           </button>
         ))}
       </div>

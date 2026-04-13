@@ -409,11 +409,11 @@ html.intl {
   }
 
   .simple-home-international .input-wrapper {
-    background: var(--cream-white);
-    border: 2px solid var(--light-gray);
+    background: transparent;
+    border: none;
     border-radius: 16px;
     padding: 1.25rem;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    box-shadow: none;
   }
 
   .simple-home-international .topic-input {
@@ -496,16 +496,17 @@ html.intl {
   }
 
   .simple-home-international .comparison-card {
-    background: var(--cream-white);
-    border: 2px solid var(--light-gray);
+    background: #fff;
+    border: 2px solid #e5e7eb;
     border-radius: 16px;
     padding: var(--spacing-lg);
     transition: all 0.2s;
   }
 
   .simple-home-international .comparison-card.highlight {
-    border-color: var(--academic-blue-primary);
-    box-shadow: 0 8px 16px rgba(26, 54, 93, 0.1);
+    background: #eff6ff;
+    border-color: #e5e7eb;
+    box-shadow: 0 8px 16px rgba(37, 99, 235, 0.1);
   }
 
   .simple-home-international .comparison-item {

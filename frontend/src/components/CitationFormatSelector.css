@@ -45,14 +45,14 @@
 }
 
 .format-button.active {
-  background: #D63031;
-  border-color: #D63031;
+  background: #2563eb;
+  border-color: #2563eb;
   color: white;
 }
 
 .format-button.active:hover {
-  background: #b92627;
-  border-color: #b92627;
+  background: #1d4ed8;
+  border-color: #1d4ed8;
 }
 
 /* 移动端适配 */
