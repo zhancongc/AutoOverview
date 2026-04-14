@@ -50,7 +50,7 @@ html.intl .search-papers-page {
 .search-papers-page .sp-nav {
   background: var(--cream-white);
   border-bottom: 1px solid var(--light-gray);
-  padding: 0.35rem 2rem;
+  padding: 0.5rem 2rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   display: flex;
   justify-content: space-between;

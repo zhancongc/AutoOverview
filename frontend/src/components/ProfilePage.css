@@ -27,7 +27,7 @@
 .profile-nav {
   background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(20px);
-  padding: 1.5rem 3rem;
+  padding: 0.5rem 2rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -569,7 +569,7 @@
 
 @media (max-width: 768px) {
   .profile-nav {
-    padding: 1rem 1.5rem;
+    padding: 0.5rem 1.25rem;
   }
 
   .profile-container {

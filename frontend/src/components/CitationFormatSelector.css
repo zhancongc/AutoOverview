@@ -1,3 +1,4 @@
+/* 中文站红色系 (默认) */
 .citation-format-selector {
   display: flex;
   align-items: center;
@@ -45,12 +46,27 @@
 }
 
 .format-button.active {
+  background: #D63031;
+  border-color: #D63031;
+  color: white;
+}
+
+.format-button.active:hover {
+  background: #B71C1C;
+  border-color: #B71C1C;
+}
+
+/* 英文站蓝色系 */
+html.intl .citation-format-selector {
+}
+
+html.intl .format-button.active {
   background: #2563eb;
   border-color: #2563eb;
   color: white;
 }
 
-.format-button.active:hover {
+html.intl .format-button.active:hover {
   background: #1d4ed8;
   border-color: #1d4ed8;
 }
