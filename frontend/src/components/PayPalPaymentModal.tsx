@@ -22,11 +22,11 @@ const PAYPAL_PRICING = {
   single: {
     type: 'single',
     name: 'Starter',
-    price: 5.99,
-    credits: 1,
+    price: 9.99,
+    credits: 3,
     currency: 'USD',
     features: [
-      '1 complete literature review',
+      '3 complete literature reviews',
       'DOI-verifiable citations',
       'Standard citation formats',
       'Word export',
@@ -35,11 +35,11 @@ const PAYPAL_PRICING = {
   semester: {
     type: 'semester',
     name: 'Semester Pro',
-    price: 27.99,
-    credits: 12,
+    price: 24.99,
+    credits: 10,
     currency: 'USD',
     features: [
-      '12 review credits',
+      '10 review credits',
       'Priority processing',
       'Advanced citation formats',
       'All Starter features',
@@ -49,11 +49,11 @@ const PAYPAL_PRICING = {
   yearly: {
     type: 'yearly',
     name: 'Annual Premium',
-    price: 64.99,
-    credits: 36,
+    price: 44.99,
+    credits: 30,
     currency: 'USD',
     features: [
-      '36 review credits',
+      '30 review credits',
       'Priority processing',
       'Advanced citation formats',
       'All Semester features',
