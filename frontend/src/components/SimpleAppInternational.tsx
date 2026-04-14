@@ -9,7 +9,7 @@ import { api } from '../api'
 import { isLoggedIn as checkLoggedIn, getLocalUserInfo } from '../authApi'
 import { LoginModalInternational } from './LoginModalInternational'
 import { PaymentModal } from './PaymentModal'
-import { PaddlePaymentModal } from './PaddlePaymentModal'
+
 import { PayPalPaymentModal } from './PayPalPaymentModal'
 import { CookieConsentBanner } from './CookieConsentBanner'
 import './SimpleAppInternational.css'
@@ -31,7 +31,6 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
   const [, setError] = useState('')
   const [showLoginModal, setShowLoginModal] = useState(false)
   const [showPaymentModal, setShowPaymentModal] = useState<string | false>(false)
-  const [paymentProvider, setPaymentProvider] = useState<'paypal' | 'paddle'>('paypal') // Default to PayPal
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [, setActiveTaskId] = useState<string | null>(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -484,19 +483,6 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
             <div className="hero-cta-group">
               <button
                 className="generate-btn hero-cta-primary"
-                onClick={() => {
-                  const el = document.getElementById('generate')
-                  if (el) {
-                    const navHeight = 60
-                    const elPosition = el.getBoundingClientRect().top + window.pageYOffset
-                    window.scrollTo({ top: elPosition - navHeight, behavior: 'smooth' })
-                  }
-                }}
-              >
-                {t('home.input.button')}
-              </button>
-              <button
-                className="secondary-btn hero-cta-secondary"
                 onClick={() => navigate('/search-papers')}
               >
                 {t('home.hero.search_papers_cta')}
@@ -921,26 +907,11 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
       {showPaymentModal && (
         <>
           {language === 'en' ? (
-            <>
-              {paymentProvider === 'paypal' ? (
-                <PayPalPaymentModal
-                  onClose={() => setShowPaymentModal(false)}
-                  onPaymentSuccess={handlePaymentSuccess}
-                  planType={showPaymentModal}
-                  showPaddleOption={true}
-                  onSwitchToPaddle={() => setPaymentProvider('paddle')}
-                />
-              ) : (
-                <PaddlePaymentModal
-                  onClose={() => {
-                    setShowPaymentModal(false)
-                    setPaymentProvider('paypal')
-                  }}
-                  onPaymentSuccess={handlePaymentSuccess}
-                  planType={showPaymentModal}
-                />
-              )}
-            </>
+            <PayPalPaymentModal
+              onClose={() => setShowPaymentModal(false)}
+              onPaymentSuccess={handlePaymentSuccess}
+              planType={showPaymentModal}
+            />
           ) : (
             <PaymentModal
               onClose={() => setShowPaymentModal(false)}

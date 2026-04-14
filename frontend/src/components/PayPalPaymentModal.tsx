@@ -13,8 +13,6 @@ interface PayPalPaymentModalProps {
   onPaymentSuccess: (addedCredits?: number) => void
   planType: string
   recordId?: number  // For unlock mode
-  showPaddleOption?: boolean  // Allow switching to Paddle
-  onSwitchToPaddle?: () => void
 }
 
 // Pricing aligned with backend PAYPAL_PRICING (and Paddle)
@@ -90,8 +88,6 @@ export function PayPalPaymentModal({
   onPaymentSuccess,
   planType,
   recordId,
-  showPaddleOption = true,
-  onSwitchToPaddle
 }: PayPalPaymentModalProps) {
   const { t } = useTranslation()
   const [, setLoading] = useState(false)
@@ -322,22 +318,6 @@ export function PayPalPaymentModal({
                 </div>
               )}
 
-              {/* Alternative payment option: Paddle */}
-              {showPaddleOption && onSwitchToPaddle && (
-                <div className="payment-alternative">
-                  <p className="payment-alternative-text">Or pay with:</p>
-                  <button
-                    className="payment-alternative-btn"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      onSwitchToPaddle()
-                    }}
-                  >
-                    Credit Card (Paddle)
-                  </button>
-                </div>
-              )}
-
               <button className="payment-cancel-btn" onClick={handleClose}>
                 {t('payment.cancel')}
               </button>
@@ -363,11 +343,6 @@ export function PayPalPaymentModal({
               <p className="payment-error-text">{error}</p>
               <div className="payment-error-actions">
                 <button className="payment-modal-btn" onClick={handleRetry}>{t('payment.retry')}</button>
-                {showPaddleOption && onSwitchToPaddle && (
-                  <button className="payment-modal-btn secondary" onClick={onSwitchToPaddle}>
-                    Use Paddle instead
-                  </button>
-                )}
               </div>
             </div>
           )}

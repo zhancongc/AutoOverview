@@ -10,7 +10,7 @@ set -e
 
 # ---------- 配置 ----------
 DOMAIN="autooverview.plainkit.top"
-APP_DIR="/opt/autooverview-en"
+APP_DIR="/app/AutoOverview"
 DIST_DIR="$APP_DIR/frontend/dist-en"
 # 上海后端服务器
 BACKEND_HOST="14.103.210.88"

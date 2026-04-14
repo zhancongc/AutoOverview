@@ -168,7 +168,7 @@ autooverview.plainkit.top {
 
     # 静态文件服务
     handle {
-        root * /opt/autooverview-en/frontend/dist-en
+        root * /app/AutoOverview/frontend/dist-en
         
         try_files {path} /index.html
         file_server

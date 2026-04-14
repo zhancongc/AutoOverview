@@ -40,7 +40,6 @@ from authkit.middleware import StatsMiddleware
 from authkit.routers import subscription as sub_router
 from authkit.routers import webhook as webhook_router
 from authkit.routers import payment_callback as payment_cb_router
-from authkit.routers import paddle_subscription as paddle_router
 from authkit.routers import paypal_subscription as paypal_router
 from authkit.models.payment import Subscription, PaymentLog, PaymentBase
 from models import ReviewRecord
@@ -227,10 +226,6 @@ app.include_router(admin_stats_router_module.router)
 app.include_router(sub_router.router)
 app.include_router(webhook_router.router)
 app.include_router(payment_cb_router.router)
-
-# 集成 Paddle 支付路由（国际版）
-paddle_router.set_get_db(auth_get_db)
-app.include_router(paddle_router.router)
 
 # 集成 PayPal 支付路由（国际版默认）
 paypal_router.set_get_db(auth_get_db)

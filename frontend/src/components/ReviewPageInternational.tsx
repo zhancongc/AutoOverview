@@ -6,7 +6,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { ReviewViewerInternational } from './ReviewViewerInternational'
-import { PaddlePaymentModal } from './PaddlePaymentModal'
+
 import { PayPalPaymentModal } from './PayPalPaymentModal'
 import { ConfirmModalInternational } from './ConfirmModalInternational'
 import { CitationFormatSelector } from './CitationFormatSelector'
@@ -55,7 +55,6 @@ export function ReviewPageInternational() {
   const [error, setError] = useState('')
   const [activeTab, setActiveTab] = useState<TabType>('content')
   const [showPayModal, setShowPayModal] = useState(false)
-  const [paymentProvider, setPaymentProvider] = useState<'paypal' | 'paddle'>('paypal') // Default to PayPal
   const [exporting, setExporting] = useState(false)
   const [exportError, setExportError] = useState('')
   const [unlockMode, setUnlockMode] = useState(false)
@@ -519,92 +518,41 @@ export function ReviewPageInternational() {
         )
       )}
       {showPayModal && unlockMode && (
-        <>
-          {paymentProvider === 'paypal' ? (
-            <PayPalPaymentModal
-              onClose={() => {
-                setShowPayModal(false)
-                setUnlockMode(false)
-              }}
-              onPaymentSuccess={async () => {
-                setShowPayModal(false)
-                setUnlockMode(false)
-                if (taskId) {
-                  api.getTaskReview(taskId).then(res => {
-                    if (res.success && res.data) {
-                      setTaskData({
-                        title: res.data.topic,
-                        content: res.data.review,
-                        papers: res.data.papers || [],
-                        recordId: res.data.record_id,
-                        isPublic: res.data.is_public,
-                        isPaid: res.data.is_paid,
-                      })
-                    }
-                  }).catch(err => console.error('Failed to refresh task:', err))
+        <PayPalPaymentModal
+          onClose={() => {
+            setShowPayModal(false)
+            setUnlockMode(false)
+          }}
+          onPaymentSuccess={async () => {
+            setShowPayModal(false)
+            setUnlockMode(false)
+            if (taskId) {
+              api.getTaskReview(taskId).then(res => {
+                if (res.success && res.data) {
+                  setTaskData({
+                    title: res.data.topic,
+                    content: res.data.review,
+                    papers: res.data.papers || [],
+                    recordId: res.data.record_id,
+                    isPublic: res.data.is_public,
+                    isPaid: res.data.is_paid,
+                  })
                 }
-              }}
-              planType="unlock"
-              recordId={reviewData.recordId}
-              showPaddleOption={true}
-              onSwitchToPaddle={() => setPaymentProvider('paddle')}
-            />
-          ) : (
-            <PaddlePaymentModal
-              onClose={() => {
-                setShowPayModal(false)
-                setUnlockMode(false)
-                setPaymentProvider('paypal')
-              }}
-              onPaymentSuccess={async () => {
-                setShowPayModal(false)
-                setUnlockMode(false)
-                if (taskId) {
-                  api.getTaskReview(taskId).then(res => {
-                    if (res.success && res.data) {
-                      setTaskData({
-                        title: res.data.topic,
-                        content: res.data.review,
-                        papers: res.data.papers || [],
-                        recordId: res.data.record_id,
-                        isPublic: res.data.is_public,
-                        isPaid: res.data.is_paid,
-                      })
-                    }
-                  }).catch(err => console.error('Failed to refresh task:', err))
-                }
-              }}
-              planType="unlock"
-              recordId={reviewData.recordId}
-            />
-          )}
-        </>
+              }).catch(err => console.error('Failed to refresh task:', err))
+            }
+          }}
+          planType="unlock"
+          recordId={reviewData.recordId}
+        />
       )}
       {showPayModal && !unlockMode && (
-        <>
-          {paymentProvider === 'paypal' ? (
-            <PayPalPaymentModal
-              onClose={() => setShowPayModal(false)}
-              onPaymentSuccess={async () => {
-                setShowPayModal(false)
-              }}
-              planType="single"
-              showPaddleOption={true}
-              onSwitchToPaddle={() => setPaymentProvider('paddle')}
-            />
-          ) : (
-            <PaddlePaymentModal
-              onClose={() => {
-                setShowPayModal(false)
-                setPaymentProvider('paypal')
-              }}
-              onPaymentSuccess={async () => {
-                setShowPayModal(false)
-              }}
-              planType="single"
-            />
-          )}
-        </>
+        <PayPalPaymentModal
+          onClose={() => setShowPayModal(false)}
+          onPaymentSuccess={async () => {
+            setShowPayModal(false)
+          }}
+          planType="single"
+        />
       )}
 
       {showCreditConfirmModal && (
