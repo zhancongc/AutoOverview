@@ -191,6 +191,11 @@ class PayPalService:
             logger.warning("[PayPal] No webhook ID configured, skipping verification")
             return True
 
+        # 沙箱模式跳过验证（沙箱 webhook 配置可能不完整）
+        if self.sandbox:
+            logger.info("[PayPal] Sandbox mode, skipping webhook verification")
+            return True
+
         try:
             import httpx
             import json
