@@ -7,7 +7,7 @@
 
 set -e
 
-APP_DIR="/app/Autooverview"
+APP_DIR="/app/AutoOverview"
 DIST_DIR="$APP_DIR/frontend/dist-en"
 
 echo "=========================================="
