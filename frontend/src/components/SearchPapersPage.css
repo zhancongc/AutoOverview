@@ -1,7 +1,30 @@
 /* SearchPapersPage - Free Paper Search Tool */
-/* Reuses CSS variables from html.intl scope */
 
+/* Default variables (Chinese red theme) — overridden by html.intl for English site */
+.search-papers-page {
+  --academic-blue-primary: #D63031;
+  --academic-blue-secondary: #B71C1C;
+  --academic-blue-light: #fde8e8;
+  --academic-blue-border: #f5c6c6;
+  --ink-black: #1A1A1A;
+  --charcoal: #2D3436;
+  --text-gray: #636E72;
+  --light-gray: #DFE6E9;
+  --cream-white: #FFFBF5;
+  --accent-blue: #D63031;
+  --accent-green: #38a169;
+}
+
+/* English site: restore blue theme (overrides the defaults above) */
 html.intl .search-papers-page {
+  --academic-blue-primary: #1a365d;
+  --academic-blue-secondary: #2c5282;
+  --academic-blue-light: #ebf8ff;
+  --academic-blue-border: #bee3f8;
+  --accent-blue: #3182ce;
+}
+
+.search-papers-page {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', 'Roboto', 'Oxygen', sans-serif;
   color: var(--ink-black);
   background: var(--cream-white);
@@ -12,19 +35,19 @@ html.intl .search-papers-page {
 }
 
 /* 让主内容区填充剩余空间，footer 自然沉底 */
-html.intl .search-papers-page > .sp-hero,
-html.intl .search-papers-page > .sp-search-section,
-html.intl .search-papers-page > .sp-loading,
-html.intl .search-papers-page > .sp-error,
-html.intl .search-papers-page > .sp-statistics,
-html.intl .search-papers-page > .sp-results,
-html.intl .search-papers-page > .sp-no-results,
-html.intl .search-papers-page > .sp-cta {
+.search-papers-page > .sp-hero,
+.search-papers-page > .sp-search-section,
+.search-papers-page > .sp-loading,
+.search-papers-page > .sp-error,
+.search-papers-page > .sp-statistics,
+.search-papers-page > .sp-results,
+.search-papers-page > .sp-no-results,
+.search-papers-page > .sp-cta {
   flex-shrink: 0;
 }
 
 /* ==================== Navigation ==================== */
-html.intl .search-papers-page .sp-nav {
+.search-papers-page .sp-nav {
   background: var(--cream-white);
   border-bottom: 1px solid var(--light-gray);
   padding: 0.35rem 2rem;
@@ -39,7 +62,7 @@ html.intl .search-papers-page .sp-nav {
   z-index: 100;
 }
 
-html.intl .search-papers-page .sp-nav-logo {
+.search-papers-page .sp-nav-logo {
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -50,17 +73,17 @@ html.intl .search-papers-page .sp-nav-logo {
   text-decoration: none;
 }
 
-html.intl .search-papers-page .sp-nav-logo .logo-icon {
+.search-papers-page .sp-nav-logo .logo-icon {
   font-size: 1.35rem;
 }
 
-html.intl .search-papers-page .sp-nav-links {
+.search-papers-page .sp-nav-links {
   display: flex;
   gap: 1.5rem;
   align-items: center;
 }
 
-html.intl .search-papers-page .sp-nav-links a {
+.search-papers-page .sp-nav-links a {
   color: var(--text-gray);
   text-decoration: none;
   font-weight: 500;
@@ -68,18 +91,18 @@ html.intl .search-papers-page .sp-nav-links a {
   transition: color 0.2s;
 }
 
-html.intl .search-papers-page .sp-nav-links a:hover,
-html.intl .search-papers-page .sp-nav-links a.active {
+.search-papers-page .sp-nav-links a:hover,
+.search-papers-page .sp-nav-links a.active {
   color: var(--academic-blue-primary);
 }
 
-html.intl .search-papers-page .sp-nav-actions {
+.search-papers-page .sp-nav-actions {
   display: flex;
   gap: 1rem;
   align-items: center;
 }
 
-html.intl .search-papers-page .sp-nav-btn {
+.search-papers-page .sp-nav-btn {
   padding: 0.5rem 1.25rem;
   border-radius: 8px;
   font-size: 0.875rem;
@@ -90,17 +113,17 @@ html.intl .search-papers-page .sp-nav-btn {
   text-decoration: none;
 }
 
-html.intl .search-papers-page .sp-nav-btn-primary {
+.search-papers-page .sp-nav-btn-primary {
   background: var(--academic-blue-primary);
   color: var(--cream-white);
 }
 
-html.intl .search-papers-page .sp-nav-btn-primary:hover {
+.search-papers-page .sp-nav-btn-primary:hover {
   background: var(--academic-blue-secondary);
 }
 
 /* Mobile menu toggle */
-html.intl .search-papers-page .sp-mobile-toggle {
+.search-papers-page .sp-mobile-toggle {
   display: none;
   background: none;
   border: none;
@@ -108,7 +131,7 @@ html.intl .search-papers-page .sp-mobile-toggle {
   padding: 0.5rem;
 }
 
-html.intl .search-papers-page .sp-mobile-toggle .hamburger {
+.search-papers-page .sp-mobile-toggle .hamburger {
   display: block;
   width: 22px;
   height: 2px;
@@ -117,8 +140,8 @@ html.intl .search-papers-page .sp-mobile-toggle .hamburger {
   transition: background 0.2s;
 }
 
-html.intl .search-papers-page .sp-mobile-toggle .hamburger::before,
-html.intl .search-papers-page .sp-mobile-toggle .hamburger::after {
+.search-papers-page .sp-mobile-toggle .hamburger::before,
+.search-papers-page .sp-mobile-toggle .hamburger::after {
   content: '';
   display: block;
   width: 22px;
@@ -129,11 +152,11 @@ html.intl .search-papers-page .sp-mobile-toggle .hamburger::after {
   transition: transform 0.2s;
 }
 
-html.intl .search-papers-page .sp-mobile-toggle .hamburger::before { top: -7px; }
-html.intl .search-papers-page .sp-mobile-toggle .hamburger::after { top: 7px; }
+.search-papers-page .sp-mobile-toggle .hamburger::before { top: -7px; }
+.search-papers-page .sp-mobile-toggle .hamburger::after { top: 7px; }
 
 /* Mobile sidebar overlay */
-html.intl .search-papers-page .sp-sidebar-overlay {
+.search-papers-page .sp-sidebar-overlay {
   display: none;
   position: fixed;
   inset: 0;
@@ -142,7 +165,7 @@ html.intl .search-papers-page .sp-sidebar-overlay {
 }
 
 /* Mobile sidebar */
-html.intl .search-papers-page .sp-sidebar {
+.search-papers-page .sp-sidebar {
   display: none;
   position: fixed;
   top: 0;
@@ -156,22 +179,22 @@ html.intl .search-papers-page .sp-sidebar {
   flex-direction: column;
 }
 
-html.intl .search-papers-page .sp-sidebar-open {
+.search-papers-page .sp-sidebar-open {
   display: flex;
 }
 
-html.intl .search-papers-page .sp-sidebar-overlay-open {
+.search-papers-page .sp-sidebar-overlay-open {
   display: block;
 }
 
-html.intl .search-papers-page .sp-sidebar-header {
+.search-papers-page .sp-sidebar-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 2rem;
 }
 
-html.intl .search-papers-page .sp-sidebar-close {
+.search-papers-page .sp-sidebar-close {
   background: none;
   border: none;
   font-size: 1.5rem;
@@ -180,13 +203,13 @@ html.intl .search-papers-page .sp-sidebar-close {
   padding: 0.25rem;
 }
 
-html.intl .search-papers-page .sp-sidebar-nav {
+.search-papers-page .sp-sidebar-nav {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
 
-html.intl .search-papers-page .sp-sidebar-nav a {
+.search-papers-page .sp-sidebar-nav a {
   color: var(--charcoal);
   text-decoration: none;
   padding: 0.75rem 1rem;
@@ -195,19 +218,19 @@ html.intl .search-papers-page .sp-sidebar-nav a {
   transition: background 0.2s;
 }
 
-html.intl .search-papers-page .sp-sidebar-nav a:hover {
+.search-papers-page .sp-sidebar-nav a:hover {
   background: var(--academic-blue-light);
 }
 
 /* ==================== Hero Section ==================== */
-html.intl .search-papers-page .sp-hero {
+.search-papers-page .sp-hero {
   padding: calc(60px + 4rem) 2rem 2rem;
   max-width: 720px;
   margin: 0 auto;
   text-align: center;
 }
 
-html.intl .search-papers-page .sp-hero-badge {
+.search-papers-page .sp-hero-badge {
   display: inline-block;
   background: var(--academic-blue-light);
   color: var(--academic-blue-primary);
@@ -219,7 +242,7 @@ html.intl .search-papers-page .sp-hero-badge {
   letter-spacing: 0.02em;
 }
 
-html.intl .search-papers-page .sp-hero h1 {
+.search-papers-page .sp-hero h1 {
   font-size: 2.5rem;
   font-weight: 800;
   color: var(--academic-blue-primary);
@@ -227,7 +250,7 @@ html.intl .search-papers-page .sp-hero h1 {
   line-height: 1.2;
 }
 
-html.intl .search-papers-page .sp-hero-subtitle {
+.search-papers-page .sp-hero-subtitle {
   font-size: 1.1rem;
   color: var(--text-gray);
   max-width: 560px;
@@ -236,13 +259,13 @@ html.intl .search-papers-page .sp-hero-subtitle {
 }
 
 /* ==================== Search Input Section ==================== */
-html.intl .search-papers-page .sp-search-section {
+.search-papers-page .sp-search-section {
   max-width: 680px;
   margin: 0 auto 2rem;
   padding: 0 2rem;
 }
 
-html.intl .search-papers-page .sp-search-card {
+.search-papers-page .sp-search-card {
   background: var(--cream-white);
   border: 2px solid var(--light-gray);
   border-radius: 16px;
@@ -251,11 +274,11 @@ html.intl .search-papers-page .sp-search-card {
   transition: border-color 0.2s;
 }
 
-html.intl .search-papers-page .sp-search-card:focus-within {
+.search-papers-page .sp-search-card:focus-within {
   border-color: var(--accent-blue);
 }
 
-html.intl .search-papers-page .sp-search-input {
+.search-papers-page .sp-search-input {
   width: 100%;
   padding: 0.875rem 1rem;
   border: 1px solid var(--light-gray);
@@ -269,28 +292,28 @@ html.intl .search-papers-page .sp-search-input {
   font-family: inherit;
 }
 
-html.intl .search-papers-page .sp-search-input:focus {
+.search-papers-page .sp-search-input:focus {
   border-color: var(--accent-blue);
   box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.1);
 }
 
-html.intl .search-papers-page .sp-search-input::placeholder {
+.search-papers-page .sp-search-input::placeholder {
   color: #a0aec0;
 }
 
-html.intl .search-papers-page .sp-search-input:disabled {
+.search-papers-page .sp-search-input:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
 
-html.intl .search-papers-page .sp-search-actions {
+.search-papers-page .sp-search-actions {
   display: flex;
   align-items: center;
   gap: 1rem;
   margin-top: 1rem;
 }
 
-html.intl .search-papers-page .sp-search-btn {
+.search-papers-page .sp-search-btn {
   flex: 1;
   background: var(--academic-blue-primary);
   color: var(--cream-white);
@@ -304,32 +327,32 @@ html.intl .search-papers-page .sp-search-btn {
   box-shadow: 0 4px 12px rgba(26, 54, 93, 0.2);
 }
 
-html.intl .search-papers-page .sp-search-btn:hover:not(:disabled) {
+.search-papers-page .sp-search-btn:hover:not(:disabled) {
   background: var(--academic-blue-secondary);
   transform: translateY(-1px);
   box-shadow: 0 6px 16px rgba(26, 54, 93, 0.25);
 }
 
-html.intl .search-papers-page .sp-search-btn:disabled {
+.search-papers-page .sp-search-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
 
-html.intl .search-papers-page .sp-search-helper {
+.search-papers-page .sp-search-helper {
   font-size: 0.8rem;
   color: #a0aec0;
   margin-top: 0.75rem;
 }
 
 /* Data Sources */
-html.intl .search-papers-page .sp-sources {
+.search-papers-page .sp-sources {
   max-width: 680px;
   margin: 0 auto 2rem;
   padding: 0 2rem;
   text-align: center;
 }
 
-html.intl .search-papers-page .sp-sources-title {
+.search-papers-page .sp-sources-title {
   font-size: 0.8rem;
   color: var(--text-gray);
   margin-bottom: 0.75rem;
@@ -338,7 +361,7 @@ html.intl .search-papers-page .sp-sources-title {
   letter-spacing: 0.08em;
 }
 
-html.intl .search-papers-page .sp-sources-logos {
+.search-papers-page .sp-sources-logos {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -346,7 +369,7 @@ html.intl .search-papers-page .sp-sources-logos {
   flex-wrap: wrap;
 }
 
-html.intl .search-papers-page .sp-source-logo {
+.search-papers-page .sp-source-logo {
   padding: 0.5rem 1rem;
   font-size: 0.9rem;
   font-weight: 600;
@@ -355,27 +378,27 @@ html.intl .search-papers-page .sp-source-logo {
 }
 
 /* ==================== Loading State ==================== */
-html.intl .search-papers-page .sp-loading {
+.search-papers-page .sp-loading {
   max-width: 680px;
   margin: 0 auto 2rem;
   padding: 0 2rem;
   text-align: center;
 }
 
-html.intl .search-papers-page .sp-loading-card {
+.search-papers-page .sp-loading-card {
   background: #f7fafc;
   border: 1px solid var(--light-gray);
   border-radius: 12px;
   padding: 2rem;
 }
 
-html.intl .search-papers-page .sp-loading-title {
+.search-papers-page .sp-loading-title {
   font-weight: 600;
   color: var(--charcoal);
   margin-bottom: 1rem;
 }
 
-html.intl .search-papers-page .sp-progress-bar {
+.search-papers-page .sp-progress-bar {
   width: 100%;
   height: 6px;
   background: var(--light-gray);
@@ -384,7 +407,7 @@ html.intl .search-papers-page .sp-progress-bar {
   margin-bottom: 1rem;
 }
 
-html.intl .search-papers-page .sp-progress-fill {
+.search-papers-page .sp-progress-fill {
   height: 100%;
   background: linear-gradient(90deg, var(--accent-blue), var(--academic-blue-secondary));
   border-radius: 3px;
@@ -397,7 +420,7 @@ html.intl .search-papers-page .sp-progress-fill {
   100% { width: 10%; margin-left: 90%; }
 }
 
-html.intl .search-papers-page .sp-loading-status {
+.search-papers-page .sp-loading-status {
   font-size: 0.95rem;
   color: var(--charcoal);
   font-weight: 500;
@@ -405,19 +428,19 @@ html.intl .search-papers-page .sp-loading-status {
   min-height: 1.5em;
 }
 
-html.intl .search-papers-page .sp-loading-estimate {
+.search-papers-page .sp-loading-estimate {
   font-size: 0.8rem;
   color: var(--text-gray);
 }
 
 /* ==================== Error State ==================== */
-html.intl .search-papers-page .sp-error {
+.search-papers-page .sp-error {
   max-width: 680px;
   margin: 0 auto 2rem;
   padding: 0 2rem;
 }
 
-html.intl .search-papers-page .sp-error-card {
+.search-papers-page .sp-error-card {
   background: #fff5f5;
   border: 1px solid #fed7d7;
   border-radius: 12px;
@@ -425,13 +448,13 @@ html.intl .search-papers-page .sp-error-card {
   text-align: center;
 }
 
-html.intl .search-papers-page .sp-error-message {
+.search-papers-page .sp-error-message {
   color: #c53030;
   font-weight: 500;
   margin-bottom: 1rem;
 }
 
-html.intl .search-papers-page .sp-error-retry {
+.search-papers-page .sp-error-retry {
   background: var(--academic-blue-primary);
   color: var(--cream-white);
   border: none;
@@ -442,25 +465,25 @@ html.intl .search-papers-page .sp-error-retry {
   transition: background 0.2s;
 }
 
-html.intl .search-papers-page .sp-error-retry:hover {
+.search-papers-page .sp-error-retry:hover {
   background: var(--academic-blue-secondary);
 }
 
 /* ==================== Statistics Bar ==================== */
-html.intl .search-papers-page .sp-statistics {
+.search-papers-page .sp-statistics {
   max-width: 800px;
   margin: 0 auto 1.5rem;
   padding: 0 2rem;
 }
 
-html.intl .search-papers-page .sp-statistics-bar {
+.search-papers-page .sp-statistics-bar {
   display: flex;
   gap: 0.75rem;
   flex-wrap: wrap;
   align-items: center;
 }
 
-html.intl .search-papers-page .sp-stat-badge {
+.search-papers-page .sp-stat-badge {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
@@ -472,30 +495,30 @@ html.intl .search-papers-page .sp-stat-badge {
   color: var(--academic-blue-secondary);
 }
 
-html.intl .search-papers-page .sp-stat-badge-primary {
+.search-papers-page .sp-stat-badge-primary {
   background: var(--academic-blue-primary);
   color: var(--cream-white);
 }
 
-html.intl .search-papers-page .sp-stat-number {
+.search-papers-page .sp-stat-number {
   font-weight: 700;
 }
 
 /* ==================== Results ==================== */
-html.intl .search-papers-page .sp-results {
+.search-papers-page .sp-results {
   max-width: 800px;
   margin: 0 auto;
   padding: 0 2rem;
 }
 
-html.intl .search-papers-page .sp-results-header {
+.search-papers-page .sp-results-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1rem;
 }
 
-html.intl .search-papers-page .sp-sort-controls {
+.search-papers-page .sp-sort-controls {
   display: flex;
   gap: 0.5rem;
   align-items: center;
@@ -503,7 +526,7 @@ html.intl .search-papers-page .sp-sort-controls {
   color: var(--text-gray);
 }
 
-html.intl .search-papers-page .sp-sort-btn {
+.search-papers-page .sp-sort-btn {
   background: transparent;
   border: 1px solid var(--light-gray);
   padding: 0.3rem 0.75rem;
@@ -514,14 +537,14 @@ html.intl .search-papers-page .sp-sort-btn {
   transition: all 0.2s;
 }
 
-html.intl .search-papers-page .sp-sort-btn:hover,
-html.intl .search-papers-page .sp-sort-btn.active {
+.search-papers-page .sp-sort-btn:hover,
+.search-papers-page .sp-sort-btn.active {
   border-color: var(--accent-blue);
   color: var(--accent-blue);
   background: var(--academic-blue-light);
 }
 
-html.intl .search-papers-page .sp-paper-card {
+.search-papers-page .sp-paper-card {
   background: var(--cream-white);
   border: 1px solid var(--light-gray);
   border-radius: 12px;
@@ -530,18 +553,18 @@ html.intl .search-papers-page .sp-paper-card {
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-html.intl .search-papers-page .sp-paper-card:hover {
+.search-papers-page .sp-paper-card:hover {
   border-color: var(--academic-blue-border);
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
 }
 
-html.intl .search-papers-page .sp-paper-top {
+.search-papers-page .sp-paper-top {
   display: flex;
   gap: 0.75rem;
   align-items: flex-start;
 }
 
-html.intl .search-papers-page .sp-paper-number {
+.search-papers-page .sp-paper-number {
   font-size: 0.85rem;
   font-weight: 700;
   color: var(--accent-blue);
@@ -549,25 +572,25 @@ html.intl .search-papers-page .sp-paper-number {
   padding-top: 2px;
 }
 
-html.intl .search-papers-page .sp-paper-title {
+.search-papers-page .sp-paper-title {
   font-size: 1rem;
   font-weight: 600;
   color: var(--academic-blue-primary);
   line-height: 1.5;
 }
 
-html.intl .search-papers-page .sp-paper-title a {
+.search-papers-page .sp-paper-title a {
   color: inherit;
   text-decoration: none;
   transition: color 0.2s;
 }
 
-html.intl .search-papers-page .sp-paper-title a:hover {
+.search-papers-page .sp-paper-title a:hover {
   color: var(--accent-blue);
   text-decoration: underline;
 }
 
-html.intl .search-papers-page .sp-paper-meta {
+.search-papers-page .sp-paper-meta {
   display: flex;
   gap: 0.75rem;
   align-items: center;
@@ -576,7 +599,7 @@ html.intl .search-papers-page .sp-paper-meta {
   flex-wrap: wrap;
 }
 
-html.intl .search-papers-page .sp-paper-tag {
+.search-papers-page .sp-paper-tag {
   display: inline-flex;
   align-items: center;
   font-size: 0.75rem;
@@ -585,22 +608,22 @@ html.intl .search-papers-page .sp-paper-tag {
   border-radius: 4px;
 }
 
-html.intl .search-papers-page .sp-tag-year {
+.search-papers-page .sp-tag-year {
   background: #edf2f7;
   color: var(--charcoal);
 }
 
-html.intl .search-papers-page .sp-tag-citations {
+.search-papers-page .sp-tag-citations {
   background: #fefcbf;
   color: #975a16;
 }
 
-html.intl .search-papers-page .sp-tag-lang {
+.search-papers-page .sp-tag-lang {
   background: var(--academic-blue-light);
   color: var(--academic-blue-secondary);
 }
 
-html.intl .search-papers-page .sp-paper-abstract {
+.search-papers-page .sp-paper-abstract {
   padding-left: 2.75rem;
   margin-top: 0.5rem;
   font-size: 0.875rem;
@@ -608,7 +631,7 @@ html.intl .search-papers-page .sp-paper-abstract {
   line-height: 1.65;
 }
 
-html.intl .search-papers-page .sp-paper-authors {
+.search-papers-page .sp-paper-authors {
   padding-left: 2.75rem;
   margin-top: 0.35rem;
   font-size: 0.8rem;
@@ -616,13 +639,13 @@ html.intl .search-papers-page .sp-paper-authors {
 }
 
 /* ==================== CTA Section ==================== */
-html.intl .search-papers-page .sp-cta {
+.search-papers-page .sp-cta {
   max-width: 800px;
   margin: 3rem auto;
   padding: 0 2rem;
 }
 
-html.intl .search-papers-page .sp-cta-card {
+.search-papers-page .sp-cta-card {
   background: linear-gradient(135deg, var(--academic-blue-primary) 0%, var(--academic-blue-secondary) 100%);
   border-radius: 16px;
   padding: 2.5rem;
@@ -630,13 +653,13 @@ html.intl .search-papers-page .sp-cta-card {
   color: var(--cream-white);
 }
 
-html.intl .search-papers-page .sp-cta-title {
+.search-papers-page .sp-cta-title {
   font-size: 1.5rem;
   font-weight: 700;
   margin-bottom: 0.75rem;
 }
 
-html.intl .search-papers-page .sp-cta-desc {
+.search-papers-page .sp-cta-desc {
   font-size: 0.95rem;
   opacity: 0.9;
   max-width: 500px;
@@ -644,7 +667,7 @@ html.intl .search-papers-page .sp-cta-desc {
   line-height: 1.7;
 }
 
-html.intl .search-papers-page .sp-cta-btn {
+.search-papers-page .sp-cta-btn {
   display: inline-block;
   background: var(--cream-white);
   color: var(--academic-blue-primary);
@@ -659,24 +682,24 @@ html.intl .search-papers-page .sp-cta-btn {
   text-decoration: none;
 }
 
-html.intl .search-papers-page .sp-cta-btn:hover {
+.search-papers-page .sp-cta-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
 }
 
-html.intl .search-papers-page .sp-cta-badge {
+.search-papers-page .sp-cta-badge {
   margin-top: 1rem;
   font-size: 0.8rem;
   opacity: 0.7;
 }
 
-html.intl .search-papers-page .sp-cta-badge a {
+.search-papers-page .sp-cta-badge a {
   color: var(--cream-white);
   text-decoration: underline;
 }
 
 /* ==================== Footer ==================== */
-html.intl .search-papers-page .sp-footer {
+.search-papers-page .sp-footer {
   border-top: 1px solid var(--light-gray);
   padding: 1.5rem 2rem;
   text-align: center;
@@ -685,118 +708,118 @@ html.intl .search-papers-page .sp-footer {
   margin-top: auto;
 }
 
-html.intl .search-papers-page .sp-footer-links {
+.search-papers-page .sp-footer-links {
   display: flex;
   justify-content: center;
   gap: 1.5rem;
   margin-bottom: 0.5rem;
 }
 
-html.intl .search-papers-page .sp-footer-links a {
+.search-papers-page .sp-footer-links a {
   color: var(--text-gray);
   text-decoration: none;
   transition: color 0.2s;
 }
 
-html.intl .search-papers-page .sp-footer-links a:hover {
+.search-papers-page .sp-footer-links a:hover {
   color: var(--academic-blue-primary);
 }
 
 /* ==================== No Results ==================== */
-html.intl .search-papers-page .sp-no-results {
+.search-papers-page .sp-no-results {
   max-width: 680px;
   margin: 2rem auto;
   padding: 0 2rem;
   text-align: center;
 }
 
-html.intl .search-papers-page .sp-no-results-card {
+.search-papers-page .sp-no-results-card {
   background: #f7fafc;
   border: 1px solid var(--light-gray);
   border-radius: 12px;
   padding: 2.5rem;
 }
 
-html.intl .search-papers-page .sp-no-results-icon {
+.search-papers-page .sp-no-results-icon {
   font-size: 2.5rem;
   margin-bottom: 1rem;
 }
 
-html.intl .search-papers-page .sp-no-results-text {
+.search-papers-page .sp-no-results-text {
   color: var(--text-gray);
   font-size: 1rem;
 }
 
 /* ==================== Responsive ==================== */
 @media (max-width: 768px) {
-  html.intl .search-papers-page .sp-nav-links,
-  html.intl .search-papers-page .sp-nav-actions {
+  .search-papers-page .sp-nav-links,
+  .search-papers-page .sp-nav-actions {
     display: none;
   }
 
-  html.intl .search-papers-page .sp-mobile-toggle {
+  .search-papers-page .sp-mobile-toggle {
     display: block;
   }
 
-  html.intl .search-papers-page .sp-hero {
+  .search-papers-page .sp-hero {
     padding: calc(60px + 2rem) 1.25rem 1.5rem;
   }
 
-  html.intl .search-papers-page .sp-hero h1 {
+  .search-papers-page .sp-hero h1 {
     font-size: 1.75rem;
   }
 
-  html.intl .search-papers-page .sp-hero-subtitle {
+  .search-papers-page .sp-hero-subtitle {
     font-size: 0.95rem;
   }
 
-  html.intl .search-papers-page .sp-search-section {
+  .search-papers-page .sp-search-section {
     padding: 0 1.25rem;
   }
 
-  html.intl .search-papers-page .sp-search-card {
+  .search-papers-page .sp-search-card {
     padding: 1.25rem;
   }
 
-  html.intl .search-papers-page .sp-paper-meta,
-  html.intl .search-papers-page .sp-paper-abstract,
-  html.intl .search-papers-page .sp-paper-authors {
+  .search-papers-page .sp-paper-meta,
+  .search-papers-page .sp-paper-abstract,
+  .search-papers-page .sp-paper-authors {
     padding-left: 0;
   }
 
-  html.intl .search-papers-page .sp-results {
+  .search-papers-page .sp-results {
     padding: 0 1.25rem;
   }
 
-  html.intl .search-papers-page .sp-statistics {
+  .search-papers-page .sp-statistics {
     padding: 0 1.25rem;
   }
 
-  html.intl .search-papers-page .sp-cta {
+  .search-papers-page .sp-cta {
     padding: 0 1.25rem;
   }
 
-  html.intl .search-papers-page .sp-cta-card {
+  .search-papers-page .sp-cta-card {
     padding: 1.75rem;
   }
 
-  html.intl .search-papers-page .sp-cta-title {
+  .search-papers-page .sp-cta-title {
     font-size: 1.25rem;
   }
 
-  html.intl .search-papers-page .sp-loading {
+  .search-papers-page .sp-loading {
     padding: 0 1.25rem;
   }
 
-  html.intl .search-papers-page .sp-error {
+  .search-papers-page .sp-error {
     padding: 0 1.25rem;
   }
 
-  html.intl .search-papers-page .sp-search-btn {
+  .search-papers-page .sp-search-btn {
     width: 100%;
   }
 
-  html.intl .search-papers-page .sp-sources {
+  .search-papers-page .sp-sources {
     padding: 0 1.25rem;
   }
 }

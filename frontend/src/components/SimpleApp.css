@@ -413,6 +413,55 @@
   max-width: 520px;
 }
 
+/* Hero CTA group - Generate + Search Papers */
+.hero-cta-group {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.hero-cta-group .hero-cta-primary {
+  padding: 0.875rem 2rem;
+  font-size: 0.95rem;
+}
+
+.hero-cta-group .hero-cta-secondary {
+  padding: 0.875rem 1.75rem;
+  font-size: 0.95rem;
+  background: transparent;
+  color: var(--academic-red);
+  border: 2px solid var(--academic-red);
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.hero-cta-group .hero-cta-secondary:hover {
+  background: rgba(214, 48, 49, 0.05);
+  transform: translateY(-1px);
+}
+
+/* Search papers hint below input */
+.search-papers-hint {
+  font-size: 0.85rem;
+  color: #a0aec0;
+  margin-top: 0.75rem;
+  text-align: center;
+}
+
+.search-papers-hint a {
+  color: var(--academic-red);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.search-papers-hint a:hover {
+  text-decoration: underline;
+}
+
 /* Hero 右侧装饰 */
 
 .hero-visual {

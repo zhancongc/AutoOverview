@@ -4,7 +4,8 @@
     "hero": {
       "accent": "生产工具 · 非检索助手",
       "title": "交付<span class=\"highlight\">可直接投稿的综述初稿</span>",
-      "subtitle": "不是片段摘要，而是完整结构化初稿。基于 CrossRef/Semantic Scholar 真实元数据构建骨架，AI 填充内容。所有引用 DOI 可验证，拒绝幻觉"
+      "subtitle": "不是片段摘要，而是完整结构化初稿。基于 CrossRef/Semantic Scholar 真实元数据构建骨架，AI 填充内容。所有引用 DOI 可验证，拒绝幻觉",
+      "search_papers_cta": "搜索文献 — 免费"
     },
     "stats": {
       "papers": "基于 2亿+ 真实论文元数据",
@@ -179,6 +180,7 @@
       "process": "使用流程",
       "cases": "案例展示",
       "pricing": "定价",
+      "search_papers": "搜索文献",
       "profile": "我的综述",
       "login_register": "登录 / 注册",
       "logout": "退出登录"
@@ -328,7 +330,9 @@
     "button": "立即生成我的综述初稿",
     "button_generating": "生成中...",
     "credits_remaining": "剩余",
-    "retry": "重试"
+    "retry": "重试",
+    "search_papers_hint": "只想查找相关文献？",
+    "search_papers_link": "试试免费搜索工具"
   },
   "pricing": {
     "title": "灵活定价，按需付费",
@@ -359,5 +363,67 @@
     "buy_single": "立即购买",
     "choose_semester": "选择标准包",
     "choose_yearly": "选择进阶包"
+  },
+  "search_papers": {
+    "meta": {
+      "title": "搜索相关学术文献 - 免费工具 | AutoOverview",
+      "description": "免费搜索相关学术文献。输入论文标题，从2亿+论文中发现相关文献。"
+    },
+    "nav": {
+      "search": "搜索文献",
+      "generate": "生成综述",
+      "pricing": "定价"
+    },
+    "hero": {
+      "badge": "免费研究工具",
+      "title": "快速查找相关文献",
+      "subtitle": "输入论文标题，从2亿+学术论文中发现相关文献。免费使用，无需注册。"
+    },
+    "input": {
+      "placeholder": "请输入论文标题，例如：基于深度学习的图像识别研究综述",
+      "button": "搜索文献",
+      "button_searching": "搜索中...",
+      "helper": "我们将从 Web of Science、IEEE Xplore、CrossRef、Semantic Scholar 搜索相关文献。"
+    },
+    "loading": {
+      "title": "正在搜索学术数据库...",
+      "estimate": "通常需要 30-60 秒",
+      "status_1": "正在分析您的主题...",
+      "status_2": "正在搜索学术数据库...",
+      "status_3": "正在获取论文元数据...",
+      "status_4": "正在按相关性排序..."
+    },
+    "results": {
+      "found": "篇文献",
+      "recent": "近5年",
+      "english": "英文文献",
+      "avg_citations": "平均引用",
+      "no_results": "未找到相关文献，请尝试其他标题。",
+      "sort_by": "排序",
+      "sort_default": "相关性",
+      "sort_year": "年份",
+      "sort_citations": "引用数"
+    },
+    "paper": {
+      "citations": "引用",
+      "et_al": "等"
+    },
+    "cta": {
+      "title": "需要一篇完整的文献综述？",
+      "description": "AutoOverview 生成可直接投稿的结构化综述，含 DOI 可验证引用。从研究背景到学术争议到结论。",
+      "button": "生成完整文献综述",
+      "badge": "免费工具 by"
+    },
+    "footer": {
+      "copyright": "© 2026 AutoOverview. All rights reserved.",
+      "terms": "用户协议",
+      "privacy": "隐私政策",
+      "refund": "退款政策"
+    },
+    "error": {
+      "timeout": "搜索超时，请重试。",
+      "generic": "出错了，请重试。",
+      "retry": "重试"
+    }
   }
 }

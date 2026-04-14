@@ -354,6 +354,7 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
           <a href="#process">{t('home.nav.process')}</a>
           <a href="#cases">{t('home.nav.cases')}</a>
           <a href="#pricing">{t('home.nav.pricing')}</a>
+          <a href="/search-papers" onClick={(e) => { e.preventDefault(); navigate('/search-papers') }}>{t('home.nav.search_papers')}</a>
         </div>
         <div className="nav-actions">
           {isLoggedIn ? (
@@ -433,6 +434,27 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
             <p className="home-subtitle">
               {t('home.hero.subtitle')}
             </p>
+            <div className="hero-cta-group">
+              <button
+                className="home-button hero-cta-primary"
+                onClick={() => {
+                  const el = document.getElementById('generate')
+                  if (el) {
+                    const navHeight = 56
+                    const elPosition = el.getBoundingClientRect().top + window.pageYOffset
+                    window.scrollTo({ top: elPosition - navHeight, behavior: 'smooth' })
+                  }
+                }}
+              >
+                {t('input.button')}
+              </button>
+              <button
+                className="hero-cta-secondary"
+                onClick={() => navigate('/search-papers')}
+              >
+                {t('home.hero.search_papers_cta')}
+              </button>
+            </div>
           </div>
 
           <div className="hero-visual">
@@ -502,6 +524,13 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
           >
             {isGenerating ? t('input.button_generating') : t('input.button')}
           </button>
+
+          <p className="search-papers-hint">
+            {t('home.input.search_papers_hint')}{' '}
+            <a href="/search-papers" onClick={(e) => { e.preventDefault(); navigate('/search-papers') }}>
+              {t('home.input.search_papers_link')} →
+            </a>
+          </p>
 
           {error && (
             <div className="home-error">
