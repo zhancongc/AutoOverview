@@ -264,6 +264,17 @@ export function SearchPapersPage() {
         </div>
       </div>
 
+      {/* Data Sources */}
+      <div className="sp-sources">
+        <p className="sp-sources-title">{t('home.sources.title')}</p>
+        <div className="sp-sources-logos">
+          <span className="sp-source-logo">Web of Science</span>
+          <span className="sp-source-logo">IEEE Xplore</span>
+          <span className="sp-source-logo">CrossRef</span>
+          <span className="sp-source-logo">Semantic Scholar</span>
+        </div>
+      </div>
+
       {/* Loading */}
       {isLoading && (
         <div className="sp-loading">

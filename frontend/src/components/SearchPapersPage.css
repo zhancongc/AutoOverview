@@ -321,6 +321,39 @@ html.intl .search-papers-page .sp-search-helper {
   margin-top: 0.75rem;
 }
 
+/* Data Sources */
+html.intl .search-papers-page .sp-sources {
+  max-width: 680px;
+  margin: 0 auto 2rem;
+  padding: 0 2rem;
+  text-align: center;
+}
+
+html.intl .search-papers-page .sp-sources-title {
+  font-size: 0.8rem;
+  color: var(--text-gray);
+  margin-bottom: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+html.intl .search-papers-page .sp-sources-logos {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+html.intl .search-papers-page .sp-source-logo {
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--charcoal);
+  opacity: 0.55;
+}
+
 /* ==================== Loading State ==================== */
 html.intl .search-papers-page .sp-loading {
   max-width: 680px;
@@ -761,5 +794,9 @@ html.intl .search-papers-page .sp-no-results-text {
 
   html.intl .search-papers-page .sp-search-btn {
     width: 100%;
+  }
+
+  html.intl .search-papers-page .sp-sources {
+    padding: 0 1.25rem;
   }
 }
