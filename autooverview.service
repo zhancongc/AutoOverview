@@ -20,7 +20,7 @@ EnvironmentFile=-/app/AutoOverview/backend/.env
 # - 2核 VPS: --workers 4
 # - 4核 VPS: --workers 6  ← 当前配置（预留资源给其他服务）
 # - 8核 VPS: --workers 16
-ExecStart=/app/AutoOverview/backend/.venv/bin/uvicorn main:app --host 127.0.0.1 --port 8006 --workers 6
+ExecStart=/app/AutoOverview/backend/.venv/bin/uvicorn main:app --host 0.0.0.0 --port 8006 --workers 6
 
 # Restart policy
 Restart=always
