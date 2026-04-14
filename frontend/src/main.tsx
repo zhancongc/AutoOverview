@@ -6,6 +6,7 @@ import { SimpleApp } from './components/SimpleApp'
 import { SimpleAppInternational } from './components/SimpleAppInternational'
 import { ReviewPage } from './components/ReviewPage'
 import { ReviewPageInternational } from './components/ReviewPageInternational'
+import { SearchPapersPage } from './components/SearchPapersPage'
 import { ProfilePage } from './components/ProfilePage'
 import { ProfilePageInternational } from './components/ProfilePageInternational'
 import { DavidPage } from './components/DavidPage'
@@ -51,6 +52,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       <Routes>
         <Route path="/login" element={isEnglishVersion ? <SimpleAppInternational autoShowLogin /> : <SimpleApp autoShowLogin />} />
         <Route path="/" element={isEnglishVersion ? <SimpleAppInternational /> : <SimpleApp />} />
+        <Route path="/search-papers" element={<SearchPapersPage />} />
         <Route path="/profile" element={
           <ProtectedRoute>
             {isEnglishVersion ? <ProfilePageInternational /> : <ProfilePage />}

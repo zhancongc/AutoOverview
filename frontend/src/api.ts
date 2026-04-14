@@ -118,6 +118,8 @@ export const api = {
       topic,
       target_count: options.targetCount ?? 50,
       search_years: options.searchYears ?? 10
+    }, {
+      timeout: 120000  // 2 minutes — LLM-driven search takes 30-60s
     });
     return response.data;
   },

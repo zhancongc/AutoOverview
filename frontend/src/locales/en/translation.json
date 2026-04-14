@@ -6,7 +6,8 @@
       "title": "Deliver <highlight>Submission-Ready Structured Drafts</highlight>",
       "subtitle": "Not fragmented summaries, but complete structured drafts. Built on verified CrossRef/Semantic Scholar metadata, AI fills the content. All citations DOI-verifiable.",
       "cta_button": "Start Generating Now",
-      "cta_hint": "Free to try • No credit card required"
+      "cta_hint": "Free to try • No credit card required",
+      "search_papers_cta": "Search Papers — Free"
     },
     "stats": {
       "papers": "Based on 200M+ real paper metadata",
@@ -31,7 +32,9 @@
       "credits_remaining": "credits remaining",
       "retry": "Retry",
       "how_it_works": "How It Works",
-      "alert_empty_topic": "Please enter a research topic"
+      "alert_empty_topic": "Please enter a research topic",
+      "search_papers_hint": "Just want to find related papers?",
+      "search_papers_link": "Try our free search tool"
     },
     "social_proof": {
       "text": "Trusted by <strong>10,000+</strong> researchers worldwide"
@@ -156,6 +159,7 @@
       "process": "How It Works",
       "cases": "Samples",
       "pricing": "Pricing",
+      "search_papers": "Search Papers",
       "profile": "My Reviews",
       "login_register": "Login / Register",
       "logout": "Logout"
@@ -310,5 +314,67 @@
     "success_unlock": "Your review is now unlocked for Word export",
     "failed": "Failed to create payment session. Please try again.",
     "retry": "Retry"
+  },
+  "search_papers": {
+    "meta": {
+      "title": "Search Related Academic Papers - Free Tool | AutoOverview",
+      "description": "Find related academic papers for free. Search by title and discover literature from 200M+ papers across Web of Science, IEEE, CrossRef, and Semantic Scholar."
+    },
+    "nav": {
+      "search": "Search Papers",
+      "generate": "Generate Review",
+      "pricing": "Pricing"
+    },
+    "hero": {
+      "badge": "Free Research Tool",
+      "title": "Find Related Papers Instantly",
+      "subtitle": "Enter a paper title and discover related literature from 200M+ academic papers. Free, no sign-up required."
+    },
+    "input": {
+      "placeholder": "Enter a paper title, e.g., Attention Is All You Need",
+      "button": "Search Papers",
+      "button_searching": "Searching...",
+      "helper": "We'll find related papers from Web of Science, IEEE Xplore, CrossRef, and Semantic Scholar."
+    },
+    "loading": {
+      "title": "Searching academic databases...",
+      "estimate": "This usually takes 30-60 seconds",
+      "status_1": "Analyzing your topic...",
+      "status_2": "Searching academic databases...",
+      "status_3": "Retrieving paper metadata...",
+      "status_4": "Ranking by relevance..."
+    },
+    "results": {
+      "found": "papers found",
+      "recent": "recent (last 5 years)",
+      "english": "English papers",
+      "avg_citations": "avg. citations",
+      "no_results": "No papers found. Try a different title.",
+      "sort_by": "Sort by",
+      "sort_default": "Relevance",
+      "sort_year": "Year",
+      "sort_citations": "Citations"
+    },
+    "paper": {
+      "citations": "citations",
+      "et_al": "et al."
+    },
+    "cta": {
+      "title": "Need a Complete Literature Review?",
+      "description": "AutoOverview generates submission-ready structured drafts with verified DOI citations. From background to debates to conclusions.",
+      "button": "Generate Full Literature Review",
+      "badge": "Free tool by"
+    },
+    "footer": {
+      "copyright": "© 2026 AutoOverview. All rights reserved.",
+      "terms": "Terms & Conditions",
+      "privacy": "Privacy Policy",
+      "refund": "Refund Policy"
+    },
+    "error": {
+      "timeout": "Search timed out. Please try again.",
+      "generic": "Something went wrong. Please try again.",
+      "retry": "Retry"
+    }
   }
 }

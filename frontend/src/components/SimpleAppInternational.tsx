@@ -3,7 +3,7 @@
  * Designed for overseas market with clean, professional academic style
  */
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { api } from '../api'
 import { isLoggedIn as checkLoggedIn, getLocalUserInfo } from '../authApi'
@@ -22,6 +22,7 @@ interface TaskProgress {
 export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const location = useLocation()
   const [topic, setTopic] = useState('')
   const [language] = useState<'zh' | 'en'>('en')
   const [isGenerating, setIsGenerating] = useState(false)
@@ -274,6 +275,23 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
     return () => window.removeEventListener('keydown', onKey)
   }, [showLoginModal, showPaymentModal, mobileMenuOpen])
 
+  // Handle hash scroll when navigating from other pages (e.g., /search-papers -> /#pricing)
+  useEffect(() => {
+    if (location.hash) {
+      const id = location.hash.replace('#', '')
+      // Delay to let the page render
+      const timer = setTimeout(() => {
+        const el = document.getElementById(id)
+        if (el) {
+          const navHeight = 60
+          const elPosition = el.getBoundingClientRect().top + window.pageYOffset
+          window.scrollTo({ top: elPosition - navHeight, behavior: 'smooth' })
+        }
+      }, 300)
+      return () => clearTimeout(timer)
+    }
+  }, [location.hash])
+
   return (
     <div className="simple-home simple-home-international">
       <nav className="home-nav">
@@ -293,6 +311,10 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
               }
             }}>{t(`home.nav.${id}`)}</a>
           ))}
+          <a href="/search-papers" onClick={(e) => {
+            e.preventDefault()
+            navigate('/search-papers')
+          }}>{t('home.nav.search_papers')}</a>
         </div>
         <div className="nav-actions">
           {isLoggedIn ? (
@@ -395,6 +417,14 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
               }
             }}
           >{t('home.nav.pricing')}</a>
+          <a
+            href="/search-papers"
+            onClick={(e) => {
+              e.preventDefault()
+              setMobileMenuOpen(false)
+              navigate('/search-papers')
+            }}
+          >{t('home.nav.search_papers')}</a>
         </nav>
         <div className="sidebar-bottom">
           {isLoggedIn ? (
@@ -433,6 +463,27 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
               <span dangerouslySetInnerHTML={{ __html: t('home.hero.title') }} />
             </h1>
             <p className="home-subtitle">{t('home.hero.subtitle')}</p>
+            <div className="hero-cta-group">
+              <button
+                className="generate-btn hero-cta-primary"
+                onClick={() => {
+                  const el = document.getElementById('generate')
+                  if (el) {
+                    const navHeight = 60
+                    const elPosition = el.getBoundingClientRect().top + window.pageYOffset
+                    window.scrollTo({ top: elPosition - navHeight, behavior: 'smooth' })
+                  }
+                }}
+              >
+                {t('home.input.button')}
+              </button>
+              <button
+                className="secondary-btn hero-cta-secondary"
+                onClick={() => navigate('/search-papers')}
+              >
+                {t('home.hero.search_papers_cta')}
+              </button>
+            </div>
           </div>
 
           <div className="hero-visual">
@@ -486,6 +537,12 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
                   {isGenerating ? t('home.input.button_generating') : t('home.input.button')}
                 </button>
               </div>
+              <p className="search-papers-hint">
+                {t('home.input.search_papers_hint')}{' '}
+                <a href="/search-papers" onClick={(e) => { e.preventDefault(); navigate('/search-papers') }}>
+                  {t('home.input.search_papers_link')} →
+                </a>
+              </p>
             </div>
           </div>
         </div>
