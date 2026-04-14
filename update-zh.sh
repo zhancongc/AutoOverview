@@ -2,7 +2,7 @@
 # ============================================
 # AutoOverview 中文前端 + 后端 - 更新脚本
 # 在上海服务器本地运行
-# git pull → 构建前端 → 重启后端
+# git pull → 构建前端 → 数据库迁移 → 更新服务配置 → 重启后端
 # ============================================
 
 set -e
@@ -16,23 +16,40 @@ echo "=========================================="
 
 # ---------- 1. 拉取代码 ----------
 echo ""
-echo "[1/3] 拉取最新代码..."
+echo "[1/5] 拉取最新代码..."
 cd "$APP_DIR"
 git pull
 echo "✓ 代码已更新"
 
 # ---------- 2. 构建中文前端 ----------
 echo ""
-echo "[2/3] 构建中文前端..."
+echo "[2/5] 构建中文前端..."
 cd frontend
 npm install
 npm run build
 echo "✓ 前端构建完成"
 
-# ---------- 3. 重启后端 ----------
+# ---------- 3. 数据库迁移 ----------
 echo ""
-echo "[3/3] 重启后端..."
+echo "[3/5] 检查数据库迁移..."
 cd "$APP_DIR/backend"
+"$APP_DIR/backend/.venv/bin/python" "$APP_DIR/backend/migrations/base.py" migrate --dir "$APP_DIR/backend/migrations"
+echo "✓ 数据库迁移完成"
+
+# ---------- 4. 更新 systemd 服务配置 ----------
+echo ""
+echo "[4/5] 更新服务配置..."
+if [ -f "$APP_DIR/autooverview.service" ]; then
+    cp "$APP_DIR/autooverview.service" /etc/systemd/system/autooverview.service
+    systemctl daemon-reload
+    echo "✓ 服务配置已更新"
+else
+    echo "⚠ 未找到 autooverview.service，跳过"
+fi
+
+# ---------- 5. 重启后端 ----------
+echo ""
+echo "[5/5] 重启后端..."
 
 # 安装新增依赖（使用 venv）
 [ -f "requirements.txt" ] && "$APP_DIR/backend/.venv/bin/pip" install -q -r requirements.txt
@@ -41,7 +58,7 @@ systemctl restart autooverview
 echo "✓ 后端已重启"
 
 sleep 2
-API_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:$BACKEND_PORT/api/paddle/plans)
+API_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:$BACKEND_PORT/api/health)
 echo ""
 echo "=========================================="
 echo " 更新完成 (API: $API_CODE)"
