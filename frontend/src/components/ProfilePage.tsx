@@ -86,6 +86,7 @@ export function ProfilePage() {
     }
     localStorage.setItem('search_papers_task_id', search.id)
     localStorage.setItem('search_papers_has_searched', 'true')
+    localStorage.setItem('search_papers_scroll_to_results', 'true')
     navigate('/search-papers')
   }
 

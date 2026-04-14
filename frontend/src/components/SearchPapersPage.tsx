@@ -49,6 +49,7 @@ export function SearchPapersPage() {
   const [isChineseSite, setIsChineseSite] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
+  const [shouldScrollToResults, setShouldScrollToResults] = useState(false)
   const statusIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   // SEO meta tags
@@ -96,12 +97,19 @@ export function SearchPapersPage() {
     const savedPapers = localStorage.getItem('search_papers_papers')
     const savedStatistics = localStorage.getItem('search_papers_statistics')
     const savedHasSearched = localStorage.getItem('search_papers_has_searched')
+    const savedShouldScroll = localStorage.getItem('search_papers_scroll_to_results')
 
     if (savedTopic) setTopic(savedTopic)
     if (savedTaskId) setSearchTaskId(savedTaskId)
     if (savedPapers) setPapers(JSON.parse(savedPapers))
     if (savedStatistics) setStatistics(JSON.parse(savedStatistics))
     if (savedHasSearched) setHasSearched(savedHasSearched === 'true')
+
+    // 如果需要滚动到结果区域，设置状态标记并清除 localStorage 标记
+    if (savedShouldScroll) {
+      setShouldScrollToResults(true)
+      localStorage.removeItem('search_papers_scroll_to_results')
+    }
   }, [])
 
   // 组件首次挂载时恢复状态
@@ -115,6 +123,21 @@ export function SearchPapersPage() {
       restoreSearchState()
     }
   }, [location.pathname, isLoading, restoreSearchState])
+
+  // 自动滚动到结果区域（从 profile 页面跳转时）
+  useEffect(() => {
+    if (shouldScrollToResults && hasSearched && papers.length > 0 && statistics) {
+      // 使用 setTimeout 确保 DOM 已经渲染
+      const timer = setTimeout(() => {
+        const statisticsSection = document.querySelector('.sp-statistics')
+        if (statisticsSection) {
+          statisticsSection.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          setShouldScrollToResults(false)
+        }
+      }, 100)
+      return () => clearTimeout(timer)
+    }
+  }, [shouldScrollToResults, hasSearched, papers.length, statistics])
 
   const handleSearch = useCallback(async () => {
     if (!topic.trim()) return
