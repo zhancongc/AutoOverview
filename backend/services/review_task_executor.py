@@ -327,6 +327,7 @@ class ReviewTaskExecutor:
     ) -> dict:
         """
         只查找文献，不生成综述（使用 PaperSearchAgent）
+        搜索结果持久化到数据库：论文入 PaperMetadata 总库，搜索任务入 ReviewTask + PaperSearchStage。
 
         Args:
             topic: 论文主题
@@ -334,10 +335,16 @@ class ReviewTaskExecutor:
 
         Returns:
             {
+                'task_id': 搜索任务ID（可用于后续生成综述）,
                 'all_papers': 所有搜索到的文献,
                 'statistics': 统计信息,
             }
         """
+        import uuid
+        from services.paper_metadata_dao import PaperMetadataDAO
+        from database import db as database
+
+        # 1. 执行搜索
         ss_service = get_semantic_scholar_service()
         search_agent = PaperSearchAgent(ss_service=ss_service)
         all_papers = await search_agent.search(
@@ -347,10 +354,230 @@ class ReviewTaskExecutor:
         )
 
         stats = self.filter_service.get_statistics(all_papers)
-
         logger.debug(f"[search_papers_only] 搜索完成: {len(all_papers)} 篇文献")
 
+        # 2. 创建 ReviewTask 记录（标记为 search_only）
+        task_id = str(uuid.uuid4())[:8]
+        task_params = {**params, 'type': 'search_only'}
+        stage_recorder.create_task(task_id, topic, task_params)
+        stage_recorder.update_task_status(task_id, status="completed", current_stage="文献搜索完成")
+
+        # 3. 将论文存入 PaperMetadata 总库
+        if database.engine is None:
+            database.connect()
+        with next(database.get_session()) as session:
+            paper_dao = PaperMetadataDAO(session)
+            try:
+                saved_count = paper_dao.save_papers(all_papers, source="semantic_scholar")
+                logger.debug(f"[search_papers_only] 论文入总库: 新增 {saved_count} 篇")
+            except Exception as e:
+                logger.error(f"[search_papers_only] 论文入库失败（不影响返回）: {e}")
+
+        # 4. 记录搜索阶段（存全部论文样本，便于后续复用）
+        stage_recorder.record_paper_search(
+            task_id=task_id,
+            outline={'topic': topic},
+            search_queries_count=1,
+            papers_count=len(all_papers),
+            papers_summary=stats,
+            papers_sample=all_papers  # 存全部论文，便于后续生成综述时复用
+        )
+
         return {
+            'task_id': task_id,
             'all_papers': all_papers,
             'statistics': stats,
         }
+
+    async def execute_task_with_papers(self, task_id: str, db_session: Session, papers: list):
+        """
+        使用已有论文列表执行综述生成（跳过搜索阶段）
+
+        Args:
+            task_id: 任务ID
+            db_session: 数据库会话
+            papers: 已有的论文列表
+        """
+        task = task_manager.get_task(task_id)
+        if not task:
+            logger.debug(f"[TaskExecutor] 任务不存在: {task_id}")
+            return
+
+        acquired = await task_manager.acquire_slot(task_id, timeout=1800)
+        if not acquired:
+            task_manager.update_task_status(
+                task_id,
+                TaskStatus.FAILED,
+                error="系统繁忙，排队超时，请稍后重试"
+            )
+            return
+
+        params = task.params
+        topic = task.topic
+
+        task_manager.update_task_status(task_id, TaskStatus.PROCESSING)
+
+        try:
+            # 创建数据库记录
+            record = self.record_service.create_record(
+                db_session=db_session,
+                topic=topic,
+                target_count=params.get('target_count', 50),
+                recent_years_ratio=params.get('recent_years_ratio', 0.5),
+                english_ratio=params.get('english_ratio', 0.3),
+                is_paid=getattr(task, 'is_paid', False),
+                user_id=getattr(task, 'user_id', None)
+            )
+
+            # 记录搜索阶段（使用已有论文）
+            all_papers = papers
+            stats = self.filter_service.get_statistics(all_papers)
+
+            stage_recorder.record_paper_search(
+                task_id=task_id,
+                outline={'topic': topic, 'source': 'reused'},
+                search_queries_count=0,
+                papers_count=len(all_papers),
+                papers_summary=stats,
+                papers_sample=all_papers[:20]
+            )
+            stage_recorder.update_task_status(task_id, status="processing", current_stage="复用已有文献")
+
+            # 阶段2: 生成综述（直接使用已有论文）
+            api_key = os.getenv("DEEPSEEK_API_KEY")
+            if not api_key:
+                raise Exception("DEEPSEEK_API_KEY not configured")
+
+            logger.debug(f"[execute_task_with_papers] 使用已有 {len(all_papers)} 篇文献生成综述")
+
+            task_manager.update_task_status(
+                task_id,
+                TaskStatus.PROCESSING,
+                progress={"step": "generating", "message": "正在生成综述..."}
+            )
+
+            final_generator = SmartReviewGeneratorFinal(
+                deepseek_api_key=api_key,
+                deepseek_base_url=os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com")
+            )
+
+            search_params = {
+                "search_years": params.get('search_years', 10),
+                "target_count": params.get('target_count', 50),
+                "recent_years_ratio": params.get('recent_years_ratio', 0.5),
+                "english_ratio": params.get('english_ratio', 0.3),
+                "search_platform": "Semantic Scholar",
+                "sort_by": "被引量降序"
+            }
+
+            result = await final_generator.generate_review_from_papers(
+                topic=topic,
+                papers=all_papers,
+                model=params.get('review_model', 'deepseek-reasoner'),
+                search_params=search_params,
+                language=params.get('language', 'zh')
+            )
+
+            review = result["review"]
+            cited_papers = result["cited_papers"]
+            final_validation = result.get("validation", {"valid": True, "issues": []})
+
+            # 阶段3: 引用校验
+            validator_v2 = CitationValidatorV2()
+            validation_result = validator_v2.validate_and_fix(review, cited_papers)
+
+            if not validation_result.valid:
+                if validation_result.fixed_content:
+                    review = validation_result.fixed_content
+                if validation_result.fixed_references:
+                    cited_papers = validation_result.fixed_references
+                final_validation = {
+                    "valid": validation_result.valid,
+                    "issues": validation_result.issues
+                }
+            else:
+                improved_refs = validator_v2.format_references_ieee_improved(cited_papers)
+                if "## References" in review:
+                    review = review[:review.index("## References")] + "## References\n\n" + improved_refs
+
+            cited_stats = self.filter_service.get_statistics(cited_papers)
+
+            # 标记文献是否被引用
+            cited_paper_ids = {p.get('id') for p in cited_papers}
+            for paper in all_papers:
+                if 'relevance_score' not in paper:
+                    paper['relevance_score'] = 0.5
+                paper['is_cited'] = paper.get('id') in cited_paper_ids
+
+            # 保存最终结果
+            self.record_service.update_success(
+                record_id=record.id,
+                review_content=review,
+                papers=all_papers,
+                cited_papers=cited_papers,
+                statistics=cited_stats,
+                validation=final_validation,
+                search_params=search_params
+            )
+
+            stage_recorder.record_review_generation(
+                task_id=task_id,
+                model=params.get('review_model', 'deepseek-reasoner'),
+                papers_count=len(all_papers),
+                cited_papers_count=len(cited_papers),
+                review_length=len(review),
+                language=params.get('language', 'zh')
+            )
+
+            stage_recorder.update_task_status(
+                task_id,
+                status="completed",
+                completed_at=datetime.now(),
+                review_record_id=record.id
+            )
+
+            task_manager.update_task_status(
+                task_id,
+                TaskStatus.COMPLETED,
+                result={
+                    "review": review,
+                    "papers": cited_papers,
+                    "statistics": cited_stats,
+                    "record_id": record.id,
+                    "task_id": task_id
+                }
+            )
+
+            logger.debug(f"[execute_task_with_papers] 综述生成完成: record_id={record.id}")
+
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            logger.error(f"[execute_task_with_papers] 任务执行失败: {e}")
+
+            stage_recorder.update_task_status(
+                task_id,
+                status="failed",
+                error_message=str(e)
+            )
+            task_manager.update_task_status(
+                task_id,
+                TaskStatus.FAILED,
+                error=str(e)
+            )
+
+            # 退还额度
+            task_user_id = getattr(task, 'user_id', None)
+            task_is_paid = getattr(task, 'is_paid', False)
+            if task_user_id and task_is_paid:
+                try:
+                    from authkit.database import SessionLocal as AuthSessionLocal
+                    if AuthSessionLocal:
+                        auth_db = AuthSessionLocal()
+                        try:
+                            from authkit.services.credit_service import CreditService
+                            CreditService(refund=True).refund_paid_credit(task_user_id, auth_db)
+                        finally:
+                            auth_db.close()
+                except Exception as refund_err:
+                    logger.error("额度退还失败: user_id=%s, error=%s", task_user_id, refund_err)

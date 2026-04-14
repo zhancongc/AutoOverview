@@ -88,6 +88,7 @@ export const api = {
       englishRatio?: number;
       searchYears?: number;
       maxSearchQueries?: number;
+      reuseTaskId?: string;
     } = {}
   ): Promise<TaskSubmitResponse> {
     const token = localStorage.getItem('auth_token');
@@ -101,7 +102,8 @@ export const api = {
       recent_years_ratio: options.recentYearsRatio ?? 0.5,
       english_ratio: options.englishRatio ?? 0.3,
       search_years: options.searchYears ?? 10,
-      max_search_queries: options.maxSearchQueries ?? 8
+      max_search_queries: options.maxSearchQueries ?? 8,
+      reuse_task_id: options.reuseTaskId ?? ''
     }, { headers });
     return response.data;
   },

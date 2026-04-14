@@ -3,7 +3,7 @@
  * Designed for overseas market with clean, professional academic style
  */
 import { useState, useEffect } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { api } from '../api'
 import { isLoggedIn as checkLoggedIn, getLocalUserInfo } from '../authApi'
@@ -23,6 +23,7 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
   const { t } = useTranslation()
   const navigate = useNavigate()
   const location = useLocation()
+  const [searchParams] = useSearchParams()
   const [topic, setTopic] = useState('')
   const [language] = useState<'zh' | 'en'>('en')
   const [isGenerating, setIsGenerating] = useState(false)
@@ -93,7 +94,18 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
         console.error('Failed to fetch demo cases:', err)
         setCasesLoading(false)
       })
-  }, [t])
+
+    // Handle reuse_task_id from search-papers page redirect
+    const reuseTaskId = searchParams.get('reuse_task_id')
+    const reuseTopic = searchParams.get('topic')
+    if (reuseTaskId && reuseTopic) {
+      setTopic(reuseTopic)
+      sessionStorage.setItem('reuse_task_id', reuseTaskId)
+      sessionStorage.setItem('pending_topic', reuseTopic)
+      // Clean URL without reloading
+      window.history.replaceState({}, '', '/')
+    }
+  }, [t, searchParams])
 
   const pollTask = (taskId: string) => {
     const startTime = Date.now()
@@ -177,12 +189,21 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
     setProgress(null)
 
     try {
+      // Check if reusing search results from search-papers page
+      const reuseTaskId = sessionStorage.getItem('reuse_task_id')
+
       const submitResponse = await api.submitReviewTask(topic, {
         language: language,
         targetCount: 50,
         recentYearsRatio: 0.5,
-        englishRatio: language === 'en' ? 0.8 : 0.3
+        englishRatio: language === 'en' ? 0.8 : 0.3,
+        reuseTaskId: reuseTaskId || undefined
       })
+
+      // Clear reuse params after use
+      if (reuseTaskId) {
+        sessionStorage.removeItem('reuse_task_id')
+      }
 
       if (!submitResponse.success || !submitResponse.data?.task_id) {
         const msg = submitResponse.message || ''
@@ -234,12 +255,6 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
         document.getElementById('generate')?.scrollIntoView({ behavior: 'smooth' })
       }, 300)
     }
-  }
-
-  const handleLogout = () => {
-    localStorage.removeItem('auth_token')
-    localStorage.removeItem('user_info')
-    navigate('/')
   }
 
   const handlePaymentSuccess = async (_addedCredits: number = 0) => {
@@ -322,9 +337,6 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
               <button className="user-info" onClick={() => navigate('/profile')}>
                 <span className="user-avatar">👤</span>
                 <span className="user-name">{t('home.nav.profile')}</span>
-              </button>
-              <button className="nav-btn nav-btn-logout" onClick={handleLogout}>
-                {t('home.nav.logout')}
               </button>
             </div>
           ) : (
@@ -435,12 +447,6 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
               >
                 <span className="user-avatar">👤</span>
                 <span className="user-name">{t('home.nav.profile')}</span>
-              </button>
-              <button
-                className="nav-btn nav-btn-logout"
-                onClick={() => { setMobileMenuOpen(false); handleLogout() }}
-              >
-                {t('home.nav.logout')}
               </button>
             </>
           ) : (

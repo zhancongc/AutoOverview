@@ -7,6 +7,20 @@ html.intl .search-papers-page {
   background: var(--cream-white);
   line-height: 1.6;
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 让主内容区填充剩余空间，footer 自然沉底 */
+html.intl .search-papers-page > .sp-hero,
+html.intl .search-papers-page > .sp-search-section,
+html.intl .search-papers-page > .sp-loading,
+html.intl .search-papers-page > .sp-error,
+html.intl .search-papers-page > .sp-statistics,
+html.intl .search-papers-page > .sp-results,
+html.intl .search-papers-page > .sp-no-results,
+html.intl .search-papers-page > .sp-cta {
+  flex-shrink: 0;
 }
 
 /* ==================== Navigation ==================== */
@@ -316,15 +330,15 @@ html.intl .search-papers-page .sp-loading {
 }
 
 html.intl .search-papers-page .sp-loading-card {
-  background: var(--academic-blue-light);
-  border: 1px solid var(--academic-blue-border);
+  background: #f7fafc;
+  border: 1px solid var(--light-gray);
   border-radius: 12px;
   padding: 2rem;
 }
 
 html.intl .search-papers-page .sp-loading-title {
   font-weight: 600;
-  color: var(--academic-blue-primary);
+  color: var(--charcoal);
   margin-bottom: 1rem;
 }
 
@@ -352,7 +366,7 @@ html.intl .search-papers-page .sp-progress-fill {
 
 html.intl .search-papers-page .sp-loading-status {
   font-size: 0.95rem;
-  color: var(--academic-blue-secondary);
+  color: var(--charcoal);
   font-weight: 500;
   margin-bottom: 0.5rem;
   min-height: 1.5em;
@@ -635,7 +649,7 @@ html.intl .search-papers-page .sp-footer {
   text-align: center;
   font-size: 0.8rem;
   color: var(--text-gray);
-  margin-top: 2rem;
+  margin-top: auto;
 }
 
 html.intl .search-papers-page .sp-footer-links {

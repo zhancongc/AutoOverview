@@ -265,6 +265,9 @@ class GenerateRequest(BaseModel):
     search_years: int = Field(10, description="搜索年份范围", ge=5, le=30)
     max_search_queries: int = Field(8, description="最多搜索查询数", ge=1, le=20)
 
+    # 复用已有搜索结果（从免费搜索页跳转）
+    reuse_task_id: str = Field("", description="复用已有搜索任务的ID，跳过搜索阶段")
+
 class GenerateResponse(BaseModel):
     success: bool
     message: str
@@ -1175,15 +1178,38 @@ async def submit_review_task(
             is_paid=is_paid
         )
 
-        # 启动后台任务
-        async def run_task():
-            # 在后台任务中创建新的 session，不使用请求级别的 session
-            executor = ReviewTaskExecutor()
-            with next(db.get_session()) as task_session:
-                await executor.execute_task(task.task_id, task_session)
+        # 判断是否复用已有搜索结果
+        if request.reuse_task_id:
+            # 从 PaperSearchStage 加载已有论文
+            from models import PaperSearchStage
+            with next(db.get_session()) as load_session:
+                stage = load_session.query(PaperSearchStage).filter_by(
+                    task_id=request.reuse_task_id
+                ).order_by(PaperSearchStage.id.desc()).first()
 
-        # 使用 asyncio.create_task 而不是 BackgroundTasks
-        asyncio.create_task(run_task())
+                if not stage or not stage.papers_sample:
+                    return TaskSubmitResponse(
+                        success=False,
+                        message=f"未找到搜索任务 {request.reuse_task_id} 的文献数据"
+                    )
+
+                reused_papers = stage.papers_sample
+
+            # 启动后台任务（使用已有论文）
+            async def run_task_with_papers():
+                executor = ReviewTaskExecutor()
+                with next(db.get_session()) as task_session:
+                    await executor.execute_task_with_papers(task.task_id, task_session, reused_papers)
+
+            asyncio.create_task(run_task_with_papers())
+        else:
+            # 正常流程：搜索 + 生成
+            async def run_task():
+                executor = ReviewTaskExecutor()
+                with next(db.get_session()) as task_session:
+                    await executor.execute_task(task.task_id, task_session)
+
+            asyncio.create_task(run_task())
 
         return TaskSubmitResponse(
             success=True,

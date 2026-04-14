@@ -44,6 +44,8 @@ export function SearchPapersPage() {
   const [statusIndex, setStatusIndex] = useState(0)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [hasSearched, setHasSearched] = useState(false)
+  const [searchTaskId, setSearchTaskId] = useState<string | null>(null)
+  const [isGenerating, setIsGenerating] = useState(false)
   const statusIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   // SEO meta tags
@@ -91,6 +93,7 @@ export function SearchPapersPage() {
     setStatistics(null)
     setHasSearched(true)
     setSortMode('default')
+    setSearchTaskId(null)
 
     try {
       const response = await api.searchPapersOnly(topic, {
@@ -101,6 +104,7 @@ export function SearchPapersPage() {
       if (response.success && response.data) {
         setPapers(response.data.all_papers || [])
         setStatistics(response.data.statistics || null)
+        setSearchTaskId(response.data.task_id || null)
       } else {
         setError(response.message || t('search_papers.error.generic'))
       }
@@ -118,6 +122,41 @@ export function SearchPapersPage() {
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !isLoading && topic.trim()) {
       handleSearch()
+    }
+  }
+
+  const handleGenerateFromSearch = async () => {
+    if (!searchTaskId || !topic.trim()) return
+
+    const loggedIn = checkLoggedIn()
+    if (!loggedIn) {
+      // 未登录：跳转首页，带上复用参数，登录后自动继续
+      navigate(`/?reuse_task_id=${searchTaskId}&topic=${encodeURIComponent(topic)}`)
+      return
+    }
+
+    setIsGenerating(true)
+    try {
+      const response = await api.submitReviewTask(topic, {
+        language: 'en',
+        reuseTaskId: searchTaskId,
+      })
+
+      if (response.success && response.data?.task_id) {
+        navigate(`/review?task_id=${response.data.task_id}`)
+      } else {
+        const msg = response.message || ''
+        if (msg.includes('credits') || msg.includes('额度')) {
+          // 额度不足，跳转首页购买
+          navigate(`/?reuse_task_id=${searchTaskId}&topic=${encodeURIComponent(topic)}`)
+        } else {
+          setError(msg || t('search_papers.error.generic'))
+        }
+      }
+    } catch {
+      setError(t('search_papers.error.generic'))
+    } finally {
+      setIsGenerating(false)
     }
   }
 
@@ -351,8 +390,12 @@ export function SearchPapersPage() {
           <div className="sp-cta-card">
             <h2 className="sp-cta-title">{t('search_papers.cta.title')}</h2>
             <p className="sp-cta-desc">{t('search_papers.cta.description')}</p>
-            <button className="sp-cta-btn" onClick={() => navigate('/')}>
-              {t('search_papers.cta.button')}
+            <button
+              className="sp-cta-btn"
+              onClick={handleGenerateFromSearch}
+              disabled={isGenerating || !searchTaskId}
+            >
+              {isGenerating ? t('home.input.button_generating') : t('search_papers.cta.button')}
             </button>
             <p className="sp-cta-badge">
               {t('search_papers.cta.badge')} <a href="/">AutoOverview</a>
