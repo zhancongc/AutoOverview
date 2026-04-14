@@ -5,7 +5,6 @@ import { api } from '../api'
 import { isLoggedIn as checkLoggedIn, getLocalUserInfo } from '../authApi'
 import { LoginModal } from './LoginModal'
 import { PaymentModal } from './PaymentModal'
-import { PaddlePaymentModal } from './PaddlePaymentModal'
 import { PayPalPaymentModal } from './PayPalPaymentModal'
 import './SimpleApp.css'
 
@@ -26,7 +25,6 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
   const [error, setError] = useState('')
   const [showLoginModal, setShowLoginModal] = useState(false)
   const [showPaymentModal, setShowPaymentModal] = useState<string | false>(false)
-  const [paymentProvider, setPaymentProvider] = useState<'paypal' | 'paddle'>('paypal') // Default to PayPal
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [, setUserInfo] = useState<any>(null)
@@ -927,26 +925,11 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
       {showPaymentModal && (
         <>
           {language === 'en' ? (
-            <>
-              {paymentProvider === 'paypal' ? (
-                <PayPalPaymentModal
-                  onClose={() => setShowPaymentModal(false)}
-                  onPaymentSuccess={handlePaymentSuccess}
-                  planType={showPaymentModal}
-                  showPaddleOption={true}
-                  onSwitchToPaddle={() => setPaymentProvider('paddle')}
-                />
-              ) : (
-                <PaddlePaymentModal
-                  onClose={() => {
-                    setShowPaymentModal(false)
-                    setPaymentProvider('paypal') // Reset to PayPal for next time
-                  }}
-                  onPaymentSuccess={handlePaymentSuccess}
-                  planType={showPaymentModal}
-                />
-              )}
-            </>
+            <PayPalPaymentModal
+              onClose={() => setShowPaymentModal(false)}
+              onPaymentSuccess={handlePaymentSuccess}
+              planType={showPaymentModal}
+            />
           ) : (
             <PaymentModal
               onClose={() => setShowPaymentModal(false)}

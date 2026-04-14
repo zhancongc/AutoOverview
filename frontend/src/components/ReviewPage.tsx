@@ -3,7 +3,6 @@ import { useNavigate, useLocation, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { ReviewViewer } from './ReviewViewer'
 import { PaymentModal } from './PaymentModal'
-import { PaddlePaymentModal } from './PaddlePaymentModal'
 import { PayPalPaymentModal } from './PayPalPaymentModal'
 import { ConfirmModal } from './ConfirmModal'
 import { CitationFormatSelector } from './CitationFormatSelector'
@@ -55,7 +54,6 @@ export function ReviewPage() {
   const [showPayModal, setShowPayModal] = useState(false)
   const [exporting, setExporting] = useState(false)
   const [unlockMode, setUnlockMode] = useState(false)
-  const [paymentProvider, setPaymentProvider] = useState<'paypal' | 'paddle'>('paypal') // Default to PayPal
   const [language, setLanguage] = useState<'zh' | 'en'>('zh')
   const [showCreditConfirmModal, setShowCreditConfirmModal] = useState(false)
   const [credits, setCredits] = useState<number>(0)
@@ -769,68 +767,33 @@ export function ReviewPage() {
       {showPayModal && unlockMode && (
         <>
           {language === 'en' ? (
-            <>
-              {paymentProvider === 'paypal' ? (
-                <PayPalPaymentModal
-                  onClose={() => {
-                    setShowPayModal(false)
-                    setUnlockMode(false)
-                  }}
-                  onPaymentSuccess={async () => {
-                    setShowPayModal(false)
-                    setUnlockMode(false)
-                    // Refresh task data (is_paid status updated)
-                    if (taskId) {
-                      api.getTaskReview(taskId).then(res => {
-                        if (res.success && res.data) {
-                          setTaskData({
-                            title: res.data.topic,
-                            content: res.data.review,
-                            papers: res.data.papers || [],
-                            recordId: res.data.record_id,
-                            isPublic: res.data.is_public,
-                            isPaid: res.data.is_paid,
-                          })
-                        }
-                      }).catch(err => console.error('Failed to refresh task status:', err))
+            <PayPalPaymentModal
+              onClose={() => {
+                setShowPayModal(false)
+                setUnlockMode(false)
+              }}
+              onPaymentSuccess={async () => {
+                setShowPayModal(false)
+                setUnlockMode(false)
+                // Refresh task data (is_paid status updated)
+                if (taskId) {
+                  api.getTaskReview(taskId).then(res => {
+                    if (res.success && res.data) {
+                      setTaskData({
+                        title: res.data.topic,
+                        content: res.data.review,
+                        papers: res.data.papers || [],
+                        recordId: res.data.record_id,
+                        isPublic: res.data.is_public,
+                        isPaid: res.data.is_paid,
+                      })
                     }
-                  }}
-                  planType="unlock"
-                  recordId={reviewData.recordId}
-                  showPaddleOption={true}
-                  onSwitchToPaddle={() => setPaymentProvider('paddle')}
-                />
-              ) : (
-                <PaddlePaymentModal
-                  onClose={() => {
-                    setShowPayModal(false)
-                    setUnlockMode(false)
-                    setPaymentProvider('paypal')
-                  }}
-                  onPaymentSuccess={async () => {
-                    setShowPayModal(false)
-                    setUnlockMode(false)
-                    // Refresh task data (is_paid status updated)
-                    if (taskId) {
-                      api.getTaskReview(taskId).then(res => {
-                        if (res.success && res.data) {
-                          setTaskData({
-                            title: res.data.topic,
-                            content: res.data.review,
-                            papers: res.data.papers || [],
-                            recordId: res.data.record_id,
-                            isPublic: res.data.is_public,
-                            isPaid: res.data.is_paid,
-                          })
-                        }
-                      }).catch(err => console.error('Failed to refresh task status:', err))
-                    }
-                  }}
-                  planType="unlock"
-                  recordId={reviewData.recordId}
-                />
-              )}
-            </>
+                  }).catch(err => console.error('Failed to refresh task status:', err))
+                }
+              }}
+              planType="unlock"
+              recordId={reviewData.recordId}
+            />
           ) : (
             <PaymentModal
               onClose={() => {
@@ -865,30 +828,13 @@ export function ReviewPage() {
       {showPayModal && !unlockMode && (
         <>
           {language === 'en' ? (
-            <>
-              {paymentProvider === 'paypal' ? (
-                <PayPalPaymentModal
-                  onClose={() => setShowPayModal(false)}
-                  onPaymentSuccess={async () => {
-                    setShowPayModal(false)
-                  }}
-                  planType="single"
-                  showPaddleOption={true}
-                  onSwitchToPaddle={() => setPaymentProvider('paddle')}
-                />
-              ) : (
-                <PaddlePaymentModal
-                  onClose={() => {
-                    setShowPayModal(false)
-                    setPaymentProvider('paypal')
-                  }}
-                  onPaymentSuccess={async () => {
-                    setShowPayModal(false)
-                  }}
-                  planType="single"
-                />
-              )}
-            </>
+            <PayPalPaymentModal
+              onClose={() => setShowPayModal(false)}
+              onPaymentSuccess={async () => {
+                setShowPayModal(false)
+              }}
+              planType="single"
+            />
           ) : (
             <PaymentModal
               onClose={() => setShowPayModal(false)}
