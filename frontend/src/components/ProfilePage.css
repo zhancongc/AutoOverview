@@ -235,17 +235,21 @@
   font-size: 1rem;
   font-weight: 600;
   color: var(--text-gray);
-  background: transparent;
-  border: none;
+  background: white;
+  border: 1.5px solid var(--border-gray);
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   font-family: 'Source Sans Pro', sans-serif;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
 }
 
 .profile-tab:hover {
   color: var(--academic-red);
   background: rgba(214, 48, 49, 0.05);
+  border-color: var(--academic-red);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(214, 48, 49, 0.1);
 }
 
 .profile-tab.active {
