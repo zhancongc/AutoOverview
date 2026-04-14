@@ -3,7 +3,7 @@
  * English-only, no login required
  */
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { api } from '../api'
 import { isLoggedIn as checkLoggedIn } from '../authApi'
@@ -30,22 +30,25 @@ interface Statistics {
   avg_citations: number
 }
 
-type SortMode = 'default' | 'year' | 'citations'
+type SortMode = 'citations' | 'year'
 
 export function SearchPapersPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const location = useLocation()
   const [topic, setTopic] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [papers, setPapers] = useState<Paper[]>([])
   const [statistics, setStatistics] = useState<Statistics | null>(null)
   const [error, setError] = useState('')
-  const [sortMode, setSortMode] = useState<SortMode>('default')
+  const [sortMode, setSortMode] = useState<SortMode>('citations')
   const [statusIndex, setStatusIndex] = useState(0)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [hasSearched, setHasSearched] = useState(false)
   const [searchTaskId, setSearchTaskId] = useState<string | null>(null)
+  const [isChineseSite, setIsChineseSite] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
+  const [isExporting, setIsExporting] = useState(false)
   const statusIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   // SEO meta tags
@@ -61,6 +64,8 @@ export function SearchPapersPage() {
       meta.content = desc
       document.head.appendChild(meta)
     }
+    // Check if Chinese site
+    setIsChineseSite(!document.documentElement.classList.contains('intl'))
     return () => {
       document.title = 'AutoOverview - AI Literature Review Generator'
     }
@@ -84,16 +89,52 @@ export function SearchPapersPage() {
     }
   }, [isLoading])
 
+  // 从 localStorage 恢复搜索状态
+  const restoreSearchState = useCallback(() => {
+    const savedTopic = localStorage.getItem('search_papers_topic')
+    const savedTaskId = localStorage.getItem('search_papers_task_id')
+    const savedPapers = localStorage.getItem('search_papers_papers')
+    const savedStatistics = localStorage.getItem('search_papers_statistics')
+    const savedHasSearched = localStorage.getItem('search_papers_has_searched')
+
+    if (savedTopic) setTopic(savedTopic)
+    if (savedTaskId) setSearchTaskId(savedTaskId)
+    if (savedPapers) setPapers(JSON.parse(savedPapers))
+    if (savedStatistics) setStatistics(JSON.parse(savedStatistics))
+    if (savedHasSearched) setHasSearched(savedHasSearched === 'true')
+  }, [])
+
+  // 组件首次挂载时恢复状态
+  useEffect(() => {
+    restoreSearchState()
+  }, [restoreSearchState])
+
+  // 监听路由变化，回到搜索页面时恢复状态（如果有的话）
+  useEffect(() => {
+    if (location.pathname === '/search-papers' && !isLoading) {
+      restoreSearchState()
+    }
+  }, [location.pathname, isLoading, restoreSearchState])
+
   const handleSearch = useCallback(async () => {
     if (!topic.trim()) return
+
+    // 搜索必须登录
+    if (!checkLoggedIn()) {
+      navigate('/login')
+      return
+    }
 
     setIsLoading(true)
     setError('')
     setPapers([])
     setStatistics(null)
     setHasSearched(true)
-    setSortMode('default')
+    setSortMode('citations')
     setSearchTaskId(null)
+
+    // 保存搜索主题到 localStorage
+    localStorage.setItem('search_papers_topic', topic)
 
     try {
       const response = await api.searchPapersOnly(topic, {
@@ -102,9 +143,19 @@ export function SearchPapersPage() {
       })
 
       if (response.success && response.data) {
-        setPapers(response.data.all_papers || [])
-        setStatistics(response.data.statistics || null)
-        setSearchTaskId(response.data.task_id || null)
+        const papers = response.data.all_papers || []
+        const stats = response.data.statistics || null
+        const taskId = response.data.task_id || null
+
+        setPapers(papers)
+        setStatistics(stats)
+        setSearchTaskId(taskId)
+
+        // 保存搜索结果到 localStorage
+        localStorage.setItem('search_papers_papers', JSON.stringify(papers))
+        localStorage.setItem('search_papers_statistics', JSON.stringify(stats))
+        localStorage.setItem('search_papers_task_id', taskId || '')
+        localStorage.setItem('search_papers_has_searched', 'true')
       } else {
         setError(response.message || t('search_papers.error.generic'))
       }
@@ -125,30 +176,123 @@ export function SearchPapersPage() {
     }
   }
 
+  const handleExportPapers = async () => {
+    if (papers.length === 0) return
+
+    setIsExporting(true)
+    try {
+      const { Document, Packer, Paragraph, TextRun, AlignmentType, HeadingLevel } = await import('docx')
+      const { saveAs } = await import('file-saver')
+
+      const children: any[] = []
+
+      // 标题
+      children.push(new Paragraph({
+        text: topic,
+        heading: HeadingLevel.TITLE,
+        alignment: AlignmentType.CENTER,
+      }))
+
+      // 统计
+      children.push(new Paragraph({
+        children: [new TextRun({ text: `${t('search_papers.results.found')} ${papers.length} ${t('search_papers.paper.citations')}`, bold: true })],
+        alignment: AlignmentType.CENTER,
+        spacing: { after: 400 },
+      }))
+
+      // 文献列表
+      for (let i = 0; i < sortedPapers.length; i++) {
+        const paper = sortedPapers[i]
+
+        // [序号] 标题
+        children.push(new Paragraph({
+          children: [new TextRun({ text: `[${i + 1}] ${paper.title}`, bold: true })],
+          spacing: { before: 200 },
+        }))
+
+        // 作者
+        if (paper.authors && paper.authors.length > 0) {
+          const authorText = paper.authors.slice(0, 5).join(', ') + (paper.authors.length > 5 ? ' et al.' : '')
+          children.push(new Paragraph({
+            children: [new TextRun({ text: `    Authors: ${authorText}`, size: 20 })],
+          }))
+        }
+
+        // 元信息
+        const metaParts: string[] = []
+        if (paper.year) metaParts.push(`Year: ${paper.year}`)
+        if (paper.cited_by_count > 0) metaParts.push(`Citations: ${paper.cited_by_count}`)
+        if (paper.doi) metaParts.push(`DOI: ${paper.doi}`)
+        if (metaParts.length > 0) {
+          children.push(new Paragraph({
+            children: [new TextRun({ text: `    ${metaParts.join(' | ')}`, size: 20 })],
+          }))
+        }
+
+        // 摘要
+        if (paper.abstract) {
+          const abstractText = paper.abstract.length > 500 ? paper.abstract.substring(0, 500) + '...' : paper.abstract
+          children.push(new Paragraph({
+            children: [new TextRun({ text: `    Abstract: ${abstractText}`, size: 20, italics: true })],
+          }))
+        }
+      }
+
+      const doc = new Document({
+        sections: [{ children }],
+      })
+
+      const blob = await Packer.toBlob(doc)
+      const safeName = topic.replace(/[\/\\:]/g, '-').substring(0, 50)
+      saveAs(blob, `${safeName}_papers.docx`)
+    } catch (err) {
+      console.error('Export failed:', err)
+      setError(t('search_papers.error.generic'))
+    } finally {
+      setIsExporting(false)
+    }
+  }
+
   const handleGenerateFromSearch = async () => {
     if (!searchTaskId || !topic.trim()) return
 
     const loggedIn = checkLoggedIn()
     if (!loggedIn) {
-      // 未登录：跳转首页，带上复用参数，登录后自动继续
-      navigate(`/?reuse_task_id=${searchTaskId}&topic=${encodeURIComponent(topic)}`)
+      // 未登录：跳转首页 generate 区域，带上复用参数，登录后自动继续
+      navigate(`/?reuse_task_id=${searchTaskId}&topic=${encodeURIComponent(topic)}#generate`)
       return
+    }
+
+    // 检查是否已有进行中的综述任务
+    try {
+      const activeTask = await api.getActiveTask()
+      if (activeTask.active && activeTask.task_id) {
+        // 已有活跃任务，提示后跳转到首页展示进度
+        setError(t('search_papers.error.active_task', '您已有一个正在生成中的综述任务'))
+        setTimeout(() => {
+          navigate(`/?task_id=${activeTask.task_id}#generate`)
+        }, 1500)
+        return
+      }
+    } catch {
+      // 获取失败不阻塞，继续提交
     }
 
     setIsGenerating(true)
     try {
       const response = await api.submitReviewTask(topic, {
-        language: 'en',
+        language: 'zh',
         reuseTaskId: searchTaskId,
       })
 
       if (response.success && response.data?.task_id) {
-        navigate(`/review?task_id=${response.data.task_id}`)
+        // 跳转首页 generate 区域，展示进度条
+        navigate(`/?task_id=${response.data.task_id}#generate`)
       } else {
         const msg = response.message || ''
         if (msg.includes('credits') || msg.includes('额度')) {
-          // 额度不足，跳转首页购买
-          navigate(`/?reuse_task_id=${searchTaskId}&topic=${encodeURIComponent(topic)}`)
+          // 额度不足，跳转首页定价区域购买
+          navigate(`/?reuse_task_id=${searchTaskId}&topic=${encodeURIComponent(topic)}#pricing`)
         } else {
           setError(msg || t('search_papers.error.generic'))
         }
@@ -164,7 +308,7 @@ export function SearchPapersPage() {
     const sorted = [...papers]
     if (mode === 'year') {
       sorted.sort((a, b) => (b.year || 0) - (a.year || 0))
-    } else if (mode === 'citations') {
+    } else {
       sorted.sort((a, b) => (b.cited_by_count || 0) - (a.cited_by_count || 0))
     }
     return sorted
@@ -261,17 +405,16 @@ export function SearchPapersPage() {
             </button>
           </div>
           <p className="sp-search-helper">{t('search_papers.input.helper')}</p>
-        </div>
-      </div>
-
-      {/* Data Sources */}
-      <div className="sp-sources">
-        <p className="sp-sources-title">{t('home.sources.title')}</p>
-        <div className="sp-sources-logos">
-          <span className="sp-source-logo">Web of Science</span>
-          <span className="sp-source-logo">IEEE Xplore</span>
-          <span className="sp-source-logo">CrossRef</span>
-          <span className="sp-source-logo">Semantic Scholar</span>
+          {loggedIn && (
+            <div className="sp-search-history-link">
+              <button
+                className="sp-history-btn"
+                onClick={() => navigate('/profile?tab=searches')}
+              >
+                📋 查看搜索历史
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -279,7 +422,6 @@ export function SearchPapersPage() {
       {isLoading && (
         <div className="sp-loading">
           <div className="sp-loading-card">
-            <p className="sp-loading-title">{t('search_papers.loading.title')}</p>
             <div className="sp-progress-bar">
               <div className="sp-progress-fill" />
             </div>
@@ -288,6 +430,17 @@ export function SearchPapersPage() {
           </div>
         </div>
       )}
+
+      {/* Data Sources */}
+      <div className="sp-sources">
+        <p className="sp-sources-title">{t('home.sources.title')}</p>
+        <div className="sp-sources-logos">
+          <a href="https://webofscience.com" target="_blank" rel="noopener noreferrer" className="sp-source-logo">Web of Science</a>
+          <a href="https://ieeexplore.ieee.org" target="_blank" rel="noopener noreferrer" className="sp-source-logo">IEEE Xplore</a>
+          <a href="https://crossref.org" target="_blank" rel="noopener noreferrer" className="sp-source-logo">CrossRef</a>
+          <a href="https://semanticscholar.org" target="_blank" rel="noopener noreferrer" className="sp-source-logo">Semantic Scholar</a>
+        </div>
+      </div>
 
       {/* Error */}
       {error && !isLoading && (
@@ -305,7 +458,7 @@ export function SearchPapersPage() {
       {statistics && !isLoading && papers.length > 0 && (
         <div className="sp-statistics">
           <div className="sp-statistics-bar">
-            <span className="sp-stat-badge sp-stat-badge-primary">
+            <span className="sp-stat-badge">
               <span className="sp-stat-number">{statistics.total}</span> {t('search_papers.results.found')}
             </span>
             <span className="sp-stat-badge">
@@ -327,7 +480,7 @@ export function SearchPapersPage() {
           <div className="sp-results-header">
             <div className="sp-sort-controls">
               <span>{t('search_papers.results.sort_by')}:</span>
-              {(['default', 'year', 'citations'] as SortMode[]).map(mode => (
+              {(['citations', 'year'] as SortMode[]).map(mode => (
                 <button
                   key={mode}
                   className={`sp-sort-btn ${sortMode === mode ? 'active' : ''}`}
@@ -336,6 +489,22 @@ export function SearchPapersPage() {
                   {t(`search_papers.results.sort_${mode}`)}
                 </button>
               ))}
+            </div>
+            <div className="sp-action-buttons">
+              <button
+                className="sp-btn-generate"
+                onClick={handleGenerateFromSearch}
+                disabled={isGenerating || !searchTaskId}
+              >
+                {isGenerating ? t('search_papers.cta.button') + '...' : t('search_papers.cta.button')}
+              </button>
+              <button
+                className="sp-btn-export"
+                onClick={handleExportPapers}
+                disabled={isExporting}
+              >
+                {isExporting ? t('search_papers.results.exporting') : t('search_papers.results.export')}
+              </button>
             </div>
           </div>
 
@@ -423,6 +592,11 @@ export function SearchPapersPage() {
           <a href="/refund-policy">{t('search_papers.footer.refund')}</a>
         </div>
         <p>{t('search_papers.footer.copyright')}</p>
+        {isChineseSite && (
+          <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer" className="sp-footer-icp">
+            沪ICP备2023018158号-4
+          </a>
+        )}
       </footer>
     </div>
   )

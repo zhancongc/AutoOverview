@@ -58,7 +58,7 @@
 .home-nav {
   background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(20px);
-  padding: 1.5rem 3rem;
+  padding: 0.5rem 2rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -359,7 +359,7 @@
   max-width: 1200px;
   background: transparent;
   border-radius: 0;
-  padding: 3rem 3rem 4rem;
+  padding: 2rem 3rem 4rem;
   margin: 0 auto;
   box-shadow: none;
   flex: 1;
@@ -377,23 +377,23 @@
 .hero-accent {
   display: inline-block;
   font-family: 'Source Sans Pro', sans-serif;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-weight: 700;
   letter-spacing: 0.15em;
   text-transform: uppercase;
   color: var(--academic-red);
-  margin-bottom: 1.25rem;
-  padding: 0.4rem 1rem;
+  margin-bottom: 0.875rem;
+  padding: 0.35rem 0.875rem;
   background: rgba(214, 48, 49, 0.08);
   border-radius: 50px;
 }
 
 .home-title {
-  font-family: 'Playfair Display', Georgia, serif;
-  font-size: 3.5rem;
+  font-family: 'PingFang SC', 'SimHei', '黑体', 'Microsoft YaHei', sans-serif;
+  font-size: 2.75rem;
   font-weight: 700;
   color: var(--ink-black);
-  margin: 0 0 1.5rem 0;
+  margin: 0 0 1rem 0;
   line-height: 1.1;
   letter-spacing: -0.03em;
 }
@@ -406,10 +406,10 @@
 
 .home-subtitle {
   font-family: 'Source Sans Pro', sans-serif;
-  font-size: 1.15rem;
+  font-size: 1.05rem;
   color: var(--text-gray);
   margin: 0;
-  line-height: 1.7;
+  line-height: 1.6;
   max-width: 520px;
 }
 
@@ -417,7 +417,7 @@
 .hero-cta-group {
   display: flex;
   gap: 1rem;
-  margin-top: 1.5rem;
+  margin-top: 1rem;
   align-items: center;
   flex-wrap: wrap;
 }
@@ -445,10 +445,19 @@
 }
 
 /* Search papers hint below input */
+.search-papers-hints {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 2rem;
+  margin-top: 0.75rem;
+  flex-wrap: wrap;
+}
+
 .search-papers-hint {
   font-size: 0.85rem;
   color: #a0aec0;
-  margin-top: 0.75rem;
+  margin: 0;
   text-align: center;
 }
 
@@ -475,7 +484,7 @@
 .visual-card {
   background: white;
   border-radius: 20px;
-  padding: 2.5rem;
+  padding: 1.75rem;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
   border: 1px solid var(--border-gray);
   position: relative;
@@ -493,8 +502,8 @@
 }
 
 .visual-icon-large {
-  font-size: 4rem;
-  margin-bottom: 1.5rem;
+  font-size: 3rem;
+  margin-bottom: 1rem;
   text-align: center;
 }
 
@@ -528,10 +537,11 @@
 
 .home-hero-wrapper {
   display: grid;
-  grid-template-columns: 1.1fr 0.9fr;
+  grid-template-columns: 1.3fr 0.7fr;
   gap: 4rem;
   align-items: center;
-  margin-bottom: 5rem;
+  margin-bottom: 3rem;
+  margin-top: -10px;
   scroll-margin-top: 100px; /* 补偿固定导航栏高度，避免内容被遮挡 */
 }
 
@@ -542,6 +552,7 @@
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.06);
   border: 1px solid var(--border-gray);
   margin-bottom: 2rem;
+  margin-top: -10px;
   position: relative;
   overflow: visible;
   grid-column: 1 / -1;
@@ -717,10 +728,11 @@
 .input-section-header {
   text-align: center;
   margin-bottom: 2rem;
+  padding-top: 0.75rem;
 }
 
 .input-section-title {
-  font-family: 'Playfair Display', serif;
+  font-family: 'PingFang SC', 'SimHei', '黑体', 'Microsoft YaHei', sans-serif;
   font-size: 1.75rem;
   font-weight: 600;
   color: var(--ink-black);
@@ -760,50 +772,51 @@
 .language-toggle-wrapper {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-  margin-bottom: 1.5rem;
-  flex-wrap: wrap;
+  gap: 0.5rem;
+  position: absolute;
+  top: 1rem;
+  left: 1.5rem;
+  z-index: 2;
 }
 
 .language-label {
   font-family: 'Source Sans Pro', sans-serif;
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   font-weight: 600;
-  color: var(--charcoal);
+  color: var(--text-gray);
 }
 
 .language-toggle {
   display: flex;
   background: var(--cream-white);
-  border-radius: 10px;
-  padding: 4px;
-  border: 2px solid var(--border-gray);
+  border-radius: 8px;
+  padding: 3px;
+  border: 1.5px solid var(--border-gray);
   gap: 2px;
 }
 
 .language-option {
-  padding: 0.5rem 1.25rem;
+  padding: 0.35rem 0.9rem;
   border: none;
-  border-radius: 8px;
+  border-radius: 6px;
   background: transparent;
   color: var(--text-gray);
   font-family: 'Source Sans Pro', sans-serif;
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
-.language-option:hover:not(:disabled) {
+.language-option:hover:not(:disabled):not(.active) {
   color: var(--charcoal);
   background: rgba(214, 48, 49, 0.08);
 }
 
 .language-option.active {
-  background: var(--academic-red);
-  color: white;
-  box-shadow: 0 2px 8px rgba(214, 48, 49, 0.25);
+  background: var(--academic-red) !important;
+  color: white !important;
+  box-shadow: 0 2px 6px rgba(214, 48, 49, 0.25);
 }
 
 .language-option:disabled {
@@ -812,35 +825,30 @@
 }
 
 .language-hint {
-  font-family: 'Source Sans Pro', sans-serif;
-  font-size: 0.8rem;
-  color: var(--text-gray);
-  font-style: italic;
+  display: none;
 }
 
 @media (max-width: 768px) {
   .language-toggle-wrapper {
-    flex-direction: column;
-    gap: 0.75rem;
+    position: absolute;
+    top: 0.75rem;
+    left: 1rem;
+    gap: 0.35rem;
   }
 
   .language-label {
-    align-self: flex-start;
-  }
-
-  .language-hint {
-    align-self: flex-end;
+    font-size: 0.75rem;
   }
 
   .language-option {
-    padding: 0.45rem 1rem;
-    font-size: 0.85rem;
+    padding: 0.3rem 0.75rem;
+    font-size: 0.75rem;
   }
 
   .language-option.active {
     background: var(--academic-red) !important;
     color: white !important;
-    box-shadow: 0 2px 8px rgba(214, 48, 49, 0.25);
+    box-shadow: 0 2px 6px rgba(214, 48, 49, 0.25);
   }
 }
 
@@ -1591,8 +1599,29 @@
 .footer-content {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.75rem;
   align-items: center;
+}
+
+.footer-links {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.footer-link {
+  color: var(--text-gray);
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.footer-link:hover {
+  color: var(--academic-red);
+  text-decoration: underline;
 }
 
 .footer-copyright {
@@ -1711,7 +1740,7 @@
   }
 
   .home-nav {
-    padding: 1rem 1.25rem;
+    padding: 0.5rem 1.25rem;
   }
 
   .logo-text {

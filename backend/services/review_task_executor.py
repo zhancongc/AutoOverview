@@ -4,7 +4,7 @@
 """
 import logging
 import os
-from typing import Dict
+from typing import Dict, Optional
 from datetime import datetime
 from sqlalchemy.orm import Session
 
@@ -324,6 +324,7 @@ class ReviewTaskExecutor:
         self,
         topic: str,
         params: dict,
+        user_id: Optional[int] = None,
     ) -> dict:
         """
         只查找文献，不生成综述（使用 PaperSearchAgent）
@@ -332,6 +333,7 @@ class ReviewTaskExecutor:
         Args:
             topic: 论文主题
             params: 参数配置
+            user_id: 用户ID（可选，登录用户的搜索任务会关联）
 
         Returns:
             {
@@ -359,7 +361,7 @@ class ReviewTaskExecutor:
         # 2. 创建 ReviewTask 记录（标记为 search_only）
         task_id = str(uuid.uuid4())[:8]
         task_params = {**params, 'type': 'search_only'}
-        stage_recorder.create_task(task_id, topic, task_params)
+        stage_recorder.create_task(task_id, topic, task_params, user_id=user_id)
         stage_recorder.update_task_status(task_id, status="completed", current_stage="文献搜索完成")
 
         # 3. 将论文存入 PaperMetadata 总库
@@ -380,7 +382,8 @@ class ReviewTaskExecutor:
             search_queries_count=1,
             papers_count=len(all_papers),
             papers_summary=stats,
-            papers_sample=all_papers  # 存全部论文，便于后续生成综述时复用
+            papers_sample=all_papers,  # 存全部论文，便于后续生成综述时复用
+            save_all_papers=True
         )
 
         return {
@@ -510,23 +513,22 @@ class ReviewTaskExecutor:
                 paper['is_cited'] = paper.get('id') in cited_paper_ids
 
             # 保存最终结果
-            self.record_service.update_success(
-                record_id=record.id,
-                review_content=review,
-                papers=all_papers,
-                cited_papers=cited_papers,
-                statistics=cited_stats,
-                validation=final_validation,
-                search_params=search_params
+            record = self.record_service.update_success(
+                db_session=db_session,
+                record=record,
+                review=review,
+                papers=cited_papers,
+                statistics=cited_stats
             )
 
             stage_recorder.record_review_generation(
                 task_id=task_id,
-                model=params.get('review_model', 'deepseek-reasoner'),
                 papers_count=len(all_papers),
-                cited_papers_count=len(cited_papers),
                 review_length=len(review),
-                language=params.get('language', 'zh')
+                citation_count=review.count('['),
+                cited_papers_count=len(cited_papers),
+                validation_result=final_validation,
+                review=review
             )
 
             stage_recorder.update_task_status(
@@ -555,10 +557,15 @@ class ReviewTaskExecutor:
             traceback.print_exc()
             logger.error(f"[execute_task_with_papers] 任务执行失败: {e}")
 
+            if task_id in task_manager._running_tasks:
+                task_manager.release_slot(task_id)
+
             stage_recorder.update_task_status(
                 task_id,
                 status="failed",
-                error_message=str(e)
+                current_stage="失败",
+                error_message=str(e),
+                completed_at=datetime.now()
             )
             task_manager.update_task_status(
                 task_id,
@@ -566,17 +573,27 @@ class ReviewTaskExecutor:
                 error=str(e)
             )
 
+            try:
+                if 'record' in locals():
+                    self.record_service.update_failure(
+                        db_session=db_session,
+                        record=record,
+                        error_message=str(e)
+                    )
+            except Exception as update_err:
+                logger.error("任务失败后更新状态异常: task_id=%s, error=%s", task_id, update_err)
+
             # 退还额度
             task_user_id = getattr(task, 'user_id', None)
-            task_is_paid = getattr(task, 'is_paid', False)
-            if task_user_id and task_is_paid:
+            if task_user_id:
                 try:
+                    from main import refund_credit
                     from authkit.database import SessionLocal as AuthSessionLocal
                     if AuthSessionLocal:
                         auth_db = AuthSessionLocal()
                         try:
-                            from authkit.services.credit_service import CreditService
-                            CreditService(refund=True).refund_paid_credit(task_user_id, auth_db)
+                            refund_credit(task_user_id, auth_db)
+                            logger.info("已退还用户 %s 的综述额度", task_user_id)
                         finally:
                             auth_db.close()
                 except Exception as refund_err:

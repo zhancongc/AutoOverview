@@ -191,6 +191,9 @@ class ReviewTask(Base):
     id = Column(String(50), primary_key=True, comment="任务ID")
     topic = Column(String(500), nullable=False, comment="论文主题")
 
+    # 用户ID（登录用户的搜索/生成任务会关联）
+    user_id = Column(Integer, nullable=True, comment="用户ID")
+
     # 任务状态
     status = Column(String(20), default="pending", comment="状态: pending/processing/completed/failed")
     current_stage = Column(String(50), nullable=True, comment="当前阶段")
@@ -213,12 +216,14 @@ class ReviewTask(Base):
     __table_args__ = (
         Index('idx_review_tasks_status', 'status'),
         Index('idx_review_tasks_created_at', 'created_at'),
+        Index('idx_review_tasks_user_id', 'user_id'),
     )
 
     def to_dict(self):
         return {
             "id": self.id,
             "topic": self.topic,
+            "user_id": self.user_id,
             "status": self.status,
             "current_stage": self.current_stage,
             "params": self.params,

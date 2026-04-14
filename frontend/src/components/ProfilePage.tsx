@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { api } from '../api'
 import { getLocalUserInfo, isLoggedIn } from '../authApi'
@@ -8,10 +8,23 @@ import { ConfirmModal } from './ConfirmModal'
 import type { ReviewRecord } from '../types'
 import './ProfilePage.css'
 
+type ProfileTab = 'reviews' | 'searches'
+
 export function ProfilePage() {
   const { i18n } = useTranslation()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const [activeTab, setActiveTab] = useState<ProfileTab>('reviews')
+
+  // 检查 URL 参数，设置默认 tab
+  useEffect(() => {
+    const tabParam = searchParams.get('tab')
+    if (tabParam === 'searches') {
+      setActiveTab('searches')
+    }
+  }, [searchParams])
   const [records, setRecords] = useState<ReviewRecord[]>([])
+  const [searches, setSearches] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
   const [userInfo, setUserInfo] = useState<any>(null)
   const [credits, setCredits] = useState<number>(0)
@@ -30,6 +43,7 @@ export function ProfilePage() {
     }
     setUserInfo(getLocalUserInfo())
     loadRecords()
+    loadSearches()
     api.getCredits().then(data => {
       setCredits(data.credits)
       setFreeCredits(data.free_credits)
@@ -48,6 +62,31 @@ export function ProfilePage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const loadSearches = async () => {
+    try {
+      const response = await api.getSearchHistory()
+      if (response.success) {
+        setSearches(response.searches)
+      }
+    } catch (err) {
+      console.error('加载搜索历史失败:', err)
+    }
+  }
+
+  const handleViewSearch = (search: any) => {
+    // 将搜索结果保存到 localStorage，然后跳转到搜索页面
+    localStorage.setItem('search_papers_topic', search.topic)
+    if (search.papers_sample) {
+      localStorage.setItem('search_papers_papers', JSON.stringify(search.papers_sample))
+    }
+    if (search.papers_summary) {
+      localStorage.setItem('search_papers_statistics', JSON.stringify(search.papers_summary))
+    }
+    localStorage.setItem('search_papers_task_id', search.id)
+    localStorage.setItem('search_papers_has_searched', 'true')
+    navigate('/search-papers')
   }
 
   const handleViewRecord = (record: ReviewRecord) => {
@@ -210,66 +249,130 @@ export function ProfilePage() {
           </div>
         </div>
 
+        {/* Tab 切换 */}
+        <div className="profile-tabs">
+          <button
+            className={`profile-tab ${activeTab === 'reviews' ? 'active' : ''}`}
+            onClick={() => setActiveTab('reviews')}
+          >
+            📖 我的综述
+          </button>
+          <button
+            className={`profile-tab ${activeTab === 'searches' ? 'active' : ''}`}
+            onClick={() => setActiveTab('searches')}
+          >
+            🔍 我的查询
+          </button>
+        </div>
+
         {/* 历史记录列表 */}
         <div className="profile-history">
-          <h2 className="history-title">📖 我的综述</h2>
-
-          {loading ? (
-            <div className="history-loading">
-              <div className="spinner"></div>
-              <p>加载历史记录中...</p>
-            </div>
-          ) : records.length === 0 ? (
-            <div className="history-empty">
-              <div className="empty-icon">📝</div>
-              <p className="empty-title">还没有生成过综述</p>
-              <p className="empty-desc">输入研究主题，AI 为您自动搜索文献并生成专业综述</p>
-              <button className="empty-button" onClick={() => navigate('/')}>
-                去生成第一篇综述
-              </button>
-            </div>
-          ) : (
-            <div className="records-list">
-              {records.map((record) => (
-                <div
-                  key={record.id}
-                  className={`record-item ${record.status === 'processing' || record.status === 'failed' ? 'record-item-disabled' : ''}`}
-                  onClick={() => handleViewRecord(record)}
-                >
-                  <div className="record-main">
-                    <div className="record-top">
-                      <h3 className="record-topic">{record.topic}</h3>
-                      {record.status === 'success' ? (
-                        <span className="status-success">✓ 完成</span>
-                      ) : record.status === 'failed' ? (
-                        <span className="status-failed">✗ 失败</span>
-                      ) : (
-                        <span className="status-processing">⏳ 进行中</span>
-                      )}
-                    </div>
-                    <div className="record-bottom">
-                      <div className="record-meta">
-                        <span className="record-time">{formatDate(record.created_at)}</span>
-                        {record.statistics && (
-                          <span className="record-stats-inline">📄 {record.statistics.total || 0} 篇文献</span>
-                        )}
-                      </div>
-                      {record.status === 'success' && (
-                        <button
-                          className={`export-button ${!record.is_paid ? 'export-word-premium' : ''}`}
-                          onClick={(e) => handleExportRecord(record.id, e)}
-                          disabled={exportingId === record.id}
-                        >
-                          {exportingId === record.id ? '导出中...' :
-                           record.is_paid ? '导出 Word' :
-                           '🔓 解锁导出'}
-                        </button>
-                      )}
-                    </div>
-                  </div>
+          {activeTab === 'reviews' ? (
+            <>
+              {loading ? (
+                <div className="history-loading">
+                  <div className="spinner"></div>
+                  <p>加载历史记录中...</p>
                 </div>
-              ))}
-            </div>
+              ) : records.length === 0 ? (
+                <div className="history-empty">
+                  <div className="empty-icon">📝</div>
+                  <p className="empty-title">还没有生成过综述</p>
+                  <p className="empty-desc">输入研究主题，AI 为您自动搜索文献并生成专业综述</p>
+                  <button className="empty-button" onClick={() => navigate('/')}>
+                    去生成第一篇综述
+                  </button>
+                </div>
+              ) : (
+                <div className="records-list">
+                  {records.map((record) => (
+                    <div
+                      key={record.id}
+                      className={`record-item ${record.status === 'processing' || record.status === 'failed' ? 'record-item-disabled' : ''}`}
+                      onClick={() => handleViewRecord(record)}
+                    >
+                      <div className="record-main">
+                        <div className="record-top">
+                          <h3 className="record-topic">{record.topic}</h3>
+                          {record.status === 'success' ? (
+                            <span className="status-success">✓ 完成</span>
+                          ) : record.status === 'failed' ? (
+                            <span className="status-failed">✗ 失败</span>
+                          ) : (
+                            <span className="status-processing">⏳ 进行中</span>
+                          )}
+                        </div>
+                        <div className="record-bottom">
+                          <div className="record-meta">
+                            <span className="record-time">{formatDate(record.created_at)}</span>
+                            {record.statistics && (
+                              <span className="record-stats-inline">📄 {record.statistics.total || 0} 篇文献</span>
+                            )}
+                          </div>
+                          {record.status === 'success' && (
+                            <button
+                              className={`export-button ${!record.is_paid ? 'export-word-premium' : ''}`}
+                              onClick={(e) => handleExportRecord(record.id, e)}
+                              disabled={exportingId === record.id}
+                            >
+                              {exportingId === record.id ? '导出中...' :
+                               record.is_paid ? '导出 Word' :
+                               '🔓 解锁导出'}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
+          ) : (
+            <>
+              {loading ? (
+                <div className="history-loading">
+                  <div className="spinner"></div>
+                  <p>加载搜索历史中...</p>
+                </div>
+              ) : searches.length === 0 ? (
+                <div className="history-empty">
+                  <div className="empty-icon">🔍</div>
+                  <p className="empty-title">还没有搜索记录</p>
+                  <p className="empty-desc">搜索文献，找到相关研究</p>
+                  <button className="empty-button" onClick={() => navigate('/search-papers')}>
+                    去搜索文献
+                  </button>
+                </div>
+              ) : (
+                <div className="records-list">
+                  {searches.map((search) => (
+                    <div
+                      key={search.id}
+                      className="record-item"
+                      onClick={() => handleViewSearch(search)}
+                    >
+                      <div className="record-main">
+                        <div className="record-top">
+                          <h3 className="record-topic">{search.topic}</h3>
+                          <span className="status-success">✓ 已完成</span>
+                        </div>
+                        <div className="record-bottom">
+                          <div className="record-meta">
+                            <span className="record-time">{formatDate(search.created_at)}</span>
+                            {search.papers_count && (
+                              <span className="record-stats-inline">📄 {search.papers_count} 篇文献</span>
+                            )}
+                          </div>
+                          <button className="export-button">
+                            查看结果
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>

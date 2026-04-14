@@ -95,6 +95,18 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
         setCasesLoading(false)
       })
 
+    // Handle task_id from search-papers page: auto-start polling with progress bar
+    const taskIdParam = searchParams.get('task_id')
+    if (taskIdParam) {
+      setIsGenerating(true)
+      setActiveTaskId(taskIdParam)
+      setProgress({ step: 'processing', message: t('home.progress.processing') })
+      sessionStorage.setItem('active_task_id', taskIdParam)
+      pollTask(taskIdParam)
+      window.history.replaceState({}, '', '/')
+      return
+    }
+
     // Handle reuse_task_id from search-papers page redirect
     const reuseTaskId = searchParams.get('reuse_task_id')
     const reuseTopic = searchParams.get('topic')

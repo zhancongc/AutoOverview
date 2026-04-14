@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useEffect, useRef } from 'react'
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { api } from '../api'
 import { isLoggedIn as checkLoggedIn, getLocalUserInfo } from '../authApi'
@@ -17,6 +17,8 @@ interface TaskProgress {
 export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const location = useLocation()
+  const [searchParams] = useSearchParams()
   const [topic, setTopic] = useState('')
   const [language, setLanguage] = useState<'zh' | 'en'>('zh')
   const [isGenerating, setIsGenerating] = useState(false)
@@ -26,7 +28,6 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
   const [showPaymentModal, setShowPaymentModal] = useState<string | false>(false)
   const [paymentProvider, setPaymentProvider] = useState<'paypal' | 'paddle'>('paypal') // Default to PayPal
   const [isLoggedIn, setIsLoggedIn] = useState(false)
-  const [, setActiveTaskId] = useState<string | null>(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [, setUserInfo] = useState<any>(null)
   const [credits, setCredits] = useState<number>(0)
@@ -37,6 +38,7 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
   const [plansLoading, setPlansLoading] = useState(true)
   const [demoCases, setDemoCases] = useState<any[]>([])
   const [casesLoading, setCasesLoading] = useState(true)
+  const isPollingRef = useRef(false)
 
   useEffect(() => {
     const loggedIn = checkLoggedIn()
@@ -51,7 +53,7 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
       // 检查是否有进行中的任务
       api.getActiveTask().then(data => {
         if (data.active && data.task_id) {
-          setActiveTaskId(data.task_id)
+          isPollingRef.current = true
           setTopic(data.topic || '')
           setIsGenerating(true)
           setProgress({ step: 'processing', message: language === 'en' ? t('home.progress.restoring') : '正在恢复任务状态...' })
@@ -86,6 +88,33 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
       })
   }, [])
 
+  // 检测 URL 参数：从搜索页跳转过来的场景
+  useEffect(() => {
+    // task_id：搜索页已提交任务，直接开始轮询展示进度条
+    const taskIdParam = searchParams.get('task_id')
+    if (taskIdParam) {
+      isPollingRef.current = true
+      setIsGenerating(true)
+      setProgress({ step: 'processing', message: '正在生成文献综述...' })
+      sessionStorage.setItem('active_task_id', taskIdParam)
+      pollTask(taskIdParam)
+      // 清理 URL
+      window.history.replaceState({}, '', '/')
+      return
+    }
+
+    // reuse_task_id + topic：搜索页跳转过来，预填主题
+    const reuseTaskId = searchParams.get('reuse_task_id')
+    const reuseTopic = searchParams.get('topic')
+    if (reuseTaskId && reuseTopic) {
+      setTopic(reuseTopic)
+      sessionStorage.setItem('reuse_task_id', reuseTaskId)
+      sessionStorage.setItem('pending_topic', reuseTopic)
+      // 清理 URL
+      window.history.replaceState({}, '', '/')
+    }
+  }, [searchParams])
+
   const pollTask = (taskId: string) => {
     const startTime = Date.now()
     const doPoll = async () => {
@@ -95,7 +124,7 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
           sessionStorage.removeItem('active_task_id')
           sessionStorage.removeItem('active_task_topic')
           setIsGenerating(false)
-          setActiveTaskId(null)
+          isPollingRef.current = false
           return
         }
 
@@ -103,6 +132,7 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
         if (taskInfo.status === 'completed' && taskInfo.result) {
           sessionStorage.removeItem('active_task_id')
           sessionStorage.removeItem('active_task_topic')
+          isPollingRef.current = false
           navigate(`/review?task_id=${taskId}`)
           return
         } else if (taskInfo.status === 'failed') {
@@ -110,7 +140,7 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
           sessionStorage.removeItem('active_task_topic')
           setError(taskInfo.error || (language === 'en' ? t('home.errors.task_failed') : '任务执行失败'))
           setIsGenerating(false)
-          setActiveTaskId(null)
+          isPollingRef.current = false
           return
         }
 
@@ -132,7 +162,7 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
         sessionStorage.removeItem('active_task_id')
         sessionStorage.removeItem('active_task_topic')
         setIsGenerating(false)
-        setActiveTaskId(null)
+        isPollingRef.current = false
       }
     }
     setTimeout(doPoll, 5000) // 初始延迟5秒
@@ -146,6 +176,30 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
     }
   }, [])
 
+  // 监听路由变化，回到首页时检查是否有活跃任务
+  useEffect(() => {
+    // 只在回到首页时检查，且避免重复轮询
+    if (location.pathname === '/' && !isPollingRef.current && isLoggedIn && !isGenerating) {
+      const checkActiveTask = async () => {
+        try {
+          const data = await api.getActiveTask()
+          if (data.active && data.task_id) {
+            isPollingRef.current = true
+            setTopic(data.topic || '')
+            setIsGenerating(true)
+            setProgress({ step: 'processing', message: language === 'en' ? t('home.progress.restoring') : '正在恢复任务状态...' })
+            sessionStorage.setItem('active_task_id', data.task_id)
+            sessionStorage.setItem('active_task_topic', data.topic || '')
+            pollTask(data.task_id)
+          }
+        } catch (err) {
+          console.error('获取活跃任务失败:', err)
+        }
+      }
+      checkActiveTask()
+    }
+  }, [location.pathname, isLoggedIn, isGenerating, language, t])
+
   // Esc 关闭弹窗
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -158,6 +212,22 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [showLoginModal, showPaymentModal, mobileMenuOpen])
+
+  // 从其他页面跳转过来时，处理 hash 滚动（如 /search-papers -> /#generate）
+  useEffect(() => {
+    if (location.hash) {
+      const id = location.hash.replace('#', '')
+      const timer = setTimeout(() => {
+        const el = document.getElementById(id)
+        if (el) {
+          const navHeight = 60
+          const elPosition = el.getBoundingClientRect().top + window.pageYOffset
+          window.scrollTo({ top: elPosition - navHeight, behavior: 'smooth' })
+        }
+      }, 300)
+      return () => clearTimeout(timer)
+    }
+  }, [location.hash])
 
   const handleGenerate = async () => {
     if (!topic.trim()) {
@@ -196,7 +266,6 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
       }
 
       const taskId = submitResponse.data.task_id
-      setActiveTaskId(taskId)
       sessionStorage.setItem('active_task_id', taskId)
       sessionStorage.setItem('active_task_topic', topic)
       const startTime = Date.now()
@@ -240,7 +309,6 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
             sessionStorage.removeItem('active_task_topic')
             setError(taskInfo.error || '\u4EFB\u52A1\u6267\u884C\u5931\u8D25')
             setIsGenerating(false)
-            setActiveTaskId(null)
             return
           }
 
@@ -316,12 +384,6 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
     }
   }
 
-  const handleLogout = () => {
-    localStorage.removeItem('auth_token')
-    localStorage.removeItem('user_info')
-    setIsLoggedIn(false)
-    setUserInfo(null)
-  }
 
   const getProgressPercentage = () => {
     if (!progress) return 0
@@ -362,9 +424,6 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
               <button className="user-info" onClick={() => navigate('/profile')}>
                 <span className="user-avatar">👤</span>
                 <span className="user-name">{t('home.nav.profile')}</span>
-              </button>
-              <button className="nav-btn nav-btn-logout" onClick={handleLogout}>
-                {t('home.nav.logout')}
               </button>
             </div>
           ) : (
@@ -409,9 +468,6 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
                 <span className="user-avatar">👤</span>
                 <span className="user-name">{t('home.nav.profile')}</span>
               </button>
-              <button className="nav-btn nav-btn-logout" onClick={() => { setMobileMenuOpen(false); handleLogout() }}>
-                {t('home.nav.logout')}
-              </button>
             </>
           ) : (
             <button
@@ -436,19 +492,6 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
             </p>
             <div className="hero-cta-group">
               <button
-                className="home-button hero-cta-primary"
-                onClick={() => {
-                  const el = document.getElementById('generate')
-                  if (el) {
-                    const navHeight = 56
-                    const elPosition = el.getBoundingClientRect().top + window.pageYOffset
-                    window.scrollTo({ top: elPosition - navHeight, behavior: 'smooth' })
-                  }
-                }}
-              >
-                {t('input.button')}
-              </button>
-              <button
                 className="hero-cta-secondary"
                 onClick={() => navigate('/search-papers')}
               >
@@ -462,7 +505,7 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
               <div className="visual-icon-large">📊</div>
               <div className="visual-stats">
                 <div className="visual-stat">
-                  <span className="visual-stat-number">200M+</span>
+                  <span className="visual-stat-number">2亿+</span>
                   <span className="visual-stat-label">{t('home.stats.papers')}</span>
                 </div>
                 <div className="visual-stat">
@@ -477,15 +520,8 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
           {isLoggedIn && <span className={`credits-badge ${prevCredits !== credits ? 'credits-updated' : ''}`}>
             {t('input.credits_remaining')} <span className="credits-number">{credits}</span>
           </span>}
-          <div className="input-section-header">
-            <div className="input-section-title-row">
-              <h2 className="input-section-title">{t('input.title')}</h2>
-            </div>
-            <p className="input-section-subtitle">{t('input.subtitle')}</p>
-          </div>
-
           <div className="language-toggle-wrapper">
-            <span className="language-label">{t('input.language')}:</span>
+            <span className="language-label">{t('input.language')}</span>
             <div className="language-toggle">
               <button
                 className={`language-option ${language === 'zh' ? 'active' : ''}`}
@@ -502,9 +538,12 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
                 {t('input.language_en')}
               </button>
             </div>
-            <span className="language-hint">
-              {language === 'zh' ? t('input.language_hint_zh') : t('input.language_hint_en')}
-            </span>
+          </div>
+          <div className="input-section-header">
+            <div className="input-section-title-row">
+              <h2 className="input-section-title">{t('input.title')}</h2>
+            </div>
+            <p className="input-section-subtitle">{t('input.subtitle')}</p>
           </div>
 
           <input
@@ -525,12 +564,21 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
             {isGenerating ? t('input.button_generating') : t('input.button')}
           </button>
 
-          <p className="search-papers-hint">
-            {t('home.input.search_papers_hint')}{' '}
-            <a href="/search-papers" onClick={(e) => { e.preventDefault(); navigate('/search-papers') }}>
-              {t('home.input.search_papers_link')} →
-            </a>
-          </p>
+          <div className="search-papers-hints">
+            <p className="search-papers-hint">
+              {t('home.input.search_papers_hint')}{' '}
+              <a href="/search-papers" onClick={(e) => { e.preventDefault(); navigate('/search-papers') }}>
+                {t('home.input.search_papers_link')} →
+              </a>
+            </p>
+            {/* 暂时隐藏验证引文提示 */}
+            {/* <p className="search-papers-hint">
+              {t('home.input.verify_citations_hint')}{' '}
+              <a href="/search-papers" onClick={(e) => { e.preventDefault(); navigate('/search-papers') }}>
+                {t('home.input.verify_citations_link')} →
+              </a>
+            </p> */}
+          </div>
 
           {error && (
             <div className="home-error">
@@ -856,6 +904,11 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
 
       <footer className="home-footer">
         <div className="footer-content">
+          <div className="footer-links">
+            <a href="/terms-and-conditions" className="footer-link">{t('home.footer.terms')}</a>
+            <a href="/privacy-policy" className="footer-link">{t('home.footer.privacy')}</a>
+            <a href="/refund-policy" className="footer-link">{t('home.footer.refund')}</a>
+          </div>
           <p className="footer-copyright">© 2026 AutoOverview. All rights reserved.</p>
           <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer" className="footer-icp">
             沪ICP备2023018158号-4

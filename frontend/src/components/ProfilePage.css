@@ -217,6 +217,43 @@
   margin-top: 0.25rem;
 }
 
+/* ==================== Tab 切换 ==================== */
+
+.profile-tabs {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  background: var(--cream-white);
+  padding: 0.5rem;
+  border-radius: 16px;
+  border: 1px solid var(--border-gray);
+}
+
+.profile-tab {
+  flex: 1;
+  padding: 0.875rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-gray);
+  background: transparent;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-family: 'Source Sans Pro', sans-serif;
+}
+
+.profile-tab:hover {
+  color: var(--academic-red);
+  background: rgba(214, 48, 49, 0.05);
+}
+
+.profile-tab.active {
+  color: white;
+  background: linear-gradient(135deg, var(--academic-red) 0%, var(--academic-red-dark) 100%);
+  box-shadow: 0 4px 16px rgba(214, 48, 49, 0.3);
+}
+
 /* ==================== 历史记录区域 ==================== */
 
 .profile-history {

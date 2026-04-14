@@ -13,6 +13,9 @@ import { DavidPage } from './components/DavidPage'
 import { TermsAndConditionsPage } from './components/TermsAndConditionsPage'
 import { PrivacyPolicyPage } from './components/PrivacyPolicyPage'
 import { RefundPolicyPage } from './components/RefundPolicyPage'
+import { TermsAndConditionsPageChinese } from './components/TermsAndConditionsPageChinese'
+import { PrivacyPolicyPageChinese } from './components/PrivacyPolicyPageChinese'
+import { RefundPolicyPageChinese } from './components/RefundPolicyPageChinese'
 import ErrorBoundary from './ErrorBoundary'
 import { api } from './api'
 import './i18n' // 导入 i18n 配置
@@ -73,9 +76,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
             <App />
           </JadeRoute>
         } />
-        <Route path="/terms-and-conditions" element={<TermsAndConditionsPage />} />
-        <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
-        <Route path="/refund-policy" element={<RefundPolicyPage />} />
+        <Route path="/terms-and-conditions" element={isEnglishVersion ? <TermsAndConditionsPage /> : <TermsAndConditionsPageChinese />} />
+        <Route path="/privacy-policy" element={isEnglishVersion ? <PrivacyPolicyPage /> : <PrivacyPolicyPageChinese />} />
+        <Route path="/refund-policy" element={isEnglishVersion ? <RefundPolicyPage /> : <RefundPolicyPageChinese />} />
       </Routes>
       <BackToTop />
     </BrowserRouter>

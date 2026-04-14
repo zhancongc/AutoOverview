@@ -371,6 +371,94 @@ async def get_records(
         "records": [record_service.record_to_dict(r) for r in records]
     }
 
+@app.get("/api/search-history")
+async def get_search_history(
+    skip: int = 0,
+    limit: int = 20,
+    user_id: Optional[int] = Depends(get_current_user_id),
+    db_session: Session = Depends(get_db)
+):
+    """获取当前用户的搜索历史（search_only 任务）"""
+    if not user_id:
+        raise HTTPException(status_code=401, detail="未登录")
+
+    from models import ReviewTask, PaperSearchStage
+
+    # 查询 search_only 类型的任务
+    tasks = (
+        db_session.query(ReviewTask)
+        .filter(ReviewTask.user_id == user_id)
+        .filter(ReviewTask.params.op('->>')('type') == 'search_only')
+        .order_by(ReviewTask.created_at.desc())
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
+
+    # 获取关联的 PaperSearchStage 数据
+    task_ids = [t.id for t in tasks]
+    search_stages = {}
+    if task_ids:
+        stages = (
+            db_session.query(PaperSearchStage)
+            .filter(PaperSearchStage.task_id.in_(task_ids))
+            .all()
+        )
+        for stage in stages:
+            search_stages[stage.task_id] = stage
+
+    # 构建返回结果
+    results = []
+    for task in tasks:
+        task_dict = task.to_dict()
+        stage = search_stages.get(task.id)
+        if stage:
+            task_dict['papers_summary'] = stage.papers_summary
+            task_dict['papers_count'] = stage.papers_count
+            task_dict['papers_sample'] = stage.papers_sample
+        results.append(task_dict)
+
+    return {
+        "success": True,
+        "count": len(results),
+        "searches": results
+    }
+
+@app.get("/api/search-history/{task_id}")
+async def get_search_history_detail(
+    task_id: str,
+    user_id: Optional[int] = Depends(get_current_user_id),
+    db_session: Session = Depends(get_db)
+):
+    """获取单条搜索历史详情"""
+    if not user_id:
+        raise HTTPException(status_code=401, detail="请先登录")
+
+    from models import ReviewTask, PaperSearchStage
+
+    # 查询任务
+    task = db_session.query(ReviewTask).filter_by(id=task_id).first()
+    if not task:
+        raise HTTPException(status_code=404, detail="搜索任务不存在")
+
+    # 验证所有权
+    if task.user_id != user_id:
+        raise HTTPException(status_code=403, detail="该搜索任务不属于您")
+
+    # 查询搜索阶段数据
+    stage = db_session.query(PaperSearchStage).filter_by(task_id=task_id).first()
+
+    result = task.to_dict()
+    if stage:
+        result['papers_summary'] = stage.papers_summary
+        result['papers_count'] = stage.papers_count
+        result['papers_sample'] = stage.papers_sample
+
+    return {
+        "success": True,
+        "search": result
+    }
+
 @app.get("/api/records/{record_id}")
 async def get_record(
     record_id: int,
@@ -736,9 +824,9 @@ async def get_demo_cases(lang: str = ""):
 
             # 根据主题关键词设置图标
             topic_lower = case_info["title"].lower()
-            if "计算机" in topic_lower or "algorithm" in topic_lower or "代数" in topic_lower:
+            if "计算机" in topic_lower or "algorithm" in topic_lower or "代数" in topic_lower or "algebra" in topic_lower or "算法" in topic_lower:
                 case_info["icon"] = "🧮"
-                case_info["tags"] = case_info["tags"] or ["计算机科学"]
+                case_info["tags"] = case_info["tags"] or ["计算机"]
             elif "光催化" in topic_lower or "材料" in topic_lower:
                 case_info["icon"] = "🔬"
                 case_info["tags"] = case_info["tags"] or ["材料科学"]
@@ -1523,12 +1611,18 @@ class SearchPapersOnlyRequest(BaseModel):
 
 
 @app.post("/api/search-papers-only")
-async def search_papers_only(request: SearchPapersOnlyRequest):
+async def search_papers_only(
+    request: SearchPapersOnlyRequest,
+    user_id: Optional[int] = Depends(get_current_user_id),
+):
     """
     查找文献（不生成综述）
 
-    使用 PaperSearchAgent 搜索文献并返回结果。
+    使用 PaperSearchAgent 搜索文献并返回结果。需要登录。
     """
+    if not user_id:
+        raise HTTPException(status_code=401, detail="请先登录")
+
     try:
         executor = ReviewTaskExecutor()
 
@@ -1539,7 +1633,8 @@ async def search_papers_only(request: SearchPapersOnlyRequest):
 
         result = await executor.search_papers_only(
             topic=request.topic,
-            params=params
+            params=params,
+            user_id=user_id
         )
 
         return {
@@ -1553,8 +1648,6 @@ async def search_papers_only(request: SearchPapersOnlyRequest):
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
-
-# ==================== 参考文献验证接口 ====================
 
 class ValidateRequest(BaseModel):
     review: str = Field(..., description="综述内容")

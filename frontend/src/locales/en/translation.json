@@ -353,7 +353,9 @@
       "sort_by": "Sort by",
       "sort_default": "Relevance",
       "sort_year": "Year",
-      "sort_citations": "Citations"
+      "sort_citations": "Citations",
+      "export": "Export References",
+      "exporting": "Exporting..."
     },
     "paper": {
       "citations": "citations",
@@ -374,7 +376,8 @@
     "error": {
       "timeout": "Search timed out. Please try again.",
       "generic": "Something went wrong. Please try again.",
-      "retry": "Retry"
+      "retry": "Retry",
+      "active_task": "You already have a review in progress. Redirecting to view progress..."
     }
   }
 }

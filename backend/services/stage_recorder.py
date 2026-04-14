@@ -35,7 +35,7 @@ class StageRecorder:
         """获取数据库会话"""
         return self.SessionLocal()
 
-    def create_task(self, task_id: str, topic: str, params: Dict) -> bool:
+    def create_task(self, task_id: str, topic: str, params: Dict, user_id: Optional[int] = None) -> bool:
         """创建任务记录"""
         session = self.get_session()
         try:
@@ -43,6 +43,7 @@ class StageRecorder:
                 id=task_id,
                 topic=topic,
                 params=params,
+                user_id=user_id,
                 status="pending",
                 created_at=datetime.now()
             )
@@ -144,13 +145,23 @@ class StageRecorder:
         papers_sample: Optional[List[Dict]],
         status: str = "completed",
         error_message: Optional[str] = None,
-        started_at: Optional[datetime] = None
+        started_at: Optional[datetime] = None,
+        save_all_papers: bool = False
     ) -> Optional[int]:
-        """记录文献搜索阶段"""
+        """记录文献搜索阶段
+
+        Args:
+            save_all_papers: 如果为 True，保存全部论文而不是只保存前20篇
+        """
         session = self.get_session()
         try:
             if not started_at:
                 started_at = datetime.now()
+
+            if save_all_papers:
+                sample_to_save = papers_sample
+            else:
+                sample_to_save = papers_sample[:20] if papers_sample else []  # 最多存储20篇样本
 
             record = PaperSearchStage(
                 task_id=task_id,
@@ -158,7 +169,7 @@ class StageRecorder:
                 search_queries_count=search_queries_count,
                 papers_count=papers_count,
                 papers_summary=papers_summary,
-                papers_sample=papers_sample[:20] if papers_sample else [],  # 最多存储20篇样本
+                papers_sample=sample_to_save,
                 status=status,
                 error_message=error_message,
                 started_at=started_at,

@@ -116,11 +116,15 @@ export const api = {
       searchYears?: number;
     } = {}
   ): Promise<{ success: boolean; message: string; data: any }> {
+    const token = localStorage.getItem('auth_token');
+    const headers: Record<string, string> = {};
+    if (token) headers.Authorization = `Bearer ${token}`;
     const response = await axios.post(`${API_BASE}/search-papers-only`, {
       topic,
       target_count: options.targetCount ?? 50,
       search_years: options.searchYears ?? 10
     }, {
+      headers,
       timeout: 120000  // 2 minutes — LLM-driven search takes 30-60s
     });
     return response.data;
@@ -355,6 +359,45 @@ export const api = {
     const headers: Record<string, string> = {};
     if (token) headers.Authorization = `Bearer ${token}`;
     const response = await axios.get(`${API_BASE}/tasks/active`, { headers });
+    return response.data;
+  },
+
+  // 获取搜索历史
+  async getSearchHistory(skip: number = 0, limit: number = 20): Promise<{
+    success: boolean;
+    count: number;
+    searches: Array<{
+      id: string;
+      topic: string;
+      user_id?: number;
+      status: string;
+      current_stage?: string;
+      params: any;
+      created_at: string;
+      papers_summary?: any;
+      papers_count?: number;
+      papers_sample?: any[];
+    }>;
+  }> {
+    const token = localStorage.getItem('auth_token');
+    const headers: Record<string, string> = {};
+    if (token) headers.Authorization = `Bearer ${token}`;
+    const response = await axios.get(`${API_BASE}/search-history`, {
+      headers,
+      params: { skip, limit }
+    });
+    return response.data;
+  },
+
+  // 获取搜索历史详情
+  async getSearchHistoryDetail(taskId: string): Promise<{
+    success: boolean;
+    search: any;
+  }> {
+    const token = localStorage.getItem('auth_token');
+    const headers: Record<string, string> = {};
+    if (token) headers.Authorization = `Bearer ${token}`;
+    const response = await axios.get(`${API_BASE}/search-history/${taskId}`, { headers });
     return response.data;
   },
 
