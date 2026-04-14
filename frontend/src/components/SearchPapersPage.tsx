@@ -131,10 +131,13 @@ export function SearchPapersPage() {
       const timer = setTimeout(() => {
         const statisticsSection = document.querySelector('.sp-statistics')
         if (statisticsSection) {
-          statisticsSection.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          // 获取导航栏高度，调整滚动位置
+          const navHeight = 60
+          const elementPosition = statisticsSection.getBoundingClientRect().top + window.pageYOffset
+          window.scrollTo({ top: elementPosition - navHeight, behavior: 'smooth' })
           setShouldScrollToResults(false)
         }
-      }, 100)
+      }, 150)
       return () => clearTimeout(timer)
     }
   }, [shouldScrollToResults, hasSearched, papers.length, statistics])
