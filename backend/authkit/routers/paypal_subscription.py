@@ -190,16 +190,7 @@ def capture_paypal_order(
     """Capture PayPal order after user approval"""
     paypal_order_id = data.order_id
 
-    # Find subscription by PayPal order ID
-    from ..models import User
-
-    subscription = None
-    all_subs = db.query(Subscription).all()
-    for sub in all_subs:
-        if sub.get_meta("paypal_order_id") == paypal_order_id:
-            subscription = sub
-            break
-
+    subscription = _find_subscription_by_paypal_order(db, paypal_order_id)
     if not subscription:
         raise HTTPException(status_code=404, detail="Subscription not found")
 
@@ -218,42 +209,11 @@ def capture_paypal_order(
         # Check if capture was successful
         status = capture_data.get("status", "")
         if status not in ("COMPLETED", "APPROVED"):
-            # Try to get order status to verify
             order_data = paypal.get_order(paypal_order_id)
             if order_data and order_data.get("status") not in ("COMPLETED", "APPROVED"):
                 raise HTTPException(status_code=400, detail="Payment not completed")
 
-        # Update subscription
-        subscription.status = "paid"
-        subscription.payment_method = "paypal"
-        subscription.payment_time = datetime.now()
-        subscription.trade_no = paypal_order_id
-
-        # Handle unlock vs subscription plans
-        if subscription.plan_type == "unlock":
-            # Unlock specific review record
-            record_id = subscription.get_meta("record_id")
-            if record_id:
-                from models import ReviewRecord
-                record = db.query(ReviewRecord).filter(
-                    ReviewRecord.id == int(record_id),
-                    ReviewRecord.user_id == subscription.user_id
-                ).first()
-                if record:
-                    record.is_paid = True
-                    logger.info(f"[PayPal] Unlocked record {record_id} for user {subscription.user_id}")
-        else:
-            # Add credits to user for subscription plans
-            user = db.query(User).filter(User.id == subscription.user_id).first()
-            if user:
-                plan = PAYPAL_PRICING.get(subscription.plan_type, {})
-                credits_to_add = plan.get("credits", 1)
-                current_credits = user.get_meta("review_credits", 0)
-                user.set_meta("review_credits", current_credits + credits_to_add)
-                user.set_meta("has_purchased", True)
-                logger.info(f"[PayPal] Added {credits_to_add} credits to user {user.id}")
-
-        db.commit()
+        _activate_subscription(subscription, paypal_order_id, db)
 
         # Log success
         log = PaymentLog(
@@ -286,14 +246,58 @@ def capture_paypal_order(
         raise HTTPException(status_code=500, detail="Failed to capture payment")
 
 
+def _find_subscription_by_paypal_order(db: Session, paypal_order_id: str):
+    """通过 PayPal Order ID 查找本地 subscription"""
+    all_subs = db.query(Subscription).all()
+    for sub in all_subs:
+        if sub.get_meta("paypal_order_id") == paypal_order_id:
+            return sub
+    return None
+
+
+def _activate_subscription(subscription, paypal_order_id: str, db: Session):
+    """激活订阅（充值额度或解锁记录），capture endpoint 和 webhook 共用"""
+    if subscription.status == "paid":
+        return
+
+    from ..models import User
+
+    subscription.status = "paid"
+    subscription.payment_method = "paypal"
+    subscription.payment_time = datetime.now()
+    subscription.trade_no = paypal_order_id
+
+    if subscription.plan_type == "unlock":
+        record_id = subscription.get_meta("record_id")
+        if record_id:
+            from models import ReviewRecord
+            record = db.query(ReviewRecord).filter(
+                ReviewRecord.id == int(record_id),
+                ReviewRecord.user_id == subscription.user_id
+            ).first()
+            if record:
+                record.is_paid = True
+                logger.info(f"[PayPal] Unlocked record {record_id} for user {subscription.user_id}")
+    else:
+        user = db.query(User).filter(User.id == subscription.user_id).first()
+        if user:
+            plan = PAYPAL_PRICING.get(subscription.plan_type, {})
+            credits_to_add = plan.get("credits", 1)
+            current_credits = user.get_meta("review_credits", 0)
+            user.set_meta("review_credits", current_credits + credits_to_add)
+            user.set_meta("has_purchased", True)
+            logger.info(f"[PayPal] Added {credits_to_add} credits to user {user.id}")
+
+    db.commit()
+    logger.info(f"[PayPal] Activated subscription {subscription.order_no} (trade_no={paypal_order_id})")
+
+
 @router.post("/webhook")
 async def paypal_webhook(request: Request, db: Session = Depends(get_db)):
     """
     Handle PayPal webhook notifications
+    仅处理 PAYMENT.CAPTURE.COMPLETED — 确认资金已到账
     """
-    import os
-    from ..models import User
-
     paypal = get_paypal_service()
     payload = await request.body()
 
@@ -318,55 +322,24 @@ async def paypal_webhook(request: Request, db: Session = Depends(get_db)):
 
         logger.info(f"[PayPal] Webhook received: {event_type}")
 
-        # Handle payment capture completed event
-        if event_type == "CHECKOUT.ORDER.COMPLETED":
-            # Get the order ID from the resource
-            paypal_order_id = resource.get("id", "")
-
-            # Find subscription by PayPal order ID
-            subscription = None
-            all_subs = db.query(Subscription).all()
-            for sub in all_subs:
-                if sub.get_meta("paypal_order_id") == paypal_order_id:
-                    subscription = sub
+        if event_type == "PAYMENT.CAPTURE.COMPLETED":
+            # 从 capture 的 links 中提取 order ID
+            # links[].rel == "up" → href 包含 /v2/checkout/orders/{ORDER_ID}
+            paypal_order_id = None
+            for link in resource.get("links", []):
+                if link.get("rel") == "up" and "/checkout/orders/" in link.get("href", ""):
+                    paypal_order_id = link["href"].rstrip("/").split("/")[-1]
                     break
 
-            if not subscription:
-                logger.warning(f"[PayPal] Subscription not found for PayPal order: {paypal_order_id}")
-                raise HTTPException(status_code=404, detail="Subscription not found")
+            if not paypal_order_id:
+                logger.warning("[PayPal] Cannot extract order ID from capture resource")
+                return {"status": "ignored"}
 
-            if subscription.status != "paid":
-                subscription.status = "paid"
-                subscription.payment_method = "paypal"
-                subscription.payment_time = datetime.now()
-                subscription.trade_no = paypal_order_id
-
-                # Handle unlock vs subscription plans
-                if subscription.plan_type == "unlock":
-                    # Unlock specific review record
-                    record_id = subscription.get_meta("record_id")
-                    if record_id:
-                        from models import ReviewRecord
-                        record = db.query(ReviewRecord).filter(
-                            ReviewRecord.id == int(record_id),
-                            ReviewRecord.user_id == subscription.user_id
-                        ).first()
-                        if record:
-                            record.is_paid = True
-                            logger.info(f"[PayPal] Unlocked record {record_id} for user {subscription.user_id}")
-                else:
-                    # Add credits to user for subscription plans
-                    user = db.query(User).filter(User.id == subscription.user_id).first()
-                    if user:
-                        plan = PAYPAL_PRICING.get(subscription.plan_type, {})
-                        credits_to_add = plan.get("credits", 1)
-                        current_credits = user.get_meta("review_credits", 0)
-                        user.set_meta("review_credits", current_credits + credits_to_add)
-                        user.set_meta("has_purchased", True)
-                        logger.info(f"[PayPal] Added {credits_to_add} credits to user {user.id}")
-
-                db.commit()
-                logger.info(f"[PayPal] Activated subscription {subscription.order_no} via webhook")
+            subscription = _find_subscription_by_paypal_order(db, paypal_order_id)
+            if subscription:
+                _activate_subscription(subscription, paypal_order_id, db)
+            else:
+                logger.warning(f"[PayPal] Subscription not found for order: {paypal_order_id}")
 
         return {"status": "success"}
 

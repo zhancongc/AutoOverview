@@ -184,25 +184,46 @@ class PayPalService:
     def verify_webhook(self, payload: bytes, transmission_id: str, transmission_time: str,
                        transmission_sig: str, cert_url: str, auth_algo: str) -> bool:
         """
-        Verify PayPal webhook signature
+        Verify PayPal webhook signature via PayPal API
+        https://developer.paypal.com/api/rest/webhooks/rest/#verify-webhook-signature
         """
         if not self.webhook_id:
             logger.warning("[PayPal] No webhook ID configured, skipping verification")
             return True
 
         try:
-            # PayPal webhook verification is complex - for simplicity, we'll trust
-            # the webhook in development and verify by re-fetching the order
-            # in production
-            if self.sandbox:
-                return True
+            import httpx
+            import json
 
-            # In production, we should verify the signature properly
-            # For now, we'll rely on checking the order status later
-            return True
+            headers = self._get_headers()
+            verification_payload = {
+                "transmission_id": transmission_id,
+                "transmission_time": transmission_time,
+                "cert_url": cert_url,
+                "auth_algo": auth_algo,
+                "transmission_sig": transmission_sig,
+                "webhook_id": self.webhook_id,
+                "webhook_event": json.loads(payload),
+            }
+
+            with httpx.Client(timeout=30.0) as client:
+                response = client.post(
+                    f"{self.api_base}/v1/notifications/verify-webhook-signature",
+                    headers=headers,
+                    json=verification_payload,
+                )
+                response.raise_for_status()
+                result = response.json()
+                status = result.get("verification_status", "").upper()
+
+                if status == "SUCCESS":
+                    return True
+                else:
+                    logger.warning(f"[PayPal] Webhook verification failed: {status}")
+                    return False
 
         except Exception as e:
-            logger.error(f"[PayPal] Webhook verification failed: {e}")
+            logger.error(f"[PayPal] Webhook verification error: {e}")
             return False
 
 
