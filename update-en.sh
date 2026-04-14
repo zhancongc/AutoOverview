@@ -26,6 +26,9 @@ echo ""
 echo "[2/2] 构建英文版前端..."
 cd frontend
 npm install
+
+# 清空旧构建产物，避免新旧文件混杂
+rm -rf dist-en
 npm run build:en
 echo "✓ 构建完成"
 
