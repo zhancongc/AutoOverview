@@ -236,6 +236,16 @@ app.include_router(paddle_router.router)
 paypal_router.set_get_db(auth_get_db)
 app.include_router(paypal_router.router)
 
+# 全局异常处理：确保所有未捕获异常打印完整堆栈
+from fastapi.responses import JSONResponse
+import traceback as _traceback
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request, exc):
+    _traceback.print_exc()
+    logger.error(f"Unhandled exception on {request.method} {request.url.path}: {exc}", exc_info=True)
+    return JSONResponse(status_code=500, content={"detail": str(exc)})
+
 # 请求模型
 class TopicRequest(BaseModel):
     topic: str = Field(..., description="论文题目", min_length=1)
@@ -425,8 +435,10 @@ async def export_review_docx(
     """
     from models import ReviewTask
 
-    # 公开文档列表（案例展示）- 从环境变量读取
-    DEMO_TASK_IDS = set(os.getenv("DEMO_TASK_IDS", "").split(",")) if os.getenv("DEMO_TASK_IDS") else set()
+    # 公开文档列表（案例展示）- 合并中文站和英文站白名单
+    _cn_ids = set(os.getenv("DEMO_TASK_IDS", "").split(",")) if os.getenv("DEMO_TASK_IDS") else set()
+    _en_ids = set(os.getenv("DEMO_TASK_IDS_EN", "").split(",")) if os.getenv("DEMO_TASK_IDS_EN") else set()
+    DEMO_TASK_IDS = _cn_ids | _en_ids
 
     record = record_service.get_record(db_session, request.record_id)
 
@@ -660,24 +672,33 @@ async def health_check():
     """健康检查接口"""
     api_key = os.getenv("DEEPSEEK_API_KEY")
     demo_task_ids = [s.strip() for s in os.getenv("DEMO_TASK_IDS", "").split(",") if s.strip()]
+    demo_task_ids_en = [s.strip() for s in os.getenv("DEMO_TASK_IDS_EN", "").split(",") if s.strip()]
     return {
         "status": "ok",
         "deepseek_configured": bool(api_key),
-        "demo_task_ids": demo_task_ids
+        "demo_task_ids": demo_task_ids,
+        "demo_task_ids_en": demo_task_ids_en
     }
 
 
 @app.get("/api/cases")
-async def get_demo_cases():
+async def get_demo_cases(lang: str = ""):
     """
     获取案例展示列表
 
-    从 DEMO_TASK_IDS 配置中读取案例 ID，并返回完整的案例信息
+    从 DEMO_TASK_IDS / DEMO_TASK_IDS_EN 配置中读取案例 ID，并返回完整的案例信息
     """
     from database import get_db
     from models import ReviewTask, ReviewRecord
 
-    demo_task_ids = [s.strip() for s in os.getenv("DEMO_TASK_IDS", "").split(",") if s.strip()]
+    # 英文站优先使用 DEMO_TASK_IDS_EN，中文站使用 DEMO_TASK_IDS
+    if lang == 'en':
+        demo_task_ids = [s.strip() for s in os.getenv("DEMO_TASK_IDS_EN", "").split(",") if s.strip()]
+    else:
+        demo_task_ids = []
+    # 如果英文站没配置独立的案例（或中文站），fallback 到 DEMO_TASK_IDS
+    if not demo_task_ids:
+        demo_task_ids = [s.strip() for s in os.getenv("DEMO_TASK_IDS", "").split(",") if s.strip()]
     cases = []
 
     db = next(get_db())
@@ -1244,8 +1265,10 @@ async def get_task_status(
     """
     from models import ReviewTask, ReviewRecord
 
-    # 公开文档列表（案例展示）- 从环境变量读取
-    DEMO_TASK_IDS = set(os.getenv("DEMO_TASK_IDS", "").split(",")) if os.getenv("DEMO_TASK_IDS") else set()
+    # 公开文档列表（案例展示）- 合并中文站和英文站白名单
+    _cn_ids = set(os.getenv("DEMO_TASK_IDS", "").split(",")) if os.getenv("DEMO_TASK_IDS") else set()
+    _en_ids = set(os.getenv("DEMO_TASK_IDS_EN", "").split(",")) if os.getenv("DEMO_TASK_IDS_EN") else set()
+    DEMO_TASK_IDS = _cn_ids | _en_ids
     is_public = task_id in DEMO_TASK_IDS
 
     # 首先尝试从内存中获取任务
@@ -1390,7 +1413,9 @@ async def get_task_review(
     from models import ReviewTask, ReviewRecord
 
     # 公开文档列表（案例展示）— 从环境变量读取，与 /api/health 保持一致
-    _demo_ids = [s.strip() for s in os.getenv("DEMO_TASK_IDS", "").split(",") if s.strip()]
+    _cn_ids = [s.strip() for s in os.getenv("DEMO_TASK_IDS", "").split(",") if s.strip()]
+    _en_ids = [s.strip() for s in os.getenv("DEMO_TASK_IDS_EN", "").split(",") if s.strip()]
+    _demo_ids = _cn_ids + _en_ids
     is_public = task_id in _demo_ids
 
     # 首先尝试从内存中获取任务

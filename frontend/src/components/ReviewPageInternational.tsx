@@ -184,7 +184,10 @@ export function ReviewPageInternational() {
         <div className="review-page-header">
           <button className="back-button" onClick={() => navigate(-1)}>←</button>
         </div>
-        <div style={{ textAlign: 'center', padding: '4rem', color: '#666' }}>{t('common.loading')}</div>
+        <div className="review-loading-container">
+          <div className="review-loading-spinner" />
+          <p className="review-loading-text">{t('common.loading')}</p>
+        </div>
       </div>
     )
   }

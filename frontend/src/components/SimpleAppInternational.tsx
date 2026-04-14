@@ -82,7 +82,7 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
     })
 
     // Get demo cases
-    fetch('/api/cases')
+    fetch('/api/cases?lang=en')
       .then(res => res.json())
       .then(data => {
         if (data.success && data.data.cases) {

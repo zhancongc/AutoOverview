@@ -102,7 +102,8 @@ function ReviewRoute({ children }: { children: React.ReactElement }) {
       .then(res => res.json())
       .then(data => {
         const ids = (data.demo_task_ids || []) as string[]
-        setDemoIds(new Set(ids))
+        const idsEn = (data.demo_task_ids_en || []) as string[]
+        setDemoIds(new Set([...ids, ...idsEn]))
       })
       .catch(() => setDemoIds(new Set()))
   }, [])

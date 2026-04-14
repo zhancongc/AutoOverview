@@ -169,7 +169,7 @@ def create_paypal_subscription(
         )
 
     except Exception as e:
-        logger.error(f"Failed to create PayPal checkout: {e}")
+        logger.error(f"Failed to create PayPal checkout: {e}", exc_info=True)
         log = PaymentLog(
             subscription_id=subscription.id,
             user_id=user_id,
@@ -274,7 +274,7 @@ def capture_paypal_order(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to capture PayPal order: {e}")
+        logger.error(f"Failed to capture PayPal order: {e}", exc_info=True)
         log = PaymentLog(
             subscription_id=subscription.id,
             user_id=subscription.user_id,
@@ -373,7 +373,7 @@ async def paypal_webhook(request: Request, db: Session = Depends(get_db)):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"[PayPal] Webhook processing failed: {e}")
+        logger.error(f"[PayPal] Webhook processing failed: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Webhook processing failed")
 
 
@@ -503,7 +503,7 @@ def create_paypal_unlock(
         )
 
     except Exception as e:
-        logger.error(f"Failed to create PayPal unlock checkout: {e}")
+        logger.error(f"Failed to create PayPal unlock checkout: {e}", exc_info=True)
         log = PaymentLog(
             subscription_id=subscription.id,
             user_id=user_id,
