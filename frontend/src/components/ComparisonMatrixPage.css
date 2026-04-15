@@ -1,0 +1,286 @@
+/**
+ * ComparisonMatrixPage - 文献对比矩阵页面样式
+ */
+
+.comparison-matrix-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #fef5e7 0%, #fff8e1 100%);
+  padding: 40px 20px;
+}
+
+.matrix-container {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.matrix-header {
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+}
+
+.header-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.back-button {
+  background: #f5f5f5;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: #666;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.back-button:hover {
+  background: #e0e0e0;
+  color: #333;
+}
+
+.header-title {
+  flex: 1;
+}
+
+.header-title h1 {
+  margin: 0 0 8px;
+  font-size: 1.75rem;
+  color: #d35400;
+}
+
+.matrix-topic {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #666;
+}
+
+.matrix-stats {
+  display: flex;
+  gap: 16px;
+  background: white;
+  border-radius: 12px;
+  padding: 16px 24px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stat-label {
+  font-size: 0.8rem;
+  color: #999;
+}
+
+.stat-value {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.matrix-content {
+  background: white;
+  border-radius: 16px;
+  padding: 32px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+}
+
+.matrix-content h1 {
+  font-size: 1.5rem;
+  color: #d35400;
+  margin-top: 0;
+  margin-bottom: 20px;
+  border-bottom: 2px solid #f39c12;
+  padding-bottom: 12px;
+}
+
+.matrix-content h2 {
+  font-size: 1.25rem;
+  color: #e67e22;
+  margin-top: 28px;
+  margin-bottom: 16px;
+}
+
+.matrix-content h3 {
+  font-size: 1.1rem;
+  color: #d35400;
+  margin-top: 20px;
+  margin-bottom: 12px;
+}
+
+.matrix-content p {
+  color: #444;
+  line-height: 1.8;
+  margin-bottom: 12px;
+}
+
+.matrix-content ul,
+.matrix-content ol {
+  color: #444;
+  line-height: 1.8;
+  margin-bottom: 12px;
+  padding-left: 24px;
+}
+
+.matrix-content li {
+  margin-bottom: 8px;
+}
+
+.table-wrapper {
+  overflow-x: auto;
+  margin: 20px 0;
+}
+
+.matrix-content table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.matrix-content th,
+.matrix-content td {
+  border: 1px solid #ddd;
+  padding: 12px;
+  text-align: left;
+}
+
+.matrix-content th {
+  background: #fef5e7;
+  color: #d35400;
+  font-weight: 600;
+}
+
+.matrix-content tr:nth-child(even) {
+  background: #fffdf5;
+}
+
+.matrix-content tr:hover {
+  background: #fff8e1;
+}
+
+.matrix-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.action-btn {
+  background: white;
+  color: #e67e22;
+  border: 2px solid #e67e22;
+  padding: 12px 28px;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.action-btn:hover {
+  background: #fff8e1;
+}
+
+.action-btn-primary {
+  background: #e67e22;
+  color: white;
+  border: 2px solid #e67e22;
+}
+
+.action-btn-primary:hover {
+  background: #d35400;
+  border-color: #d35400;
+}
+
+.loading-container,
+.error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+}
+
+.loading-container p,
+.error-container p {
+  color: #d35400;
+  font-size: 1.1rem;
+  margin-bottom: 20px;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid rgba(230, 126, 34, 0.3);
+  border-top-color: #e67e22;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.back-btn {
+  background: #e67e22;
+  color: white;
+  border: none;
+  padding: 12px 28px;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.back-btn:hover {
+  background: #d35400;
+}
+
+@media (max-width: 768px) {
+  .comparison-matrix-page {
+    padding: 20px 12px;
+  }
+
+  .matrix-header {
+    padding: 16px;
+  }
+
+  .header-content {
+    flex-direction: column;
+  }
+
+  .header-title h1 {
+    font-size: 1.4rem;
+  }
+
+  .matrix-topic {
+    font-size: 1rem;
+  }
+
+  .matrix-stats {
+    flex-wrap: wrap;
+    padding: 12px 16px;
+  }
+
+  .matrix-content {
+    padding: 20px 16px;
+  }
+
+  .matrix-actions {
+    flex-direction: column;
+  }
+
+  .action-btn {
+    width: 100%;
+  }
+}

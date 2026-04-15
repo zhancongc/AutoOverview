@@ -286,6 +286,20 @@ class ExportRequest(BaseModel):
 class UnlockRequest(BaseModel):
     record_id: int
 
+
+class GenerateComparisonMatrixRequest(BaseModel):
+    """生成对比矩阵请求"""
+    topic: str = Field(..., description="论文主题", min_length=1)
+    reuse_task_id: str = Field("", description="复用已有搜索任务的ID，跳过搜索阶段")
+    language: str = Field("zh", description="生成语言：zh（中文）或 en（英文）")
+
+
+class ComparisonMatrixData(BaseModel):
+    """对比矩阵数据响应"""
+    topic: str
+    comparison_matrix: str
+    statistics: dict
+
 # 全局服务实例
 scholarflux = ScholarFlux()
 search_service = SmartPaperSearchService(scholarflux, get_db)
@@ -1706,6 +1720,153 @@ async def check_citation_order(request: CheckCitationOrderRequest):
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ==================== 文献对比矩阵接口 ====================
+
+@app.post("/api/generate-comparison-matrix", response_model=TaskSubmitResponse)
+async def generate_comparison_matrix(
+    request: GenerateComparisonMatrixRequest,
+    background_tasks: BackgroundTasks,
+    db_session: Session = Depends(get_db),
+    user_id: Optional[int] = Depends(get_current_user_id)
+):
+    """
+    提交文献对比矩阵生成任务（异步模式）
+    仅生成对比矩阵，不生成完整综述
+    """
+    # 检查API配置
+    api_key = os.getenv("DEEPSEEK_API_KEY")
+    if not api_key:
+        return TaskSubmitResponse(
+            success=False,
+            message="API配置错误：DEEPSEEK_API_KEY not configured"
+        )
+
+    # 检查用户是否登录
+    if not user_id:
+        return TaskSubmitResponse(
+            success=False,
+            message="请先登录"
+        )
+
+    try:
+        # 创建任务
+        task = task_manager.create_task(
+            topic=request.topic,
+            params={
+                "type": "comparison_matrix_only",
+                "language": request.language,
+                "reuse_task_id": request.reuse_task_id
+            },
+            user_id=user_id,
+            is_paid=False  # 对比矩阵暂时免费
+        )
+
+        # 启动后台任务
+        async def run_comparison_matrix_task():
+            executor = ReviewTaskExecutor()
+            with next(db.get_session()) as task_session:
+                await executor.execute_comparison_matrix_only(
+                    task.task_id,
+                    task_session,
+                    request.reuse_task_id,
+                    request.language
+                )
+
+        asyncio.create_task(run_comparison_matrix_task())
+
+        return TaskSubmitResponse(
+            success=True,
+            message="对比矩阵生成任务已提交",
+            data={
+                "task_id": task.task_id,
+                "topic": request.topic,
+                "status": TaskStatus.PENDING.value,
+                "poll_url": f"/api/tasks/{task.task_id}"
+            }
+        )
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return TaskSubmitResponse(
+            success=False,
+            message=f"任务提交失败: {str(e)}"
+        )
+
+
+@app.get("/api/comparison-matrix/{task_id}")
+async def get_comparison_matrix(
+    task_id: str,
+    user_id: Optional[int] = Depends(get_current_user_id),
+    db_session: Session = Depends(get_db)
+):
+    """
+    获取对比矩阵结果
+    """
+    from models import ReviewTask
+
+    # 首先尝试从内存中获取任务
+    task = task_manager.get_task(task_id)
+
+    if task and task.status == TaskStatus.COMPLETED and task.result:
+        # 验证所有者
+        if not user_id:
+            raise HTTPException(status_code=401, detail="请先登录")
+        task_user_id = getattr(task, 'user_id', None)
+        if task_user_id and task_user_id != user_id:
+            raise HTTPException(status_code=403, detail="该任务不属于您")
+
+        return {
+            "success": True,
+            "data": {
+                "task_id": task_id,
+                "topic": task.topic,
+                "comparison_matrix": task.result.get("comparison_matrix", ""),
+                "statistics": task.result.get("statistics", {})
+            }
+        }
+
+    # 内存中没有，从数据库查询
+    review_task = db_session.query(ReviewTask).filter_by(id=task_id).first()
+
+    if not review_task:
+        raise HTTPException(status_code=404, detail="任务不存在")
+
+    # 验证所有者
+    if not user_id:
+        raise HTTPException(status_code=401, detail="请先登录")
+
+    # 检查任务是否完成并且有对比矩阵数据
+    if review_task.status != "completed":
+        raise HTTPException(status_code=404, detail="对比矩阵尚未生成完成")
+
+    # 从 params 或 result 中获取对比矩阵数据
+    params = review_task.params or {}
+    if params.get("type") != "comparison_matrix_only":
+        raise HTTPException(status_code=404, detail="该任务不是对比矩阵任务")
+
+    # 尝试从 params 中获取结果（暂时存储在这里）
+    comparison_matrix = params.get("comparison_matrix", "")
+    statistics = params.get("statistics", {})
+
+    if not comparison_matrix:
+        raise HTTPException(status_code=404, detail="对比矩阵数据不存在")
+
+    # 验证所有者
+    if review_task.user_id and review_task.user_id != user_id:
+        raise HTTPException(status_code=403, detail="该任务不属于您")
+
+    return {
+        "success": True,
+        "data": {
+            "task_id": task_id,
+            "topic": review_task.topic,
+            "comparison_matrix": comparison_matrix,
+            "statistics": statistics
+        }
+    }
 
 
 if __name__ == "__main__":

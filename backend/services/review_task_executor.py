@@ -598,3 +598,163 @@ class ReviewTaskExecutor:
                             auth_db.close()
                 except Exception as refund_err:
                     logger.error("额度退还失败: user_id=%s, error=%s", task_user_id, refund_err)
+
+    async def execute_comparison_matrix_only(
+        self,
+        task_id: str,
+        db_session: Session,
+        reuse_task_id: str = "",
+        language: str = "zh"
+    ):
+        """
+        仅执行对比矩阵生成（不生成完整综述）
+
+        Args:
+            task_id: 任务ID
+            db_session: 数据库会话
+            reuse_task_id: 复用已有搜索任务的ID（可选）
+            language: 生成语言（zh 或 en）
+        """
+        import time
+        from models import PaperSearchStage
+
+        task = task_manager.get_task(task_id)
+        if not task:
+            logger.debug(f"[TaskExecutor] 任务不存在: {task_id}")
+            return
+
+        topic = task.topic
+
+        task_manager.update_task_status(
+            task_id,
+            TaskStatus.PROCESSING,
+            progress={"step": "preparing", "message": "正在准备..."}
+        )
+
+        try:
+            start_time = time.time()
+
+            # 步骤1: 获取论文数据（要么复用，要么重新搜索）
+            all_papers = []
+            if reuse_task_id:
+                # 从 PaperSearchStage 加载已有论文
+                stage = db_session.query(PaperSearchStage).filter_by(
+                    task_id=reuse_task_id
+                ).order_by(PaperSearchStage.id.desc()).first()
+
+                if not stage or not stage.papers_sample:
+                    raise Exception(f"未找到搜索任务 {reuse_task_id} 的文献数据")
+
+                all_papers = stage.papers_sample
+                logger.debug(f"[execute_comparison_matrix_only] 复用已有论文: {len(all_papers)} 篇")
+            else:
+                # 重新搜索论文
+                logger.debug(f"[execute_comparison_matrix_only] 开始搜索论文: {topic}")
+                task_manager.update_task_status(
+                    task_id,
+                    TaskStatus.PROCESSING,
+                    progress={"step": "searching", "message": "正在搜索文献..."}
+                )
+
+                ss_service = get_semantic_scholar_service()
+                search_agent = PaperSearchAgent(ss_service=ss_service)
+                all_papers = await search_agent.search(
+                    topic=topic,
+                    search_years=10,
+                    target_count=50
+                )
+
+                logger.debug(f"[execute_comparison_matrix_only] 搜索完成: {len(all_papers)} 篇文献")
+
+            if not all_papers:
+                raise Exception(f'未找到关于「{topic}」的相关文献')
+
+            # 步骤2: 生成对比矩阵
+            logger.debug(f"[execute_comparison_matrix_only] 开始生成对比矩阵")
+            task_manager.update_task_status(
+                task_id,
+                TaskStatus.PROCESSING,
+                progress={"step": "generating", "message": "正在生成对比矩阵..."}
+            )
+
+            api_key = os.getenv("DEEPSEEK_API_KEY")
+            if not api_key:
+                raise Exception("DEEPSEEK_API_KEY not configured")
+
+            from services.smart_review_generator_final import SmartReviewGeneratorFinal
+
+            final_generator = SmartReviewGeneratorFinal(
+                deepseek_api_key=api_key,
+                deepseek_base_url=os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com")
+            )
+
+            result = await final_generator.generate_comparison_matrix_only(
+                topic=topic,
+                papers=all_papers,
+                language=language
+            )
+
+            comparison_matrix = result["comparison_matrix"]
+            papers_used = result.get("papers_used", len(all_papers))
+            total_time = time.time() - start_time
+
+            statistics = {
+                "papers_used": papers_used,
+                "total_time_seconds": round(total_time, 2),
+                "generated_at": datetime.now().isoformat()
+            }
+
+            # 更新任务状态（完成）
+            task_manager.update_task_status(
+                task_id,
+                TaskStatus.COMPLETED,
+                result={
+                    "topic": topic,
+                    "comparison_matrix": comparison_matrix,
+                    "statistics": statistics
+                }
+            )
+
+            # 同时更新数据库中的任务 params，以便后续查询
+            from models import ReviewTask
+            review_task = db_session.query(ReviewTask).filter_by(id=task_id).first()
+            if review_task:
+                review_task.status = "completed"
+                review_task.completed_at = datetime.now()
+                # 将结果存储在 params 中，作为临时方案
+                params = review_task.params or {}
+                params["comparison_matrix"] = comparison_matrix
+                params["statistics"] = statistics
+                review_task.params = params
+                db_session.commit()
+
+            stage_recorder.update_task_status(
+                task_id,
+                status="completed",
+                current_stage="完成",
+                completed_at=datetime.now()
+            )
+
+            logger.debug(f"[execute_comparison_matrix_only] 对比矩阵生成完成")
+
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            logger.error("对比矩阵生成任务失败: task_id=%s, error=%s", task_id, e, exc_info=True)
+
+            if task_id in task_manager._running_tasks:
+                task_manager.release_slot(task_id)
+
+            task_manager.update_task_status(
+                task_id,
+                TaskStatus.FAILED,
+                error=str(e)
+            )
+
+            stage_recorder.update_task_status(
+                task_id,
+                status="failed",
+                current_stage="失败",
+                error_message=str(e),
+                completed_at=datetime.now()
+            )
