@@ -7,6 +7,8 @@ import { useTranslation } from 'react-i18next'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { api } from '../api'
+import { isLoggedIn } from '../authApi'
+import { LoginModal } from './LoginModal'
 import './ComparisonMatrixPage.css'
 
 interface ComparisonMatrixData {
@@ -24,11 +26,20 @@ export function ComparisonMatrixPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const taskId = searchParams.get('task_id') || ''
+  const [isChineseSite, setIsChineseSite] = useState(false)
+  const [showLoginModal, setShowLoginModal] = useState(false)
+  const [loggedIn, setLoggedIn] = useState(isLoggedIn())
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const [matrixData, setMatrixData] = useState<ComparisonMatrixData | null>(null)
   const [loading, setLoading] = useState(false)
   const [loadingMessage, setLoadingMessage] = useState('')
   const [error, setError] = useState('')
+  const [progress, setProgress] = useState(0) // 0-100
+
+  useEffect(() => {
+    document.documentElement.classList.contains('intl') ? setIsChineseSite(false) : setIsChineseSite(true)
+  }, [])
 
   useEffect(() => {
     if (taskId) {
@@ -41,6 +52,7 @@ export function ComparisonMatrixPage() {
       setLoading(true)
       setLoadingMessage(t('comparison_matrix_page.loading'))
       setError('')
+      setProgress(10)
 
       // 首先尝试轮询任务状态，直到完成
       let attempts = 0
@@ -48,6 +60,9 @@ export function ComparisonMatrixPage() {
 
       while (attempts < maxAttempts) {
         attempts++
+
+        // 更新进度条（最多到90%，留10%给最后完成）
+        setProgress(Math.min(10 + (attempts / maxAttempts) * 80, 90))
 
         try {
           // 先尝试直接获取对比矩阵
@@ -58,6 +73,7 @@ export function ComparisonMatrixPage() {
               comparison_matrix: result.data.comparison_matrix,
               statistics: result.data.statistics
             })
+            setProgress(100)
             setLoading(false)
             return
           }
@@ -81,6 +97,7 @@ export function ComparisonMatrixPage() {
                 comparison_matrix: task.result.comparison_matrix,
                 statistics: task.result.statistics
               })
+              setProgress(100)
               setLoading(false)
               return
             } else if (task.status === 'failed') {
@@ -112,13 +129,91 @@ export function ComparisonMatrixPage() {
     }
   }
 
+  const handleLoginSuccess = () => {
+    setShowLoginModal(false)
+    setLoggedIn(true)
+  }
+
   if (loading) {
     return (
       <div className="comparison-matrix-page">
+        {/* Navigation */}
+        <nav className="home-nav">
+          <div className="nav-logo" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
+            <span className="logo-icon">📚</span>
+            <span className="logo-text">AutoOverview</span>
+          </div>
+          <div className="nav-links">
+            <a href="/search-papers" className="active">{t('search_papers.nav.search')}</a>
+            <a href="/" onClick={(e) => { e.preventDefault(); navigate('/') }}>{t('search_papers.nav.generate')}</a>
+            <a href="/#pricing" onClick={(e) => { e.preventDefault(); navigate('/#pricing') }}>{t('search_papers.nav.pricing')}</a>
+          </div>
+          <div className="nav-actions">
+            {loggedIn ? (
+              <div className="user-menu">
+                <button className="user-info" onClick={() => navigate('/profile')}>
+                  <span className="user-avatar">👤</span>
+                  <span className="user-name">{t('home.nav.profile')}</span>
+                </button>
+              </div>
+            ) : (
+              <div className="auth-buttons">
+                <button className="nav-btn nav-btn-register" onClick={() => setShowLoginModal(true)}>
+                  {t('home.nav.login_register')}
+                </button>
+              </div>
+            )}
+          </div>
+          <button className="mobile-menu-toggle" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+            <span className={`hamburger ${mobileMenuOpen ? 'open' : ''}`} />
+          </button>
+        </nav>
+
+        {/* Mobile sidebar overlay */}
+        {mobileMenuOpen && (
+          <div className="mobile-sidebar-overlay" onClick={() => setMobileMenuOpen(false)} />
+        )}
+
+        {/* Mobile sidebar */}
+        <aside className={`mobile-sidebar ${mobileMenuOpen ? 'sidebar-open' : ''}`}>
+          <div className="sidebar-header">
+            <span className="logo-icon">📚</span>
+            <span className="logo-text">AutoOverview</span>
+            <button className="sidebar-close" onClick={() => setMobileMenuOpen(false)}>&times;</button>
+          </div>
+          <nav className="sidebar-links">
+            <a href="/search-papers" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false) }}>{t('search_papers.nav.search')}</a>
+            <a href="/" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/') }}>{t('search_papers.nav.generate')}</a>
+            <a href="/#pricing" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/#pricing') }}>{t('search_papers.nav.pricing')}</a>
+          </nav>
+          <div className="sidebar-bottom">
+            {loggedIn ? (
+              <button className="sidebar-user-btn" onClick={() => { setMobileMenuOpen(false); navigate('/profile') }}>
+                <span className="user-avatar">👤</span>
+                <span className="user-name">{t('home.nav.profile')}</span>
+              </button>
+            ) : (
+              <button className="nav-btn nav-btn-register" onClick={() => { setMobileMenuOpen(false); setShowLoginModal(true) }}>
+                {t('home.nav.login_register')}
+              </button>
+            )}
+          </div>
+        </aside>
+
         <div className="loading-container">
-          <div className="spinner"></div>
+          <div className="progress-bar-container">
+            <div className="progress-bar" style={{ width: `${progress}%` }}></div>
+          </div>
           <p>{loadingMessage || t('comparison_matrix_page.loading')}</p>
         </div>
+
+        {/* Login Modal */}
+        {showLoginModal && (
+          <LoginModal
+            onClose={() => setShowLoginModal(false)}
+            onLoginSuccess={handleLoginSuccess}
+          />
+        )}
       </div>
     )
   }
@@ -126,12 +221,83 @@ export function ComparisonMatrixPage() {
   if (error) {
     return (
       <div className="comparison-matrix-page">
+        {/* Navigation */}
+        <nav className="home-nav">
+          <div className="nav-logo" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
+            <span className="logo-icon">📚</span>
+            <span className="logo-text">AutoOverview</span>
+          </div>
+          <div className="nav-links">
+            <a href="/search-papers" className="active">{t('search_papers.nav.search')}</a>
+            <a href="/" onClick={(e) => { e.preventDefault(); navigate('/') }}>{t('search_papers.nav.generate')}</a>
+            <a href="/#pricing" onClick={(e) => { e.preventDefault(); navigate('/#pricing') }}>{t('search_papers.nav.pricing')}</a>
+          </div>
+          <div className="nav-actions">
+            {loggedIn ? (
+              <div className="user-menu">
+                <button className="user-info" onClick={() => navigate('/profile')}>
+                  <span className="user-avatar">👤</span>
+                  <span className="user-name">{t('home.nav.profile')}</span>
+                </button>
+              </div>
+            ) : (
+              <div className="auth-buttons">
+                <button className="nav-btn nav-btn-register" onClick={() => setShowLoginModal(true)}>
+                  {t('home.nav.login_register')}
+                </button>
+              </div>
+            )}
+          </div>
+          <button className="mobile-menu-toggle" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+            <span className={`hamburger ${mobileMenuOpen ? 'open' : ''}`} />
+          </button>
+        </nav>
+
+        {/* Mobile sidebar overlay */}
+        {mobileMenuOpen && (
+          <div className="mobile-sidebar-overlay" onClick={() => setMobileMenuOpen(false)} />
+        )}
+
+        {/* Mobile sidebar */}
+        <aside className={`mobile-sidebar ${mobileMenuOpen ? 'sidebar-open' : ''}`}>
+          <div className="sidebar-header">
+            <span className="logo-icon">📚</span>
+            <span className="logo-text">AutoOverview</span>
+            <button className="sidebar-close" onClick={() => setMobileMenuOpen(false)}>&times;</button>
+          </div>
+          <nav className="sidebar-links">
+            <a href="/search-papers" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false) }}>{t('search_papers.nav.search')}</a>
+            <a href="/" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/') }}>{t('search_papers.nav.generate')}</a>
+            <a href="/#pricing" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/#pricing') }}>{t('search_papers.nav.pricing')}</a>
+          </nav>
+          <div className="sidebar-bottom">
+            {loggedIn ? (
+              <button className="sidebar-user-btn" onClick={() => { setMobileMenuOpen(false); navigate('/profile') }}>
+                <span className="user-avatar">👤</span>
+                <span className="user-name">{t('home.nav.profile')}</span>
+              </button>
+            ) : (
+              <button className="nav-btn nav-btn-register" onClick={() => { setMobileMenuOpen(false); setShowLoginModal(true) }}>
+                {t('home.nav.login_register')}
+              </button>
+            )}
+          </div>
+        </aside>
+
         <div className="error-container">
           <p>{error}</p>
           <button onClick={() => navigate(-1)} className="back-btn">
             {t('comparison_matrix_page.back')}
           </button>
         </div>
+
+        {/* Login Modal */}
+        {showLoginModal && (
+          <LoginModal
+            onClose={() => setShowLoginModal(false)}
+            onLoginSuccess={handleLoginSuccess}
+          />
+        )}
       </div>
     )
   }
@@ -139,18 +305,152 @@ export function ComparisonMatrixPage() {
   if (!matrixData) {
     return (
       <div className="comparison-matrix-page">
+        {/* Navigation */}
+        <nav className="home-nav">
+          <div className="nav-logo" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
+            <span className="logo-icon">📚</span>
+            <span className="logo-text">AutoOverview</span>
+          </div>
+          <div className="nav-links">
+            <a href="/search-papers" className="active">{t('search_papers.nav.search')}</a>
+            <a href="/" onClick={(e) => { e.preventDefault(); navigate('/') }}>{t('search_papers.nav.generate')}</a>
+            <a href="/#pricing" onClick={(e) => { e.preventDefault(); navigate('/#pricing') }}>{t('search_papers.nav.pricing')}</a>
+          </div>
+          <div className="nav-actions">
+            {loggedIn ? (
+              <div className="user-menu">
+                <button className="user-info" onClick={() => navigate('/profile')}>
+                  <span className="user-avatar">👤</span>
+                  <span className="user-name">{t('home.nav.profile')}</span>
+                </button>
+              </div>
+            ) : (
+              <div className="auth-buttons">
+                <button className="nav-btn nav-btn-register" onClick={() => setShowLoginModal(true)}>
+                  {t('home.nav.login_register')}
+                </button>
+              </div>
+            )}
+          </div>
+          <button className="mobile-menu-toggle" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+            <span className={`hamburger ${mobileMenuOpen ? 'open' : ''}`} />
+          </button>
+        </nav>
+
+        {/* Mobile sidebar overlay */}
+        {mobileMenuOpen && (
+          <div className="mobile-sidebar-overlay" onClick={() => setMobileMenuOpen(false)} />
+        )}
+
+        {/* Mobile sidebar */}
+        <aside className={`mobile-sidebar ${mobileMenuOpen ? 'sidebar-open' : ''}`}>
+          <div className="sidebar-header">
+            <span className="logo-icon">📚</span>
+            <span className="logo-text">AutoOverview</span>
+            <button className="sidebar-close" onClick={() => setMobileMenuOpen(false)}>&times;</button>
+          </div>
+          <nav className="sidebar-links">
+            <a href="/search-papers" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false) }}>{t('search_papers.nav.search')}</a>
+            <a href="/" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/') }}>{t('search_papers.nav.generate')}</a>
+            <a href="/#pricing" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/#pricing') }}>{t('search_papers.nav.pricing')}</a>
+          </nav>
+          <div className="sidebar-bottom">
+            {loggedIn ? (
+              <button className="sidebar-user-btn" onClick={() => { setMobileMenuOpen(false); navigate('/profile') }}>
+                <span className="user-avatar">👤</span>
+                <span className="user-name">{t('home.nav.profile')}</span>
+              </button>
+            ) : (
+              <button className="nav-btn nav-btn-register" onClick={() => { setMobileMenuOpen(false); setShowLoginModal(true) }}>
+                {t('home.nav.login_register')}
+              </button>
+            )}
+          </div>
+        </aside>
+
         <div className="error-container">
           <p>{t('comparison_matrix_page.not_found')}</p>
           <button onClick={() => navigate('/search-papers')} className="back-btn">
             {t('comparison_matrix_page.go_search')}
           </button>
         </div>
+
+        {/* Login Modal */}
+        {showLoginModal && (
+          <LoginModal
+            onClose={() => setShowLoginModal(false)}
+            onLoginSuccess={handleLoginSuccess}
+          />
+        )}
       </div>
     )
   }
 
   return (
     <div className="comparison-matrix-page">
+      {/* Navigation */}
+      <nav className="home-nav">
+        <div className="nav-logo" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
+          <span className="logo-icon">📚</span>
+          <span className="logo-text">AutoOverview</span>
+        </div>
+        <div className="nav-links">
+          <a href="/search-papers" onClick={(e) => { e.preventDefault(); navigate('/search-papers') }}>{t('search_papers.nav.search')}</a>
+          <a href="/" onClick={(e) => { e.preventDefault(); navigate('/') }}>{t('search_papers.nav.generate')}</a>
+          <a href="/#pricing" onClick={(e) => { e.preventDefault(); navigate('/#pricing') }}>{t('search_papers.nav.pricing')}</a>
+        </div>
+        <div className="nav-actions">
+          {loggedIn ? (
+            <div className="user-menu">
+              <button className="user-info" onClick={() => navigate('/profile')}>
+                <span className="user-avatar">👤</span>
+                <span className="user-name">{t('home.nav.profile')}</span>
+              </button>
+            </div>
+          ) : (
+            <div className="auth-buttons">
+              <button className="nav-btn nav-btn-register" onClick={() => setShowLoginModal(true)}>
+                {t('home.nav.login_register')}
+              </button>
+            </div>
+          )}
+        </div>
+        <button className="mobile-menu-toggle" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+          <span className={`hamburger ${mobileMenuOpen ? 'open' : ''}`} />
+        </button>
+      </nav>
+
+      {/* Mobile sidebar overlay */}
+      {mobileMenuOpen && (
+        <div className="mobile-sidebar-overlay" onClick={() => setMobileMenuOpen(false)} />
+      )}
+
+      {/* Mobile sidebar */}
+      <aside className={`mobile-sidebar ${mobileMenuOpen ? 'sidebar-open' : ''}`}>
+        <div className="sidebar-header">
+          <span className="logo-icon">📚</span>
+          <span className="logo-text">AutoOverview</span>
+          <button className="sidebar-close" onClick={() => setMobileMenuOpen(false)}>&times;</button>
+        </div>
+        <nav className="sidebar-links">
+          <a href="/search-papers" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false) }}>{t('search_papers.nav.search')}</a>
+          <a href="/" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/') }}>{t('search_papers.nav.generate')}</a>
+          <a href="/#pricing" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/#pricing') }}>{t('search_papers.nav.pricing')}</a>
+        </nav>
+        <div className="sidebar-bottom">
+          {loggedIn ? (
+            <button className="sidebar-user-btn" onClick={() => { setMobileMenuOpen(false); navigate('/profile') }}>
+              <span className="user-avatar">👤</span>
+              <span className="user-name">{t('home.nav.profile')}</span>
+            </button>
+          ) : (
+            <button className="nav-btn nav-btn-register" onClick={() => { setMobileMenuOpen(false); setShowLoginModal(true) }}>
+              {t('home.nav.login_register')}
+            </button>
+          )}
+        </div>
+      </aside>
+
       <div className="matrix-container">
         {/* Header */}
         <header className="matrix-header">
@@ -217,6 +517,14 @@ export function ComparisonMatrixPage() {
           </button>
         </div>
       </div>
+
+      {/* Login Modal */}
+      {showLoginModal && (
+        <LoginModal
+          onClose={() => setShowLoginModal(false)}
+          onLoginSuccess={handleLoginSuccess}
+        />
+      )}
     </div>
   )
 }
