@@ -4,6 +4,17 @@
  */
 import React, { useState, useEffect } from 'react';
 
+interface CurrencyStats {
+  total_orders: number;
+  total_revenue: number;
+}
+
+interface PlanCurrencyStats {
+  count: number;
+  revenue: number;
+  name: string;
+}
+
 interface OverviewStats {
   visits: {
     total: number;
@@ -20,12 +31,12 @@ interface OverviewStats {
   };
   payments: {
     total_orders: number;
-    total_revenue: number;
+    by_currency: {
+      [key: string]: CurrencyStats;
+    };
     by_plan: {
       [key: string]: {
-        name: string;
-        count: number;
-        revenue: number;
+        [key: string]: PlanCurrencyStats;
       };
     };
   };
@@ -34,7 +45,12 @@ interface OverviewStats {
     today_registers: number;
     today_generations: number;
     today_payments: number;
-    today_revenue: number;
+    today_payments_by_currency: {
+      [key: string]: {
+        count: number;
+        revenue: number;
+      };
+    };
   };
 }
 
@@ -44,7 +60,12 @@ interface DailyStats {
   registers: number;
   generations: number;
   payments: number;
-  revenue: number;
+  payments_by_currency: {
+    [key: string]: {
+      count: number;
+      revenue: number;
+    };
+  };
 }
 
 export const DavidPage: React.FC = () => {
@@ -86,10 +107,10 @@ export const DavidPage: React.FC = () => {
     return new Intl.NumberFormat('zh-CN').format(num);
   };
 
-  const formatCurrency = (num: number) => {
+  const formatCurrency = (num: number, currency: string = 'CNY') => {
     return new Intl.NumberFormat('zh-CN', {
       style: 'currency',
-      currency: 'CNY'
+      currency: currency
     }).format(num);
   };
 
@@ -132,6 +153,12 @@ export const DavidPage: React.FC = () => {
     return null;
   }
 
+  const cnyStats = overview.payments.by_currency?.CNY || { total_orders: 0, total_revenue: 0 };
+  const usdStats = overview.payments.by_currency?.USD || { total_orders: 0, total_revenue: 0 };
+
+  const todayCny = overview.today.today_payments_by_currency?.CNY || { count: 0, revenue: 0 };
+  const todayUsd = overview.today.today_payments_by_currency?.USD || { count: 0, revenue: 0 };
+
   return (
     <div className="david-page">
       <div className="david-container">
@@ -163,10 +190,16 @@ export const DavidPage: React.FC = () => {
               color="purple"
             />
             <StatCard
-              title="总收入"
-              value={formatCurrency(overview.payments.total_revenue)}
-              subtitle={`共 ${overview.payments.total_orders} 笔订单`}
+              title="总收入 (CNY)"
+              value={formatCurrency(cnyStats.total_revenue, 'CNY')}
+              subtitle={`共 ${cnyStats.total_orders} 笔订单`}
               color="orange"
+            />
+            <StatCard
+              title="总收入 (USD)"
+              value={formatCurrency(usdStats.total_revenue, 'USD')}
+              subtitle={`共 ${usdStats.total_orders} 笔订单`}
+              color="teal"
             />
           </div>
         </section>
@@ -188,31 +221,61 @@ export const DavidPage: React.FC = () => {
               <span className="today-value">{formatNumber(overview.today.today_generations)}</span>
             </div>
             <div className="today-item">
-              <span className="today-label">付费数</span>
-              <span className="today-value">{formatNumber(overview.today.today_payments)}</span>
+              <span className="today-label">付费数 (CNY)</span>
+              <span className="today-value">{formatNumber(todayCny.count)}</span>
             </div>
             <div className="today-item">
-              <span className="today-label">收入</span>
-              <span className="today-value today-revenue">{formatCurrency(overview.today.today_revenue)}</span>
+              <span className="today-label">收入 (CNY)</span>
+              <span className="today-value today-revenue">{formatCurrency(todayCny.revenue, 'CNY')}</span>
+            </div>
+            <div className="today-item">
+              <span className="today-label">付费数 (USD)</span>
+              <span className="today-value">{formatNumber(todayUsd.count)}</span>
+            </div>
+            <div className="today-item">
+              <span className="today-label">收入 (USD)</span>
+              <span className="today-value today-revenue">{formatCurrency(todayUsd.revenue, 'USD')}</span>
             </div>
           </div>
         </section>
 
         {/* 套餐统计 */}
         <section className="david-section">
-          <h2 className="section-title">套餐统计</h2>
+          <h2 className="section-title">套餐统计 (CNY)</h2>
           <div className="plans-grid">
-            {Object.entries(overview.payments.by_plan).map(([type, data]: [string, any]) => (
+            {Object.entries(overview.payments.by_plan).map(([type, currencyData]: [string, any]) => (
               <div key={type} className="plan-card">
-                <div className="plan-name">{data.name}</div>
+                <div className="plan-name">{currencyData.CNY?.name || type}</div>
                 <div className="plan-stats">
                   <div className="plan-stat">
                     <span className="plan-label">订单数</span>
-                    <span className="plan-number">{formatNumber(data.count)}</span>
+                    <span className="plan-number">{formatNumber(currencyData.CNY?.count || 0)}</span>
                   </div>
                   <div className="plan-stat">
                     <span className="plan-label">收入</span>
-                    <span className="plan-number plan-revenue">{formatCurrency(data.revenue)}</span>
+                    <span className="plan-number plan-revenue">{formatCurrency(currencyData.CNY?.revenue || 0, 'CNY')}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* 套餐统计 USD */}
+        <section className="david-section">
+          <h2 className="section-title">套餐统计 (USD)</h2>
+          <div className="plans-grid">
+            {Object.entries(overview.payments.by_plan).map(([type, currencyData]: [string, any]) => (
+              <div key={`${type}-usd`} className="plan-card">
+                <div className="plan-name">{currencyData.USD?.name || type}</div>
+                <div className="plan-stats">
+                  <div className="plan-stat">
+                    <span className="plan-label">订单数</span>
+                    <span className="plan-number">{formatNumber(currencyData.USD?.count || 0)}</span>
+                  </div>
+                  <div className="plan-stat">
+                    <span className="plan-label">收入</span>
+                    <span className="plan-number plan-revenue">{formatCurrency(currencyData.USD?.revenue || 0, 'USD')}</span>
                   </div>
                 </div>
               </div>
@@ -249,20 +312,26 @@ export const DavidPage: React.FC = () => {
                   <th>注册量</th>
                   <th>生成数</th>
                   <th>付费数</th>
-                  <th>收入</th>
+                  <th>收入 (CNY)</th>
+                  <th>收入 (USD)</th>
                 </tr>
               </thead>
               <tbody>
-                {dailyStats.map((day) => (
-                  <tr key={day.date}>
-                    <td>{day.date}</td>
-                    <td>{formatNumber(day.visits)}</td>
-                    <td>{formatNumber(day.registers)}</td>
-                    <td>{formatNumber(day.generations)}</td>
-                    <td>{formatNumber(day.payments)}</td>
-                    <td className="trend-revenue">{formatCurrency(day.revenue)}</td>
-                  </tr>
-                ))}
+                {dailyStats.map((day) => {
+                  const dayCny = day.payments_by_currency?.CNY || { count: 0, revenue: 0 };
+                  const dayUsd = day.payments_by_currency?.USD || { count: 0, revenue: 0 };
+                  return (
+                    <tr key={day.date}>
+                      <td>{day.date}</td>
+                      <td>{formatNumber(day.visits)}</td>
+                      <td>{formatNumber(day.registers)}</td>
+                      <td>{formatNumber(day.generations)}</td>
+                      <td>{formatNumber(day.payments)}</td>
+                      <td className="trend-revenue">{formatCurrency(dayCny.revenue, 'CNY')}</td>
+                      <td className="trend-revenue">{formatCurrency(dayUsd.revenue, 'USD')}</td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -277,7 +346,7 @@ export const DavidPage: React.FC = () => {
         }
 
         .david-container {
-          max-width: 1200px;
+          max-width: 1400px;
           margin: 0 auto;
         }
 
@@ -341,6 +410,7 @@ export const DavidPage: React.FC = () => {
         .stat-green { color: #4CAF50; }
         .stat-purple { color: #9C27B0; }
         .stat-orange { color: #FF9800; }
+        .stat-teal { color: #009688; }
 
         .stat-subtitle {
           font-size: 0.85rem;

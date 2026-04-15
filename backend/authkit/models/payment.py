@@ -62,8 +62,9 @@ class Subscription(PaymentBase):
     order_no = Column(String(64), unique=True, nullable=False, index=True, comment="商户订单号")
     plan_type = Column(String(32), nullable=False, comment="套餐类型: single(体验包1篇)/semester(标准包3篇)/yearly(进阶包6篇)/unlock(单次解锁)")
     amount = Column(Float, nullable=False, comment="订单金额")
+    currency = Column(String(10), default="CNY", comment="货币: CNY/USD")
     status = Column(String(20), default="pending", comment="订单状态: pending/paid/cancelled")
-    payment_method = Column(String(20), nullable=True, comment="支付方式: alipay")
+    payment_method = Column(String(20), nullable=True, comment="支付方式: alipay/paypal/paddle")
     payment_time = Column(DateTime(timezone=True), nullable=True, comment="支付时间")
     trade_no = Column(String(64), nullable=True, comment="支付宝交易号")
     expires_at = Column(DateTime(timezone=True), nullable=True, comment="会员到期时间")
@@ -78,6 +79,7 @@ class Subscription(PaymentBase):
             "order_no": self.order_no,
             "plan_type": self.plan_type,
             "amount": self.amount,
+            "currency": self.currency,
             "status": self.status,
             "payment_method": self.payment_method,
             "payment_time": self.payment_time.isoformat() if self.payment_time else None,

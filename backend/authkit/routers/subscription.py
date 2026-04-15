@@ -105,6 +105,7 @@ def create_subscription(
         order_no=order_no,
         plan_type=data.plan_type,
         amount=plan["price"],
+        currency="CNY",
         status="pending",
     )
     db.add(subscription)

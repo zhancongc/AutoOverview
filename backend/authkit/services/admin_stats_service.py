@@ -100,29 +100,43 @@ class AdminStatsService:
                 )
             ).scalar() or 0
 
-            # 付费数
-            payments = self.db.query(func.count(Subscription.id)).filter(
+            # 按货币统计付费数和收入
+            daily_payment_stats = self.db.query(
+                Subscription.currency,
+                func.count(Subscription.id).label('count'),
+                func.sum(Subscription.amount).label('revenue')
+            ).filter(
                 and_(
                     Subscription.status == "paid",
                     func.date(Subscription.payment_time) == date_obj
                 )
-            ).scalar() or 0
+            ).group_by(Subscription.currency).all()
 
-            # 收入
-            revenue = self.db.query(func.sum(Subscription.amount)).filter(
-                and_(
-                    Subscription.status == "paid",
-                    func.date(Subscription.payment_time) == date_obj
-                )
-            ).scalar() or 0
+            payments_by_currency = {}
+            total_payments = 0
+            for currency, count, revenue in daily_payment_stats:
+                curr = currency or "CNY"
+                payments_by_currency[curr] = {
+                    "count": count,
+                    "revenue": float(revenue) if revenue else 0.0
+                }
+                total_payments += count
+
+            # 确保 CNY 和 USD 都存在
+            for curr in ["CNY", "USD"]:
+                if curr not in payments_by_currency:
+                    payments_by_currency[curr] = {
+                        "count": 0,
+                        "revenue": 0.0
+                    }
 
             result.append({
                 "date": stat_date,
                 "visits": visits,
                 "registers": registers,
                 "generations": generations,
-                "payments": payments,
-                "revenue": float(revenue)
+                "payments": total_payments,
+                "payments_by_currency": payments_by_currency
             })
 
         return result
@@ -163,51 +177,74 @@ class AdminStatsService:
         return stats.visit_count if stats else 0
 
     def _get_payment_stats(self) -> dict:
-        """获取付费统计（按套餐类型）"""
+        """获取付费统计（按套餐类型和货币）"""
         from authkit.models.payment import Subscription
 
-        # 总付费订单数
-        total_payments = self.db.query(func.count(Subscription.id)).filter(
-            Subscription.status == "paid"
-        ).scalar() or 0
-
-        # 总收入
-        total_revenue = self.db.query(func.sum(Subscription.amount)).filter(
-            Subscription.status == "paid"
-        ).scalar() or 0
-
-        # 按套餐类型统计
-        plan_stats = self.db.query(
-            Subscription.plan_type,
+        # 按货币统计
+        currency_stats = self.db.query(
+            Subscription.currency,
             func.count(Subscription.id).label('count'),
             func.sum(Subscription.amount).label('revenue')
         ).filter(
             Subscription.status == "paid"
-        ).group_by(Subscription.plan_type).all()
+        ).group_by(Subscription.currency).all()
 
-        plans = {}
-        for plan_type, count, revenue in plan_stats:
-            plans[plan_type] = {
-                "count": count,
-                "revenue": float(revenue)
+        by_currency = {}
+        total_orders = 0
+        for currency, count, revenue in currency_stats:
+            curr = currency or "CNY"
+            by_currency[curr] = {
+                "total_orders": count,
+                "total_revenue": float(revenue) if revenue else 0.0
             }
+            total_orders += count
 
-        # 套餐名称映射
+        # 确保 CNY 和 USD 都存在
+        for curr in ["CNY", "USD"]:
+            if curr not in by_currency:
+                by_currency[curr] = {
+                    "total_orders": 0,
+                    "total_revenue": 0.0
+                }
+
+        # 按套餐类型+货币统计
+        plan_currency_stats = self.db.query(
+            Subscription.plan_type,
+            Subscription.currency,
+            func.count(Subscription.id).label('count'),
+            func.sum(Subscription.amount).label('revenue')
+        ).filter(
+            Subscription.status == "paid"
+        ).group_by(Subscription.plan_type, Subscription.currency).all()
+
+        # 初始化按套餐统计
+        plans = {}
         plan_names = {
-            "single": "体验包",
-            "semester": "标准包",
-            "yearly": "进阶包",
-            "unlock": "单次解锁"
+            "single": {"CNY": "体验包", "USD": "Starter"},
+            "semester": {"CNY": "标准包", "USD": "Semester Pro"},
+            "yearly": {"CNY": "进阶包", "USD": "Annual Premium"},
+            "unlock": {"CNY": "单次解锁", "USD": "Single Unlock"}
         }
 
-        for plan_type, name in plan_names.items():
-            if plan_type not in plans:
-                plans[plan_type] = {"count": 0, "revenue": 0.0}
-            plans[plan_type]["name"] = name
+        for plan_type in plan_names.keys():
+            plans[plan_type] = {}
+            for curr in ["CNY", "USD"]:
+                plans[plan_type][curr] = {
+                    "count": 0,
+                    "revenue": 0.0,
+                    "name": plan_names[plan_type][curr]
+                }
+
+        # 填充实际数据
+        for plan_type, currency, count, revenue in plan_currency_stats:
+            curr = currency or "CNY"
+            if plan_type in plans and curr in plans[plan_type]:
+                plans[plan_type][curr]["count"] = count
+                plans[plan_type][curr]["revenue"] = float(revenue) if revenue else 0.0
 
         return {
-            "total_orders": total_payments,
-            "total_revenue": float(total_revenue),
+            "total_orders": total_orders,
+            "by_currency": by_currency,
             "by_plan": plans
         }
 
@@ -236,26 +273,40 @@ class AdminStatsService:
             )
         ).scalar() or 0
 
-        # 今日付费数
-        today_payments = self.db.query(func.count(Subscription.id)).filter(
+        # 今日按货币统计付费数和收入
+        today_payment_stats = self.db.query(
+            Subscription.currency,
+            func.count(Subscription.id).label('count'),
+            func.sum(Subscription.amount).label('revenue')
+        ).filter(
             and_(
                 Subscription.status == "paid",
                 func.date(Subscription.payment_time) == today
             )
-        ).scalar() or 0
+        ).group_by(Subscription.currency).all()
 
-        # 今日收入
-        today_revenue = self.db.query(func.sum(Subscription.amount)).filter(
-            and_(
-                Subscription.status == "paid",
-                func.date(Subscription.payment_time) == today
-            )
-        ).scalar() or 0
+        today_payments_by_currency = {}
+        total_today_payments = 0
+        for currency, count, revenue in today_payment_stats:
+            curr = currency or "CNY"
+            today_payments_by_currency[curr] = {
+                "count": count,
+                "revenue": float(revenue) if revenue else 0.0
+            }
+            total_today_payments += count
+
+        # 确保 CNY 和 USD 都存在
+        for curr in ["CNY", "USD"]:
+            if curr not in today_payments_by_currency:
+                today_payments_by_currency[curr] = {
+                    "count": 0,
+                    "revenue": 0.0
+                }
 
         return {
             "today_visits": today_visits,
             "today_registers": today_registers,
             "today_generations": today_generations,
-            "today_payments": today_payments,
-            "today_revenue": float(today_revenue)
+            "today_payments": total_today_payments,
+            "today_payments_by_currency": today_payments_by_currency
         }

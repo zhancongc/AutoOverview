@@ -113,6 +113,7 @@ def create_paypal_subscription(
         order_no=order_no,
         plan_type=data.plan_type,
         amount=plan["price"],
+        currency="USD",
         status="pending",
         payment_method="paypal",
     )
@@ -416,6 +417,7 @@ def create_paypal_unlock(
         order_no=order_no,
         plan_type="unlock",
         amount=plan["price"],
+        currency="USD",
         status="pending",
         payment_method="paypal",
     )

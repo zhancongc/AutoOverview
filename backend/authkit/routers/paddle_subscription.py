@@ -98,6 +98,7 @@ def create_paddle_subscription(
         order_no=order_no,
         plan_type=data.plan_type,
         amount=plan["price"],
+        currency="USD",
         status="pending",
         payment_method="paddle",
     )
@@ -319,6 +320,7 @@ def create_paddle_unlock(
         order_no=order_no,
         plan_type="unlock",
         amount=plan["price"],
+        currency="USD",
         status="pending",
         payment_method="paddle",
     )
