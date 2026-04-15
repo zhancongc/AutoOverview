@@ -454,6 +454,12 @@
     "generated_at": "生成时间",
     "export_markdown": "导出 Markdown",
     "continue_search": "继续搜索",
-    "coming_soon": "导出功能即将上线！"
+    "coming_soon": "导出功能即将上线！",
+    "nav_generate": "生成对比矩阵",
+    "generate_title": "生成文献对比矩阵",
+    "topic_placeholder": "输入您的研究主题，例如：深度学习在医学影像中的应用",
+    "cancel": "取消",
+    "generate_now": "立即生成",
+    "generating": "生成中..."
   }
 }

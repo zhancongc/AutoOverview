@@ -21,6 +21,58 @@ interface ComparisonMatrixData {
   }
 }
 
+// 生成对比矩阵的模态框组件
+function GenerateComparisonModal({
+  isOpen,
+  onClose,
+  onSubmit,
+  loading,
+  t
+}: {
+  isOpen: boolean
+  onClose: () => void
+  onSubmit: (topic: string) => void
+  loading: boolean
+  t: (key: string) => string
+}) {
+  const [topic, setTopic] = useState('')
+
+  if (!isOpen) return null
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <h2>{t('comparison_matrix_page.generate_title')}</h2>
+          <button className="modal-close" onClick={onClose}>&times;</button>
+        </div>
+        <div className="modal-body">
+          <input
+            type="text"
+            className="topic-input"
+            placeholder={t('comparison_matrix_page.topic_placeholder')}
+            value={topic}
+            onChange={(e) => setTopic(e.target.value)}
+            disabled={loading}
+          />
+        </div>
+        <div className="modal-footer">
+          <button className="modal-btn modal-btn-cancel" onClick={onClose} disabled={loading}>
+            {t('comparison_matrix_page.cancel')}
+          </button>
+          <button
+            className="modal-btn modal-btn-primary"
+            onClick={() => onSubmit(topic)}
+            disabled={loading || !topic.trim()}
+          >
+            {loading ? t('comparison_matrix_page.generating') : t('comparison_matrix_page.generate_now')}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export function ComparisonMatrixPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
@@ -28,6 +80,8 @@ export function ComparisonMatrixPage() {
   const taskId = searchParams.get('task_id') || ''
   const [isChineseSite, setIsChineseSite] = useState(false)
   const [showLoginModal, setShowLoginModal] = useState(false)
+  const [showGenerateModal, setShowGenerateModal] = useState(false)
+  const [generateLoading, setGenerateLoading] = useState(false)
   const [loggedIn, setLoggedIn] = useState(isLoggedIn())
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
@@ -134,6 +188,44 @@ export function ComparisonMatrixPage() {
     setLoggedIn(true)
   }
 
+  const handleGenerateClick = () => {
+    if (!loggedIn) {
+      setShowLoginModal(true)
+      return
+    }
+    setShowGenerateModal(true)
+  }
+
+  const handleGenerateSubmit = async (topic: string) => {
+    if (!topic.trim()) return
+
+    setGenerateLoading(true)
+    try {
+      // 检查是否有进行中的任务
+      const activeTask = await api.getActiveTask()
+      if (activeTask.active) {
+        alert(t('search_papers.has_active_task'))
+        return
+      }
+
+      const result = await api.generateComparisonMatrix(topic, {
+        language: isChineseSite ? 'zh' : 'en'
+      })
+
+      if (result.success && result.data) {
+        setShowGenerateModal(false)
+        navigate(`/comparison-matrix?task_id=${result.data.task_id}`)
+      } else {
+        alert(result.message || t('comparison_matrix_page.error'))
+      }
+    } catch (err: any) {
+      console.error('Generate comparison matrix failed:', err)
+      alert(err.message || t('comparison_matrix_page.error'))
+    } finally {
+      setGenerateLoading(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="comparison-matrix-page">
@@ -144,11 +236,14 @@ export function ComparisonMatrixPage() {
             <span className="logo-text">AutoOverview</span>
           </div>
           <div className="nav-links">
-            <a href="/search-papers" className="active">{t('search_papers.nav.search')}</a>
+            <a href="/search-papers" onClick={(e) => { e.preventDefault(); navigate('/search-papers') }}>{t('search_papers.nav.search')}</a>
             <a href="/" onClick={(e) => { e.preventDefault(); navigate('/') }}>{t('search_papers.nav.generate')}</a>
             <a href="/#pricing" onClick={(e) => { e.preventDefault(); navigate('/#pricing') }}>{t('search_papers.nav.pricing')}</a>
           </div>
           <div className="nav-actions">
+            <button className="nav-btn nav-btn-primary nav-generate-btn" onClick={handleGenerateClick}>
+              {t('comparison_matrix_page.nav_generate')}
+            </button>
             {loggedIn ? (
               <div className="user-menu">
                 <button className="user-info" onClick={() => navigate('/profile')}>
@@ -185,6 +280,15 @@ export function ComparisonMatrixPage() {
             <a href="/search-papers" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false) }}>{t('search_papers.nav.search')}</a>
             <a href="/" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/') }}>{t('search_papers.nav.generate')}</a>
             <a href="/#pricing" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/#pricing') }}>{t('search_papers.nav.pricing')}</a>
+            <button
+              className="sidebar-generate-btn"
+              onClick={() => {
+                setMobileMenuOpen(false)
+                handleGenerateClick()
+              }}
+            >
+              {t('comparison_matrix_page.nav_generate')}
+            </button>
           </nav>
           <div className="sidebar-bottom">
             {loggedIn ? (
@@ -228,11 +332,14 @@ export function ComparisonMatrixPage() {
             <span className="logo-text">AutoOverview</span>
           </div>
           <div className="nav-links">
-            <a href="/search-papers" className="active">{t('search_papers.nav.search')}</a>
+            <a href="/search-papers" onClick={(e) => { e.preventDefault(); navigate('/search-papers') }}>{t('search_papers.nav.search')}</a>
             <a href="/" onClick={(e) => { e.preventDefault(); navigate('/') }}>{t('search_papers.nav.generate')}</a>
             <a href="/#pricing" onClick={(e) => { e.preventDefault(); navigate('/#pricing') }}>{t('search_papers.nav.pricing')}</a>
           </div>
           <div className="nav-actions">
+            <button className="nav-btn nav-btn-primary nav-generate-btn" onClick={handleGenerateClick}>
+              {t('comparison_matrix_page.nav_generate')}
+            </button>
             {loggedIn ? (
               <div className="user-menu">
                 <button className="user-info" onClick={() => navigate('/profile')}>
@@ -269,6 +376,15 @@ export function ComparisonMatrixPage() {
             <a href="/search-papers" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false) }}>{t('search_papers.nav.search')}</a>
             <a href="/" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/') }}>{t('search_papers.nav.generate')}</a>
             <a href="/#pricing" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/#pricing') }}>{t('search_papers.nav.pricing')}</a>
+            <button
+              className="sidebar-generate-btn"
+              onClick={() => {
+                setMobileMenuOpen(false)
+                handleGenerateClick()
+              }}
+            >
+              {t('comparison_matrix_page.nav_generate')}
+            </button>
           </nav>
           <div className="sidebar-bottom">
             {loggedIn ? (
@@ -312,11 +428,14 @@ export function ComparisonMatrixPage() {
             <span className="logo-text">AutoOverview</span>
           </div>
           <div className="nav-links">
-            <a href="/search-papers" className="active">{t('search_papers.nav.search')}</a>
+            <a href="/search-papers" onClick={(e) => { e.preventDefault(); navigate('/search-papers') }}>{t('search_papers.nav.search')}</a>
             <a href="/" onClick={(e) => { e.preventDefault(); navigate('/') }}>{t('search_papers.nav.generate')}</a>
             <a href="/#pricing" onClick={(e) => { e.preventDefault(); navigate('/#pricing') }}>{t('search_papers.nav.pricing')}</a>
           </div>
           <div className="nav-actions">
+            <button className="nav-btn nav-btn-primary nav-generate-btn" onClick={handleGenerateClick}>
+              {t('comparison_matrix_page.nav_generate')}
+            </button>
             {loggedIn ? (
               <div className="user-menu">
                 <button className="user-info" onClick={() => navigate('/profile')}>
@@ -353,6 +472,15 @@ export function ComparisonMatrixPage() {
             <a href="/search-papers" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false) }}>{t('search_papers.nav.search')}</a>
             <a href="/" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/') }}>{t('search_papers.nav.generate')}</a>
             <a href="/#pricing" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/#pricing') }}>{t('search_papers.nav.pricing')}</a>
+            <button
+              className="sidebar-generate-btn"
+              onClick={() => {
+                setMobileMenuOpen(false)
+                handleGenerateClick()
+              }}
+            >
+              {t('comparison_matrix_page.nav_generate')}
+            </button>
           </nav>
           <div className="sidebar-bottom">
             {loggedIn ? (
@@ -525,6 +653,15 @@ export function ComparisonMatrixPage() {
           onLoginSuccess={handleLoginSuccess}
         />
       )}
+
+      {/* Generate Comparison Matrix Modal */}
+      <GenerateComparisonModal
+        isOpen={showGenerateModal}
+        onClose={() => setShowGenerateModal(false)}
+        onSubmit={handleGenerateSubmit}
+        loading={generateLoading}
+        t={t}
+      />
     </div>
   )
 }

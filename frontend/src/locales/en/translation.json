@@ -400,6 +400,12 @@
     "generated_at": "Generated at",
     "export_markdown": "Export Markdown",
     "continue_search": "Continue Search",
-    "coming_soon": "Export feature coming soon!"
+    "coming_soon": "Export feature coming soon!",
+    "nav_generate": "Generate Comparison Matrix",
+    "generate_title": "Generate Literature Comparison Matrix",
+    "topic_placeholder": "Enter your research topic, e.g., Deep Learning in Medical Imaging",
+    "cancel": "Cancel",
+    "generate_now": "Generate Now",
+    "generating": "Generating..."
   }
 }
