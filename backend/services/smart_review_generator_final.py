@@ -86,40 +86,50 @@ class SmartReviewGeneratorFinal:
         papers = self._preprocess_papers(papers)
         logger.debug(f"✓ 清洗后: {len(papers)} 篇")
 
-        # === 步骤 2: 生成综述（初始版）===
-        logger.debug("\n[步骤 2] 生成初始综述...")
+        # === 步骤 2: 生成文献对比矩阵 ===
+        logger.debug("\n[步骤 2] 生成文献对比矩阵...")
+        comparison_matrix = await self._generate_comparison_matrix(
+            topic=topic,
+            papers=papers,
+            language=language
+        )
+        logger.debug(f"✓ 对比矩阵生成完成")
+
+        # === 步骤 3: 生成综述（初始版）===
+        logger.debug("\n[步骤 3] 生成初始综述...")
         raw_content, accessed_paper_indices = await self._generate_raw_review(
             topic=topic,
             papers=papers,
             model=model,
             search_params=search_params,
             total_papers_count=len(papers),
-            language=language
+            language=language,
+            comparison_matrix=comparison_matrix
         )
 
-        # === 步骤 3: 提取并排序引用 ===
-        logger.debug("\n[步骤 3] 处理引用...")
+        # === 步骤 4: 提取并排序引用 ===
+        logger.debug("\n[步骤 4] 处理引用...")
         cited_sequence = self._extract_cited_indices(raw_content)
         logger.debug(f"  初始引用次数: {len(cited_sequence)}")
 
-        # === 步骤 4: 应用 5 条引用规范 ===
-        logger.debug("\n[步骤 4] 应用 5 条引用规范...")
+        # === 步骤 5: 应用 5 条引用规范 ===
+        logger.debug("\n[步骤 5] 应用 5 条引用规范...")
         final_content, final_references = self._apply_citation_rules(
             content=raw_content,
             cited_sequence=cited_sequence,
             all_papers=papers
         )
 
-        # === 步骤 5: 格式化参考文献 (IEEE) ===
-        logger.debug("\n[步骤 5] 格式化参考文献 (IEEE)...")
+        # === 步骤 6: 格式化参考文献 (IEEE) ===
+        logger.debug("\n[步骤 6] 格式化参考文献 (IEEE)...")
         references_formatted = self._format_references_ieee(final_references)
 
-        # === 步骤 6: 合并最终内容 ===
+        # === 步骤 7: 合并最终内容 ===
         references_title = "## References" if language == "en" else "## 参考文献"
         final_review = final_content + f"\n\n{references_title}\n\n" + references_formatted
 
-        # === 步骤 7: 最终验证 ===
-        logger.debug("\n[步骤 7] 最终验证...")
+        # === 步骤 8: 最终验证 ===
+        logger.debug("\n[步骤 8] 最终验证...")
         validation_result = self._final_validation(final_review, final_references)
 
         if validation_result["valid"]:
@@ -185,6 +195,126 @@ class SmartReviewGeneratorFinal:
 
         return unique_papers
 
+    async def _generate_comparison_matrix(
+        self,
+        topic: str,
+        papers: List[Dict],
+        language: str = "zh"
+    ) -> str:
+        """
+        生成文献对比矩阵（步骤 2）
+
+        返回 Markdown 格式的对比矩阵，包含：
+        - 观点对比
+        - 分歧原因分析
+        - 对比表格
+        """
+        if len(papers) < 3:
+            logger.debug(f"[对比矩阵] 论文数量不足 ({len(papers)} 篇)，跳过生成")
+            return ""
+
+        # 选择被引次数最高的前 10 篇论文进行对比
+        papers_sorted = sorted(papers, key=lambda p: p.get("cited_by_count", 0), reverse=True)
+        selected_papers = papers_sorted[:10]
+
+        # 构建论文信息
+        papers_info = []
+        for i, paper in enumerate(selected_papers, 1):
+            title = paper.get("title", "")
+            abstract = (paper.get("abstract") or "")[:400]
+            year = paper.get("year", "Unknown")
+            authors = paper.get("authors", [])
+            first_author = authors[0] if authors else "Unknown"
+            citations = paper.get("cited_by_count", 0)
+            papers_info.append(f"{i}. {title} ({year})\n   作者: {first_author}等\n   被引量: {citations}\n   摘要: {abstract}\n")
+
+        # 构建提示词
+        if language == "en":
+            prompt = f"""Please generate a literature comparison matrix for the research topic: "{topic}"
+
+Papers to analyze:
+{chr(10).join(papers_info)}
+
+Please output in the following Markdown format:
+
+## Literature Comparison Matrix
+
+### 1. Viewpoint Comparison
+List 2-3 groups of contrasting or different viewpoints, each supported by at least 2 papers.
+
+### 2. Divergence Reason Analysis
+For each group of contrasting viewpoints, deeply analyze possible reasons including:
+1. Sample differences (sample size, source, region, time, etc.)
+2. Methodological differences (measurement methods, analysis methods, model specifications, etc.)
+3. Contextual differences (institutional environment, market environment, industry characteristics, etc.)
+4. Theoretical differences (theoretical perspectives, assumptions, etc.)
+
+### 3. Comparison Table
+Create a comparison table with the following columns:
+| Researcher | Year | Sample | Core Viewpoint | Method | Possible Divergence Reasons |
+|------------|------|--------|----------------|--------|----------------------------|
+| ...        | ...  | ...    | ...            | ...    | ...                        |
+
+Requirements:
+- Specifically indicate which literature supports which viewpoint
+- Use the format "This divergence may stem from..." to explore reasons
+- Provide reasonable explanations even if just speculative
+- Demonstrate depth of analysis and critical thinking
+
+Output only the comparison matrix content in Markdown format."""
+        else:
+            prompt = f"""请为研究主题「{topic}」生成文献对比矩阵。
+
+待分析的论文：
+{chr(10).join(papers_info)}
+
+请按以下 Markdown 格式输出：
+
+## 文献对比矩阵
+
+### 1. 观点对比
+列出 2-3 组对立或不同的观点，每组至少包含 2 篇文献的支持。
+
+### 2. 分歧原因分析
+对每组对立观点，深入分析可能的原因，包括：
+1. 样本差异（样本量、来源、地域、时间等）
+2. 方法差异（测量方式、分析方法、模型设定等）
+3. 情境差异（制度环境、市场环境、行业特征等）
+4. 理论差异（理论视角、假设前提等）
+
+### 3. 对比表格
+创建一个对比表格，包含以下列：
+| 研究者 | 年份 | 样本 | 核心观点 | 方法 | 可能的分歧原因 |
+|--------|------|------|----------|------|----------------|
+| ...    | ...  | ...  | ...      | ...  | ...            |
+
+要求：
+- 具体指出哪篇文献支持哪个观点
+- 用"这种分歧可能源于..."的句式追问原因
+- 即使只是推测，也要给出合理的解释
+- 展示分析的深度和批判性思维
+
+只输出对比矩阵内容，使用 Markdown 格式。"""
+
+        try:
+            response = await self.llm_client.chat.completions.create(
+                model="deepseek-chat",
+                messages=[
+                    {"role": "system", "content": "你是一位学术分析专家，擅长进行深度文献对比和批判性分析。"},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.3,
+                max_tokens=3000
+            )
+
+            matrix_content = response.choices[0].message.content.strip()
+            logger.debug(f"[对比矩阵] 生成完成，长度: {len(matrix_content)}")
+            return matrix_content
+
+        except Exception as e:
+            logger.debug(f"[对比矩阵] 生成失败: {e}，跳过")
+            return ""
+
     async def _generate_raw_review(
         self,
         topic: str,
@@ -192,20 +322,22 @@ class SmartReviewGeneratorFinal:
         model: str,
         search_params: Dict[str, Any] = None,
         total_papers_count: int = 0,
-        language: str = "zh"
+        language: str = "zh",
+        comparison_matrix: str = ""
     ) -> Tuple[str, Set[int]]:
         """生成初始综述（不进行引用映射）"""
         paper_titles_list = self._format_paper_titles_list(papers, language)
         logger.debug(f"[准备] 论文标题列表 ({len(papers)} 篇)")
 
-        system_prompt = self._build_system_prompt(len(papers), language)
+        system_prompt = self._build_system_prompt(len(papers), language, comparison_matrix)
         user_message = self._build_user_message(
             topic=topic,
             paper_titles=paper_titles_list,
             paper_count=len(papers),
             search_params=search_params,
             total_papers_count=total_papers_count,
-            language=language
+            language=language,
+            comparison_matrix=comparison_matrix
         )
 
         messages = [
@@ -644,7 +776,7 @@ class SmartReviewGeneratorFinal:
                 lines.append(f"{i}. {title} ({year}) - {first_author}等")
         return "\n".join(lines)
 
-    def _build_system_prompt(self, paper_count: int, language: str = "zh") -> str:
+    def _build_system_prompt(self, paper_count: int, language: str = "zh", comparison_matrix: str = "") -> str:
         if language == "en":
             return f"""You are an academic writing expert, currently writing a high-quality literature review.
 
@@ -803,12 +935,35 @@ Table content must include:
         paper_count: int,
         search_params: Dict[str, Any] = None,
         total_papers_count: int = 0,
-        language: str = "zh"
+        language: str = "zh",
+        comparison_matrix: str = ""
     ) -> str:
         # 构建方法论描述
         methodology_description = self._build_methodology_description(
             search_params, total_papers_count, paper_count, language
         )
+
+        # 添加对比矩阵信息（如果有）
+        comparison_matrix_section = ""
+        if comparison_matrix:
+            if language == "en":
+                comparison_matrix_section = f"""
+**【Important】 Literature Comparison Matrix (Please Reference)**:
+The following is a pre-generated literature comparison matrix. Please use this as a reference when writing the review, and integrate the key insights into your analysis:
+
+{comparison_matrix}
+
+Please integrate the viewpoints and divergence reasons from this matrix into your review, and cite the corresponding papers where appropriate.
+"""
+            else:
+                comparison_matrix_section = f"""
+**【重要】文献对比矩阵（请参考使用）**：
+以下是预先生成的文献对比矩阵，请在撰写综述时参考此矩阵，将其中的关键洞察整合到你的分析中：
+
+{comparison_matrix}
+
+请将此矩阵中的观点和分歧原因整合到你的综述中，并在适当位置引用相应的文献。
+"""
 
         if language == "en":
             return f"""Please write a literature review on "{topic}".
@@ -825,6 +980,8 @@ When browsing the following paper list and writing the review, please strictly f
 3. **Quality reference**: On the basis of meeting the above conditions, appropriately reference citation counts
 
 {paper_titles}
+
+{comparison_matrix_section}
 
 **【Introduction must include】Literature Search and Screening Methodology**:
 At the end of the introduction (or as an independent "2. Literature Search Strategy" subsection), you must add a dedicated paragraph explaining your literature inclusion and exclusion criteria.
@@ -868,6 +1025,8 @@ Now please start writing. First design the review structure (outline), then writ
 3. **质量参考**：在满足上述条件的基础上，可适当参考被引次数
 
 {paper_titles}
+
+{comparison_matrix_section}
 
 **【引言部分必须包含】文献检索与筛选方法论**：
 在引言的末尾（或者作为独立的"2. 文献检索策略"小节），必须加入一个专门段落，说明你的文献纳入与排除标准（Inclusion/Exclusion Criteria）。
