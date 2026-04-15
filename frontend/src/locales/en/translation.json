@@ -379,6 +379,27 @@
       "retry": "Retry",
       "active_task": "You already have a review in progress. Redirecting to view progress..."
     },
-    "history": "📋 View Search History"
+    "history": "📋 View Search History",
+    "comparison_matrix": {
+      "title": "Generate Literature Comparison Matrix",
+      "description": "Get viewpoint comparisons, divergence analysis, and comparison tables for just $0.99",
+      "button": "Generate Now ($0.99)"
+    }
+  },
+  "comparison_matrix_page": {
+    "title": "Literature Comparison Matrix",
+    "loading": "Loading comparison matrix...",
+    "error": "Failed to load",
+    "not_found": "Comparison matrix data not found",
+    "go_search": "Search Papers",
+    "back": "Back",
+    "papers_used": "Papers used",
+    "papers_unit": "",
+    "time_used": "Generation time",
+    "time_unit": "sec",
+    "generated_at": "Generated at",
+    "export_markdown": "Export Markdown",
+    "continue_search": "Continue Search",
+    "coming_soon": "Export feature coming soon!"
   }
 }

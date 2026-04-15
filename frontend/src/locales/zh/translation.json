@@ -433,6 +433,27 @@
       "retry": "重试",
       "active_task": "您已有一个正在生成中的综述任务，即将跳转查看进度"
     },
-    "history": "📋 查看搜索历史"
+    "history": "📋 查看搜索历史",
+    "comparison_matrix": {
+      "title": "生成文献对比矩阵",
+      "description": "仅需 ¥5.00，即可获取观点对比、分歧原因分析和对比表格",
+      "button": "立即生成 (¥5.00)"
+    }
+  },
+  "comparison_matrix_page": {
+    "title": "文献对比矩阵",
+    "loading": "加载对比矩阵中...",
+    "error": "加载失败",
+    "not_found": "未找到对比矩阵数据",
+    "go_search": "去搜索文献",
+    "back": "返回",
+    "papers_used": "使用论文",
+    "papers_unit": "篇",
+    "time_used": "生成耗时",
+    "time_unit": "秒",
+    "generated_at": "生成时间",
+    "export_markdown": "导出 Markdown",
+    "continue_search": "继续搜索",
+    "coming_soon": "导出功能即将上线！"
   }
 }

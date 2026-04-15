@@ -566,11 +566,11 @@ export function SearchPapersPage() {
           <div className="sp-comparison-cta-card">
             <div className="sp-comparison-icon">📊</div>
             <div className="sp-comparison-content">
-              <h3>生成文献对比矩阵</h3>
-              <p>仅需 ¥5.00，即可获取观点对比、分歧原因分析和对比表格</p>
+              <h3>{t('search_papers.comparison_matrix.title')}</h3>
+              <p>{t('search_papers.comparison_matrix.description')}</p>
             </div>
             <button className="sp-comparison-btn" onClick={() => alert('文献对比矩阵功能即将上线！')}>
-              立即生成 (¥5.00)
+              {t('search_papers.comparison_matrix.button')}
             </button>
           </div>
         </div>
