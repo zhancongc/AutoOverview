@@ -497,7 +497,7 @@ export function SearchPapersPage() {
                 className="sp-history-btn"
                 onClick={() => navigate('/profile?tab=searches')}
               >
-                📋 查看搜索历史
+                {t('search_papers.history')}
               </button>
             </div>
           )}

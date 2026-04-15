@@ -378,6 +378,7 @@
       "generic": "Something went wrong. Please try again.",
       "retry": "Retry",
       "active_task": "You already have a review in progress. Redirecting to view progress..."
-    }
+    },
+    "history": "📋 View Search History"
   }
 }
