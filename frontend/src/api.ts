@@ -521,4 +521,46 @@ export const api = {
     });
     return response.data;
   },
+
+  // ==================== 对比矩阵 API ====================
+
+  // 提交对比矩阵生成任务
+  async generateComparisonMatrix(
+    topic: string,
+    options: {
+      reuseTaskId?: string;
+      language?: string;
+    } = {}
+  ): Promise<TaskSubmitResponse> {
+    const token = localStorage.getItem('auth_token');
+    const headers: Record<string, string> = {};
+    if (token) headers.Authorization = `Bearer ${token}`;
+    const response = await axios.post(`${API_BASE}/generate-comparison-matrix`, {
+      topic,
+      reuse_task_id: options.reuseTaskId ?? '',
+      language: options.language ?? 'zh'
+    }, { headers });
+    return response.data;
+  },
+
+  // 获取对比矩阵结果
+  async getComparisonMatrix(taskId: string): Promise<{
+    success: boolean;
+    data: {
+      task_id: string;
+      topic: string;
+      comparison_matrix: string;
+      statistics: {
+        papers_used: number;
+        total_time_seconds: number;
+        generated_at: string;
+      };
+    };
+  }> {
+    const token = localStorage.getItem('auth_token');
+    const headers: Record<string, string> = {};
+    if (token) headers.Authorization = `Bearer ${token}`;
+    const response = await axios.get(`${API_BASE}/comparison-matrix/${taskId}`, { headers });
+    return response.data;
+  },
 };

@@ -50,6 +50,7 @@ export function SearchPapersPage() {
   const [searchTaskId, setSearchTaskId] = useState<string | null>(null)
   const [isChineseSite, setIsChineseSite] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
+  const [isGeneratingComparisonMatrix, setIsGeneratingComparisonMatrix] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
   const [showLoginModal, setShowLoginModal] = useState(false)
   const [pendingSearchTopic, setPendingSearchTopic] = useState('')
@@ -335,6 +336,51 @@ export function SearchPapersPage() {
     }
   }
 
+  const handleGenerateComparisonMatrix = async () => {
+    if (!topic.trim()) return
+
+    const loggedIn = checkLoggedIn()
+    if (!loggedIn) {
+      setPendingSearchTopic(topic)
+      setShowLoginModal(true)
+      return
+    }
+
+    // 检查是否已有进行中的任务
+    try {
+      const activeTask = await api.getActiveTask()
+      if (activeTask.active && activeTask.task_id) {
+        setError(t('search_papers.error.active_task', '您已有一个正在生成中的任务'))
+        setTimeout(() => {
+          navigate(`/?task_id=${activeTask.task_id}#generate`)
+        }, 1500)
+        return
+      }
+    } catch {
+      // 获取失败不阻塞，继续提交
+    }
+
+    setIsGeneratingComparisonMatrix(true)
+    try {
+      const language = isChineseSite ? 'zh' : 'en'
+      const response = await api.generateComparisonMatrix(topic, {
+        reuseTaskId: searchTaskId || '',
+        language: language
+      })
+
+      if (response.success && response.data?.task_id) {
+        // 跳转到对比矩阵页面
+        navigate(`/comparison-matrix?task_id=${response.data.task_id}`)
+      } else {
+        setError(response.message || t('search_papers.error.generic'))
+      }
+    } catch (err: any) {
+      setError(err.response?.data?.detail || t('search_papers.error.generic'))
+    } finally {
+      setIsGeneratingComparisonMatrix(false)
+    }
+  }
+
   const sortPapers = useCallback((papers: Paper[], mode: SortMode): Paper[] => {
     const sorted = [...papers]
     if (mode === 'year') {
@@ -569,8 +615,15 @@ export function SearchPapersPage() {
               <h3>{t('search_papers.comparison_matrix.title')}</h3>
               <p>{t('search_papers.comparison_matrix.description')}</p>
             </div>
-            <button className="sp-comparison-btn" onClick={() => alert('文献对比矩阵功能即将上线！')}>
-              {t('search_papers.comparison_matrix.button')}
+            <button
+              className="sp-comparison-btn"
+              onClick={handleGenerateComparisonMatrix}
+              disabled={isGeneratingComparisonMatrix}
+            >
+              {isGeneratingComparisonMatrix
+                ? (t('search_papers.input.button_searching') || '生成中...')
+                : t('search_papers.comparison_matrix.button')
+              }
             </button>
           </div>
         </div>
