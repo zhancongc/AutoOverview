@@ -64,7 +64,7 @@ class PaperSearchAgent:
         ]
 
         tools = self._get_tools_definition(search_years)
-        max_iterations = 15
+        max_iterations = 4  # 限制迭代次数，防止超时
         iteration = 0
 
         while iteration < max_iterations:
@@ -80,24 +80,26 @@ class PaperSearchAgent:
             )
 
             assistant_message = response.choices[0].message
+            finish_reason = response.choices[0].finish_reason
+            logger.debug(f"  [迭代 {iteration}] finish_reason={finish_reason}, tool_calls={len(assistant_message.tool_calls or [])}, collected={len(self.collected_papers)}")
 
             if assistant_message.tool_calls:
                 messages.append(assistant_message)
-                tool_responses = []
 
-                for tool_call in assistant_message.tool_calls:
+                # 并发执行所有工具调用（大幅减少等待时间）
+                async def _exec_tool(tool_call):
                     function_name = tool_call.function.name
                     function_args = json.loads(tool_call.function.arguments)
-
-                    result = await self._handle_tool_call(
-                        function_name, function_args
-                    )
-
-                    tool_responses.append({
+                    result = await self._handle_tool_call(function_name, function_args)
+                    return {
                         "role": "tool",
                         "tool_call_id": tool_call.id,
                         "content": json.dumps(result, ensure_ascii=False)
-                    })
+                    }
+
+                tool_responses = await asyncio.gather(*[
+                    _exec_tool(tc) for tc in assistant_message.tool_calls
+                ])
 
                 messages.extend(tool_responses)
                 logger.debug(f"  [迭代 {iteration}] 已收集 {len(self.collected_papers)} 篇去重论文, 共调用 {self.search_count} 次搜索")
@@ -116,6 +118,54 @@ class PaperSearchAgent:
         # 转换为列表
         all_papers = list(self.collected_papers.values())
 
+        # 兜底：如果 LLM 没找到任何论文，用主题直接做一次关键词搜索
+        if len(all_papers) == 0:
+            logger.warning(f"[PaperSearchAgent] 搜索结果为空（{self.search_count} 次搜索），执行兜底搜索")
+            try:
+                # 用中文主题直接搜
+                fallback_papers = await self.ss_service.search_papers(
+                    query=topic,
+                    years_ago=search_years,
+                    limit=target_count,
+                    sort="citationCount:desc"
+                )
+                for paper in fallback_papers:
+                    paper_id = paper.get("id") or paper.get("paperId")
+                    if paper_id and paper_id not in self.collected_papers:
+                        self.collected_papers[paper_id] = paper
+                all_papers = list(self.collected_papers.values())
+                logger.info(f"[PaperSearchAgent] 中文兜底搜索找到 {len(all_papers)} 篇论文")
+
+                # 如果中文也没结果，用翻译后的英文关键词再搜
+                if len(all_papers) == 0:
+                    # 尝试用 DeepSeek 翻译并提取英文关键词
+                    translate_response = await self.llm_client.chat.completions.create(
+                        model=self.model,
+                        messages=[
+                            {"role": "system", "content": "你是一个学术翻译助手。将用户给定的中文学术主题翻译为英文，提取3-5个最适合在Semantic Scholar搜索的英文关键词组合（用AND连接）。只返回搜索查询，不要其他内容。"},
+                            {"role": "user", "content": f"翻译以下学术主题为英文搜索词：{topic}"}
+                        ],
+                        temperature=0.1,
+                        max_tokens=200
+                    )
+                    en_query = translate_response.choices[0].message.content.strip()
+                    logger.info(f"[PaperSearchAgent] 英文兜底搜索词: {en_query}")
+
+                    en_papers = await self.ss_service.search_papers(
+                        query=en_query,
+                        years_ago=search_years,
+                        limit=target_count,
+                        sort="citationCount:desc"
+                    )
+                    for paper in en_papers:
+                        paper_id = paper.get("id") or paper.get("paperId")
+                        if paper_id and paper_id not in self.collected_papers:
+                            self.collected_papers[paper_id] = paper
+                    all_papers = list(self.collected_papers.values())
+                    logger.info(f"[PaperSearchAgent] 英文兜底搜索找到 {len(all_papers)} 篇论文")
+            except Exception as e:
+                logger.error(f"[PaperSearchAgent] 兜底搜索失败: {e}")
+
         # 按引用量排序
         all_papers.sort(key=lambda p: p.get("cited_by_count", 0), reverse=True)
 
@@ -125,69 +175,44 @@ class PaperSearchAgent:
     # ==================== Prompt 构建 ====================
 
     def _build_system_prompt(self, search_years: int, target_count: int) -> str:
-        return f"""你是一位学术文献检索专家。你的任务是根据用户给定的研究主题，制定检索策略，通过工具调用 Semantic Scholar API 检索相关文献。
+        return f"""你是一位学术文献检索专家。你的任务是根据用户给定的研究主题，通过工具调用 Semantic Scholar API 检索相关文献。
 
-## 你的目标
-收集 {target_count} 篇左右的高质量、高相关性学术文献。
+## 关键约束：必须一次性批量调用所有工具
+- **你只有 2 轮工具调用机会**，必须在第一轮就把所有搜索全部发出
+- **禁止逐个调用工具**。你必须在一次回复中同时调用所有需要的工具（5-10 个）
+- 第一轮：同时发起所有精确标题搜索 + 关键词搜索
+- 第二轮（如需要）：根据第一轮结果补充搜索
 
-## 检索策略（必须遵循）
+## 检索策略
 
-### 第一步：分析主题
-分析用户的研究主题，识别出：
-1. 该领域的 3-5 个核心子主题/关键技术方向
-2. 该领域的核心模型、方法、数据集名称（如 CLIP、DALL-E、Transformer、ImageNet）
-3. 该领域的代表性研究团队/作者
+### 1. 锚定核心论文（精确标题搜索）
+识别该领域最核心的 3-5 篇论文，使用 `search_by_exact_title` 搜索。
 
-### 第二步：生成检索词
-为每个子主题生成 **英文** 检索词（Semantic Scholar 英文效果远好于中文）。
-
+### 2. 关键词搜索（覆盖各子方向）
+为每个子方向生成 **英文** 检索词，使用 `search_papers` 搜索。
 检索词要求：
-- 精准：使用该领域的标准术语，不要用泛化词
-- 具体：优先使用具体模型名/方法名（如 "vision-language model" 而非 "multimodal learning"）
-- 组合：使用 AND/OR 组合关键词，缩小范围
+- 精准：使用该领域的标准术语
+- 具体：优先使用具体方法名（如 "micro-expression recognition" 而非 "facial expression"）
+- 组合：使用 AND/OR 缩小范围
 
-检索词示例：
-- 好的: "vision-language model AND contrastive learning", "multimodal large language model", "image captioning transformer"
-- 差的: "multimodal data processing", "machine learning model", "AI application"
-
-### 第三步：锚定核心论文
-识别该领域最核心、最具代表性的 3-5 篇论文（奠基性工作、里程碑论文），
-使用 `search_by_exact_title` 精确搜索这些论文，确保不遗漏。
-
-例如主题"多模态大模型"，核心论文包括：
-- "Learning Transferable Visual Models From Natural Language Supervision" (CLIP)
-- "Visual ChatGPT: Talking, Drawing and Editing with Large Foundation Models"
-- "LLaVA: Visual Instruction Tuning"
-
-### 第四步：评估与补充
-每次检索后，评估结果：
-- 如果某子主题的文献不足，换一组检索词补充
-- 如果发现新的关键词/方向，追加检索
-- 合理控制总调用次数
+好的检索词: "micro-expression recognition AND deep learning", "micro-expression spotting AND video sequence"
+差的检索词: "facial expression analysis", "machine learning"
 
 ## 工具说明
-
-你有两个工具可用：
 
 1. **search_papers(query, limit, sort)**: 关键词搜索
    - query: 英文检索词，支持 AND/OR/NOT 布尔运算
    - limit: 返回数量（建议 20-50）
    - sort: "citationCount:desc" 按引用排序，"publicationDate:desc" 按时间排序
-   - 返回: 论文列表（标题、年份、引用量、论文ID）
 
 2. **search_by_exact_title(title)**: 精确标题搜索
-   - title: 论文的完整英文标题
-   - 用于锚定已知的核心论文
-   - 返回: 单篇论文详情或空
+   - title: 论文的完整英文标题（用于锚定已知的核心论文，不限年份）
 
 ## 时间范围
-搜索近 {search_years} 年的文献。
+关键词搜索近 {search_years} 年的文献。精确标题搜索不受年份限制。
 
 ## 输出要求
-检索完成后，请简要总结：
-- 按子主题分类的检索结果统计
-- 检索策略是否有效
-- 是否有重要方向被遗漏"""
+检索完成后，简要总结检索结果。"""
 
     def _build_user_message(self, topic: str, target_count: int) -> str:
         return f"""请为以下研究主题检索相关学术文献：
@@ -196,7 +221,7 @@ class PaperSearchAgent:
 
 **目标数量**: 约 {target_count} 篇高质量相关文献
 
-请开始制定检索策略并执行检索。"""
+请一次性批量调用所有工具完成检索。"""
 
     # ==================== Tools 定义 ====================
 

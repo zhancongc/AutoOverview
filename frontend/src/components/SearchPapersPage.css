@@ -46,180 +46,20 @@ html.intl .search-papers-page {
   flex-shrink: 0;
 }
 
-/* ==================== Navigation ==================== */
-.search-papers-page .sp-nav {
-  background: var(--cream-white);
-  border-bottom: 1px solid var(--light-gray);
-  padding: 0.5rem 2rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+/* ==================== Navigation (uses shared classes from SimpleApp.css) ==================== */
+
+/* Active nav link on search page */
+.search-papers-page .nav-links a.active {
+  color: var(--academic-red);
+}
+
+/* Hero needs top padding for fixed nav */
+.search-papers-page .home-nav {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   z-index: 100;
-}
-
-.search-papers-page .sp-nav-logo {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-weight: 600;
-  font-size: 1.1rem;
-  color: var(--academic-blue-primary);
-  cursor: pointer;
-  text-decoration: none;
-}
-
-.search-papers-page .sp-nav-logo .logo-icon {
-  font-size: 1.35rem;
-}
-
-.search-papers-page .sp-nav-links {
-  display: flex;
-  gap: 1.5rem;
-  align-items: center;
-}
-
-.search-papers-page .sp-nav-links a {
-  color: var(--text-gray);
-  text-decoration: none;
-  font-weight: 500;
-  font-size: 0.875rem;
-  transition: color 0.2s;
-}
-
-.search-papers-page .sp-nav-links a:hover,
-.search-papers-page .sp-nav-links a.active {
-  color: var(--academic-blue-primary);
-}
-
-.search-papers-page .sp-nav-actions {
-  display: flex;
-  gap: 1rem;
-  align-items: center;
-}
-
-.search-papers-page .sp-nav-btn {
-  padding: 0.5rem 1.25rem;
-  border-radius: 8px;
-  font-size: 0.875rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  border: none;
-  text-decoration: none;
-}
-
-.search-papers-page .sp-nav-btn-primary {
-  background: var(--academic-blue-primary);
-  color: var(--cream-white);
-}
-
-.search-papers-page .sp-nav-btn-primary:hover {
-  background: var(--academic-blue-secondary);
-}
-
-/* Mobile menu toggle */
-.search-papers-page .sp-mobile-toggle {
-  display: none;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0.5rem;
-}
-
-.search-papers-page .sp-mobile-toggle .hamburger {
-  display: block;
-  width: 22px;
-  height: 2px;
-  background: var(--charcoal);
-  position: relative;
-  transition: background 0.2s;
-}
-
-.search-papers-page .sp-mobile-toggle .hamburger::before,
-.search-papers-page .sp-mobile-toggle .hamburger::after {
-  content: '';
-  display: block;
-  width: 22px;
-  height: 2px;
-  background: var(--charcoal);
-  position: absolute;
-  left: 0;
-  transition: transform 0.2s;
-}
-
-.search-papers-page .sp-mobile-toggle .hamburger::before { top: -7px; }
-.search-papers-page .sp-mobile-toggle .hamburger::after { top: 7px; }
-
-/* Mobile sidebar overlay */
-.search-papers-page .sp-sidebar-overlay {
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.3);
-  z-index: 200;
-}
-
-/* Mobile sidebar */
-.search-papers-page .sp-sidebar {
-  display: none;
-  position: fixed;
-  top: 0;
-  right: 0;
-  width: 280px;
-  height: 100vh;
-  background: var(--cream-white);
-  box-shadow: -2px 0 12px rgba(0,0,0,0.1);
-  z-index: 201;
-  padding: 1.5rem;
-  flex-direction: column;
-}
-
-.search-papers-page .sp-sidebar-open {
-  display: flex;
-}
-
-.search-papers-page .sp-sidebar-overlay-open {
-  display: block;
-}
-
-.search-papers-page .sp-sidebar-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2rem;
-}
-
-.search-papers-page .sp-sidebar-close {
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  cursor: pointer;
-  color: var(--text-gray);
-  padding: 0.25rem;
-}
-
-.search-papers-page .sp-sidebar-nav {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.search-papers-page .sp-sidebar-nav a {
-  color: var(--charcoal);
-  text-decoration: none;
-  padding: 0.75rem 1rem;
-  border-radius: 8px;
-  font-weight: 500;
-  transition: background 0.2s;
-}
-
-.search-papers-page .sp-sidebar-nav a:hover {
-  background: var(--academic-blue-light);
 }
 
 /* ==================== Hero Section ==================== */
@@ -409,17 +249,20 @@ html.intl .search-papers-page {
 
 /* ==================== Loading State ==================== */
 .search-papers-page .sp-loading {
-  max-width: 1000px;
+  width: 100%;
+  max-width: 900px;
   margin: 0 auto 2rem;
   padding: 0 2rem;
   text-align: center;
 }
 
 .search-papers-page .sp-loading-card {
-  background: #f7fafc;
-  border: 1px solid var(--light-gray);
-  border-radius: 12px;
-  padding: 2rem;
+  width: 100%;
+  background: var(--cream-white);
+  border: 2px solid var(--light-gray);
+  border-radius: 20px;
+  padding: 2.5rem;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.1);
 }
 
 .search-papers-page .sp-loading-title {

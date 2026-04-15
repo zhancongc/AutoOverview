@@ -7,6 +7,8 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { api } from '../api'
 import { isLoggedIn as checkLoggedIn } from '../authApi'
+import { LoginModal } from './LoginModal'
+import './SimpleApp.css'
 import './SearchPapersPage.css'
 
 interface Paper {
@@ -49,6 +51,8 @@ export function SearchPapersPage() {
   const [isChineseSite, setIsChineseSite] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
+  const [showLoginModal, setShowLoginModal] = useState(false)
+  const [pendingSearchTopic, setPendingSearchTopic] = useState('')
   const [shouldScrollToResults, setShouldScrollToResults] = useState(false)
   const statusIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
@@ -147,7 +151,8 @@ export function SearchPapersPage() {
 
     // 搜索必须登录
     if (!checkLoggedIn()) {
-      navigate('/login')
+      setPendingSearchTopic(topic)
+      setShowLoginModal(true)
       return
     }
 
@@ -341,7 +346,49 @@ export function SearchPapersPage() {
   }, [])
 
   const sortedPapers = sortPapers(papers, sortMode)
-  const loggedIn = checkLoggedIn()
+  const [loggedIn, setLoggedIn] = useState(checkLoggedIn())
+
+  const handleLoginSuccess = useCallback(() => {
+    setShowLoginModal(false)
+    setLoggedIn(true)
+    // 如果有待搜索的主题，自动继续搜索
+    if (pendingSearchTopic) {
+      setTopic(pendingSearchTopic)
+      setPendingSearchTopic('')
+      // 延迟执行搜索，等 state 更新
+      setTimeout(() => {
+        // 直接调用搜索 API
+        const doSearch = async () => {
+          setIsLoading(true)
+          setError('')
+          setPapers([])
+          setStatistics(null)
+          setHasSearched(true)
+          setSortMode('citations')
+          setSearchTaskId(null)
+          localStorage.setItem('search_papers_topic', pendingSearchTopic)
+          try {
+            const response = await api.searchPapersOnly(pendingSearchTopic, {
+              targetCount: 30,
+              searchYears: 10
+            })
+            if (response.success && response.data) {
+              setPapers(response.data.papers || [])
+              setStatistics(response.data.statistics || null)
+              setSearchTaskId(response.data.task_id || null)
+            } else {
+              setError(response.message || 'Search failed')
+            }
+          } catch (err: any) {
+            setError(err.response?.data?.detail || t('search_papers.error.generic'))
+          } finally {
+            setIsLoading(false)
+          }
+        }
+        doSearch()
+      }, 100)
+    }
+  }, [pendingSearchTopic, t])
 
   const statusMessages = [
     t('search_papers.loading.status_1'),
@@ -353,53 +400,66 @@ export function SearchPapersPage() {
   return (
     <div className="search-papers-page">
       {/* Navigation */}
-      <nav className="sp-nav">
-        <a className="sp-nav-logo" href="/" onClick={(e) => { e.preventDefault(); navigate('/') }}>
+      <nav className="home-nav">
+        <div className="nav-logo" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
           <span className="logo-icon">📚</span>
           <span className="logo-text">AutoOverview</span>
-        </a>
-        <div className="sp-nav-links">
+        </div>
+        <div className="nav-links">
           <a href="/search-papers" className="active">{t('search_papers.nav.search')}</a>
           <a href="/" onClick={(e) => { e.preventDefault(); navigate('/') }}>{t('search_papers.nav.generate')}</a>
           <a href="/#pricing" onClick={(e) => { e.preventDefault(); navigate('/#pricing') }}>{t('search_papers.nav.pricing')}</a>
         </div>
-        <div className="sp-nav-actions">
+        <div className="nav-actions">
           {loggedIn ? (
-            <button className="sp-nav-btn sp-nav-btn-primary" onClick={() => navigate('/profile')}>
-              {t('home.nav.profile')}
+            <div className="user-menu">
+              <button className="user-info" onClick={() => navigate('/profile')}>
+                <span className="user-avatar">👤</span>
+                <span className="user-name">{t('home.nav.profile')}</span>
+              </button>
+            </div>
+          ) : (
+            <div className="auth-buttons">
+              <button className="nav-btn nav-btn-register" onClick={() => setShowLoginModal(true)}>
+                {t('home.nav.login_register')}
+              </button>
+            </div>
+          )}
+        </div>
+        <button className="mobile-menu-toggle" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+          <span className={`hamburger ${mobileMenuOpen ? 'open' : ''}`} />
+        </button>
+      </nav>
+
+      {/* Mobile sidebar overlay */}
+      {mobileMenuOpen && (
+        <div className="mobile-sidebar-overlay" onClick={() => setMobileMenuOpen(false)} />
+      )}
+
+      {/* Mobile sidebar */}
+      <aside className={`mobile-sidebar ${mobileMenuOpen ? 'sidebar-open' : ''}`}>
+        <div className="sidebar-header">
+          <span className="logo-icon">📚</span>
+          <span className="logo-text">AutoOverview</span>
+          <button className="sidebar-close" onClick={() => setMobileMenuOpen(false)}>&times;</button>
+        </div>
+        <nav className="sidebar-links">
+          <a href="/search-papers" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false) }}>{t('search_papers.nav.search')}</a>
+          <a href="/" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/') }}>{t('search_papers.nav.generate')}</a>
+          <a href="/#pricing" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/#pricing') }}>{t('search_papers.nav.pricing')}</a>
+        </nav>
+        <div className="sidebar-bottom">
+          {loggedIn ? (
+            <button className="sidebar-user-btn" onClick={() => { setMobileMenuOpen(false); navigate('/profile') }}>
+              <span className="user-avatar">👤</span>
+              <span className="user-name">{t('home.nav.profile')}</span>
             </button>
           ) : (
-            <button className="sp-nav-btn sp-nav-btn-primary" onClick={() => navigate('/login')}>
+            <button className="nav-btn nav-btn-register" onClick={() => { setMobileMenuOpen(false); setShowLoginModal(true) }}>
               {t('home.nav.login_register')}
             </button>
           )}
         </div>
-        <button className="sp-mobile-toggle" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
-          <span className="hamburger" />
-        </button>
-      </nav>
-
-      {/* Mobile sidebar */}
-      <div
-        className={`sp-sidebar-overlay ${mobileMenuOpen ? 'sp-sidebar-overlay-open' : ''}`}
-        onClick={() => setMobileMenuOpen(false)}
-      />
-      <aside className={`sp-sidebar ${mobileMenuOpen ? 'sp-sidebar-open' : ''}`}>
-        <div className="sp-sidebar-header">
-          <span className="logo-icon">📚</span>
-          <span className="logo-text">AutoOverview</span>
-          <button className="sp-sidebar-close" onClick={() => setMobileMenuOpen(false)}>&times;</button>
-        </div>
-        <nav className="sp-sidebar-nav">
-          <a href="/search-papers" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false) }}>{t('search_papers.nav.search')}</a>
-          <a href="/" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/') }}>{t('search_papers.nav.generate')}</a>
-          <a href="/#pricing" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/#pricing') }}>{t('search_papers.nav.pricing')}</a>
-          {loggedIn ? (
-            <a href="/profile" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/profile') }}>{t('home.nav.profile')}</a>
-          ) : (
-            <a href="/login" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/login') }}>{t('home.nav.login_register')}</a>
-          )}
-        </nav>
       </aside>
 
       {/* Hero */}
@@ -591,7 +651,7 @@ export function SearchPapersPage() {
       )}
 
       {/* CTA Funnel */}
-      {hasSearched && !isLoading && (
+      {hasSearched && !isLoading && papers.length > 0 && (
         <div className="sp-cta">
           <div className="sp-cta-card">
             <h2 className="sp-cta-title">{t('search_papers.cta.title')}</h2>
@@ -624,6 +684,14 @@ export function SearchPapersPage() {
           </a>
         )}
       </footer>
+
+      {/* Login Modal */}
+      {showLoginModal && (
+        <LoginModal
+          onClose={() => setShowLoginModal(false)}
+          onLoginSuccess={handleLoginSuccess}
+        />
+      )}
     </div>
   )
 }

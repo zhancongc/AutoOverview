@@ -306,6 +306,8 @@ class SemanticScholarService:
         使用 Semantic Scholar 的 paper/search 端点，
         以标题作为查询词，取第一条结果。
 
+        注意：不受年份限制，经典论文无论发表年份都能被找到。
+
         Args:
             title: 论文的完整英文标题
 
@@ -315,14 +317,16 @@ class SemanticScholarService:
         try:
             papers = await self.search_papers(
                 query=f'title:"{title}"',
-                limit=3
+                limit=3,
+                years_ago=50  # 不限制年份，经典论文也能找到
             )
 
             if not papers:
                 # 回退：用标题直接搜索
                 papers = await self.search_papers(
                     query=title,
-                    limit=5
+                    limit=5,
+                    years_ago=50  # 不限制年份
                 )
 
             if papers:
