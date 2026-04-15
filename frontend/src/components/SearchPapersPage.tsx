@@ -560,6 +560,22 @@ export function SearchPapersPage() {
         </div>
       )}
 
+      {/* Comparison Matrix CTA */}
+      {!isLoading && papers.length > 0 && (
+        <div className="sp-comparison-cta">
+          <div className="sp-comparison-cta-card">
+            <div className="sp-comparison-icon">📊</div>
+            <div className="sp-comparison-content">
+              <h3>生成文献对比矩阵</h3>
+              <p>仅需 ¥5.00，即可获取观点对比、分歧原因分析和对比表格</p>
+            </div>
+            <button className="sp-comparison-btn" onClick={() => alert('文献对比矩阵功能即将上线！')}>
+              立即生成 (¥5.00)
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Results */}
       {!isLoading && papers.length > 0 && (
         <div className="sp-results">

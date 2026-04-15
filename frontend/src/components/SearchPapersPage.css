@@ -342,6 +342,67 @@ html.intl .search-papers-page {
   background: var(--academic-blue-secondary);
 }
 
+/* ==================== Comparison Matrix CTA ==================== */
+.search-papers-page .sp-comparison-cta {
+  max-width: 1000px;
+  margin: 0 auto 1.5rem;
+  padding: 0 2rem;
+}
+
+.search-papers-page .sp-comparison-cta-card {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  background: linear-gradient(135deg, #fef5e7 0%, #fdebd0 100%);
+  border: 2px solid #f39c12;
+  border-radius: 16px;
+  padding: 1.5rem 2rem;
+  box-shadow: 0 4px 16px rgba(243, 156, 18, 0.15);
+}
+
+.search-papers-page .sp-comparison-icon {
+  font-size: 2.5rem;
+  flex-shrink: 0;
+}
+
+.search-papers-page .sp-comparison-content {
+  flex: 1;
+}
+
+.search-papers-page .sp-comparison-content h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #d35400;
+  margin: 0 0 0.5rem;
+}
+
+.search-papers-page .sp-comparison-content p {
+  font-size: 0.95rem;
+  color: #7b4f00;
+  margin: 0;
+  line-height: 1.6;
+}
+
+.search-papers-page .sp-comparison-btn {
+  background: #e67e22;
+  color: white;
+  border: none;
+  padding: 0.875rem 1.75rem;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(230, 126, 34, 0.3);
+}
+
+.search-papers-page .sp-comparison-btn:hover {
+  background: #d35400;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(230, 126, 34, 0.4);
+}
+
 /* ==================== Statistics Bar ==================== */
 .search-papers-page .sp-statistics {
   max-width: 1000px;
@@ -757,5 +818,16 @@ html.intl .search-papers-page {
 
   .search-papers-page .sp-sources {
     padding: 0 1.25rem;
+  }
+
+  .search-papers-page .sp-comparison-cta {
+    padding: 0 1.25rem;
+  }
+
+  .search-papers-page .sp-comparison-cta-card {
+    flex-direction: column;
+    text-align: center;
+    padding: 1.5rem;
+    gap: 1rem;
   }
 }
