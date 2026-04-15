@@ -413,8 +413,8 @@ export function ReviewViewerInternational({ content, papers = [], hasPurchased =
         >
           {!hasPurchased && (
             <div className="review-watermark" onClick={onRequestUnlock} style={onRequestUnlock ? { cursor: 'pointer' } : undefined}>
-              <span className="watermark-text">AutoOverview Preview</span>
-              <span className="watermark-subtext">Unlock to export Word without watermark</span>
+              <span className="watermark-text">AI-Assisted Draft — Review Required</span>
+              <span className="watermark-subtext">This content is AI-generated. Please review and add your own analysis.</span>
             </div>
           )}
           <div className="review-body">

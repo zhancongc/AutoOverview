@@ -24,7 +24,7 @@ const PAYPAL_PRICING = {
     credits: 3,
     currency: 'USD',
     features: [
-      '3 complete literature reviews',
+      '3 AI-assisted literature analyses',
       'DOI-verifiable citations',
       'Standard citation formats',
       'Word export',

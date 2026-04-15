@@ -2,10 +2,10 @@
   "_comment": "English translation for international academic market",
   "home": {
     "hero": {
-      "accent": "Production Tool · Not Just a Search Assistant",
-      "title": "Deliver <highlight>Submission-Ready Structured Drafts</highlight>",
-      "subtitle": "Not fragmented summaries, but complete structured drafts. Built on verified CrossRef/Semantic Scholar metadata, AI fills the content. All citations DOI-verifiable.",
-      "cta_button": "Start Generating Now",
+      "accent": "AI Research Assistant · Literature Review Copilot",
+      "title": "Accelerate Your <highlight>Literature Review</highlight> Research",
+      "subtitle": "AI-assisted literature analysis with verified citations. Extract key insights, build structured outlines, and draft review frameworks — all backed by real paper metadata.",
+      "cta_button": "Start Your Research",
       "cta_hint": "Free to try • No credit card required",
       "search_papers_cta": "Search Papers — Free"
     },
@@ -19,16 +19,16 @@
       "label": "Data sources:"
     },
     "input": {
-      "title": "Generate Your Structured Draft",
-      "subtitle": "Sign up and get 1 free review. Enter a topic, get a submission-ready draft.",
+      "title": "Start Your Literature Analysis",
+      "subtitle": "Sign up and get 1 free review. Enter a topic, get an AI-assisted literature analysis draft.",
       "language": "Language:",
       "language_zh": "中文",
       "language_en": "English",
       "language_hint_zh": "For Chinese journals",
       "language_hint_en": "For international journals",
       "placeholder": "Enter your research topic, e.g., Deep Learning in Image Recognition",
-      "button": "Generate My Structured Draft",
-      "button_generating": "Generating...",
+      "button": "Analyze Literature",
+      "button_generating": "Analyzing...",
       "credits_remaining": "credits remaining",
       "retry": "Retry",
       "how_it_works": "How It Works",
@@ -41,40 +41,40 @@
     },
     "features": {
       "title": "Why Choose AutoOverview?",
-      "papers": "Built on Real Paper Metadata, AI Only Fills Content",
-      "papers_desc": "Review skeleton built on verified papers. Includes Anti-Hallucination Report (DOI verification list).",
+      "papers": "Real Paper Metadata, AI-Assisted Analysis",
+      "papers_desc": "Literature review framework built on verified papers. AI assists in extracting key insights and structuring your analysis.",
       "time": "Focus on Last 6 Years - Frontier Research Only",
       "time_desc": "Academic research prioritizes recency. We focus on the latest literature, not generic overviews.",
-      "format": "Complete Structured Draft, Ready for Word",
-      "format_desc": "Background → Current Status → Debates → Conclusions → Future Directions. Academic-grade Outline logic."
+      "format": "Structured Draft Framework, Ready for Your Input",
+      "format_desc": "Background → Current Status → Debates → Conclusions → Future Directions. A structured framework for you to build upon."
     },
     "comparison": {
       "title": "AutoOverview vs Elicit",
-      "subtitle": "Why we're a production tool, not just a search assistant",
+      "subtitle": "Why researchers choose AutoOverview",
       "free_ai": {
         "title": "Elicit / Scite / Paperpal",
         "con1": "❌ Fragmented summary aggregation, not structured drafts",
         "con2": "❌ Cannot submit directly, requires manual assembly",
         "con3": "❌ Lacks academic-grade Outline logic",
-        "con4": "❌ Just a search assistant, not a production tool"
+        "con4": "❌ Just a search assistant, not a research copilot"
       },
       "autooverview": {
         "title": "AutoOverview",
-        "pro1": "✅ Delivers submission-ready structured drafts",
+        "pro1": "✅ AI-assisted structured literature analysis",
         "pro2": "✅ Built on real paper metadata, with DOI verification",
         "pro3": "✅ Academic-grade Outline: Background → Debates → Conclusions",
-        "pro4": "✅ Production tool for researchers, not just a search aid"
+        "pro4": "✅ Research copilot that accelerates your workflow"
       }
     },
     "process": {
       "title": "How It Works",
-      "subtitle": "Three steps to your structured draft",
+      "subtitle": "Three steps to accelerate your research",
       "step1_title": "Enter Research Topic",
       "step1_desc": "Enter your topic. AI analyzes and retrieves frontier research from the last 6 years.",
-      "step2_title": "AI Builds Skeleton & Fills Content",
-      "step2_desc": "Builds Outline from real paper metadata (Background → Debates → Conclusions), AI fills content.",
-      "step3_title": "Get Draft & Verification Report",
-      "step3_desc": "Download Word draft + Anti-Hallucination Report (DOI verification list), ready for submission."
+      "step2_title": "AI Assists in Building Your Review",
+      "step2_desc": "AI helps organize findings into a structured outline (Background → Debates → Conclusions), extracting key insights from verified papers.",
+      "step3_title": "Review, Refine & Verify",
+      "step3_desc": "Download your draft framework + DOI verification report. Review and add your own analysis before finalizing."
     },
     "pricing": {
       "title": "Simple, Transparent Pricing",
@@ -85,7 +85,7 @@
         "price": "9.99",
         "unit": "USD",
         "features": [
-          "3 complete literature reviews",
+          "3 AI-assisted literature analyses",
           "DOI-verifiable citations",
           "Standard citation formats",
           "Word export"
@@ -126,24 +126,24 @@
       "subtitle": "See the quality before you commit",
       "loading": "Loading...",
       "empty": "No samples available",
-      "ai_generated": "AI-generated academic review",
+      "ai_generated": "AI-assisted academic draft",
       "view_details": "View Sample →"
     },
     "testimonials": {
       "title": "Trusted by Researchers Worldwide",
-      "text1": "\"The generated draft has complete structure — from background to debates. Just minor edits and it's ready for Word.\"",
+      "text1": "\"Provides a solid framework — from background to debates. I add my own analysis and it's ready.\"",
       "name1": "Graduate Student",
       "role1": "US University, Computer Science",
       "text2": "\"The Anti-Hallucination Report is incredibly useful. All DOIs verifiable with one click. Saved me hours.\"",
       "name2": "PhD Researcher",
       "role2": "Materials Science, STEM Field",
-      "text3": "\"The 6-year focus is professional. The review is current and directly usable for my paper.\"",
+      "text3": "\"The 6-year focus is professional. The analysis is current and gives me a great starting point for my paper.\"",
       "name3": "Postdoc Researcher",
       "role3": "European University"
     },
     "integrity": {
       "title": "Academic Integrity Commitment",
-      "description": "We are committed to academic integrity. All citations are designed to be real and verifiable.",
+      "description": "We are committed to academic integrity. All citations are designed to be real and verifiable. AI-generated content is intended as a research aid — users are responsible for reviewing, editing, and adding original analysis.",
       "link": "Learn about our citation verification process →"
     },
     "footer": {
@@ -305,7 +305,7 @@
     "waiting": "Waiting for payment completion...",
     "auto_payment": "Development Mode · Auto-payment in 3 seconds",
     "order_no": "Order: {{orderNo}}",
-    "pay_hint": "Complete your payment securely via Paddle",
+    "pay_hint": "Complete your payment securely via PayPal",
     "order_info": "Order: {{orderNo}} · Amount: ${{amount}}",
     "pay_now": "Pay Now",
     "cancel": "Cancel Payment",
@@ -362,9 +362,9 @@
       "et_al": "et al."
     },
     "cta": {
-      "title": "Need a Complete Literature Review?",
-      "description": "AutoOverview generates submission-ready structured drafts with verified DOI citations. From background to debates to conclusions.",
-      "button": "Generate Full Literature Review",
+      "title": "Ready to Accelerate Your Literature Review?",
+      "description": "AutoOverview helps you analyze literature faster with AI-assisted structuring and verified DOI citations.",
+      "button": "Start Literature Analysis",
       "badge": "Free tool by"
     },
     "footer": {

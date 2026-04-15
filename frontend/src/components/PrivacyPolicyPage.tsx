@@ -19,7 +19,7 @@ export function PrivacyPolicyPage() {
           <p>
             AutoOverview ("we," "our," or "us") respects your privacy and is committed to protecting your
             personal data. This privacy policy explains how we collect, use, disclose, and safeguard your
-            information when you use our AI-powered literature review generation service.
+            information when you use our AI-assisted literature review tool.
           </p>
           <p>
             Please read this privacy policy carefully. If you do not agree with the terms of this privacy policy,
@@ -34,9 +34,9 @@ export function PrivacyPolicyPage() {
           <p>We collect information that you provide directly to us:</p>
           <ul>
             <li><strong>Account Information:</strong> Name, email address, and academic affiliation</li>
-            <li><strong>Payment Information:</strong> Processed securely through Paddle (we do not store credit card details)</li>
-            <li><strong>Research Topics:</strong> The subjects you enter for literature review generation</li>
-            <li><strong>Generated Content:</strong> Reviews and citations generated through the Service</li>
+            <li><strong>Payment Information:</strong> Processed securely through PayPal (we do not store credit card details)</li>
+            <li><strong>Research Topics:</strong> The subjects you enter for literature analysis</li>
+            <li><strong>Generated Content:</strong> Analysis drafts and citations generated through the Service</li>
           </ul>
 
           <h3>2.2 Automatically Collected Information</h3>
@@ -60,7 +60,7 @@ export function PrivacyPolicyPage() {
 
           <h3>3.1 Service Delivery</h3>
           <ul>
-            <li>Process and generate literature reviews based on your research topics</li>
+            <li>Process and generate literature analysis drafts based on your research topics</li>
             <li>Manage your account and credits</li>
             <li>Provide customer support</li>
             <li>Send transactional emails (receipts, usage notifications)</li>
@@ -94,7 +94,7 @@ export function PrivacyPolicyPage() {
           <h3>4.1 Third-Party Service Providers</h3>
           <p>We share data with trusted third parties who assist us in operating the Service:</p>
           <ul>
-            <li><strong>Payment Processing:</strong> Paddle processes payments. We do not store your credit card information.</li>
+            <li><strong>Payment Processing:</strong> PayPal processes payments. We do not store your credit card information.</li>
             <li><strong>Academic Databases:</strong> We query public academic APIs (Semantic Scholar, IEEE, etc.) to retrieve papers.</li>
             <li><strong>Cloud Infrastructure:</strong> AWS and similar providers host our services.</li>
             <li><strong>Analytics:</strong> We use analytics tools to understand usage patterns.</li>
@@ -145,19 +145,33 @@ export function PrivacyPolicyPage() {
 
           <h3>6.1 Confidentiality</h3>
           <p>
-            Your research topics and generated reviews are stored securely and are not publicly accessible
+            Your research topics and generated analysis drafts are stored securely and are not publicly accessible
             through your account. We do not use your unpublished research to train our models without consent.
           </p>
 
-          <h3>6.2 Model Training</h3>
+          <h3>6.2 AI Data Processing</h3>
+          <p>
+            We process your research topics and uploaded literature solely to generate AI-assisted analysis content.
+            We do not store complete copies of your uploaded literature. Generated content is created in real-time
+            and remains under your control.
+          </p>
+
+          <h3>6.3 Content Ownership</h3>
+          <p>
+            You retain ownership of all analysis drafts generated through the Service. We do not retain any ownership
+            rights to your generated content. However, you acknowledge that content is AI-assisted and must be
+            reviewed and supplemented with your own original work.
+          </p>
+
+          <h3>6.4 Model Training</h3>
           <p>
             We may use anonymized and aggregated data to improve our AI models. This data does not include
             personally identifiable information or specific research content that could identify you.
           </p>
 
-          <h3>6.3 Public vs. Private Content</h3>
+          <h3>6.5 Public vs. Private Content</h3>
           <p>
-            Only you can access the reviews generated through your account. Demo cases shown on our website
+            Only you can access the analysis drafts generated through your account. Demo cases shown on our website
             are either explicitly marked as examples or shared with user consent.
           </p>
         </section>
@@ -169,7 +183,7 @@ export function PrivacyPolicyPage() {
             <li><strong>Encryption:</strong> Data is encrypted in transit and at rest</li>
             <li><strong>Access Controls:</strong> Limited access to personal data</li>
             <li><strong>Regular Audits:</strong> Periodic security assessments</li>
-            <li><strong>Secure Payments:</strong> PCI-compliant payment processing through Paddle</li>
+            <li><strong>Secure Payments:</strong> PCI-compliant payment processing through PayPal</li>
           </ul>
           <p>
             Despite our efforts, no method of transmission over the Internet is 100% secure. While we strive
@@ -194,10 +208,16 @@ export function PrivacyPolicyPage() {
 
           <h3>8.2 Data Deletion</h3>
           <p>
-            To request deletion of your personal data before the 30-day retention period, or if you have
-            already closed your account, please contact us at privacy@autooverview.snappicker.com. We will
-            process your request within 30 days, subject to legal retention requirements.
+            You may request deletion of your personal data at any time by contacting us at
+            privacy@autooverview.snappicker.com. We will process your request within 30 days, subject to
+            legal retention requirements. Upon request, we will delete:
           </p>
+          <ul>
+            <li>Your account information and profile data</li>
+            <li>All generated analysis drafts and associated content</li>
+            <li>Research topics and query history</li>
+            <li>Payment records (as permitted by law)</li>
+          </ul>
 
           <h3>8.3 Data Access & Portability</h3>
           <p>
