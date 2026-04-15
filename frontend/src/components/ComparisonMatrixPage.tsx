@@ -595,19 +595,35 @@ export function ComparisonMatrixPage() {
 
         {/* Statistics Bar */}
         <div className="matrix-stats">
-          <div className="stat-item">
-            <span className="stat-label">{t('comparison_matrix_page.papers_used')}</span>
-            <span className="stat-value">{matrixData.statistics.papers_used} {t('comparison_matrix_page.papers_unit')}</span>
+          <div className="stats-left">
+            <div className="stat-item">
+              <span className="stat-label">{t('comparison_matrix_page.papers_used')}</span>
+              <span className="stat-value">{matrixData.statistics.papers_used} {t('comparison_matrix_page.papers_unit')}</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-label">{t('comparison_matrix_page.time_used')}</span>
+              <span className="stat-value">{matrixData.statistics.total_time_seconds} {t('comparison_matrix_page.time_unit')}</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-label">{t('comparison_matrix_page.generated_at')}</span>
+              <span className="stat-value">
+                {new Date(matrixData.statistics.generated_at).toLocaleString()}
+              </span>
+            </div>
           </div>
-          <div className="stat-item">
-            <span className="stat-label">{t('comparison_matrix_page.time_used')}</span>
-            <span className="stat-value">{matrixData.statistics.total_time_seconds} {t('comparison_matrix_page.time_unit')}</span>
-          </div>
-          <div className="stat-item">
-            <span className="stat-label">{t('comparison_matrix_page.generated_at')}</span>
-            <span className="stat-value">
-              {new Date(matrixData.statistics.generated_at).toLocaleString()}
-            </span>
+          <div className="stats-actions">
+            <button
+              className="stats-action-btn stats-action-btn-primary"
+              onClick={() => alert(t('comparison_matrix_page.coming_soon'))}
+            >
+              {t('comparison_matrix_page.export_markdown')}
+            </button>
+            <button
+              className="stats-action-btn"
+              onClick={() => navigate('/search-papers')}
+            >
+              {t('comparison_matrix_page.continue_search')}
+            </button>
           </div>
         </div>
 

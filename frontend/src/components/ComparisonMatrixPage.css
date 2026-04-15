@@ -365,12 +365,27 @@
 
 .matrix-stats {
   display: flex;
+  justify-content: space-between;
+  align-items: center;
   gap: 16px;
   background: white;
   border-radius: 12px;
   padding: 16px 24px;
   margin-bottom: 20px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  flex-wrap: wrap;
+}
+
+.stats-left {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.stats-actions {
+  display: flex;
+  gap: 12px;
+  flex-shrink: 0;
 }
 
 .stat-item {
@@ -388,6 +403,34 @@
   font-size: 1.1rem;
   font-weight: 600;
   color: #333;
+}
+
+.stats-action-btn {
+  background: white;
+  color: #e67e22;
+  border: 2px solid #e67e22;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.stats-action-btn:hover {
+  background: #fff8e1;
+}
+
+.stats-action-btn-primary {
+  background: #e67e22;
+  color: white;
+  border: 2px solid #e67e22;
+}
+
+.stats-action-btn-primary:hover {
+  background: #d35400;
+  border-color: #d35400;
 }
 
 .matrix-content {
@@ -752,8 +795,23 @@
   }
 
   .matrix-stats {
-    flex-wrap: wrap;
+    flex-direction: column;
+    align-items: stretch;
     padding: 12px 16px;
+    gap: 16px;
+  }
+
+  .stats-left {
+    gap: 16px;
+  }
+
+  .stats-actions {
+    width: 100%;
+  }
+
+  .stats-action-btn {
+    flex: 1;
+    text-align: center;
   }
 
   .matrix-content {
