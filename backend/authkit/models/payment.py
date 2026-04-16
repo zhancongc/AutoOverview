@@ -212,9 +212,9 @@ DEFAULT_PLANS = [
     {
         "type": "yearly",
         "name": "进阶包", "name_en": "Annual Premium",
-        "price": 49.8, "price_usd": 44.99,
+        "price": 49.8, "price_usd": 49.99,
         "original_price": 109.8, "original_price_usd": 69.99,
-        "credits": 60,
+        "credits": 50,
         "recommended": False,
         "sort_order": 3,
         "badge": "超值", "badge_en": "Best Value",
@@ -226,11 +226,11 @@ DEFAULT_PLANS = [
             "约 ¥4.2/Credit",
         ],
         "features_en": [
-            "60 Credits (30 reviews or 60 comparison matrices)",
+            "50 Credits (25 reviews or 50 comparison matrices)",
             "Online viewing + Word export",
             "DOI-verifiable citations",
             "Export BibTeX, XML, RIS formats",
-            "~$0.75/Credit",
+            "~$1.00/Credit",
         ]
     },
     {

@@ -227,7 +227,7 @@ PADDLE_PRICING = {
     "yearly": {
         "name": "Annual Premium",
         "price": 64.99,
-        "credits": 60,
+        "credits": 50,
         "currency": "USD",
     },
     "unlock": {

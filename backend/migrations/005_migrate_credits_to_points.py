@@ -59,7 +59,7 @@ class CreditToPointsMigration(Migration):
             plan_credits = {
                 "single": 6,
                 "semester": 20,
-                "yearly": 60,
+                "yearly": 50,
             }
 
             plan_features_en = {
@@ -77,11 +77,11 @@ class CreditToPointsMigration(Migration):
                     "~$1.25/Credit",
                 ]),
                 "yearly": json.dumps([
-                    "60 Credits (30 reviews or 60 comparison matrices)",
+                    "50 Credits (25 reviews or 50 comparison matrices)",
                     "Online viewing + Word export",
                     "DOI-verifiable citations",
                     "Export BibTeX, XML, RIS formats",
-                    "~$0.75/Credit",
+                    "~$1.00/Credit",
                 ]),
             }
 
@@ -97,7 +97,7 @@ class CreditToPointsMigration(Migration):
                     )
 
             session.commit()
-            print("  ✓ Plans credits 已更新为 6/20/60")
+            print("  ✓ Plans credits 已更新为 6/20/50")
             print("  ✓ 迁移 005 完成")
 
     def down(self):

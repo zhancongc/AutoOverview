@@ -325,8 +325,8 @@ PAYPAL_PRICING = {
     },
     "yearly": {
         "name": "Annual Premium",
-        "price": 44.99,
-        "credits": 60,
+        "price": 49.99,
+        "credits": 50,
         "currency": "USD",
     },
     "unlock": {

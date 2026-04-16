@@ -59,7 +59,7 @@ AutoOverview 是一个 AI 驱动的文献综述生成平台，支持中英文双
 **英文版（USD）**：
 - Starter（6 credits）：$9.99
 - Semester Pro（20 credits）：$24.99
-- Annual Premium（60 credits）：$44.99
+- Annual Premium（50 credits）：$49.99
 
 ### API 路径
 - 前端代理: `localhost:3000` → `localhost:8000`（vite.config.ts 配置）
