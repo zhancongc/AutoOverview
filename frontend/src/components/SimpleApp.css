@@ -352,6 +352,55 @@
   color: var(--academic-red);
 }
 
+/* ==================== 左侧侧边栏 - 桌面端 ==================== */
+
+.left-sidebar {
+  position: fixed;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 200px;
+  padding: 1.5rem;
+  z-index: 40;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.left-sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  background: white;
+  padding: 1rem;
+  border-radius: 16px;
+  border: 1px solid var(--border-gray);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+}
+
+.left-sidebar-nav a {
+  display: block;
+  padding: 0.75rem 1rem;
+  font-family: 'Source Sans Pro', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-gray);
+  text-decoration: none;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.left-sidebar-nav a:hover {
+  background: var(--cream-white);
+  color: var(--academic-red);
+}
+
+.left-sidebar-nav a.active {
+  background: var(--cream-white);
+  color: var(--academic-red);
+  font-weight: 700;
+}
+
 /* ==================== 主内容区 - 大气布局 ==================== */
 
 .home-container {
@@ -365,6 +414,7 @@
   flex: 1;
   position: relative;
   z-index: 1;
+  margin-left: 200px;
 }
 
 /* Hero 区域 - 左右分栏 */
@@ -442,6 +492,86 @@
 .hero-cta-group .hero-cta-secondary:hover {
   background: rgba(214, 48, 49, 0.05);
   transform: translateY(-1px);
+}
+
+/* Hero entry cards (three function entry points) */
+.hero-entry-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-top: 2rem;
+  width: 100%;
+  max-width: 600px;
+}
+
+.hero-entry-card {
+  background: white;
+  border: 2px solid #f0f0f0;
+  border-radius: 16px;
+  padding: 1.25rem 1rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.hero-entry-card:hover {
+  border-color: #d35400;
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(211, 84, 0, 0.12);
+}
+
+.hero-entry-card-primary {
+  border-color: #e67e22;
+  background: linear-gradient(135deg, #fff5eb, #fff);
+}
+
+.hero-entry-card-primary:hover {
+  border-color: #d35400;
+  background: linear-gradient(135deg, #fff0db, #fff);
+}
+
+.hero-entry-icon {
+  font-size: 2rem;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.hero-entry-card h3 {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #333;
+  margin: 0 0 0.25rem;
+}
+
+.hero-entry-card p {
+  font-size: 0.75rem;
+  color: #999;
+  margin: 0;
+  line-height: 1.4;
+}
+
+@media (max-width: 640px) {
+  .hero-entry-cards {
+    grid-template-columns: 1fr;
+    max-width: 100%;
+    gap: 0.75rem;
+  }
+
+  .hero-entry-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    text-align: left;
+    padding: 1rem;
+  }
+
+  .hero-entry-icon {
+    font-size: 1.5rem;
+    margin-bottom: 0;
+    flex-shrink: 0;
+    width: 2rem;
+    text-align: center;
+  }
 }
 
 /* Search papers hint below input */
@@ -1050,9 +1180,9 @@
   padding: 2rem;
   border-radius: 20px;
   border: 1px solid var(--border-gray);
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
+  cursor: default;
 }
 
 .feature-item::before {
@@ -1063,18 +1193,6 @@
   right: 0;
   height: 3px;
   background: var(--academic-red);
-  transform: scaleX(0);
-  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.feature-item:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
-  border-color: rgba(214, 48, 49, 0.2);
-}
-
-.feature-item:hover::before {
-  transform: scaleX(1);
 }
 
 .feature-icon {
@@ -1112,24 +1230,14 @@
   border-radius: 20px;
   padding: 1.75rem 1.5rem;
   border: 2px solid var(--border-gray);
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   flex-direction: column;
-}
-
-.comparison-card:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
+  cursor: default;
 }
 
 .comparison-card.highlight {
   border-color: var(--academic-red);
   background: linear-gradient(180deg, rgba(214, 48, 49, 0.05) 0%, white 100%);
-  box-shadow: 0 8px 24px rgba(214, 48, 49, 0.15);
-}
-
-.comparison-card.highlight:hover {
-  box-shadow: 0 16px 40px rgba(214, 48, 49, 0.25);
 }
 
 .comparison-card-header {
@@ -1532,13 +1640,7 @@
   border-radius: 16px;
   padding: 1.75rem;
   border: 1px solid var(--border-gray);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.testimonial-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
-  border-color: rgba(214, 48, 49, 0.2);
+  cursor: default;
 }
 
 .testimonial-text {
@@ -1662,6 +1764,14 @@
 }
 
 @media (max-width: 1024px) {
+  .left-sidebar {
+    display: none;
+  }
+
+  .home-container {
+    margin-left: auto;
+  }
+
   .home-hero-wrapper {
     grid-template-columns: 1fr;
     gap: 3rem;

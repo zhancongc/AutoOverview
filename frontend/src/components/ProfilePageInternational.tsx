@@ -11,16 +11,17 @@ import { getLocalUserInfo, isLoggedIn } from '../authApi'
 import { PayPalPaymentModal } from './PayPalPaymentModal'
 import { ConfirmModalInternational } from './ConfirmModalInternational'
 import type { ReviewRecord } from '../types'
+import './SimpleAppInternational.css'
 import './ProfilePageInternational.css'
 
 export function ProfilePageInternational() {
   const { i18n } = useTranslation()
   const navigate = useNavigate()
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [records, setRecords] = useState<ReviewRecord[]>([])
   const [loading, setLoading] = useState(false)
   const [userInfo, setUserInfo] = useState<any>(null)
   const [credits, setCredits] = useState<number>(0)
-  const [freeCredits, setFreeCredits] = useState<number>(0)
   const [showPayModal, setShowPayModal] = useState(false)
   const [pendingExportRecordId, setPendingExportRecordId] = useState<number | null>(null)
   const [exportingId, setExportingId] = useState<number | null>(null)
@@ -41,7 +42,6 @@ export function ProfilePageInternational() {
     loadRecords()
     api.getCredits().then(data => {
       setCredits(data.credits)
-      setFreeCredits(data.free_credits)
     }).catch(err => console.error('Failed to fetch credits:', err))
   }, [navigate])
 
@@ -241,36 +241,57 @@ export function ProfilePageInternational() {
   return (
     <div className="profile-page-international">
       {/* Top Navigation */}
-      <nav className="profile-nav">
+      <nav className="home-nav">
         <div className="nav-logo" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
           <span className="logo-icon">📚</span>
           <span className="logo-text">AutoOverview</span>
         </div>
-        <div className="nav-actions">
-          <button className="nav-btn nav-btn-home" onClick={() => navigate('/')}>
-            Home
-          </button>
-          <button className="nav-btn nav-btn-logout" onClick={handleLogout}>
-            Logout
-          </button>
+        <div className="nav-links">
+          <a href="/" onClick={(e) => { e.preventDefault(); navigate('/') }}>Home</a>
+          <a href="/search-papers" onClick={(e) => { e.preventDefault(); navigate('/search-papers') }}>Search Papers</a>
+          <a href="/comparison-matrix" onClick={(e) => { e.preventDefault(); navigate('/comparison-matrix') }}>Comparison Matrix</a>
+          <a href="/generate" onClick={(e) => { e.preventDefault(); navigate('/generate') }}>Generate Review</a>
         </div>
+        <button className="mobile-menu-toggle" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+          <span className={`hamburger ${mobileMenuOpen ? 'open' : ''}`} />
+        </button>
       </nav>
+
+      {/* Mobile sidebar overlay */}
+      {mobileMenuOpen && (
+        <div className="mobile-sidebar-overlay" onClick={() => setMobileMenuOpen(false)} />
+      )}
+
+      {/* Mobile sidebar */}
+      <aside className={`mobile-sidebar ${mobileMenuOpen ? 'sidebar-open' : ''}`}>
+        <div className="sidebar-header">
+          <span className="logo-icon">📚</span>
+          <span className="logo-text">AutoOverview</span>
+          <button className="sidebar-close" onClick={() => setMobileMenuOpen(false)}>&times;</button>
+        </div>
+        <nav className="sidebar-links">
+          <a href="/" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/') }}>Home</a>
+          <a href="/search-papers" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/search-papers') }}>Search Papers</a>
+          <a href="/comparison-matrix" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/comparison-matrix') }}>Comparison Matrix</a>
+          <a href="/generate" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/generate') }}>Generate Review</a>
+        </nav>
+      </aside>
 
       <div className="profile-container">
         {/* User Info Section */}
         <div className="profile-header">
           <div className="user-avatar-large">👤</div>
           <div className="user-info-section">
-            <div className="user-info-row">
-              <h1 className="user-name">{userInfo?.nickname || 'User'}</h1>
+            <h1 className="user-name">{userInfo?.nickname || 'User'}</h1>
+            <p className="user-email">{userInfo?.email || ''}</p>
+            <div className="user-actions">
               <button className="edit-profile-button" onClick={handleEditProfile}>
-                ✏️ Edit
+                ✏️ Edit Profile
               </button>
-              <button className="close-account-button" onClick={() => { setShowCloseAccountModal(true); setCloseAccountEmail(''); }}>
-                Close Account
+              <button className="nav-btn nav-btn-logout" onClick={handleLogout}>
+                Logout
               </button>
             </div>
-            <p className="user-email">{userInfo?.email || ''}</p>
           </div>
         </div>
 
@@ -280,13 +301,9 @@ export function ProfilePageInternational() {
             <div className="stat-number">{records.length}</div>
             <div className="stat-label">Reviews</div>
           </div>
-          <div className="stat-card stat-card-free">
-            <div className="stat-number">{freeCredits}</div>
-            <div className="stat-label">Free Credits</div>
-          </div>
           <div className="stat-card stat-card-paid">
-            <div className="stat-number">{credits - freeCredits}</div>
-            <div className="stat-label">Plan Credits</div>
+            <div className="stat-number">{credits}</div>
+            <div className="stat-label">Credits</div>
           </div>
         </div>
 
@@ -354,6 +371,13 @@ export function ProfilePageInternational() {
         </div>
       </div>
 
+      {/* Close Account - bottom of page */}
+      <div className="close-account-wrapper">
+        <button className="close-account-button" onClick={() => { setShowCloseAccountModal(true); setCloseAccountEmail(''); }}>
+          Close Account
+        </button>
+      </div>
+
       {/* Footer */}
       <footer className="profile-footer">
         <div className="footer-content">
@@ -402,7 +426,6 @@ export function ProfilePageInternational() {
             // Refresh user status and records
             const creditsData = await api.getCredits()
             setCredits(creditsData.credits)
-            setFreeCredits(creditsData.free_credits)
             await loadRecords()
             // If has pending export, continue
             if (pendingExportRecordId !== null) {

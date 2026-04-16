@@ -21,19 +21,48 @@ html.intl {
     flex-direction: column;
   }
 
+  /* Add top padding for fixed nav */
+  .profile-page-international .profile-container {
+    padding-top: 80px;
+  }
+
   /* ==================== Top Navigation ==================== */
 
-  .profile-page-international .profile-nav {
+  .profile-page-international .home-nav {
     background: rgba(255, 255, 255, 0.85);
     backdrop-filter: blur(20px);
-    padding: 1.5rem 3rem;
+    padding: 0.5rem 2rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
     border-bottom: 1px solid var(--border-gray);
-    position: sticky;
+    position: fixed;
     top: 0;
+    left: 0;
+    right: 0;
     z-index: 100;
+  }
+
+  .profile-page-international .nav-links {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    align-items: center;
+  }
+
+  .profile-page-international .nav-links a {
+    font-family: 'Source Sans Pro', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--charcoal);
+    text-decoration: none;
+    transition: color 0.2s;
+    letter-spacing: 0.01em;
+  }
+
+  .profile-page-international .nav-links a:hover {
+    color: var(--academic-blue);
   }
 
   .profile-page-international .nav-logo {
@@ -90,11 +119,40 @@ html.intl {
     background: white;
     color: var(--text-gray);
     border: 1.5px solid var(--light-gray);
+    padding: 0.65rem 1.5rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-family: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, sans-serif;
   }
 
   .profile-page-international .nav-btn-logout:hover {
     background: var(--cream-white);
     border-color: var(--academic-blue);
+    color: var(--academic-blue);
+  }
+
+  .profile-page-international .nav-links {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    align-items: center;
+  }
+
+  .profile-page-international .nav-links a {
+    font-family: 'Source Sans Pro', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--charcoal);
+    text-decoration: none;
+    transition: color 0.2s;
+    letter-spacing: 0.01em;
+  }
+
+  .profile-page-international .nav-links a:hover {
     color: var(--academic-blue);
   }
 
@@ -137,6 +195,7 @@ html.intl {
 
   .profile-page-international .user-info-section {
     flex: 1;
+    min-width: 0;
   }
 
   .profile-page-international .profile-header .user-name {
@@ -158,7 +217,7 @@ html.intl {
 
   .profile-page-international .profile-stats {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: 1.5rem;
     margin-bottom: 2.5rem;
   }
@@ -553,23 +612,65 @@ html.intl {
   /* ==================== Responsive Design ==================== */
 
   @media (max-width: 768px) {
-    .profile-page-international .profile-nav {
-      padding: 1rem 1.5rem;
+    .profile-page-international .home-nav {
+      padding: 0.5rem 1.25rem;
+    }
+
+    .profile-page-international .nav-links {
+      display: none;
+    }
+
+    .profile-page-international .mobile-menu-toggle {
+      display: block;
     }
 
     .profile-page-international .profile-container {
-      padding: 2rem 1.5rem;
+      padding: 70px 1.5rem 2rem 1.5rem;
     }
 
     .profile-page-international .profile-header {
-      flex-direction: column;
+      flex-wrap: wrap;
       text-align: center;
       padding: 2rem;
+      gap: 1.25rem;
+    }
+
+    .profile-page-international .profile-header .user-avatar-large {
+      width: 80px;
+      height: 80px;
+      font-size: 3rem;
+      border-radius: 16px;
+      margin: 0 auto;
+    }
+
+    .profile-page-international .profile-header .user-info-section {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .profile-page-international .profile-header .user-name {
+      font-size: 1.5rem;
+    }
+
+    .profile-page-international .profile-header .user-email {
+      font-size: 0.9rem;
+    }
+
+    .profile-page-international .user-actions {
+      justify-content: center;
+      gap: 0.75rem;
+    }
+
+    .profile-page-international .user-actions .nav-btn-logout {
+      padding: 0.5rem 1rem;
+      font-size: 0.85rem;
     }
 
     .profile-page-international .profile-stats {
-      grid-template-columns: repeat(3, 1fr);
-      gap: 0.75rem;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
     }
 
     .profile-page-international .stat-card {
@@ -614,31 +715,38 @@ html.intl {
   }
 
   @media (max-width: 480px) {
-    .profile-page-international .profile-nav {
-      padding: 0.875rem 1rem;
+    .profile-page-international .home-nav {
+      padding: 0.5rem 1rem;
     }
 
-    .profile-page-international .profile-nav .nav-btn {
+    .profile-page-international .home-nav .nav-btn {
       padding: 0.5rem 1rem;
       font-size: 0.85rem;
     }
 
     .profile-page-international .profile-container {
-      padding: 1.5rem 1rem;
+      padding: 65px 1rem 1.5rem 1rem;
     }
 
     .profile-page-international .profile-header {
       padding: 1.5rem;
+      gap: 1rem;
     }
 
-    .profile-page-international .user-avatar-large {
-      width: 80px;
-      height: 80px;
-      font-size: 3rem;
+    .profile-page-international .profile-header .user-avatar-large {
+      width: 64px;
+      height: 64px;
+      font-size: 2.5rem;
+      border-radius: 14px;
     }
 
     .profile-page-international .profile-header .user-name {
-      font-size: 1.5rem;
+      font-size: 1.35rem;
+    }
+
+    .profile-page-international .user-actions {
+      flex-wrap: wrap;
+      justify-content: center;
     }
   }
 
@@ -862,11 +970,12 @@ html.intl {
     box-shadow: 0 4px 12px rgba(9, 136, 227, 0.3);
   }
 
-  /* User info row with edit button */
-  .profile-page-international .user-info-row {
+  /* User actions: Edit + Logout side by side */
+  .profile-page-international .user-actions {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: 0.75rem;
+    margin-top: 0.75rem;
   }
 
   .edit-profile-button {
@@ -892,11 +1001,11 @@ html.intl {
     transform: translateY(-1px);
   }
 
-  /* Close Account Button (next to Edit) */
-  .close-account-button {
-    background: none;
-    border: 1.5px solid #e2e8f0;
-    color: #a0aec0;
+  /* Logout button inside user-actions */
+  .profile-page-international .user-actions .nav-btn-logout {
+    background: transparent;
+    color: var(--text-gray);
+    border: 2px solid var(--border-gray);
     padding: 0.5rem 1rem;
     border-radius: 8px;
     font-size: 0.85rem;
@@ -906,10 +1015,35 @@ html.intl {
     transition: all 0.2s;
   }
 
-  .close-account-button:hover {
-    border-color: #e53e3e;
+  .profile-page-international .user-actions .nav-btn-logout:hover {
+    background: var(--light-gray);
+    border-color: var(--text-gray);
+  }
+
+  /* Close Account — bottom of page, centered */
+  .profile-page-international .close-account-wrapper {
+    text-align: center;
+    padding: 1.5rem 0;
+    margin-top: auto;
+  }
+
+  .profile-page-international .close-account-button {
+    background: none;
+    border: 1.5px solid #fc8181;
     color: #e53e3e;
-    background: #fff5f5;
+    padding: 0.5rem 1.5rem;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    font-family: 'Source Sans Pro', sans-serif;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .profile-page-international .close-account-button:hover {
+    border-color: #e53e3e;
+    color: #fff;
+    background: #e53e3e;
   }
 
   /* Close Account Modal */

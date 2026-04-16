@@ -7,7 +7,15 @@
       "subtitle": "AI-assisted literature analysis with verified citations. Extract key insights, build structured outlines, and draft review frameworks — all backed by real paper metadata.",
       "cta_button": "Start Your Research",
       "cta_hint": "Free to try • No credit card required",
-      "search_papers_cta": "Search Papers — Free"
+      "search_papers_cta": "Search Papers — Free",
+      "cards": {
+        "search": "Search Papers",
+        "search_desc": "Free academic paper search",
+        "matrix": "Comparison Matrix",
+        "matrix_desc": "Compare research perspectives",
+        "generate": "Generate Review",
+        "generate_desc": "AI-generated structured review"
+      }
     },
     "stats": {
       "papers": "Based on 200M+ real paper metadata",
@@ -79,44 +87,7 @@
     "pricing": {
       "title": "Simple, Transparent Pricing",
       "subtitle": "No subscription. Credits never expire.",
-      "note": "No subscription • Credits never expire • Get 1 free Credit on registration",
-      "single": {
-        "name": "Starter",
-        "price": "9.99",
-        "unit": "USD",
-        "features": [
-          "6 Credits (3 reviews or 6 comparison matrices)",
-          "DOI-verifiable citations",
-          "Standard citation formats",
-          "Word export"
-        ]
-      },
-      "semester": {
-        "name": "Semester Pro",
-        "badge": "Popular",
-        "price": "24.99",
-        "unit": "USD",
-        "features": [
-          "20 Credits (10 reviews or 20 comparison matrices)",
-          "Priority processing",
-          "Advanced citation formats",
-          "All Starter features",
-          "~$1.25/Credit"
-        ]
-      },
-      "yearly": {
-        "name": "Annual Premium",
-        "badge": "Best Value",
-        "price": "44.99",
-        "unit": "USD",
-        "features": [
-          "60 Credits (30 reviews or 60 comparison matrices)",
-          "Priority processing",
-          "Advanced citation formats",
-          "All Semester features",
-          "~$0.75/Credit"
-        ]
-      },
+      "note": "No subscription • Credits never expire • Get 2 free Credits on registration",
       "buy_now": "Get Started",
       "no_subscription": "No subscription required",
       "credits_never_expire": "Credits never expire"
@@ -392,6 +363,17 @@
   },
   "comparison_matrix_page": {
     "title": "Literature Comparison Matrix",
+    "hero_badge": "AI Comparison Tool",
+    "hero_title": "Generate a Literature Comparison Matrix",
+    "hero_subtitle": "Enter a research topic, search for papers, and AI will create a structured comparison table",
+    "search_placeholder": "Enter your research topic, e.g., Deep Learning in Medical Imaging",
+    "search_button": "Search Papers",
+    "searching": "Searching...",
+    "generate_from_results": "Generate Comparison Matrix (1 Credit)",
+    "generating_matrix": "Generating comparison matrix...",
+    "btn_generate_all": "Generate Comparison Matrix",
+    "phase_searching": "Searching papers...",
+    "phase_generating": "Generating comparison matrix...",
     "loading": "Loading comparison matrix...",
     "error": "Failed to load",
     "not_found": "Comparison matrix data not found",
@@ -412,6 +394,29 @@
     "generate_now": "Generate Now",
     "generating": "Generating...",
     "generate_review": "Generate Review",
-    "generate_review_disabled_hint": "This matrix was generated independently, papers cannot be reused"
+    "generate_review_disabled_hint": "This matrix was generated independently, papers cannot be reused",
+    "status_1": "Searching academic databases...",
+    "status_2": "Analyzing paper metadata...",
+    "status_3": "Filtering high-quality papers...",
+    "status_4": "Organizing search results...",
+    "estimate": "Estimated 30-60 seconds",
+    "no_results": "No papers found. Try different keywords."
+  },
+  "generate_page": {
+    "hero_badge": "Literature Review Generator",
+    "title": "Generate Literature Review",
+    "subtitle": "Enter your research topic, AI will search papers and generate a structured literature review draft",
+    "placeholder": "Enter your research topic, e.g., Deep Learning in Image Recognition",
+    "button": "Generate My Review",
+    "error_empty": "Please enter a research topic",
+    "error_submit": "Submit failed, please retry",
+    "error_status": "Failed to get task status",
+    "error_network": "Network error, please check your connection",
+    "error_task_failed": "Task failed, please retry",
+    "submitting": "Submitting task...",
+    "estimated_remaining": "Estimated remaining",
+    "minutes": "minutes",
+    "completed": "Generation completed, redirecting...",
+    "estimate": "Review generation usually takes 3-5 minutes. You can close this page and check the result later in \"My Reviews\"."
   }
 }

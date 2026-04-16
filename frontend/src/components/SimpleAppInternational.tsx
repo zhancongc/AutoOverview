@@ -3,84 +3,53 @@
  * Designed for overseas market with clean, professional academic style
  */
 import { useState, useEffect } from 'react'
-import { useNavigate, useLocation, useSearchParams } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { api } from '../api'
-import { isLoggedIn as checkLoggedIn, getLocalUserInfo } from '../authApi'
+import { isLoggedIn as checkLoggedIn } from '../authApi'
 import { LoginModalInternational } from './LoginModalInternational'
-import { PaymentModal } from './PaymentModal'
-
 import { PayPalPaymentModal } from './PayPalPaymentModal'
 import { CookieConsentBanner } from './CookieConsentBanner'
 import './SimpleAppInternational.css'
-
-interface TaskProgress {
-  step: string
-  message: string
-}
 
 export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const location = useLocation()
-  const [searchParams] = useSearchParams()
-  const [topic, setTopic] = useState('')
-  const [language] = useState<'zh' | 'en'>('en')
-  const [isGenerating, setIsGenerating] = useState(false)
-  const [progress, setProgress] = useState<TaskProgress | null>(null)
-  const [, setError] = useState('')
   const [showLoginModal, setShowLoginModal] = useState(false)
   const [showPaymentModal, setShowPaymentModal] = useState<string | false>(false)
   const [isLoggedIn, setIsLoggedIn] = useState(false)
-  const [, setActiveTaskId] = useState<string | null>(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const [, setUserInfo] = useState<any>(null)
   const [credits, setCredits] = useState<number>(0)
   const [prevCredits, setPrevCredits] = useState<number>(0)
   const [showToast, setShowToast] = useState(false)
   const [toastMessage, setToastMessage] = useState('')
-  const [, setPlans] = useState<any[]>([])
+  const [plans, setPlans] = useState<any[]>([])
   const [plansLoading, setPlansLoading] = useState(true)
   const [demoCases, setDemoCases] = useState<any[]>([])
   const [casesLoading, setCasesLoading] = useState(true)
+  const [activeSection, setActiveSection] = useState<string>('')
 
   useEffect(() => {
     const loggedIn = checkLoggedIn()
     setIsLoggedIn(loggedIn)
-    // Auto show login modal if not logged in and autoShowLogin is true
     if (!loggedIn && autoShowLogin) {
       setShowLoginModal(true)
     }
     if (loggedIn) {
-      setUserInfo(getLocalUserInfo())
       api.getCredits().then(data => {
         setCredits(data.credits)
         setPrevCredits(data.credits)
-      }).catch(err => console.error(t('home.errors.credits_fetch_failed'), err))
-      // Check for active task from server
-      api.getActiveTask().then(data => {
-        if (data.active && data.task_id) {
-          setActiveTaskId(data.task_id)
-          setTopic(data.topic || '')
-          setIsGenerating(true)
-          setProgress({ step: 'processing', message: t('home.progress.restoring') })
-          sessionStorage.setItem('active_task_id', data.task_id)
-          sessionStorage.setItem('active_task_topic', data.topic || '')
-          pollTask(data.task_id)
-        }
-      }).catch(err => console.error('Failed to get active task:', err))
+      }).catch(() => {})
     }
 
-    // Get pricing plans
     api.getSubscriptionPlans().then(data => {
       setPlans(data.plans)
       setPlansLoading(false)
-    }).catch(err => {
-      console.error(t('home.errors.plans_fetch_failed'), err)
+    }).catch(() => {
       setPlansLoading(false)
     })
 
-    // Get demo cases
     fetch('/api/cases?lang=en')
       .then(res => res.json())
       .then(data => {
@@ -89,190 +58,25 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
         }
         setCasesLoading(false)
       })
-      .catch(err => {
-        console.error('Failed to fetch demo cases:', err)
+      .catch(() => {
         setCasesLoading(false)
       })
-
-    // Handle task_id from search-papers page: auto-start polling with progress bar
-    const taskIdParam = searchParams.get('task_id')
-    if (taskIdParam) {
-      setIsGenerating(true)
-      setActiveTaskId(taskIdParam)
-      setProgress({ step: 'processing', message: t('home.progress.processing') })
-      sessionStorage.setItem('active_task_id', taskIdParam)
-      pollTask(taskIdParam)
-      window.history.replaceState({}, '', '/')
-      return
-    }
-
-    // Handle reuse_task_id from search-papers page redirect
-    const reuseTaskId = searchParams.get('reuse_task_id')
-    const reuseTopic = searchParams.get('topic')
-    if (reuseTaskId && reuseTopic) {
-      setTopic(reuseTopic)
-      sessionStorage.setItem('reuse_task_id', reuseTaskId)
-      sessionStorage.setItem('pending_topic', reuseTopic)
-      // Clean URL without reloading
-      window.history.replaceState({}, '', '/')
-    }
-  }, [t, searchParams])
-
-  const pollTask = (taskId: string) => {
-    const startTime = Date.now()
-    const doPoll = async () => {
-      try {
-        const statusResponse = await api.getTaskStatus(taskId)
-        if (!statusResponse.success) {
-          sessionStorage.removeItem('active_task_id')
-          sessionStorage.removeItem('active_task_topic')
-          setIsGenerating(false)
-          setActiveTaskId(null)
-          return
-        }
-
-        const taskInfo = statusResponse.data
-        if (taskInfo.status === 'completed' && taskInfo.result) {
-          sessionStorage.removeItem('active_task_id')
-          sessionStorage.removeItem('active_task_topic')
-          navigate(`/review?task_id=${taskId}`)
-          return
-        } else if (taskInfo.status === 'failed') {
-          sessionStorage.removeItem('active_task_id')
-          sessionStorage.removeItem('active_task_topic')
-          setError(taskInfo.error || t('home.errors.task_failed'))
-          setIsGenerating(false)
-          setActiveTaskId(null)
-          return
-        }
-
-        const elapsedMinutes = (Date.now() - startTime) / 1000 / 60
-        let expectedRemainingMinutes = Math.max(0, Math.round(5 - elapsedMinutes))
-
-        let progressMessage = taskInfo.progress?.message || t('home.progress.processing')
-        if (expectedRemainingMinutes > 0) {
-          progressMessage += ` (${expectedRemainingMinutes} min remaining)`
-        }
-
-        setProgress({
-          step: taskInfo.progress?.step || 'processing',
-          message: progressMessage
-        })
-
-        // Dynamic polling interval
-        const elapsed = Date.now() - startTime
-        const elapsedPollMinutes = elapsed / (60 * 1000)
-        let nextInterval: number
-        if (elapsedPollMinutes < 1) {
-          nextInterval = 20000
-        } else if (elapsedPollMinutes < 3) {
-          nextInterval = 15000
-        } else {
-          nextInterval = 10000
-        }
-        setTimeout(doPoll, nextInterval)
-      } catch {
-        sessionStorage.removeItem('active_task_id')
-        sessionStorage.removeItem('active_task_topic')
-        setIsGenerating(false)
-        setActiveTaskId(null)
-      }
-    }
-    setTimeout(doPoll, 5000)
-  }
-
-  const handleGenerate = async () => {
-    if (!topic.trim()) {
-      setToastMessage(t('home.input.alert_empty_topic'))
-      setShowToast(true)
-      setTimeout(() => setShowToast(false), 3000)
-      return
-    }
-
-    if (!isLoggedIn) {
-      setShowLoginModal(true)
-      sessionStorage.setItem('pending_topic', topic)
-      return
-    }
-
-    setIsGenerating(true)
-    setError('')
-    setProgress(null)
-
-    try {
-      // Check if reusing search results from search-papers page
-      const reuseTaskId = sessionStorage.getItem('reuse_task_id')
-
-      const submitResponse = await api.submitReviewTask(topic, {
-        language: language,
-        targetCount: 50,
-        recentYearsRatio: 0.5,
-        englishRatio: language === 'en' ? 0.8 : 0.3,
-        reuseTaskId: reuseTaskId || undefined
-      })
-
-      // Clear reuse params after use
-      if (reuseTaskId) {
-        sessionStorage.removeItem('reuse_task_id')
-      }
-
-      if (!submitResponse.success || !submitResponse.data?.task_id) {
-        const msg = submitResponse.message || ''
-        if (msg.includes('credits') || msg.includes('额度')) {
-          setToastMessage(t('home.errors.no_credits_hint'))
-          setShowToast(true)
-          setTimeout(() => setShowToast(false), 3000)
-          setShowPaymentModal('single')
-        } else {
-          setError(msg || t('home.errors.task_failed'))
-        }
-        setIsGenerating(false)
-        return
-      }
-
-      const taskId = submitResponse.data.task_id
-      setActiveTaskId(taskId)
-      sessionStorage.setItem('active_task_id', taskId)
-      sessionStorage.setItem('active_task_topic', topic)
-
-      pollTask(taskId)
-    } catch (err) {
-      setError(t('home.errors.task_failed'))
-      setIsGenerating(false)
-      console.error(err)
-    }
-  }
+  }, [])
 
   const handleLoginSuccess = () => {
     const loggedIn = checkLoggedIn()
     setIsLoggedIn(loggedIn)
     setShowLoginModal(false)
     if (loggedIn) {
-      setUserInfo(getLocalUserInfo())
       api.getCredits().then(data => {
         setCredits(data.credits)
         setPrevCredits(data.credits)
-      }).catch(err => console.error(t('home.errors.credits_refresh_failed'), err))
-    }
-
-    const pendingTopic = sessionStorage.getItem('pending_topic')
-    if (pendingTopic) {
-      setTopic(pendingTopic)
-      sessionStorage.removeItem('pending_topic')
-      handleGenerate()
-    } else {
-      // 登录成功后滚动到生成区域
-      setTimeout(() => {
-        document.getElementById('generate')?.scrollIntoView({ behavior: 'smooth' })
-      }, 300)
+      }).catch(() => {})
     }
   }
 
-  const handlePaymentSuccess = async (_addedCredits: number = 0) => {
+  const handlePaymentSuccess = async () => {
     setShowPaymentModal(false)
-    setUserInfo(getLocalUserInfo())
-    setError('')
-
     api.getCredits().then(data => {
       setPrevCredits(credits)
       setCredits(data.credits)
@@ -281,12 +85,7 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
         setToastMessage(t('common.payment_success'))
         setTimeout(() => setShowToast(false), 3000)
       }
-    }).catch(err => {
-      console.error(t('home.errors.credits_refresh_failed'), err)
-    })
-
-    // Scroll to generate section
-    document.getElementById('generate')?.scrollIntoView({ behavior: 'smooth' })
+    }).catch(() => {})
   }
 
   useEffect(() => {
@@ -301,11 +100,10 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
     return () => window.removeEventListener('keydown', onKey)
   }, [showLoginModal, showPaymentModal, mobileMenuOpen])
 
-  // Handle hash scroll when navigating from other pages (e.g., /search-papers -> /#pricing)
+  // Handle hash scroll when navigating from other pages
   useEffect(() => {
     if (location.hash) {
       const id = location.hash.replace('#', '')
-      // Delay to let the page render
       const timer = setTimeout(() => {
         const el = document.getElementById(id)
         if (el) {
@@ -318,6 +116,28 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
     }
   }, [location.hash])
 
+  // Track active section for left sidebar highlight
+  useEffect(() => {
+    const sectionIds = ['features', 'process', 'cases', 'pricing']
+    const onScroll = () => {
+      const navHeight = 80
+      let current = ''
+      for (const id of sectionIds) {
+        const el = document.getElementById(id)
+        if (el) {
+          const rect = el.getBoundingClientRect()
+          if (rect.top <= navHeight + 100) {
+            current = id
+          }
+        }
+      }
+      setActiveSection(current)
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    onScroll()
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
   return (
     <div className="simple-home simple-home-international">
       <nav className="home-nav">
@@ -326,17 +146,6 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
           <span className="logo-text">AutoOverview</span>
         </div>
         <div className="nav-links">
-          {['generate', 'features', 'process', 'cases', 'pricing'].map((id) => (
-            <a key={id} href={`#${id}`} onClick={(e) => {
-              e.preventDefault()
-              const el = document.getElementById(id)
-              if (el) {
-                const navHeight = 60
-                const elPosition = el.getBoundingClientRect().top + window.pageYOffset
-                window.scrollTo({ top: elPosition - navHeight, behavior: 'smooth' })
-              }
-            }}>{t(`home.nav.${id}`)}</a>
-          ))}
           <a href="/search-papers" onClick={(e) => {
             e.preventDefault()
             navigate('/search-papers')
@@ -345,6 +154,10 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
             e.preventDefault()
             navigate('/comparison-matrix')
           }}>{t('home.nav.comparison_matrix')}</a>
+          <a href="/generate" onClick={(e) => {
+            e.preventDefault()
+            navigate('/generate')
+          }}>{t('home.nav.generate')}</a>
         </div>
         <div className="nav-actions">
           {isLoggedIn ? (
@@ -383,18 +196,6 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
           <button className="sidebar-close" onClick={() => setMobileMenuOpen(false)} aria-label="Close menu">&times;</button>
         </div>
         <nav className="sidebar-links">
-          <a
-            href="#generate"
-            onClick={(e) => {
-              e.preventDefault()
-              setMobileMenuOpen(false)
-              const el = document.getElementById('generate')
-              if (el) {
-                window.location.hash = 'generate'
-                el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-              }
-            }}
-          >{t('home.nav.generate')}</a>
           <a
             href="#features"
             onClick={(e) => {
@@ -460,6 +261,14 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
               navigate('/comparison-matrix')
             }}
           >{t('home.nav.comparison_matrix')}</a>
+          <a
+            href="/generate"
+            onClick={(e) => {
+              e.preventDefault()
+              setMobileMenuOpen(false)
+              navigate('/generate')
+            }}
+          >{t('home.nav.generate')}</a>
         </nav>
         <div className="sidebar-bottom">
           {isLoggedIn ? (
@@ -483,8 +292,50 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
         </div>
       </aside>
 
+      {/* Left Sidebar - Desktop */}
+      <aside className="left-sidebar left-sidebar-visible">
+        <nav className="left-sidebar-nav">
+          <a href="#features" className={activeSection === 'features' ? 'active' : ''} onClick={(e) => {
+            e.preventDefault()
+            const el = document.getElementById('features')
+            if (el) {
+              const navHeight = 60
+              const elPosition = el.getBoundingClientRect().top + window.pageYOffset
+              window.scrollTo({ top: elPosition - navHeight, behavior: 'smooth' })
+            }
+          }}>{t('home.nav.features')}</a>
+          <a href="#process" className={activeSection === 'process' ? 'active' : ''} onClick={(e) => {
+            e.preventDefault()
+            const el = document.getElementById('process')
+            if (el) {
+              const navHeight = 60
+              const elPosition = el.getBoundingClientRect().top + window.pageYOffset
+              window.scrollTo({ top: elPosition - navHeight, behavior: 'smooth' })
+            }
+          }}>{t('home.nav.process')}</a>
+          <a href="#cases" className={activeSection === 'cases' ? 'active' : ''} onClick={(e) => {
+            e.preventDefault()
+            const el = document.getElementById('cases')
+            if (el) {
+              const navHeight = 60
+              const elPosition = el.getBoundingClientRect().top + window.pageYOffset
+              window.scrollTo({ top: elPosition - navHeight, behavior: 'smooth' })
+            }
+          }}>{t('home.nav.cases')}</a>
+          <a href="#pricing" className={activeSection === 'pricing' ? 'active' : ''} onClick={(e) => {
+            e.preventDefault()
+            const el = document.getElementById('pricing')
+            if (el) {
+              const navHeight = 60
+              const elPosition = el.getBoundingClientRect().top + window.pageYOffset
+              window.scrollTo({ top: elPosition - navHeight, behavior: 'smooth' })
+            }
+          }}>{t('home.nav.pricing')}</a>
+        </nav>
+      </aside>
+
       <div className="home-container">
-        {/* Hero Section with Input */}
+        {/* Hero Section */}
         <div id="generate" className="home-hero-wrapper">
           <div className="home-hero">
             <span className="hero-accent">{t('home.hero.accent')}</span>
@@ -492,13 +343,24 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
               <span dangerouslySetInnerHTML={{ __html: t('home.hero.title') }} />
             </h1>
             <p className="home-subtitle">{t('home.hero.subtitle')}</p>
-            <div className="hero-cta-group">
-              <button
-                className="generate-btn hero-cta-primary"
-                onClick={() => navigate('/search-papers')}
-              >
-                {t('home.hero.search_papers_cta')}
-              </button>
+
+            {/* Three entry cards */}
+            <div className="hero-entry-cards">
+              <div className="hero-entry-card" onClick={() => navigate('/search-papers')}>
+                <span className="hero-entry-icon">🔍</span>
+                <h3>{t('home.hero.cards.search')}</h3>
+                <p>{t('home.hero.cards.search_desc')}</p>
+              </div>
+              <div className="hero-entry-card" onClick={() => navigate('/comparison-matrix')}>
+                <span className="hero-entry-icon">📊</span>
+                <h3>{t('home.hero.cards.matrix')}</h3>
+                <p>{t('home.hero.cards.matrix_desc')}</p>
+              </div>
+              <div className="hero-entry-card hero-entry-card-primary" onClick={() => navigate('/generate')}>
+                <span className="hero-entry-icon">📝</span>
+                <h3>{t('home.hero.cards.generate')}</h3>
+                <p>{t('home.hero.cards.generate_desc')}</p>
+              </div>
             </div>
           </div>
 
@@ -520,80 +382,8 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
               </div>
             </div>
           </div>
-
-          {/* Input Section - Directly in Hero */}
-          <div className="home-input-section">
-            {isLoggedIn && (
-              <span className={`credits-badge ${prevCredits !== credits ? 'credits-updated' : ''}`}>
-                {t('home.input.credits_remaining')} <span className="credits-number">{credits}</span>
-              </span>
-            )}
-            <div className="input-section-header">
-              <div className="input-section-title-row">
-                <h2 className="input-section-title">{t('home.input.title')}</h2>
-              </div>
-              <p className="input-section-subtitle">{t('home.input.subtitle')}</p>
-            </div>
-
-            <div className="input-wrapper">
-              <textarea
-                className="topic-input"
-                placeholder={t('home.input.placeholder')}
-                value={topic}
-                onChange={(e) => setTopic(e.target.value)}
-                disabled={isGenerating}
-                rows={3}
-              />
-              <div className="input-actions">
-                <button
-                  className="generate-btn"
-                  onClick={handleGenerate}
-                  disabled={isGenerating || !topic.trim()}
-                >
-                  {isGenerating ? t('home.input.button_generating') : t('home.input.button')}
-                </button>
-              </div>
-              <p className="search-papers-hint">
-                {t('home.input.search_papers_hint')}{' '}
-                <a href="/search-papers" onClick={(e) => { e.preventDefault(); navigate('/search-papers') }}>
-                  {t('home.input.search_papers_link')} →
-                </a>
-              </p>
-            </div>
-          </div>
         </div>
 
-        {/* Data Sources Section */}
-        <div className="data-sources-section">
-          <div className="section-inner">
-            <p className="data-sources-title">{t('home.sources.title')}</p>
-            <div className="data-sources-logos">
-              <div className="data-source-logo">Web of Science</div>
-              <div className="data-source-logo">IEEE Xplore</div>
-              <div className="data-source-logo">CrossRef</div>
-              <div className="data-source-logo">Semantic Scholar</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Progress Section */}
-        {isGenerating && progress && (
-          <div className="home-progress">
-            <div className="progress-bar">
-              <div
-                className="progress-fill"
-                style={{ width: `${getProgressPercentage()}%` }}
-              />
-            </div>
-            <div className="progress-message">{progress.message}</div>
-            <div className="progress-hint">
-              {t('home.progress.hint')}
-              <span className="progress-hint-link" onClick={() => navigate('/profile')}>
-                {t('home.progress.view_profile')}
-              </span>
-            </div>
-          </div>
-        )}
 
         {/* Comparison Section - Simplified */}
         <section id="features" className="landing-section">
@@ -805,73 +595,37 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
               </div>
             ) : (
               <div className="pricing-grid pricing-grid-international">
-                {/* Plan 1: Starter */}
-                <div className="pricing-card pricing-card-english">
-                  <h3 className="pricing-name">{t('home.pricing.single.name')}</h3>
-                  <div className="pricing-price">
-                    <span className="currency">$</span>
-                    <span className="amount">{t('home.pricing.single.price')}</span>
-                  </div>
-                  <ul className="pricing-features">
-                    {(t('home.pricing.single.features', { returnObjects: true }) as string[]).map((feature: string, index: number) => (
-                      <li key={index}>✓ {feature}</li>
-                    ))}
-                  </ul>
-                  <button
-                    className="pricing-btn pricing-btn-primary"
-                    onClick={() => {
-                      isLoggedIn ? setShowPaymentModal('single') : setShowLoginModal(true)
-                    }}
-                  >
-                    {t('home.pricing.buy_now')}
-                  </button>
-                </div>
-
-                {/* Plan 2: Semester Pro */}
-                <div className="pricing-card pricing-card-english pricing-featured">
-                  <div className="pricing-badge">{t('home.pricing.semester.badge')}</div>
-                  <h3 className="pricing-name">{t('home.pricing.semester.name')}</h3>
-                  <div className="pricing-price">
-                    <span className="currency">$</span>
-                    <span className="amount">{t('home.pricing.semester.price')}</span>
-                  </div>
-                  <ul className="pricing-features">
-                    {(t('home.pricing.semester.features', { returnObjects: true }) as string[]).map((feature: string, index: number) => (
-                      <li key={index}>✓ {feature}</li>
-                    ))}
-                  </ul>
-                  <button
-                    className="pricing-btn pricing-btn-primary"
-                    onClick={() => {
-                      isLoggedIn ? setShowPaymentModal('semester') : setShowLoginModal(true)
-                    }}
-                  >
-                    {t('home.pricing.buy_now')}
-                  </button>
-                </div>
-
-                {/* Plan 3: Annual Premium */}
-                <div className="pricing-card pricing-card-english">
-                  <div className="pricing-badge">{t('home.pricing.yearly.badge')}</div>
-                  <h3 className="pricing-name">{t('home.pricing.yearly.name')}</h3>
-                  <div className="pricing-price">
-                    <span className="currency">$</span>
-                    <span className="amount">{t('home.pricing.yearly.price')}</span>
-                  </div>
-                  <ul className="pricing-features">
-                    {(t('home.pricing.yearly.features', { returnObjects: true }) as string[]).map((feature: string, index: number) => (
-                      <li key={index}>✓ {feature}</li>
-                    ))}
-                  </ul>
-                  <button
-                    className="pricing-btn pricing-btn-primary"
-                    onClick={() => {
-                      isLoggedIn ? setShowPaymentModal('yearly') : setShowLoginModal(true)
-                    }}
-                  >
-                    {t('home.pricing.buy_now')}
-                  </button>
-                </div>
+                {plans.filter((p: any) => p.type !== 'unlock').map((plan: any) => {
+                  const isFeatured = plan.recommended || !!plan.badge_en
+                  return (
+                    <div
+                      key={plan.type}
+                      className={`pricing-card pricing-card-english ${isFeatured ? 'pricing-featured' : ''}`}
+                    >
+                      {isFeatured && plan.badge_en && (
+                        <div className="pricing-badge">{plan.badge_en}</div>
+                      )}
+                      <h3 className="pricing-name">{plan.name_en || plan.name}</h3>
+                      <div className="pricing-price">
+                        <span className="currency">$</span>
+                        <span className="amount">{plan.price_usd || plan.price}</span>
+                      </div>
+                      <ul className="pricing-features">
+                        {(plan.features_en || plan.features || []).map((feature: string, index: number) => (
+                          <li key={index}>✓ {feature}</li>
+                        ))}
+                      </ul>
+                      <button
+                        className="pricing-btn pricing-btn-primary"
+                        onClick={() => {
+                          isLoggedIn ? setShowPaymentModal(plan.type) : setShowLoginModal(true)
+                        }}
+                      >
+                        {t('home.pricing.buy_now')}
+                      </button>
+                    </div>
+                  )
+                })}
               </div>
             )}
           </div>
@@ -912,26 +666,15 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
         <LoginModalInternational
           onClose={() => setShowLoginModal(false)}
           onLoginSuccess={handleLoginSuccess}
-          pendingTopic={topic}
         />
       )}
 
       {showPaymentModal && (
-        <>
-          {language === 'en' ? (
-            <PayPalPaymentModal
-              onClose={() => setShowPaymentModal(false)}
-              onPaymentSuccess={handlePaymentSuccess}
-              planType={showPaymentModal}
-            />
-          ) : (
-            <PaymentModal
-              onClose={() => setShowPaymentModal(false)}
-              onPaymentSuccess={handlePaymentSuccess}
-              planType={showPaymentModal}
-            />
-          )}
-        </>
+        <PayPalPaymentModal
+          onClose={() => setShowPaymentModal(false)}
+          onPaymentSuccess={handlePaymentSuccess}
+          planType={showPaymentModal}
+        />
       )}
 
       {showToast && (
@@ -944,16 +687,4 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
       <CookieConsentBanner />
     </div>
   )
-
-  function getProgressPercentage(): number {
-    if (!progress) return 0
-    const stepValues: Record<string, number> = {
-      'processing': 30,
-      'searching': 50,
-      'analyzing': 70,
-      'generating': 90,
-      'completed': 100
-    }
-    return stepValues[progress.step] || 50
-  }
 }

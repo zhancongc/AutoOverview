@@ -44,7 +44,9 @@ html.intl {
 
   /* Navigation */
   .simple-home-international .home-nav {
-    background: var(--cream-white);
+    background: #ffffff;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
     border-bottom: 1px solid var(--light-gray);
     padding: 0.35rem 2rem;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
@@ -999,9 +1001,25 @@ html.intl {
   }
 
   .simple-home-international .case-action {
-    color: var(--academic-blue-primary);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    color: white;
     font-weight: 600;
-    font-size: 0.875rem;
+    font-size: 0.8rem;
+    margin-top: 0.75rem;
+    padding: 0.45rem 1rem;
+    background: var(--academic-blue-primary);
+    border: none;
+    border-radius: 6px;
+    opacity: 1;
+    transform: none;
+    transition: all 0.2s;
+  }
+
+  .simple-home-international .case-card:hover .case-action {
+    opacity: 0.9;
+    transform: translateY(-1px);
   }
 
   .simple-home-international .cases-grid {
@@ -1143,5 +1161,156 @@ html.intl {
 
   .simple-home-international .progress-hint-link:hover {
     text-decoration: underline;
+  }
+
+  /* Mobile Menu Toggle */
+  .simple-home-international .mobile-menu-toggle,
+  .mobile-menu-toggle {
+    display: none;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.5rem;
+    z-index: 101;
+  }
+
+  .simple-home-international .hamburger,
+  .hamburger {
+    display: block;
+    width: 24px;
+    height: 2px;
+    background: var(--charcoal);
+    position: relative;
+    transition: background 0.3s;
+  }
+
+  .simple-home-international .hamburger::before,
+  .simple-home-international .hamburger::after,
+  .hamburger::before,
+  .hamburger::after {
+    content: '';
+    position: absolute;
+    width: 24px;
+    height: 2px;
+    background: var(--charcoal);
+    left: 0;
+    transition: transform 0.3s;
+  }
+
+  .simple-home-international .hamburger::before,
+  .hamburger::before { top: -7px; }
+
+  .simple-home-international .hamburger::after,
+  .hamburger::after { top: 7px; }
+
+  .simple-home-international .hamburger.open,
+  .hamburger.open { background: transparent; }
+
+  .simple-home-international .hamburger.open::before,
+  .hamburger.open::before { transform: rotate(45deg); top: 0; }
+
+  .simple-home-international .hamburger.open::after,
+  .hamburger.open::after { transform: rotate(-45deg); top: 0; }
+
+  /* Mobile Sidebar */
+  .simple-home-international .mobile-sidebar-overlay,
+  .mobile-sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 200;
+  }
+
+  .simple-home-international .mobile-sidebar,
+  .mobile-sidebar {
+    position: fixed;
+    top: 0;
+    right: -100%;
+    width: 280px;
+    height: 100%;
+    background: white;
+    z-index: 201;
+    transition: right 0.3s ease;
+    box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+  }
+
+  .simple-home-international .mobile-sidebar.sidebar-open,
+  .mobile-sidebar.sidebar-open {
+    right: 0;
+  }
+
+  .simple-home-international .sidebar-header,
+  .sidebar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--light-gray);
+  }
+
+  .simple-home-international .sidebar-close,
+  .sidebar-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--text-gray);
+    cursor: pointer;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    line-height: 1;
+  }
+
+  .simple-home-international .sidebar-links,
+  .sidebar-links {
+    display: flex;
+    flex-direction: column;
+    padding: 1.5rem;
+    gap: 1rem;
+  }
+
+  .simple-home-international .sidebar-links a,
+  .sidebar-links a {
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--charcoal);
+    text-decoration: none;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--light-gray);
+  }
+
+  /* Responsive Mobile Styles */
+  @media (max-width: 768px) {
+    .simple-home-international .mobile-menu-toggle,
+    .mobile-menu-toggle {
+      display: block;
+    }
+
+    .simple-home-international .nav-links,
+    .simple-home-international .nav-actions {
+      display: none;
+    }
+  }
+
+  /* Left sidebar active state - blue for international */
+  .simple-home-international .left-sidebar-nav a.active {
+    background: var(--academic-blue-light);
+    color: var(--academic-blue-primary);
+  }
+}
+
+/* Mobile: 1 card per row for cases and testimonials */
+@media (max-width: 768px) {
+  .simple-home-international .cases-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1rem;
+  }
+
+  .simple-home-international .testimonials-international {
+    grid-template-columns: 1fr !important;
+    gap: 1rem;
   }
 }

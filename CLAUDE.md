@@ -57,9 +57,9 @@ AutoOverview 是一个 AI 驱动的文献综述生成平台，支持中英文双
 - 进阶包（6篇）：¥109.8（原价 ¥178.8，约 ¥18.3/篇）
 
 **英文版（USD）**：
-- 单次：$9.99
-- 学期包（10次）：$24.99
-- 学年包（30次）：$44.99
+- Starter（6 credits）：$9.99
+- Semester Pro（20 credits）：$24.99
+- Annual Premium（60 credits）：$44.99
 
 ### API 路径
 - 前端代理: `localhost:3000` → `localhost:8000`（vite.config.ts 配置）

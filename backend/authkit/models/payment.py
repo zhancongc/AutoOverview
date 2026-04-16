@@ -17,11 +17,18 @@ class Plan(PaymentBase):
 
     id = Column(Integer, primary_key=True, index=True)
     type = Column(String(32), unique=True, nullable=False, comment="套餐类型: single/semester/yearly/unlock")
-    name = Column(String(50), nullable=False, comment="套餐名称")
-    price = Column(Float, nullable=False, comment="价格（元）")
-    credits = Column(Integer, nullable=False, comment="包含的综述额度数量")
+    name = Column(String(50), nullable=False, comment="套餐名称（中文）")
+    name_en = Column(String(100), nullable=True, comment="套餐名称（英文）")
+    price = Column(Float, nullable=False, comment="CNY 价格")
+    price_usd = Column(Float, nullable=True, comment="USD 价格")
+    original_price = Column(Float, nullable=True, comment="CNY 原价（划线价）")
+    original_price_usd = Column(Float, nullable=True, comment="USD 原价")
+    credits = Column(Integer, nullable=False, comment="包含的 Credit 点数")
     recommended = Column(Boolean, default=False, comment="是否推荐")
-    features = Column(Text, nullable=True, comment="套餐特性（JSON格式）")
+    features = Column(Text, nullable=True, comment="中文特性（JSON格式）")
+    features_en = Column(Text, nullable=True, comment="英文特性（JSON格式）")
+    badge = Column(String(50), nullable=True, comment="中文角标")
+    badge_en = Column(String(50), nullable=True, comment="英文角标")
     is_active = Column(Boolean, default=True, comment="是否启用")
     sort_order = Column(Integer, default=0, comment="显示顺序")
     created_at = Column(DateTime(timezone=True), server_default=func.now(), comment="创建时间")
@@ -32,23 +39,28 @@ class Plan(PaymentBase):
             "id": self.id,
             "type": self.type,
             "name": self.name,
+            "name_en": self.name_en or self.name,
             "price": self.price,
+            "price_usd": self.price_usd or self.price,
+            "original_price": self.original_price,
+            "original_price_usd": self.original_price_usd,
             "credits": self.credits,
             "recommended": self.recommended,
-            "features": self.parse_features() if self.features else [],
+            "features": self._parse(self.features),
+            "features_en": self._parse(self.features_en) or self._parse(self.features),
+            "badge": self.badge,
+            "badge_en": self.badge_en,
             "is_active": self.is_active,
             "sort_order": self.sort_order,
-            "created_at": self.created_at.isoformat() if self.created_at else None,
-            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }
 
-    def parse_features(self):
-        """解析 JSON 格式的特性列表"""
-        if not self.features:
+    @staticmethod
+    def _parse(features_json):
+        if not features_json:
             return []
         import json
         try:
-            return json.loads(self.features)
+            return json.loads(features_json)
         except:
             return []
 
@@ -153,46 +165,90 @@ class MembershipInfo(BaseModel):
 DEFAULT_PLANS = [
     {
         "type": "single",
-        "name": "体验包",
-        "price": 29.8,
-        "credits": 2,
+        "name": "体验包", "name_en": "Starter",
+        "price": 9.9, "price_usd": 9.99,
+        "original_price": 29.8, "original_price_usd": 14.99,
+        "credits": 6,
         "recommended": False,
         "sort_order": 1,
+        "badge": None, "badge_en": None,
         "features": [
             "2 个 Credit（1 篇综述 或 2 篇对比矩阵）",
             "在线查看 + Word 导出",
             "参考文献包含真实文献 DOI 链接",
             "支持导出 BibTeX、XML、RIS 格式",
+        ],
+        "features_en": [
+            "6 Credits (3 reviews or 6 comparison matrices)",
+            "Online viewing + Word export",
+            "DOI-verifiable citations",
+            "Export BibTeX, XML, RIS formats",
         ]
     },
     {
         "type": "semester",
-        "name": "标准包",
-        "price": 69.8,
-        "credits": 6,
+        "name": "标准包", "name_en": "Semester Pro",
+        "price": 19.8, "price_usd": 24.99,
+        "original_price": 69.8, "original_price_usd": 39.99,
+        "credits": 20,
         "recommended": True,
         "sort_order": 2,
+        "badge": "热门", "badge_en": "Popular",
         "features": [
             "6 个 Credit（3 篇综述 或 6 篇对比矩阵）",
             "在线查看 + Word 导出",
             "参考文献包含真实文献 DOI 链接",
             "支持导出 BibTeX、XML、RIS 格式",
-            "约 ¥11.6/Credit",
+            "约 ¥3.3/Credit",
+        ],
+        "features_en": [
+            "20 Credits (10 reviews or 20 comparison matrices)",
+            "Online viewing + Word export",
+            "DOI-verifiable citations",
+            "Export BibTeX, XML, RIS formats",
+            "~$1.25/Credit",
         ]
     },
     {
         "type": "yearly",
-        "name": "进阶包",
-        "price": 109.8,
-        "credits": 12,
+        "name": "进阶包", "name_en": "Annual Premium",
+        "price": 49.8, "price_usd": 44.99,
+        "original_price": 109.8, "original_price_usd": 69.99,
+        "credits": 60,
         "recommended": False,
         "sort_order": 3,
+        "badge": "超值", "badge_en": "Best Value",
         "features": [
             "12 个 Credit（6 篇综述 或 12 篇对比矩阵）",
             "在线查看 + Word 导出",
             "参考文献包含真实文献 DOI 链接",
             "支持导出 BibTeX、XML、RIS 格式",
-            "约 ¥9.2/Credit",
+            "约 ¥4.2/Credit",
+        ],
+        "features_en": [
+            "60 Credits (30 reviews or 60 comparison matrices)",
+            "Online viewing + Word export",
+            "DOI-verifiable citations",
+            "Export BibTeX, XML, RIS formats",
+            "~$0.75/Credit",
+        ]
+    },
+    {
+        "type": "unlock",
+        "name": "单次解锁", "name_en": "Unlock Single Export",
+        "price": 9.9, "price_usd": 9.99,
+        "original_price": None, "original_price_usd": None,
+        "credits": 0,
+        "recommended": False,
+        "sort_order": 4,
+        "badge": None, "badge_en": None,
+        "features": [
+            "解锁当前综述 Word 导出权限",
+            "无水印 Word 文档",
+        ],
+        "features_en": [
+            "Unlock Word export for this review",
+            "Watermark-free Word document",
         ]
     },
 ]
@@ -234,20 +290,34 @@ def init_plans_in_db(session):
         if existing:
             # 已存在则更新
             existing.name = plan_data["name"]
+            existing.name_en = plan_data.get("name_en")
             existing.price = plan_data["price"]
+            existing.price_usd = plan_data.get("price_usd")
+            existing.original_price = plan_data.get("original_price")
+            existing.original_price_usd = plan_data.get("original_price_usd")
             existing.credits = plan_data["credits"]
             existing.recommended = plan_data["recommended"]
             existing.features = json.dumps(plan_data["features"])
+            existing.features_en = json.dumps(plan_data["features_en"]) if plan_data.get("features_en") else None
+            existing.badge = plan_data.get("badge")
+            existing.badge_en = plan_data.get("badge_en")
             existing.sort_order = plan_data.get("sort_order", 0)
         else:
             # 不存在则创建
             plan = Plan(
                 type=plan_data["type"],
                 name=plan_data["name"],
+                name_en=plan_data.get("name_en"),
                 price=plan_data["price"],
+                price_usd=plan_data.get("price_usd"),
+                original_price=plan_data.get("original_price"),
+                original_price_usd=plan_data.get("original_price_usd"),
                 credits=plan_data["credits"],
                 recommended=plan_data["recommended"],
                 features=json.dumps(plan_data["features"]),
+                features_en=json.dumps(plan_data["features_en"]) if plan_data.get("features_en") else None,
+                badge=plan_data.get("badge"),
+                badge_en=plan_data.get("badge_en"),
                 sort_order=plan_data.get("sort_order", 0)
             )
             session.add(plan)
