@@ -476,10 +476,10 @@ export function SearchPapersPage() {
           <span className="logo-text">AutoOverview</span>
         </div>
         <div className="nav-links">
+          <a href="/" onClick={(e) => { e.preventDefault(); navigate('/') }}>{t('nav.home')}</a>
           <a href="/search-papers" className="active">{t('search_papers.nav.search')}</a>
-          <a href="/" onClick={(e) => { e.preventDefault(); navigate('/') }}>{t('search_papers.nav.generate')}</a>
           <a href="/comparison-matrix" onClick={(e) => { e.preventDefault(); navigate('/comparison-matrix') }}>{t('search_papers.nav.comparison_matrix')}</a>
-          <a href="/#pricing" onClick={(e) => { e.preventDefault(); navigate('/#pricing') }}>{t('search_papers.nav.pricing')}</a>
+          <a href="/generate" onClick={(e) => { e.preventDefault(); navigate('/generate') }}>{t('search_papers.nav.generate')}</a>
         </div>
         <div className="nav-actions">
           {loggedIn ? (
@@ -515,10 +515,10 @@ export function SearchPapersPage() {
           <button className="sidebar-close" onClick={() => setMobileMenuOpen(false)}>&times;</button>
         </div>
         <nav className="sidebar-links">
+          <a href="/" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/') }}>首页</a>
           <a href="/search-papers" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false) }}>{t('search_papers.nav.search')}</a>
-          <a href="/" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/') }}>{t('search_papers.nav.generate')}</a>
           <a href="/comparison-matrix" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/comparison-matrix') }}>{t('search_papers.nav.comparison_matrix')}</a>
-          <a href="/#pricing" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/#pricing') }}>{t('search_papers.nav.pricing')}</a>
+          <a href="/generate" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/generate') }}>{t('search_papers.nav.generate')}</a>
         </nav>
         <div className="sidebar-bottom">
           {loggedIn ? (

@@ -17,6 +17,7 @@ import { TermsAndConditionsPageChinese } from './components/TermsAndConditionsPa
 import { PrivacyPolicyPageChinese } from './components/PrivacyPolicyPageChinese'
 import { RefundPolicyPageChinese } from './components/RefundPolicyPageChinese'
 import { ComparisonMatrixPage } from './components/ComparisonMatrixPage'
+import { GenerateReviewPage } from './components/GenerateReviewPage'
 import ErrorBoundary from './ErrorBoundary'
 import { api } from './api'
 import './i18n' // 导入 i18n 配置
@@ -81,6 +82,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         <Route path="/privacy-policy" element={isEnglishVersion ? <PrivacyPolicyPage /> : <PrivacyPolicyPageChinese />} />
         <Route path="/refund-policy" element={isEnglishVersion ? <RefundPolicyPage /> : <RefundPolicyPageChinese />} />
         <Route path="/comparison-matrix" element={<ComparisonMatrixPage />} />
+        <Route path="/generate" element={<GenerateReviewPage />} />
       </Routes>
       <BackToTop />
     </BrowserRouter>

@@ -1,77 +1,41 @@
-import { useState, useEffect, useRef } from 'react'
-import { useNavigate, useLocation, useSearchParams } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { api } from '../api'
-import { isLoggedIn as checkLoggedIn, getLocalUserInfo } from '../authApi'
+import { isLoggedIn as checkLoggedIn } from '../authApi'
 import { LoginModal } from './LoginModal'
 import { PaymentModal } from './PaymentModal'
-import { PayPalPaymentModal } from './PayPalPaymentModal'
 import './SimpleApp.css'
-
-interface TaskProgress {
-  step: string
-  message: string
-}
 
 export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const location = useLocation()
-  const [searchParams] = useSearchParams()
-  const [topic, setTopic] = useState('')
-  const [language, setLanguage] = useState<'zh' | 'en'>('zh')
-  const [isGenerating, setIsGenerating] = useState(false)
-  const [progress, setProgress] = useState<TaskProgress | null>(null)
-  const [error, setError] = useState('')
   const [showLoginModal, setShowLoginModal] = useState(false)
   const [showPaymentModal, setShowPaymentModal] = useState<string | false>(false)
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const [, setUserInfo] = useState<any>(null)
-  const [credits, setCredits] = useState<number>(0)
-  const [prevCredits, setPrevCredits] = useState<number>(0)
   const [showToast, setShowToast] = useState(false)
   const [toastMessage, setToastMessage] = useState('')
   const [plans, setPlans] = useState<any[]>([])
   const [plansLoading, setPlansLoading] = useState(true)
   const [demoCases, setDemoCases] = useState<any[]>([])
   const [casesLoading, setCasesLoading] = useState(true)
-  const isPollingRef = useRef(false)
 
   useEffect(() => {
     const loggedIn = checkLoggedIn()
     setIsLoggedIn(loggedIn)
-    // 未登录且 autoShowLogin 时自动弹出登录弹窗
     if (!loggedIn && autoShowLogin) {
       setShowLoginModal(true)
     }
-    if (loggedIn) {
-      setUserInfo(getLocalUserInfo())
-      api.getCredits().then(data => setCredits(data.credits)).catch(err => console.error('获取额度失败:', err))
-      // 检查是否有进行中的任务
-      api.getActiveTask().then(data => {
-        if (data.active && data.task_id) {
-          isPollingRef.current = true
-          setTopic(data.topic || '')
-          setIsGenerating(true)
-          setProgress({ step: 'processing', message: language === 'en' ? t('home.progress.restoring') : '正在恢复任务状态...' })
-          sessionStorage.setItem('active_task_id', data.task_id)
-          sessionStorage.setItem('active_task_topic', data.topic || '')
-          pollTask(data.task_id)
-        }
-      }).catch(err => console.error('获取活跃任务失败:', err))
-    }
 
-    // 获取套餐价格数据
     api.getSubscriptionPlans().then(data => {
       setPlans(data.plans)
       setPlansLoading(false)
-    }).catch(err => {
-      console.error('获取套餐失败:', err)
+    }).catch(() => {
       setPlansLoading(false)
     })
 
-    // 获取案例展示列表
     fetch('/api/cases')
       .then(res => res.json())
       .then(data => {
@@ -80,123 +44,10 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
         }
         setCasesLoading(false)
       })
-      .catch(err => {
-        console.error('获取案例失败:', err)
+      .catch(() => {
         setCasesLoading(false)
       })
   }, [])
-
-  // 检测 URL 参数：从搜索页跳转过来的场景
-  useEffect(() => {
-    // task_id：搜索页已提交任务，直接开始轮询展示进度条
-    const taskIdParam = searchParams.get('task_id')
-    if (taskIdParam) {
-      isPollingRef.current = true
-      setIsGenerating(true)
-      setProgress({ step: 'processing', message: '正在生成文献综述...' })
-      sessionStorage.setItem('active_task_id', taskIdParam)
-      pollTask(taskIdParam)
-      // 清理 URL
-      window.history.replaceState({}, '', '/')
-      return
-    }
-
-    // reuse_task_id + topic：搜索页跳转过来，预填主题
-    const reuseTaskId = searchParams.get('reuse_task_id')
-    const reuseTopic = searchParams.get('topic')
-    if (reuseTaskId && reuseTopic) {
-      setTopic(reuseTopic)
-      sessionStorage.setItem('reuse_task_id', reuseTaskId)
-      sessionStorage.setItem('pending_topic', reuseTopic)
-      // 清理 URL
-      window.history.replaceState({}, '', '/')
-    }
-  }, [searchParams])
-
-  const pollTask = (taskId: string) => {
-    const startTime = Date.now()
-    const doPoll = async () => {
-      try {
-        const statusResponse = await api.getTaskStatus(taskId)
-        if (!statusResponse.success) {
-          sessionStorage.removeItem('active_task_id')
-          sessionStorage.removeItem('active_task_topic')
-          setIsGenerating(false)
-          isPollingRef.current = false
-          return
-        }
-
-        const taskInfo = statusResponse.data
-        if (taskInfo.status === 'completed' && taskInfo.result) {
-          sessionStorage.removeItem('active_task_id')
-          sessionStorage.removeItem('active_task_topic')
-          isPollingRef.current = false
-          navigate(`/review?task_id=${taskId}`)
-          return
-        } else if (taskInfo.status === 'failed') {
-          sessionStorage.removeItem('active_task_id')
-          sessionStorage.removeItem('active_task_topic')
-          setError(taskInfo.error || (language === 'en' ? t('home.errors.task_failed') : '任务执行失败'))
-          setIsGenerating(false)
-          isPollingRef.current = false
-          return
-        }
-
-        setProgress({ step: taskInfo.progress?.step || 'processing', message: taskInfo.progress?.message || (language === 'en' ? t('home.progress.processing') : '正在处理...') })
-
-        // 根据已用时间调整轮询间隔
-        const elapsed = Date.now() - startTime
-        const elapsedMinutes = elapsed / (60 * 1000)
-        let nextInterval: number
-        if (elapsedMinutes < 1) {
-          nextInterval = 20000
-        } else if (elapsedMinutes < 3) {
-          nextInterval = 15000
-        } else {
-          nextInterval = 10000
-        }
-        setTimeout(doPoll, nextInterval)
-      } catch {
-        sessionStorage.removeItem('active_task_id')
-        sessionStorage.removeItem('active_task_topic')
-        setIsGenerating(false)
-        isPollingRef.current = false
-      }
-    }
-    setTimeout(doPoll, 5000) // 初始延迟5秒
-  }
-
-  useEffect(() => {
-    const pendingTopic = sessionStorage.getItem('pending_topic')
-    if (pendingTopic) {
-      sessionStorage.removeItem('pending_topic')
-      setTopic(pendingTopic)
-    }
-  }, [])
-
-  // 监听路由变化，回到首页时检查是否有活跃任务
-  useEffect(() => {
-    // 只在回到首页时检查，且避免重复轮询
-    if (location.pathname === '/' && !isPollingRef.current && isLoggedIn && !isGenerating) {
-      const checkActiveTask = async () => {
-        try {
-          const data = await api.getActiveTask()
-          if (data.active && data.task_id) {
-            isPollingRef.current = true
-            setTopic(data.topic || '')
-            setIsGenerating(true)
-            setProgress({ step: 'processing', message: language === 'en' ? t('home.progress.restoring') : '正在恢复任务状态...' })
-            sessionStorage.setItem('active_task_id', data.task_id)
-            sessionStorage.setItem('active_task_topic', data.topic || '')
-            pollTask(data.task_id)
-          }
-        } catch (err) {
-          console.error('获取活跃任务失败:', err)
-        }
-      }
-      checkActiveTask()
-    }
-  }, [location.pathname, isLoggedIn, isGenerating, language, t])
 
   // Esc 关闭弹窗
   useEffect(() => {
@@ -211,7 +62,7 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
     return () => window.removeEventListener('keydown', onKey)
   }, [showLoginModal, showPaymentModal, mobileMenuOpen])
 
-  // 从其他页面跳转过来时，处理 hash 滚动（如 /search-papers -> /#generate）
+  // 从其他页面跳转过来时，处理 hash 滚动
   useEffect(() => {
     if (location.hash) {
       const id = location.hash.replace('#', '')
@@ -227,178 +78,17 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
     }
   }, [location.hash])
 
-  const handleGenerate = async () => {
-    if (!topic.trim()) {
-      setError('\u8BF7\u8F93\u5165\u7814\u7A76\u4E3B\u9898')
-      return
-    }
-
-    if (!checkLoggedIn()) {
-      setShowLoginModal(true)
-      return
-    }
-
-    setIsGenerating(true)
-    setProgress({ step: 'init', message: '\u6B63\u5728\u63D0\u4EA4\u4EFB\u52A1...' })
-    setError('')
-
-    try {
-      const submitResponse = await api.submitReviewTask(topic, {
-        language,
-        targetCount: 50,
-        recentYearsRatio: 0.5,
-        englishRatio: 0.3,
-        searchYears: 10,
-        maxSearchQueries: 8
-      })
-
-      if (!submitResponse.success || !submitResponse.data?.task_id) {
-        if (submitResponse.message?.includes('额度已用完')) {
-          setError(submitResponse.message)
-          setShowPaymentModal('single')
-        } else {
-          setError(submitResponse.message || '\u4EFB\u52A1\u63D0\u4EA4\u5931\u8D25')
-        }
-        setIsGenerating(false)
-        return
-      }
-
-      const taskId = submitResponse.data.task_id
-      sessionStorage.setItem('active_task_id', taskId)
-      sessionStorage.setItem('active_task_topic', topic)
-      const startTime = Date.now()
-      let pollCount = 0
-
-      const doPoll = async () => {
-        try {
-          const statusResponse = await api.getTaskStatus(taskId)
-
-          if (!statusResponse.success) {
-            setError('\u67E5\u8BE2\u4EFB\u52A1\u72B6\u6001\u5931\u8D25')
-            setIsGenerating(false)
-            return
-          }
-
-          const taskInfo = statusResponse.data
-
-          const elapsedMinutes = (Date.now() - startTime) / 1000 / 60
-          let expectedRemainingMinutes = Math.max(0, Math.round(5 - elapsedMinutes))
-
-          let progressMessage = taskInfo.progress?.message || '\u6B63\u5728\u5904\u7406...'
-          if (expectedRemainingMinutes > 0) {
-            progressMessage += `\uFF08\u9884\u671F\u8FD8\u6709${expectedRemainingMinutes}\u5206\u949F\uFF09`
-          }
-
-          setProgress({
-            step: taskInfo.progress?.step || 'processing',
-            message: progressMessage
-          })
-
-          if (taskInfo.status === 'completed' && taskInfo.result) {
-            setProgress({ step: 'completed', message: '\u751F\u6210\u5B8C\u6210\uFF01\u6B63\u5728\u8DF3\u8F6C...' })
-            sessionStorage.removeItem('active_task_id')
-            sessionStorage.removeItem('active_task_topic')
-            setTimeout(() => {
-              navigate(`/review?task_id=${taskId}`)
-            }, 500)
-            return
-          } else if (taskInfo.status === 'failed') {
-            sessionStorage.removeItem('active_task_id')
-            sessionStorage.removeItem('active_task_topic')
-            setError(taskInfo.error || '\u4EFB\u52A1\u6267\u884C\u5931\u8D25')
-            setIsGenerating(false)
-            return
-          }
-
-          pollCount++
-          // elapsedMinutes 已在上面计算，直接使用
-
-          // 优化轮询间隔，减少服务端压力
-          let nextInterval: number
-          if (elapsedMinutes < 1) {
-            // 前1分钟：每20秒轮询一次
-            nextInterval = 20000
-          } else if (elapsedMinutes < 3) {
-            // 1-3分钟：每15秒轮询一次
-            nextInterval = 15000
-          } else if (elapsedMinutes < 5) {
-            // 3-5分钟：每10秒轮询一次
-            nextInterval = 10000
-          } else {
-            // 5分钟后：每8秒轮询一次
-            nextInterval = 8000
-          }
-
-          setTimeout(doPoll, nextInterval)
-        } catch (err) {
-          setError('\u67E5\u8BE2\u4EFB\u52A1\u72B6\u6001\u51FA\u9519')
-          setIsGenerating(false)
-          console.error(err)
-        }
-      }
-
-      setTimeout(doPoll, 3000) // 初始延迟3秒，减少服务端压力
-    } catch (err) {
-      setError('\u63D0\u4EA4\u4EFB\u52A1\u5931\u8D25\uFF0C\u8BF7\u68C0\u67E5\u540E\u7AEF\u670D\u52A1\u662F\u5426\u6B63\u5E38\u8FD0\u884C')
-      setIsGenerating(false)
-      console.error(err)
-    }
-  }
-
   const handleLoginSuccess = () => {
     const loggedIn = checkLoggedIn()
     setIsLoggedIn(loggedIn)
-    if (loggedIn) {
-      setUserInfo(getLocalUserInfo())
-    }
     setShowLoginModal(false)
   }
 
-  const handlePaymentSuccess = async (_addedCredits: number = 0) => {
+  const handlePaymentSuccess = async () => {
     setShowPaymentModal(false)
-    setUserInfo(getLocalUserInfo())
-    setError('') // 清除之前的错误状态
-
-    // 刷新额度
-    try {
-      const data = await api.getCredits()
-      setPrevCredits(credits)
-      setCredits(data.credits)
-
-      // 显示成功提示
-      setToastMessage(t('common.payment_success'))
-      setShowToast(true)
-      setTimeout(() => setShowToast(false), 3000)
-
-      // 滚动到综述生成区域
-      setTimeout(() => {
-        const generateSection = document.getElementById('generate')
-        if (generateSection) {
-          generateSection.scrollIntoView({ behavior: 'smooth', block: 'start' })
-        }
-      }, 500)
-    } catch (err) {
-      console.error('刷新额度失败', err)
-    }
-  }
-
-
-  const getProgressPercentage = () => {
-    if (!progress) return 0
-    switch (progress.step) {
-      case 'init': return 5
-      case 'waiting': return 5
-      case 'generating_outline': return 15
-      case 'analyzing': return 20
-      case 'optimizing_keywords': return 25
-      case 'searching': return 40
-      case 'filtering': return 60
-      case 'topic_relevance_check': return 65
-      case 'generating': return 80
-      case 'validating': return 90
-      case 'completed': return 100
-      default: return 5
-    }
+    setToastMessage(t('common.payment_success'))
+    setShowToast(true)
+    setTimeout(() => setShowToast(false), 3000)
   }
 
   return (
@@ -409,13 +99,9 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
           <span className="logo-text">AutoOverview</span>
         </div>
         <div className="nav-links">
-          <a href="#generate">{t('home.nav.generate')}</a>
-          <a href="#features">{t('home.nav.features')}</a>
-          <a href="#process">{t('home.nav.process')}</a>
-          <a href="#cases">{t('home.nav.cases')}</a>
-          <a href="#pricing">{t('home.nav.pricing')}</a>
           <a href="/search-papers" onClick={(e) => { e.preventDefault(); navigate('/search-papers') }}>{t('home.nav.search_papers')}</a>
           <a href="/comparison-matrix" onClick={(e) => { e.preventDefault(); navigate('/comparison-matrix') }}>{t('home.nav.comparison_matrix')}</a>
+          <a href="/generate" onClick={(e) => { e.preventDefault(); navigate('/generate') }}>{t('home.nav.generate')}</a>
         </div>
         <div className="nav-actions">
           {isLoggedIn ? (
@@ -454,13 +140,13 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
           <button className="sidebar-close" onClick={() => setMobileMenuOpen(false)}>&times;</button>
         </div>
         <nav className="sidebar-links">
-          <a href="#generate" onClick={() => setMobileMenuOpen(false)}>{t('home.nav.generate')}</a>
           <a href="#features" onClick={() => setMobileMenuOpen(false)}>{t('home.nav.features')}</a>
           <a href="#process" onClick={() => setMobileMenuOpen(false)}>{t('home.nav.process')}</a>
           <a href="#cases" onClick={() => setMobileMenuOpen(false)}>{t('home.nav.cases')}</a>
           <a href="#pricing" onClick={() => setMobileMenuOpen(false)}>{t('home.nav.pricing')}</a>
           <a href="/search-papers" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/search-papers') }}>{t('home.nav.search_papers')}</a>
           <a href="/comparison-matrix" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/comparison-matrix') }}>{t('home.nav.comparison_matrix')}</a>
+          <a href="/generate" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/generate') }}>{t('home.nav.generate')}</a>
         </nav>
         <div className="sidebar-bottom">
           {isLoggedIn ? (
@@ -481,6 +167,48 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
         </div>
       </aside>
 
+      {/* 左侧侧边栏 - 桌面端 */}
+      <aside className="left-sidebar left-sidebar-visible">
+        <nav className="left-sidebar-nav">
+          <a href="#features" onClick={(e) => {
+            e.preventDefault()
+            const el = document.getElementById('features')
+            if (el) {
+              const navHeight = 60
+              const elPosition = el.getBoundingClientRect().top + window.pageYOffset
+              window.scrollTo({ top: elPosition - navHeight, behavior: 'smooth' })
+            }
+          }}>{t('home.nav.features')}</a>
+          <a href="#process" onClick={(e) => {
+            e.preventDefault()
+            const el = document.getElementById('process')
+            if (el) {
+              const navHeight = 60
+              const elPosition = el.getBoundingClientRect().top + window.pageYOffset
+              window.scrollTo({ top: elPosition - navHeight, behavior: 'smooth' })
+            }
+          }}>{t('home.nav.process')}</a>
+          <a href="#cases" onClick={(e) => {
+            e.preventDefault()
+            const el = document.getElementById('cases')
+            if (el) {
+              const navHeight = 60
+              const elPosition = el.getBoundingClientRect().top + window.pageYOffset
+              window.scrollTo({ top: elPosition - navHeight, behavior: 'smooth' })
+            }
+          }}>{t('home.nav.cases')}</a>
+          <a href="#pricing" onClick={(e) => {
+            e.preventDefault()
+            const el = document.getElementById('pricing')
+            if (el) {
+              const navHeight = 60
+              const elPosition = el.getBoundingClientRect().top + window.pageYOffset
+              window.scrollTo({ top: elPosition - navHeight, behavior: 'smooth' })
+            }
+          }}>{t('home.nav.pricing')}</a>
+        </nav>
+      </aside>
+
       <div className="home-container">
         <div id="generate" className="home-hero-wrapper">
           <div className="home-hero">
@@ -491,13 +219,24 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
             <p className="home-subtitle">
               {t('home.hero.subtitle')}
             </p>
-            <div className="hero-cta-group">
-              <button
-                className="hero-cta-secondary"
-                onClick={() => navigate('/search-papers')}
-              >
-                {t('home.hero.search_papers_cta')}
-              </button>
+
+            {/* Three entry cards */}
+            <div className="hero-entry-cards">
+              <div className="hero-entry-card" onClick={() => navigate('/search-papers')}>
+                <span className="hero-entry-icon">🔍</span>
+                <h3>{t('home.hero.cards.search')}</h3>
+                <p>{t('home.hero.cards.search_desc')}</p>
+              </div>
+              <div className="hero-entry-card" onClick={() => navigate('/comparison-matrix')}>
+                <span className="hero-entry-icon">📊</span>
+                <h3>{t('home.hero.cards.matrix')}</h3>
+                <p>{t('home.hero.cards.matrix_desc')}</p>
+              </div>
+              <div className="hero-entry-card hero-entry-card-primary" onClick={() => navigate('/generate')}>
+                <span className="hero-entry-icon">📝</span>
+                <h3>{t('home.hero.cards.generate')}</h3>
+                <p>{t('home.hero.cards.generate_desc')}</p>
+              </div>
             </div>
           </div>
 
@@ -516,99 +255,6 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
               </div>
             </div>
           </div>
-
-          <div className="home-input-section">
-          {isLoggedIn && <span className={`credits-badge ${prevCredits !== credits ? 'credits-updated' : ''}`}>
-            {t('input.credits_remaining')} <span className="credits-number">{credits}</span>
-          </span>}
-          <div className="language-toggle-wrapper">
-            <span className="language-label">{t('input.language')}</span>
-            <div className="language-toggle">
-              <button
-                className={`language-option ${language === 'zh' ? 'active' : ''}`}
-                onClick={() => setLanguage('zh')}
-                disabled={isGenerating}
-              >
-                {t('input.language_zh')}
-              </button>
-              <button
-                className={`language-option ${language === 'en' ? 'active' : ''}`}
-                onClick={() => setLanguage('en')}
-                disabled={isGenerating}
-              >
-                {t('input.language_en')}
-              </button>
-            </div>
-          </div>
-          <div className="input-section-header">
-            <div className="input-section-title-row">
-              <h2 className="input-section-title">{t('input.title')}</h2>
-            </div>
-            <p className="input-section-subtitle">{t('input.subtitle')}</p>
-          </div>
-
-          <input
-            type="text"
-            className="home-input"
-            placeholder={t('input.placeholder')}
-            value={topic}
-            onChange={(e) => setTopic(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && !isGenerating && handleGenerate()}
-            disabled={isGenerating}
-          />
-
-          <button
-            className="home-button"
-            onClick={handleGenerate}
-            disabled={isGenerating || !topic.trim()}
-          >
-            {isGenerating ? t('input.button_generating') : t('input.button')}
-          </button>
-
-          <div className="search-papers-hints">
-            <p className="search-papers-hint">
-              {t('home.input.search_papers_hint')}{' '}
-              <a href="/search-papers" onClick={(e) => { e.preventDefault(); navigate('/search-papers') }}>
-                {t('home.input.search_papers_link')} →
-              </a>
-            </p>
-            {/* 暂时隐藏验证引文提示 */}
-            {/* <p className="search-papers-hint">
-              {t('home.input.verify_citations_hint')}{' '}
-              <a href="/search-papers" onClick={(e) => { e.preventDefault(); navigate('/search-papers') }}>
-                {t('home.input.verify_citations_link')} →
-              </a>
-            </p> */}
-          </div>
-
-          {error && (
-            <div className="home-error">
-              <span>{error}</span>
-              <button className="retry-button" onClick={handleGenerate}>{t('input.retry')}</button>
-            </div>
-          )}
-
-          {isGenerating && progress && (
-            <div className="home-progress">
-              <div className="progress-bar">
-                <div
-                  className="progress-fill"
-                  style={{ width: `${getProgressPercentage()}%` }}
-                />
-              </div>
-              <div className="progress-message">{progress.message}</div>
-              <div className="progress-hint">
-                {t('home.progress.hint')}
-                <span className="progress-hint-link" onClick={() => navigate('/profile')}>{t('home.progress.view_profile')}</span>
-              </div>
-            </div>
-          )}
-        </div>
-
-        <div className="social-proof-bar">
-          <span className="social-proof-icon">🏆</span>
-          <span className="social-proof-text" dangerouslySetInnerHTML={{ __html: t('home.social_proof.text') }} />
-        </div>
         </div>
       </div>
 
@@ -809,48 +455,34 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
             </div>
           ) : (
             <div className="pricing-grid">
-              {plans.map((plan) => {
-                // English pricing (USD)
-                const enPricing: Record<string, { price: number; original: number; name: string; button: string; badge?: string | null }> = {
-                  single: { price: 9.99, original: 14.99, name: t('pricing.single.name'), button: t('pricing.buy_single') },
-                  semester: { price: 24.99, original: 39.99, name: t('pricing.semester.name'), button: t('pricing.choose_semester') },
-                  yearly: { price: 44.99, original: 69.99, name: t('pricing.yearly.name'), button: t('pricing.choose_yearly') }
-                }
-                // Chinese pricing with original prices based on 29.8 per single
-                const zhPricing: Record<string, { price: number; original: number; name: string; button: string; badge: string | null }> = {
-                  single: { price: 29.8, original: 39.8, name: '体验包', button: '', badge: null },
-                  semester: { price: 69.8, original: 89.4, name: '标准包', button: '', badge: '热门' },
-                  yearly: { price: 109.8, original: 178.8, name: '进阶包', button: '', badge: '超值' }
-                }
-                const pricing = language === 'en' ? enPricing[plan.type] : zhPricing[plan.type] || { price: plan.price, original: 0, name: plan.name, button: '', badge: null }
-                const features = language === 'en' ? (plan.type === 'single' ? t('pricing.single.features', { returnObjects: true }) :
-                  plan.type === 'semester' ? t('pricing.semester.features', { returnObjects: true }) :
-                  t('pricing.yearly.features', { returnObjects: true })) : plan.features
-
-                const isFeatured = language === 'en' ? plan.recommended : !!pricing.badge
+              {plans.filter((p: any) => p.type !== 'unlock').map((plan: any) => {
+                // 从 API 数据直接读取，不硬编码
+                const planName = plan.name
+                const planPrice = plan.price
+                const planOriginal = plan.original_price
+                const planFeatures = plan.features
+                const planBadge = plan.badge
+                const isFeatured = !!planBadge
+                const currency = '¥'
 
                 return (
                   <div
                     key={plan.type}
                     className={`pricing-card ${isFeatured ? 'pricing-featured' : ''}`}
                   >
-                    {language === 'en' ? (
-                      plan.recommended && <div className="pricing-badge">Recommended</div>
-                    ) : (
-                      pricing.badge && <div className="pricing-badge">{pricing.badge}</div>
+                    {isFeatured && planBadge && (
+                      <div className="pricing-badge">{planBadge}</div>
                     )}
-                    <h3 className="pricing-name">{pricing.name}</h3>
+                    <h3 className="pricing-name">{planName}</h3>
                     <div className="pricing-price">
-                      {pricing.original > 0 && (
-                        <span className="pricing-original">{language === 'en' ? '$' : '¥'}{pricing.original}</span>
+                      {planOriginal > 0 && (
+                        <span className="pricing-original">{currency}{planOriginal}</span>
                       )}
-                      {language === 'en' ? '$' : '¥'}
-                      {pricing.price}
-                      {language === 'en' && <span className="pricing-unit">USD</span>}
+                      {currency}{planPrice}
                     </div>
                     <ul className="pricing-features">
-                      {Array.isArray(features) && features.map((feature: string | any, index: number) => (
-                        <li key={index}>{typeof feature === 'string' ? feature : String(feature)}</li>
+                      {Array.isArray(planFeatures) && planFeatures.map((feature: string, index: number) => (
+                        <li key={index}>{feature}</li>
                       ))}
                     </ul>
                     <button
@@ -859,7 +491,7 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
                         isLoggedIn ? setShowPaymentModal(plan.type) : setShowLoginModal(true)
                       }}
                     >
-                      {language === 'en' ? pricing.button : (plan.type === 'single' ? '立即购买' : plan.type === 'semester' ? '选择标准包' : '选择进阶包')}
+                      {plan.type === 'single' ? '立即购买' : plan.type === 'semester' ? '选择标准包' : '选择进阶包'}
                     </button>
                   </div>
                 )
@@ -921,26 +553,15 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
         <LoginModal
           onClose={() => setShowLoginModal(false)}
           onLoginSuccess={handleLoginSuccess}
-          pendingTopic={topic}
         />
       )}
 
       {showPaymentModal && (
-        <>
-          {language === 'en' ? (
-            <PayPalPaymentModal
-              onClose={() => setShowPaymentModal(false)}
-              onPaymentSuccess={handlePaymentSuccess}
-              planType={showPaymentModal}
-            />
-          ) : (
-            <PaymentModal
-              onClose={() => setShowPaymentModal(false)}
-              onPaymentSuccess={handlePaymentSuccess}
-              planType={showPaymentModal}
-            />
-          )}
-        </>
+        <PaymentModal
+          onClose={() => setShowPaymentModal(false)}
+          onPaymentSuccess={handlePaymentSuccess}
+          planType={showPaymentModal}
+        />
       )}
 
       {showToast && (

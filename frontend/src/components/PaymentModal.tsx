@@ -9,18 +9,6 @@ interface PaymentModalProps {
   recordId?: number  // 用于 unlock 模式
 }
 
-// 单次解锁的固定配置
-const UNLOCK_PLAN = {
-  type: 'unlock',
-  name: '单次解锁',
-  price: 39.8,
-  credits: 0,
-  features: [
-    '解锁当前综述 Word 导出权限',
-    '无水印 Word 文档',
-  ],
-}
-
 const IS_DEV = window.location.hostname === 'localhost' ||
   window.location.hostname === '127.0.0.1'
 
@@ -43,10 +31,8 @@ export function PaymentModal({ onClose, onPaymentSuccess, planType, recordId }: 
     })
   }, [])
 
-  // 单次解锁使用固定配置，其他套餐从 API 获取
-  const plan = planType === 'unlock'
-    ? UNLOCK_PLAN
-    : plans.find(p => p.type === planType) || { ...UNLOCK_PLAN, name: '未知套餐', price: 0, credits: 0, features: [] }
+  // 所有套餐（含 unlock）从 API 获取
+  const plan = plans.find(p => p.type === planType) || { name: '加载中...', price: 0, credits: 0, features: [] }
 
   // Esc 关闭弹窗
   useEffect(() => {

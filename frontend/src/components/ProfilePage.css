@@ -22,6 +22,11 @@
   flex-direction: column;
 }
 
+/* Add top padding for fixed nav */
+.profile-page .profile-container {
+  padding-top: calc(100px + 5rem);
+}
+
 /* ==================== 顶部导航栏 ==================== */
 
 .profile-nav {
@@ -35,6 +40,14 @@
   position: sticky;
   top: 0;
   z-index: 100;
+}
+
+.profile-nav .nav-links {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  align-items: center;
 }
 
 .profile-nav .nav-logo {
@@ -55,6 +68,28 @@
   font-weight: 700;
   color: var(--ink-black);
   letter-spacing: -0.02em;
+}
+
+.profile-nav .nav-links {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  align-items: center;
+}
+
+.profile-nav .nav-links a {
+  font-family: 'Source Sans Pro', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--charcoal);
+  text-decoration: none;
+  transition: color 0.2s;
+  letter-spacing: 0.01em;
+}
+
+.profile-nav .nav-links a:hover {
+  color: var(--academic-red);
 }
 
 .profile-nav .nav-actions {
@@ -123,6 +158,26 @@
   border: 1px solid var(--border-gray);
 }
 
+.profile-header .nav-btn {
+  padding: 0.65rem 1.5rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-family: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, sans-serif;
+  letter-spacing: 0.01em;
+  background: transparent;
+  color: var(--charcoal);
+  border: 1.5px solid var(--light-gray);
+}
+
+.profile-header .nav-btn:hover {
+  background: var(--cream-white);
+  border-color: var(--academic-red);
+  color: var(--academic-red);
+}
+
 .user-avatar-large {
   font-size: 4rem;
   width: 100px;
@@ -159,7 +214,7 @@
 
 .profile-stats {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 1.5rem;
   margin-bottom: 2.5rem;
 }
@@ -577,7 +632,7 @@
   }
 
   .profile-container {
-    padding: 2rem 1.5rem;
+    padding: calc(80px + 4rem) 1.5rem 2rem 1.5rem;
   }
 
   .profile-header {
@@ -587,8 +642,8 @@
   }
 
   .profile-stats {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 0.75rem;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
   }
 
   .stat-card {

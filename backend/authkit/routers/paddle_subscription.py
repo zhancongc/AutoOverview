@@ -12,7 +12,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 
-from ..models.payment import Subscription, PaymentLog
+from ..models.payment import Plan, Subscription, PaymentLog
 from ..models.schemas import UserResponse
 from ..services.paddle_service import get_paddle_service, PADDLE_PRICING
 from ..core.security import decode_access_token
@@ -70,9 +70,11 @@ class PaddlePaymentResponse(BaseModel):
 
 
 @router.get("/plans")
-def get_paddle_plans():
-    """Get Paddle pricing plans"""
-    return {"plans": PADDLE_PRICING}
+def get_paddle_plans(db: Session = Depends(get_db)):
+    """Get Paddle pricing plans from database"""
+    from ..models.payment import get_plans_from_db
+    plans = get_plans_from_db(db)
+    return {"plans": plans}
 
 
 @router.post("/create", response_model=PaddlePaymentResponse)
@@ -84,8 +86,17 @@ def create_paddle_subscription(
     """Create Paddle checkout session"""
     user_id = current_user.id
 
-    # Get plan details
-    plan = PADDLE_PRICING.get(data.plan_type)
+    # Get plan details from database, fallback to hardcoded
+    plan_record = db.query(Plan).filter_by(type=data.plan_type, is_active=True).first()
+    if plan_record:
+        plan = {
+            "name": plan_record.name_en or plan_record.name,
+            "price": plan_record.price_usd or plan_record.price,
+            "credits": plan_record.credits,
+            "currency": "USD",
+        }
+    else:
+        plan = PADDLE_PRICING.get(data.plan_type)
     if not plan:
         raise HTTPException(status_code=400, detail="Invalid plan type")
 
@@ -235,8 +246,13 @@ async def paddle_webhook(request: Request, db: Session = Depends(get_db)):
                     from ..models import User
                     user = db.query(User).filter(User.id == subscription.user_id).first()
                     if user:
-                        plan = PADDLE_PRICING.get(subscription.plan_type, {})
-                        credits_to_add = plan.get("credits", 1)
+                        # 从数据库读取 credits
+                        plan_rec = db.query(Plan).filter_by(type=subscription.plan_type, is_active=True).first()
+                        if plan_rec:
+                            credits_to_add = plan_rec.credits
+                        else:
+                            plan = PADDLE_PRICING.get(subscription.plan_type, {})
+                            credits_to_add = plan.get("credits", 1)
                         current_credits = user.get_meta("review_credits", 0)
                         user.set_meta("review_credits", current_credits + credits_to_add)
                         user.set_meta("has_purchased", True)
@@ -306,8 +322,12 @@ def create_paddle_unlock(
             currency="USD",
         )
 
-    # Get unlock plan details
-    plan = PADDLE_PRICING.get("unlock")
+    # Get unlock plan details from database
+    plan_record = db.query(Plan).filter_by(type="unlock", is_active=True).first()
+    if plan_record:
+        plan = {"price": plan_record.price_usd or plan_record.price, "currency": "USD"}
+    else:
+        plan = PADDLE_PRICING.get("unlock")
     if not plan:
         raise HTTPException(status_code=500, detail="Unlock plan not configured")
 

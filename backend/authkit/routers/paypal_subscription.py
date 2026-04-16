@@ -12,7 +12,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 
-from ..models.payment import Subscription, PaymentLog
+from ..models.payment import Plan, Subscription, PaymentLog
 from ..models.schemas import UserResponse
 from ..services.paypal_service import get_paypal_service, PAYPAL_PRICING
 from ..core.security import decode_access_token
@@ -75,9 +75,11 @@ class PayPalPaymentResponse(BaseModel):
 
 
 @router.get("/plans")
-def get_paypal_plans():
-    """Get PayPal pricing plans"""
-    return {"plans": PAYPAL_PRICING}
+def get_paypal_plans(db: Session = Depends(get_db)):
+    """Get PayPal pricing plans from database"""
+    from ..models.payment import get_plans_from_db
+    plans = get_plans_from_db(db)
+    return {"plans": plans}
 
 
 @router.get("/config")
@@ -99,8 +101,17 @@ def create_paypal_subscription(
     """Create PayPal checkout session"""
     user_id = current_user.id
 
-    # Get plan details
-    plan = PAYPAL_PRICING.get(data.plan_type)
+    # Get plan details from database, fallback to hardcoded
+    plan_record = db.query(Plan).filter_by(type=data.plan_type, is_active=True).first()
+    if plan_record:
+        plan = {
+            "name": plan_record.name_en or plan_record.name,
+            "price": plan_record.price_usd or plan_record.price,
+            "credits": plan_record.credits,
+            "currency": "USD",
+        }
+    else:
+        plan = PAYPAL_PRICING.get(data.plan_type)
     if not plan:
         raise HTTPException(status_code=400, detail="Invalid plan type")
 
@@ -282,8 +293,13 @@ def _activate_subscription(subscription, paypal_order_id: str, db: Session):
     else:
         user = db.query(User).filter(User.id == subscription.user_id).first()
         if user:
-            plan = PAYPAL_PRICING.get(subscription.plan_type, {})
-            credits_to_add = plan.get("credits", 1)
+            # 从数据库读取 credits
+            plan_record = db.query(Plan).filter_by(type=subscription.plan_type, is_active=True).first()
+            if plan_record:
+                credits_to_add = plan_record.credits
+            else:
+                plan = PAYPAL_PRICING.get(subscription.plan_type, {})
+                credits_to_add = plan.get("credits", 1)
             current_credits = user.get_meta("review_credits", 0)
             user.set_meta("review_credits", current_credits + credits_to_add)
             user.set_meta("has_purchased", True)
@@ -403,8 +419,12 @@ def create_paypal_unlock(
             currency="USD",
         )
 
-    # Get unlock plan details
-    plan = PAYPAL_PRICING.get("unlock")
+    # Get unlock plan details from database
+    plan_record = db.query(Plan).filter_by(type="unlock", is_active=True).first()
+    if plan_record:
+        plan = {"price": plan_record.price_usd or plan_record.price, "currency": "USD"}
+    else:
+        plan = PAYPAL_PRICING.get("unlock")
     if not plan:
         raise HTTPException(status_code=500, detail="Unlock plan not configured")
 

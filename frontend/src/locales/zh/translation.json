@@ -5,7 +5,15 @@
       "accent": "100% 真实引文 · 支持 DOI 验真 · 拒绝文献幻觉",
       "title": "学术级 AI 文献助理<br>用真实文献生成结构化综述",
       "subtitle": "专注科研工作流起步阶段。基于 Web of Science、IEEE、Crossref 等权威数据源构建逻辑骨架，为您提供合规、真实、可验证的文献综述。",
-      "search_papers_cta": "搜索文献 — 免费"
+      "search_papers_cta": "搜索文献 — 免费",
+      "cards": {
+        "search": "搜索文献",
+        "search_desc": "免费检索相关学术文献",
+        "generate": "生成综述",
+        "generate_desc": "AI 自动生成结构化综述",
+        "matrix": "对比矩阵",
+        "matrix_desc": "对比分析研究观点分歧"
+      }
     },
     "stats": {
       "papers": "基于 2亿+ 真实论文元数据",
@@ -110,50 +118,10 @@
     "pricing": {
       "title": "灵活定价，按需付费",
       "subtitle": "按需付费，额度不过期",
-      "note": "Credit 点数永久有效，不设过期时间。注册即送 1 个 Credit。",
-      "single": {
-        "name": "体验包",
-        "price": "29.8",
-        "unit": "CNY",
-        "features": [
-          "2 个 Credit（1 篇综述 或 2 篇对比矩阵）",
-          "在线查看 + Word 导出",
-          "参考文献包含真实文献 DOI 链接",
-          "支持导出 BibTeX、XML、RIS 格式"
-        ]
-      },
-      "semester": {
-        "name": "标准包",
-        "badge": "热门",
-        "price": "69.8",
-        "unit": "CNY",
-        "features": [
-          "6 个 Credit（3 篇综述 或 6 篇对比矩阵）",
-          "在线查看 + Word 导出",
-          "参考文献包含真实文献 DOI 链接",
-          "支持导出 BibTeX、XML、RIS 格式",
-          "约 ¥11.6/Credit"
-        ]
-      },
-      "yearly": {
-        "name": "进阶包",
-        "badge": "超值",
-        "price": "109.8",
-        "unit": "CNY",
-        "features": [
-          "12 个 Credit（6 篇综述 或 12 篇对比矩阵）",
-          "在线查看 + Word 导出",
-          "参考文献包含真实文献 DOI 链接",
-          "支持导出 BibTeX、XML、RIS 格式",
-          "约 ¥9.2/Credit"
-        ]
-      },
-      "buy_single": "立即购买",
-      "choose_semester": "选择标准包",
-      "choose_yearly": "选择进阶包",
+      "note": "积分永久有效，不设过期时间。注册即送 2 个积分。",
       "buy_now": "立即开始",
       "no_subscription": "无需订阅",
-      "credits_never_expire": "额度永不过期"
+      "credits_never_expire": "积分永不过期"
     },
     "demo": {
       "title": "案例展示",
@@ -201,13 +169,13 @@
     },
     "errors": {
       "task_failed": "任务执行失败",
-      "credits_fetch_failed": "获取额度失败",
+      "credits_fetch_failed": "获取积分失败",
       "active_task_fetch_failed": "获取任务失败",
       "plans_fetch_failed": "获取定价失败",
       "cases_fetch_failed": "获取案例失败",
-      "credits_refresh_failed": "刷新额度失败",
-      "no_credits": "Credit 不足",
-      "no_credits_hint": "Credit 不足，请购买后继续使用。"
+      "credits_refresh_failed": "刷新积分失败",
+      "no_credits": "积分不足",
+      "no_credits_hint": "积分不足，请购买后继续使用。"
     }
   },
   "review": {
@@ -233,9 +201,9 @@
       "unlock_export": "解锁导出（¥39.8）",
       "alert_not_supported": "该综述不支持导出",
       "alert_failed": "导出失败，请稍后重试",
-      "confirm_title": "使用额度解锁",
-      "confirm_message": "您有 {{credits}} 个付费额度。使用 1 个额度解锁此综述并导出 Word？",
-      "confirm_button": "使用额度",
+      "confirm_title": "使用积分解锁",
+      "confirm_message": "您有 {{credits}} 个积分。使用 1 个积分解锁此综述并导出 Word？",
+      "confirm_button": "使用积分",
       "unlock_failed": "解锁失败，请稍后重试"
     },
     "references": {
@@ -342,33 +310,7 @@
   },
   "pricing": {
     "title": "灵活定价，按需付费",
-    "note": "额度永久有效，不设过期时间。注册即送 1 篇免费综述额度。",
-    "single": {
-      "name": "体验包",
-      "features": [
-        "1 篇综述生成额度",
-        "在线查看 + Word 导出"
-      ]
-    },
-    "semester": {
-      "name": "标准包",
-      "features": [
-        "3 篇综述生成额度",
-        "在线查看 + Word 导出",
-        "约 ¥23.3/篇"
-      ]
-    },
-    "yearly": {
-      "name": "进阶包",
-      "features": [
-        "6 篇综述生成额度",
-        "在线查看 + Word 导出",
-        "约 ¥18.3/篇"
-      ]
-    },
-    "buy_single": "立即购买",
-    "choose_semester": "选择标准包",
-    "choose_yearly": "选择进阶包"
+    "note": "积分永久有效，不设过期时间。注册即送 2 个积分。"
   },
   "search_papers": {
     "meta": {
@@ -446,6 +388,17 @@
   },
   "comparison_matrix_page": {
     "title": "文献对比矩阵",
+    "hero_badge": "AI 文献对比工具",
+    "hero_title": "一键生成文献对比矩阵",
+    "hero_subtitle": "输入研究主题，搜索相关文献，AI 自动生成结构化的文献对比表格",
+    "search_placeholder": "输入您的研究主题，例如：深度学习在医学影像中的应用",
+    "search_button": "搜索文献",
+    "searching": "搜索中...",
+    "generate_from_results": "生成对比矩阵（1 Credit）",
+    "generating_matrix": "正在生成对比矩阵...",
+    "btn_generate_all": "生成文献对比矩阵",
+    "phase_searching": "正在搜索文献...",
+    "phase_generating": "正在生成对比矩阵...",
     "loading": "加载对比矩阵中...",
     "error": "加载失败",
     "not_found": "未找到对比矩阵数据",
@@ -466,6 +419,29 @@
     "generate_now": "立即生成",
     "generating": "生成中...",
     "generate_review": "生成综述",
-    "generate_review_disabled_hint": "该对比矩阵未复用搜索结果，无法直接生成综述"
+    "generate_review_disabled_hint": "该对比矩阵未复用搜索结果，无法直接生成综述",
+    "status_1": "正在搜索学术数据库...",
+    "status_2": "正在分析论文元数据...",
+    "status_3": "正在筛选高质量文献...",
+    "status_4": "正在整理搜索结果...",
+    "estimate": "预计需要 30-60 秒",
+    "no_results": "未找到相关文献，请尝试其他关键词"
+  },
+  "generate_page": {
+    "hero_badge": "文献综述生成",
+    "title": "一键生成文献综述",
+    "subtitle": "输入研究主题，AI 自动检索文献并生成结构化综述初稿",
+    "placeholder": "请输入您的研究主题，例如：深度学习在图像识别中的应用",
+    "button": "生成我的综述",
+    "error_empty": "请输入研究主题",
+    "error_submit": "提交失败，请重试",
+    "error_status": "获取任务状态失败",
+    "error_network": "网络错误，请检查网络连接",
+    "error_task_failed": "任务执行失败，请重试",
+    "submitting": "正在提交任务...",
+    "estimated_remaining": "预计剩余",
+    "minutes": "分钟",
+    "completed": "生成完成，即将跳转...",
+    "estimate": "综述生成通常需要 3-5 分钟，您可以关闭此页面，稍后在「我的综述」中查看结果"
   }
 }

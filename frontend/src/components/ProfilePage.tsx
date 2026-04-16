@@ -6,6 +6,7 @@ import { getLocalUserInfo, isLoggedIn } from '../authApi'
 import { PaymentModal } from './PaymentModal'
 import { ConfirmModal } from './ConfirmModal'
 import type { ReviewRecord } from '../types'
+import './SimpleApp.css'
 import './ProfilePage.css'
 
 type ProfileTab = 'reviews' | 'searches'
@@ -15,6 +16,7 @@ export function ProfilePage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const [activeTab, setActiveTab] = useState<ProfileTab>('reviews')
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   // 检查 URL 参数，设置默认 tab
   useEffect(() => {
@@ -28,7 +30,6 @@ export function ProfilePage() {
   const [loading, setLoading] = useState(false)
   const [userInfo, setUserInfo] = useState<any>(null)
   const [credits, setCredits] = useState<number>(0)
-  const [freeCredits, setFreeCredits] = useState<number>(0)
   const [showPayModal, setShowPayModal] = useState(false)
   const [pendingExportRecordId, setPendingExportRecordId] = useState<number | null>(null)
   const [exportingId, setExportingId] = useState<number | null>(null)
@@ -46,7 +47,6 @@ export function ProfilePage() {
     loadSearches()
     api.getCredits().then(data => {
       setCredits(data.credits)
-      setFreeCredits(data.free_credits)
     }).catch(err => console.error('获取额度失败:', err))
   }, [])
 
@@ -209,20 +209,41 @@ export function ProfilePage() {
   return (
     <div className="profile-page">
       {/* 顶部导航栏 */}
-      <nav className="profile-nav">
+      <nav className="home-nav">
         <div className="nav-logo" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
           <span className="logo-icon">📚</span>
           <span className="logo-text">AutoOverview</span>
         </div>
-        <div className="nav-actions">
-          <button className="nav-btn nav-btn-home" onClick={() => navigate('/')}>
-            首页
-          </button>
-          <button className="nav-btn nav-btn-logout" onClick={handleLogout}>
-            退出登录
-          </button>
+        <div className="nav-links">
+          <a href="/" onClick={(e) => { e.preventDefault(); navigate('/') }}>首页</a>
+          <a href="/search-papers" onClick={(e) => { e.preventDefault(); navigate('/search-papers') }}>搜索文献</a>
+          <a href="/comparison-matrix" onClick={(e) => { e.preventDefault(); navigate('/comparison-matrix') }}>对比矩阵</a>
+          <a href="/generate" onClick={(e) => { e.preventDefault(); navigate('/generate') }}>生成综述</a>
         </div>
+        <button className="mobile-menu-toggle" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+          <span className={`hamburger ${mobileMenuOpen ? 'open' : ''}`} />
+        </button>
       </nav>
+
+      {/* 移动端侧边栏遮罩 */}
+      {mobileMenuOpen && (
+        <div className="mobile-sidebar-overlay" onClick={() => setMobileMenuOpen(false)} />
+      )}
+
+      {/* 移动端侧边栏 */}
+      <aside className={`mobile-sidebar ${mobileMenuOpen ? 'sidebar-open' : ''}`}>
+        <div className="sidebar-header">
+          <span className="logo-icon">📚</span>
+          <span className="logo-text">AutoOverview</span>
+          <button className="sidebar-close" onClick={() => setMobileMenuOpen(false)}>&times;</button>
+        </div>
+        <nav className="sidebar-links">
+          <a href="/" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/') }}>首页</a>
+          <a href="/search-papers" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/search-papers') }}>搜索文献</a>
+          <a href="/comparison-matrix" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/comparison-matrix') }}>对比矩阵</a>
+          <a href="/generate" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/generate') }}>生成综述</a>
+        </nav>
+      </aside>
 
       <div className="profile-container">
         {/* 用户信息区域 */}
@@ -232,6 +253,9 @@ export function ProfilePage() {
             <h1 className="user-name">{userInfo?.nickname || '用户'}</h1>
             <p className="user-email">{userInfo?.email || ''}</p>
           </div>
+          <button className="nav-btn nav-btn-logout" onClick={handleLogout}>
+            退出登录
+          </button>
         </div>
 
         {/* 统计信息 */}
@@ -240,13 +264,9 @@ export function ProfilePage() {
             <div className="stat-number">{records.length}</div>
             <div className="stat-label">综述数量</div>
           </div>
-          <div className="stat-card stat-card-free">
-            <div className="stat-number">{freeCredits}</div>
-            <div className="stat-label">免费额度</div>
-          </div>
           <div className="stat-card stat-card-paid">
-            <div className="stat-number">{credits - freeCredits}</div>
-            <div className="stat-label">套餐额度</div>
+            <div className="stat-number">{credits}</div>
+            <div className="stat-label">积分</div>
           </div>
         </div>
 
@@ -296,7 +316,7 @@ export function ProfilePage() {
                         <div className="record-top">
                           <h3 className="record-topic">{record.topic}</h3>
                           {record.status === 'success' ? (
-                            <span className="status-success">✓ 完成</span>
+                            <span className="status-success">✓ 已完成</span>
                           ) : record.status === 'failed' ? (
                             <span className="status-failed">✗ 失败</span>
                           ) : (
@@ -422,7 +442,6 @@ export function ProfilePage() {
             // 刷新用户状态和记录列表
             const creditsData = await api.getCredits()
             setCredits(creditsData.credits)
-            setFreeCredits(creditsData.free_credits)
             await loadRecords()
             // 如果有待导出的记录，继续导出
             if (pendingExportRecordId !== null) {
@@ -437,9 +456,9 @@ export function ProfilePage() {
       {/* 使用额度确认弹窗 */}
       {showCreditConfirmModal && confirmRecordId !== null && (
         <ConfirmModal
-          title="使用套餐额度解锁"
-          message={`您有 ${credits} 个付费额度。\n是否使用 1 个额度解锁此综述并导出 Word？`}
-          confirmText="使用额度解锁"
+          title="使用积分解锁"
+          message={`您有 ${credits} 个积分。\n是否使用 1 个积分解锁此综述并导出 Word？`}
+          confirmText="使用积分解锁"
           cancelText="取消"
           onConfirm={handleConfirmUseCredit}
           onCancel={() => {

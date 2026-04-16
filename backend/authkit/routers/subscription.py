@@ -66,12 +66,17 @@ def _add_credits(user_id: int, plan_type: str, db: Session):
     user = _get_user_model(user_id, db)
     if not user:
         return
-    credits_to_add = PLAN_CREDITS.get(plan_type, 1)
+    # 从数据库读取 credits，fallback 到 PLAN_CREDITS
+    plan_record = db.query(Plan).filter_by(type=plan_type, is_active=True).first()
+    if plan_record:
+        credits_to_add = plan_record.credits
+    else:
+        credits_to_add = PLAN_CREDITS.get(plan_type, 1)
     current_credits = user.get_meta("review_credits", 0)
     user.set_meta("review_credits", current_credits + credits_to_add)
     user.set_meta("has_purchased", True)
     db.commit()
-    logger.info(f"用户 {user_id} 获得 {credits_to_add} 篇付费额度，当前付费 {current_credits + credits_to_add}")
+    logger.info(f"用户 {user_id} 获得 {credits_to_add} 个 Credit，当前付费 {current_credits + credits_to_add}")
 
 
 @router.get("/plans")

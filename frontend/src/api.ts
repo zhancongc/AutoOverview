@@ -291,10 +291,17 @@ export const api = {
   async getSubscriptionPlans(): Promise<{ plans: Array<{
     type: string;
     name: string;
+    name_en: string;
     price: number;
-    duration_days: number;
+    price_usd: number;
+    original_price?: number;
+    original_price_usd?: number;
+    credits: number;
     recommended?: boolean;
     features: string[];
+    features_en: string[];
+    badge?: string;
+    badge_en?: string;
   }> }> {
     const response = await axios.get(`${API_BASE}/subscription/plans`);
     return response.data;

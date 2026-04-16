@@ -15,63 +15,7 @@ interface PayPalPaymentModalProps {
   recordId?: number  // For unlock mode
 }
 
-// Pricing aligned with backend PAYPAL_PRICING (and Paddle)
-const PAYPAL_PRICING = {
-  single: {
-    type: 'single',
-    name: 'Starter',
-    price: 9.99,
-    credits: 3,
-    currency: 'USD',
-    features: [
-      '3 AI-assisted literature analyses',
-      'DOI-verifiable citations',
-      'Standard citation formats',
-      'Word export',
-    ]
-  },
-  semester: {
-    type: 'semester',
-    name: 'Semester Pro',
-    price: 24.99,
-    credits: 10,
-    currency: 'USD',
-    features: [
-      '10 review credits',
-      'Priority processing',
-      'Advanced citation formats',
-      'All Starter features',
-      'Valid for 6 months'
-    ]
-  },
-  yearly: {
-    type: 'yearly',
-    name: 'Annual Premium',
-    price: 44.99,
-    credits: 30,
-    currency: 'USD',
-    features: [
-      '30 review credits',
-      'Priority processing',
-      'Advanced citation formats',
-      'All Semester features',
-      'Valid for 12 months'
-    ]
-  },
-  unlock: {
-    type: 'unlock',
-    name: 'Unlock Single Export',
-    price: 9.99,
-    credits: 0,
-    currency: 'USD',
-    features: [
-      'Unlock Word export for this review',
-      'No watermark',
-      'Professional formatting',
-      'Instant access'
-    ]
-  }
-}
+// Plan data fetched from API (database-driven)
 
 const IS_DEV = window.location.hostname === 'localhost' ||
   window.location.hostname === '127.0.0.1'
@@ -96,9 +40,19 @@ export function PayPalPaymentModal({
   const [orderNo, setOrderNo] = useState('')
   const [paypalOrderId, setPayPalOrderId] = useState('')
   const [paypalSdkLoaded, setPaypalSdkLoaded] = useState(false)
+  const [plans, setPlans] = useState<any[]>([])
   const paypalButtonContainerRef = useRef<HTMLDivElement>(null)
 
-  const plan = PAYPAL_PRICING[planType as keyof typeof PAYPAL_PRICING] || PAYPAL_PRICING.single
+  // Fetch plans from API
+  useEffect(() => {
+    api.getSubscriptionPlans().then(data => {
+      setPlans(data.plans)
+    }).catch(err => {
+      console.error('Failed to fetch plans:', err)
+    })
+  }, [])
+
+  const plan = plans.find(p => p.type === planType) || { name: 'Loading...', name_en: 'Loading...', price: 0, price_usd: 0, credits: 0, features: [], features_en: [] }
   const isUnlockMode = planType === 'unlock' && recordId !== undefined
 
   // Load PayPal SDK
@@ -267,16 +221,16 @@ export function PayPalPaymentModal({
         {/* Header: Plan Information */}
         <div className="payment-modal-header">
           <span className="payment-modal-icon">💳</span>
-          <h2 className="payment-modal-title">{t('payment.buy', { name: plan.name })}</h2>
+          <h2 className="payment-modal-title">{t('payment.buy', { name: plan.name_en || plan.name })}</h2>
           <p className="payment-modal-price">
-            <span className="amount">${plan.price}</span>
-            <span className="currency"> {plan.currency}</span>
+            <span className="amount">${plan.price_usd || plan.price}</span>
+            <span className="currency"> USD</span>
           </p>
           {plan.credits > 0 && (
             <p className="payment-modal-credits">{t('payment.credits_info', { credits: plan.credits })}</p>
           )}
           <ul className="payment-modal-features">
-            {plan.features.map((f: string, i: number) => (
+            {(plan.features_en || plan.features).map((f: string, i: number) => (
               <li key={i}>✓ {f}</li>
             ))}
           </ul>
@@ -308,7 +262,7 @@ export function PayPalPaymentModal({
                 <div className="payment-modal-paypal">
                   <p className="payment-pay-hint">{t('payment.pay_hint')}</p>
                   <p className="payment-order-info">
-                    {t('payment.order_info', { orderNo, amount: plan.price })}
+                    {t('payment.order_info', { orderNo, amount: plan.price_usd || plan.price })}
                   </p>
                   <div ref={paypalButtonContainerRef} className="paypal-button-container"></div>
                   <div className="payment-modal-polling">
