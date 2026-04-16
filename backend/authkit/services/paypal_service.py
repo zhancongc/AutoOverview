@@ -314,19 +314,19 @@ PAYPAL_PRICING = {
     "single": {
         "name": "Starter",
         "price": 9.99,
-        "credits": 2,
+        "credits": 6,
         "currency": "USD",
     },
     "semester": {
         "name": "Semester Pro",
         "price": 24.99,
-        "credits": 6,
+        "credits": 20,
         "currency": "USD",
     },
     "yearly": {
         "name": "Annual Premium",
         "price": 44.99,
-        "credits": 12,
+        "credits": 60,
         "currency": "USD",
     },
     "unlock": {

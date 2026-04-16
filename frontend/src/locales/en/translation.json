@@ -85,7 +85,7 @@
         "price": "9.99",
         "unit": "USD",
         "features": [
-          "2 Credits (1 review or 2 comparison matrices)",
+          "6 Credits (3 reviews or 6 comparison matrices)",
           "DOI-verifiable citations",
           "Standard citation formats",
           "Word export"
@@ -97,11 +97,11 @@
         "price": "24.99",
         "unit": "USD",
         "features": [
-          "6 Credits (3 reviews or 6 comparison matrices)",
+          "20 Credits (10 reviews or 20 comparison matrices)",
           "Priority processing",
           "Advanced citation formats",
           "All Starter features",
-          "~$4.16/Credit"
+          "~$1.25/Credit"
         ]
       },
       "yearly": {
@@ -110,11 +110,11 @@
         "price": "44.99",
         "unit": "USD",
         "features": [
-          "12 Credits (6 reviews or 12 comparison matrices)",
+          "60 Credits (30 reviews or 60 comparison matrices)",
           "Priority processing",
           "Advanced citation formats",
           "All Semester features",
-          "~$3.75/Credit"
+          "~$0.75/Credit"
         ]
       },
       "buy_now": "Get Started",
