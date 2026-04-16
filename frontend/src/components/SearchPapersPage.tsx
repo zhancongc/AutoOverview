@@ -52,6 +52,13 @@ export function SearchPapersPage() {
   const [isGenerating, setIsGenerating] = useState(false)
   const [isGeneratingComparisonMatrix, setIsGeneratingComparisonMatrix] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
+  const [relatedTasks, setRelatedTasks] = useState<Array<{
+    task_id: string;
+    topic: string;
+    status: string;
+    type: 'comparison_matrix' | 'review';
+    created_at: string;
+  }>>([])
   const [showLoginModal, setShowLoginModal] = useState(false)
   const [pendingSearchTopic, setPendingSearchTopic] = useState('')
   const [shouldScrollToResults, setShouldScrollToResults] = useState(false)
@@ -105,7 +112,15 @@ export function SearchPapersPage() {
     const savedShouldScroll = localStorage.getItem('search_papers_scroll_to_results')
 
     if (savedTopic) setTopic(savedTopic)
-    if (savedTaskId) setSearchTaskId(savedTaskId)
+    if (savedTaskId) {
+      setSearchTaskId(savedTaskId)
+      // 恢复后也加载关联任务
+      api.getRelatedTasks(savedTaskId).then(res => {
+        if (res.success && res.data) {
+          setRelatedTasks(res.data)
+        }
+      }).catch(() => {})
+    }
     if (savedPapers) setPapers(JSON.parse(savedPapers))
     if (savedStatistics) setStatistics(JSON.parse(savedStatistics))
     if (savedHasSearched) setHasSearched(savedHasSearched === 'true')
@@ -182,6 +197,15 @@ export function SearchPapersPage() {
         setPapers(papers)
         setStatistics(stats)
         setSearchTaskId(taskId)
+
+        // 查询该搜索任务已生成的关联任务
+        if (taskId) {
+          api.getRelatedTasks(taskId).then(res => {
+            if (res.success && res.data) {
+              setRelatedTasks(res.data)
+            }
+          }).catch(() => {})
+        }
 
         // 保存搜索结果到 localStorage
         localStorage.setItem('search_papers_papers', JSON.stringify(papers))
@@ -313,7 +337,7 @@ export function SearchPapersPage() {
     setIsGenerating(true)
     try {
       const response = await api.submitReviewTask(topic, {
-        language: 'zh',
+        language: isChineseSite ? 'zh' : 'en',
         reuseTaskId: searchTaskId,
       })
 
@@ -454,6 +478,7 @@ export function SearchPapersPage() {
         <div className="nav-links">
           <a href="/search-papers" className="active">{t('search_papers.nav.search')}</a>
           <a href="/" onClick={(e) => { e.preventDefault(); navigate('/') }}>{t('search_papers.nav.generate')}</a>
+          <a href="/comparison-matrix" onClick={(e) => { e.preventDefault(); navigate('/comparison-matrix') }}>{t('search_papers.nav.comparison_matrix')}</a>
           <a href="/#pricing" onClick={(e) => { e.preventDefault(); navigate('/#pricing') }}>{t('search_papers.nav.pricing')}</a>
         </div>
         <div className="nav-actions">
@@ -492,6 +517,7 @@ export function SearchPapersPage() {
         <nav className="sidebar-links">
           <a href="/search-papers" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false) }}>{t('search_papers.nav.search')}</a>
           <a href="/" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/') }}>{t('search_papers.nav.generate')}</a>
+          <a href="/comparison-matrix" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/comparison-matrix') }}>{t('search_papers.nav.comparison_matrix')}</a>
           <a href="/#pricing" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/#pricing') }}>{t('search_papers.nav.pricing')}</a>
         </nav>
         <div className="sidebar-bottom">
@@ -615,16 +641,32 @@ export function SearchPapersPage() {
               <h3>{t('search_papers.comparison_matrix.title')}</h3>
               <p>{t('search_papers.comparison_matrix.description')}</p>
             </div>
-            <button
-              className="sp-comparison-btn"
-              onClick={handleGenerateComparisonMatrix}
-              disabled={isGeneratingComparisonMatrix}
-            >
-              {isGeneratingComparisonMatrix
-                ? (t('search_papers.input.button_searching') || '生成中...')
-                : t('search_papers.comparison_matrix.button')
+            {(() => {
+              const existingMatrix = relatedTasks.find(r => r.type === 'comparison_matrix' && r.status === 'completed')
+              if (existingMatrix) {
+                return (
+                  <button
+                    className="sp-comparison-btn"
+                    onClick={() => navigate(`/comparison-matrix?task_id=${existingMatrix.task_id}`)}
+                  >
+                    {t('search_papers.comparison_matrix.view_result')}
+                  </button>
+                )
               }
-            </button>
+              const processingMatrix = relatedTasks.find(r => r.type === 'comparison_matrix' && (r.status === 'processing' || r.status === 'pending'))
+              return (
+                <button
+                  className="sp-comparison-btn"
+                  onClick={processingMatrix ? () => navigate(`/comparison-matrix?task_id=${processingMatrix.task_id}`) : handleGenerateComparisonMatrix}
+                  disabled={isGeneratingComparisonMatrix}
+                >
+                  {isGeneratingComparisonMatrix || processingMatrix
+                    ? (t('search_papers.input.button_searching') || '生成中...')
+                    : t('search_papers.comparison_matrix.button')
+                  }
+                </button>
+              )
+            })()}
           </div>
         </div>
       )}
@@ -646,13 +688,28 @@ export function SearchPapersPage() {
               ))}
             </div>
             <div className="sp-action-buttons">
-              <button
-                className="sp-btn-generate"
-                onClick={handleGenerateFromSearch}
-                disabled={isGenerating || !searchTaskId}
-              >
-                {isGenerating ? t('search_papers.cta.button') + '...' : t('search_papers.cta.button')}
-              </button>
+              {(() => {
+                const existingReview = relatedTasks.find(r => r.type === 'review' && r.status === 'completed')
+                if (existingReview) {
+                  return (
+                    <button
+                      className="sp-btn-generate"
+                      onClick={() => navigate(`/?task_id=${existingReview.task_id}#generate`)}
+                    >
+                      {t('search_papers.cta.view_result')}
+                    </button>
+                  )
+                }
+                return (
+                  <button
+                    className="sp-btn-generate"
+                    onClick={handleGenerateFromSearch}
+                    disabled={isGenerating || !searchTaskId}
+                  >
+                    {isGenerating ? t('search_papers.cta.button') + '...' : t('search_papers.cta.button')}
+                  </button>
+                )
+              })()}
               <button
                 className="sp-btn-export"
                 onClick={handleExportPapers}
@@ -725,13 +782,28 @@ export function SearchPapersPage() {
           <div className="sp-cta-card">
             <h2 className="sp-cta-title">{t('search_papers.cta.title')}</h2>
             <p className="sp-cta-desc">{t('search_papers.cta.description')}</p>
-            <button
-              className="sp-cta-btn"
-              onClick={handleGenerateFromSearch}
-              disabled={isGenerating || !searchTaskId}
-            >
-              {isGenerating ? t('home.input.button_generating') : t('search_papers.cta.button')}
-            </button>
+            {(() => {
+              const existingReview = relatedTasks.find(r => r.type === 'review' && r.status === 'completed')
+              if (existingReview) {
+                return (
+                  <button
+                    className="sp-cta-btn"
+                    onClick={() => navigate(`/?task_id=${existingReview.task_id}#generate`)}
+                  >
+                    {t('search_papers.cta.view_result')}
+                  </button>
+                )
+              }
+              return (
+                <button
+                  className="sp-cta-btn"
+                  onClick={handleGenerateFromSearch}
+                  disabled={isGenerating || !searchTaskId}
+                >
+                  {isGenerating ? t('home.input.button_generating') : t('search_papers.cta.button')}
+                </button>
+              )
+            })()}
             <p className="sp-cta-badge">
               {t('search_papers.cta.badge')} <a href="/">AutoOverview</a>
             </p>

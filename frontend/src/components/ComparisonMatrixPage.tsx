@@ -84,6 +84,8 @@ export function ComparisonMatrixPage() {
   const [generateLoading, setGenerateLoading] = useState(false)
   const [loggedIn, setLoggedIn] = useState(isLoggedIn())
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [searchTaskId, setSearchTaskId] = useState<string>('')
+  const [isGeneratingReview, setIsGeneratingReview] = useState(false)
 
   const [matrixData, setMatrixData] = useState<ComparisonMatrixData | null>(null)
   const [loading, setLoading] = useState(false)
@@ -129,6 +131,15 @@ export function ComparisonMatrixPage() {
             })
             setProgress(100)
             setLoading(false)
+            // 获取任务参数以提取 reuse_task_id
+            api.getTaskStatus(id).then(taskResult => {
+              if (taskResult.success && taskResult.data) {
+                const taskData: any = taskResult.data
+                if (taskData.params?.reuse_task_id) {
+                  setSearchTaskId(taskData.params.reuse_task_id)
+                }
+              }
+            }).catch(() => {})
             return
           }
         } catch (err: any) {
@@ -143,6 +154,12 @@ export function ComparisonMatrixPage() {
           const taskResult = await api.getTaskStatus(id)
           if (taskResult.success && taskResult.data) {
             const task = taskResult.data
+
+            // 提取 reuse_task_id（用于生成综述时复用论文）
+            const taskData: any = task
+            if (taskData.params?.reuse_task_id) {
+              setSearchTaskId(taskData.params.reuse_task_id)
+            }
 
             if (task.status === 'completed' && task.result) {
               // 任务完成，有结果
@@ -226,6 +243,48 @@ export function ComparisonMatrixPage() {
     }
   }
 
+  const handleGenerateReview = async () => {
+    if (!loggedIn) {
+      setShowLoginModal(true)
+      return
+    }
+
+    if (!searchTaskId || !matrixData?.topic) return
+
+    try {
+      const activeTask = await api.getActiveTask()
+      if (activeTask.active) {
+        alert(t('comparison_matrix_page.error'))
+        return
+      }
+    } catch {
+      // 不阻塞
+    }
+
+    setIsGeneratingReview(true)
+    try {
+      const response = await api.submitReviewTask(matrixData.topic, {
+        language: isChineseSite ? 'zh' : 'en',
+        reuseTaskId: searchTaskId,
+      })
+
+      if (response.success && response.data?.task_id) {
+        navigate(`/?task_id=${response.data.task_id}#generate`)
+      } else {
+        const msg = response.message || ''
+        if (msg.includes('credits') || msg.includes('额度')) {
+          navigate(`/?reuse_task_id=${searchTaskId}&topic=${encodeURIComponent(matrixData.topic)}#pricing`)
+        } else {
+          alert(msg || t('comparison_matrix_page.error'))
+        }
+      }
+    } catch (err: any) {
+      alert(err.message || t('comparison_matrix_page.error'))
+    } finally {
+      setIsGeneratingReview(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="comparison-matrix-page">
@@ -238,6 +297,7 @@ export function ComparisonMatrixPage() {
           <div className="nav-links">
             <a href="/search-papers" onClick={(e) => { e.preventDefault(); navigate('/search-papers') }}>{t('search_papers.nav.search')}</a>
             <a href="/" onClick={(e) => { e.preventDefault(); navigate('/') }}>{t('search_papers.nav.generate')}</a>
+            <a href="/comparison-matrix" className="active" onClick={(e) => { e.preventDefault(); navigate('/comparison-matrix') }}>{t('search_papers.nav.comparison_matrix')}</a>
             <a href="/#pricing" onClick={(e) => { e.preventDefault(); navigate('/#pricing') }}>{t('search_papers.nav.pricing')}</a>
           </div>
           <div className="nav-actions">
@@ -279,6 +339,7 @@ export function ComparisonMatrixPage() {
           <nav className="sidebar-links">
             <a href="/search-papers" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false) }}>{t('search_papers.nav.search')}</a>
             <a href="/" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/') }}>{t('search_papers.nav.generate')}</a>
+            <a href="/comparison-matrix" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/comparison-matrix') }}>{t('search_papers.nav.comparison_matrix')}</a>
             <a href="/#pricing" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/#pricing') }}>{t('search_papers.nav.pricing')}</a>
             <button
               className="sidebar-generate-btn"
@@ -334,6 +395,7 @@ export function ComparisonMatrixPage() {
           <div className="nav-links">
             <a href="/search-papers" onClick={(e) => { e.preventDefault(); navigate('/search-papers') }}>{t('search_papers.nav.search')}</a>
             <a href="/" onClick={(e) => { e.preventDefault(); navigate('/') }}>{t('search_papers.nav.generate')}</a>
+            <a href="/comparison-matrix" className="active" onClick={(e) => { e.preventDefault(); navigate('/comparison-matrix') }}>{t('search_papers.nav.comparison_matrix')}</a>
             <a href="/#pricing" onClick={(e) => { e.preventDefault(); navigate('/#pricing') }}>{t('search_papers.nav.pricing')}</a>
           </div>
           <div className="nav-actions">
@@ -375,6 +437,7 @@ export function ComparisonMatrixPage() {
           <nav className="sidebar-links">
             <a href="/search-papers" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false) }}>{t('search_papers.nav.search')}</a>
             <a href="/" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/') }}>{t('search_papers.nav.generate')}</a>
+            <a href="/comparison-matrix" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/comparison-matrix') }}>{t('search_papers.nav.comparison_matrix')}</a>
             <a href="/#pricing" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/#pricing') }}>{t('search_papers.nav.pricing')}</a>
             <button
               className="sidebar-generate-btn"
@@ -430,6 +493,7 @@ export function ComparisonMatrixPage() {
           <div className="nav-links">
             <a href="/search-papers" onClick={(e) => { e.preventDefault(); navigate('/search-papers') }}>{t('search_papers.nav.search')}</a>
             <a href="/" onClick={(e) => { e.preventDefault(); navigate('/') }}>{t('search_papers.nav.generate')}</a>
+            <a href="/comparison-matrix" className="active" onClick={(e) => { e.preventDefault(); navigate('/comparison-matrix') }}>{t('search_papers.nav.comparison_matrix')}</a>
             <a href="/#pricing" onClick={(e) => { e.preventDefault(); navigate('/#pricing') }}>{t('search_papers.nav.pricing')}</a>
           </div>
           <div className="nav-actions">
@@ -471,6 +535,7 @@ export function ComparisonMatrixPage() {
           <nav className="sidebar-links">
             <a href="/search-papers" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false) }}>{t('search_papers.nav.search')}</a>
             <a href="/" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/') }}>{t('search_papers.nav.generate')}</a>
+            <a href="/comparison-matrix" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/comparison-matrix') }}>{t('search_papers.nav.comparison_matrix')}</a>
             <a href="/#pricing" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/#pricing') }}>{t('search_papers.nav.pricing')}</a>
             <button
               className="sidebar-generate-btn"
@@ -614,6 +679,14 @@ export function ComparisonMatrixPage() {
           <div className="stats-actions">
             <button
               className="stats-action-btn stats-action-btn-primary"
+              onClick={handleGenerateReview}
+              disabled={!searchTaskId || isGeneratingReview}
+              title={!searchTaskId ? t('comparison_matrix_page.generate_review_disabled_hint') : undefined}
+            >
+              {isGeneratingReview ? t('comparison_matrix_page.generating') : t('comparison_matrix_page.generate_review')}
+            </button>
+            <button
+              className="stats-action-btn"
               onClick={() => alert(t('comparison_matrix_page.coming_soon'))}
             >
               {t('comparison_matrix_page.export_markdown')}
@@ -649,6 +722,14 @@ export function ComparisonMatrixPage() {
         <div className="matrix-actions">
           <button
             className="action-btn action-btn-primary"
+            onClick={handleGenerateReview}
+            disabled={!searchTaskId || isGeneratingReview}
+            title={!searchTaskId ? t('comparison_matrix_page.generate_review_disabled_hint') : undefined}
+          >
+            {isGeneratingReview ? t('comparison_matrix_page.generating') : t('comparison_matrix_page.generate_review')}
+          </button>
+          <button
+            className="action-btn"
             onClick={() => alert(t('comparison_matrix_page.coming_soon'))}
           >
             {t('comparison_matrix_page.export_markdown')}

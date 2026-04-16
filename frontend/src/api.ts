@@ -563,4 +563,22 @@ export const api = {
     const response = await axios.get(`${API_BASE}/comparison-matrix/${taskId}`, { headers });
     return response.data;
   },
+
+  // 查询搜索任务的关联任务（对比矩阵、综述）
+  async getRelatedTasks(taskId: string): Promise<{
+    success: boolean;
+    data: Array<{
+      task_id: string;
+      topic: string;
+      status: string;
+      type: 'comparison_matrix' | 'review';
+      created_at: string;
+    }>;
+  }> {
+    const token = localStorage.getItem('auth_token');
+    const headers: Record<string, string> = {};
+    if (token) headers.Authorization = `Bearer ${token}`;
+    const response = await axios.get(`${API_BASE}/search-history/${taskId}/related-tasks`, { headers });
+    return response.data;
+  },
 };

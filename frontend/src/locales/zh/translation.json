@@ -110,13 +110,13 @@
     "pricing": {
       "title": "灵活定价，按需付费",
       "subtitle": "按需付费，额度不过期",
-      "note": "额度永久有效，不设过期时间。注册即送 1 篇免费综述额度。",
+      "note": "Credit 点数永久有效，不设过期时间。注册即送 1 个 Credit。",
       "single": {
         "name": "体验包",
         "price": "29.8",
         "unit": "CNY",
         "features": [
-          "1 篇综述生成额度",
+          "2 个 Credit（1 篇综述 或 2 篇对比矩阵）",
           "在线查看 + Word 导出",
           "参考文献包含真实文献 DOI 链接",
           "支持导出 BibTeX、XML、RIS 格式"
@@ -128,11 +128,11 @@
         "price": "69.8",
         "unit": "CNY",
         "features": [
-          "3 篇综述生成额度",
+          "6 个 Credit（3 篇综述 或 6 篇对比矩阵）",
           "在线查看 + Word 导出",
           "参考文献包含真实文献 DOI 链接",
           "支持导出 BibTeX、XML、RIS 格式",
-          "约 ¥23.3/篇"
+          "约 ¥11.6/Credit"
         ]
       },
       "yearly": {
@@ -141,11 +141,11 @@
         "price": "109.8",
         "unit": "CNY",
         "features": [
-          "6 篇综述生成额度",
+          "12 个 Credit（6 篇综述 或 12 篇对比矩阵）",
           "在线查看 + Word 导出",
           "参考文献包含真实文献 DOI 链接",
           "支持导出 BibTeX、XML、RIS 格式",
-          "约 ¥18.3/篇"
+          "约 ¥9.2/Credit"
         ]
       },
       "buy_single": "立即购买",
@@ -188,6 +188,7 @@
       "cases": "案例展示",
       "pricing": "定价",
       "search_papers": "搜索文献",
+      "comparison_matrix": "对比矩阵",
       "profile": "我的综述",
       "login_register": "登录 / 注册",
       "logout": "退出登录"
@@ -205,8 +206,8 @@
       "plans_fetch_failed": "获取定价失败",
       "cases_fetch_failed": "获取案例失败",
       "credits_refresh_failed": "刷新额度失败",
-      "no_credits": "额度已用完",
-      "no_credits_hint": "额度已用完，请购买套餐后继续使用。"
+      "no_credits": "Credit 不足",
+      "no_credits_hint": "Credit 不足，请购买后继续使用。"
     }
   },
   "review": {
@@ -377,6 +378,7 @@
     "nav": {
       "search": "搜索文献",
       "generate": "生成综述",
+      "comparison_matrix": "对比矩阵",
       "pricing": "定价"
     },
     "hero": {
@@ -419,6 +421,7 @@
       "title": "需要一篇完整的文献综述？",
       "description": "AutoOverview 生成可直接投稿的结构化综述，含 DOI 可验证引用。从研究背景到学术争议到结论。",
       "button": "生成完整文献综述",
+      "view_result": "查看综述",
       "badge": "免费工具 by"
     },
     "footer": {
@@ -437,7 +440,8 @@
     "comparison_matrix": {
       "title": "生成文献对比矩阵",
       "description": "仅需 ¥5.00，即可获取观点对比、分歧原因分析和对比表格",
-      "button": "立即生成 (¥5.00)"
+      "button": "立即生成 (¥5.00)",
+      "view_result": "查看对比矩阵"
     }
   },
   "comparison_matrix_page": {
@@ -460,6 +464,8 @@
     "topic_placeholder": "输入您的研究主题，例如：深度学习在医学影像中的应用",
     "cancel": "取消",
     "generate_now": "立即生成",
-    "generating": "生成中..."
+    "generating": "生成中...",
+    "generate_review": "生成综述",
+    "generate_review_disabled_hint": "该对比矩阵未复用搜索结果，无法直接生成综述"
   }
 }

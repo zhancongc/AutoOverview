@@ -79,13 +79,13 @@
     "pricing": {
       "title": "Simple, Transparent Pricing",
       "subtitle": "No subscription. Credits never expire.",
-      "note": "No subscription • Credits never expire • Customer satisfaction focused",
+      "note": "No subscription • Credits never expire • Get 1 free Credit on registration",
       "single": {
         "name": "Starter",
         "price": "9.99",
         "unit": "USD",
         "features": [
-          "3 AI-assisted literature analyses",
+          "2 Credits (1 review or 2 comparison matrices)",
           "DOI-verifiable citations",
           "Standard citation formats",
           "Word export"
@@ -97,11 +97,11 @@
         "price": "24.99",
         "unit": "USD",
         "features": [
-          "10 review credits",
+          "6 Credits (3 reviews or 6 comparison matrices)",
           "Priority processing",
           "Advanced citation formats",
           "All Starter features",
-          "Valid for 6 months"
+          "~$4.16/Credit"
         ]
       },
       "yearly": {
@@ -110,11 +110,11 @@
         "price": "44.99",
         "unit": "USD",
         "features": [
-          "30 review credits",
+          "12 Credits (6 reviews or 12 comparison matrices)",
           "Priority processing",
           "Advanced citation formats",
           "All Semester features",
-          "Valid for 12 months"
+          "~$3.75/Credit"
         ]
       },
       "buy_now": "Get Started",
@@ -160,6 +160,7 @@
       "cases": "Samples",
       "pricing": "Pricing",
       "search_papers": "Search Papers",
+      "comparison_matrix": "Comparison Matrix",
       "profile": "My Reviews",
       "login_register": "Login / Register",
       "logout": "Logout"
@@ -323,6 +324,7 @@
     "nav": {
       "search": "Search Papers",
       "generate": "Generate Review",
+      "comparison_matrix": "Comparison Matrix",
       "pricing": "Pricing"
     },
     "hero": {
@@ -365,6 +367,7 @@
       "title": "Ready to Accelerate Your Literature Review?",
       "description": "AutoOverview helps you analyze literature faster with AI-assisted structuring and verified DOI citations.",
       "button": "Start Literature Analysis",
+      "view_result": "View Review",
       "badge": "Free tool by"
     },
     "footer": {
@@ -383,7 +386,8 @@
     "comparison_matrix": {
       "title": "Generate Literature Comparison Matrix",
       "description": "Get viewpoint comparisons, divergence analysis, and comparison tables for just $0.99",
-      "button": "Generate Now ($0.99)"
+      "button": "Generate Now ($0.99)",
+      "view_result": "View Comparison Matrix"
     }
   },
   "comparison_matrix_page": {
@@ -406,6 +410,8 @@
     "topic_placeholder": "Enter your research topic, e.g., Deep Learning in Medical Imaging",
     "cancel": "Cancel",
     "generate_now": "Generate Now",
-    "generating": "Generating..."
+    "generating": "Generating...",
+    "generate_review": "Generate Review",
+    "generate_review_disabled_hint": "This matrix was generated independently, papers cannot be reused"
   }
 }

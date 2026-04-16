@@ -341,6 +341,10 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
             e.preventDefault()
             navigate('/search-papers')
           }}>{t('home.nav.search_papers')}</a>
+          <a href="/comparison-matrix" onClick={(e) => {
+            e.preventDefault()
+            navigate('/comparison-matrix')
+          }}>{t('home.nav.comparison_matrix')}</a>
         </div>
         <div className="nav-actions">
           {isLoggedIn ? (
@@ -448,6 +452,14 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
               navigate('/search-papers')
             }}
           >{t('home.nav.search_papers')}</a>
+          <a
+            href="/comparison-matrix"
+            onClick={(e) => {
+              e.preventDefault()
+              setMobileMenuOpen(false)
+              navigate('/comparison-matrix')
+            }}
+          >{t('home.nav.comparison_matrix')}</a>
         </nav>
         <div className="sidebar-bottom">
           {isLoggedIn ? (

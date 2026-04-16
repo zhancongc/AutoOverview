@@ -415,6 +415,7 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
           <a href="#cases">{t('home.nav.cases')}</a>
           <a href="#pricing">{t('home.nav.pricing')}</a>
           <a href="/search-papers" onClick={(e) => { e.preventDefault(); navigate('/search-papers') }}>{t('home.nav.search_papers')}</a>
+          <a href="/comparison-matrix" onClick={(e) => { e.preventDefault(); navigate('/comparison-matrix') }}>{t('home.nav.comparison_matrix')}</a>
         </div>
         <div className="nav-actions">
           {isLoggedIn ? (
@@ -458,6 +459,8 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
           <a href="#process" onClick={() => setMobileMenuOpen(false)}>{t('home.nav.process')}</a>
           <a href="#cases" onClick={() => setMobileMenuOpen(false)}>{t('home.nav.cases')}</a>
           <a href="#pricing" onClick={() => setMobileMenuOpen(false)}>{t('home.nav.pricing')}</a>
+          <a href="/search-papers" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/search-papers') }}>{t('home.nav.search_papers')}</a>
+          <a href="/comparison-matrix" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/comparison-matrix') }}>{t('home.nav.comparison_matrix')}</a>
         </nav>
         <div className="sidebar-bottom">
           {isLoggedIn ? (

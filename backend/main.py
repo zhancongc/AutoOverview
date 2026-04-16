@@ -70,9 +70,10 @@ def get_current_user_id(credentials: HTTPAuthorizationCredentials = Depends(secu
     return None
 
 
-def check_and_deduct_credit(user_id: int, db_session: Session) -> tuple[Optional[str], bool]:
+def check_and_deduct_credit(user_id: int, db_session: Session, cost: int = 2) -> tuple[Optional[str], bool]:
     """
-    检查并扣除用户综述额度。
+    检查并扣除用户 credit 点数。
+    cost: 需要扣除的 credit 数量（对比矩阵=1，综述=2）
     返回 (错误信息, 是否扣除付费额度)。错误信息为 None 表示通过。
     优先扣除付费额度，再扣除免费额度。
     """
@@ -85,22 +86,33 @@ def check_and_deduct_credit(user_id: int, db_session: Session) -> tuple[Optional
     paid_credits = user.get_meta("review_credits", 0)
     total = free_credits + paid_credits
 
-    if total <= 0:
-        return "综述生成额度已用完，请购买套餐后继续使用", False
+    if total < cost:
+        return f"Credit 不足，当前 {total} 个 Credit，需要 {cost} 个。请购买后继续使用", False
 
     # 优先扣除付费额度，再用免费额度
-    used_paid = paid_credits > 0
-    if used_paid:
-        user.set_meta("review_credits", paid_credits - 1)
+    used_paid = False
+    remaining_cost = cost
+
+    if paid_credits >= remaining_cost:
+        user.set_meta("review_credits", paid_credits - remaining_cost)
+        used_paid = True
+        remaining_cost = 0
     else:
-        user.set_meta("free_credits", free_credits - 1)
+        remaining_cost -= paid_credits
+        user.set_meta("review_credits", 0)
+        used_paid = paid_credits > 0
+
+    if remaining_cost > 0:
+        user.set_meta("free_credits", free_credits - remaining_cost)
+
     db_session.commit()
     return None, used_paid
 
 
-def refund_credit(user_id: int, db_session: Session) -> None:
+def refund_credit(user_id: int, db_session: Session, cost: int = 2) -> None:
     """
-    退还用户综述额度（任务失败时调用）。
+    退还用户 credit 点数（任务失败时调用）。
+    cost: 需要退还的 credit 数量
     优先退还免费额度，再退还付费额度（与扣除顺序相反）。
     """
     from authkit.models import User
@@ -112,10 +124,17 @@ def refund_credit(user_id: int, db_session: Session) -> None:
     paid_credits = user.get_meta("review_credits", 0)
 
     # 优先退还免费额度（与扣除时"先用付费再用免费"相反）
-    if free_credits == 0:
-        user.set_meta("review_credits", paid_credits + 1)
-    else:
-        user.set_meta("free_credits", free_credits + 1)
+    remaining_refund = cost
+    new_free = free_credits
+    new_paid = paid_credits
+
+    # 先退给 free
+    if remaining_refund > 0:
+        new_free += remaining_refund
+        remaining_refund = 0
+
+    user.set_meta("free_credits", new_free)
+    user.set_meta("review_credits", new_paid)
     db_session.commit()
 
 
@@ -1257,13 +1276,27 @@ async def submit_review_task(
 
     # 检查用户付费状态并扣除额度
     is_paid = False
+    credit_cost = 2  # 默认综述需要 2 credit
     if user_id:
         from authkit.database import SessionLocal as AuthSessionLocal
         if AuthSessionLocal:
             auth_db = AuthSessionLocal()
             try:
+                # 动态判断 credit cost：如果复用的搜索任务已有对比矩阵，综述只需 1 credit
+                if request.reuse_task_id:
+                    try:
+                        from models import ReviewTask
+                        existing_matrix = auth_db.query(ReviewTask).filter(
+                            ReviewTask.params["reuse_task_id"].as_string() == request.reuse_task_id,
+                            ReviewTask.status == "completed"
+                        ).first()
+                        if existing_matrix and existing_matrix.params and existing_matrix.params.get("type") == "comparison_matrix_only":
+                            credit_cost = 1
+                    except Exception:
+                        pass  # 查询失败时不影响主流程
+
                 # 额度检查，返回是否使用了付费额度
-                usage_error, used_paid = check_and_deduct_credit(user_id, auth_db)
+                usage_error, used_paid = check_and_deduct_credit(user_id, auth_db, cost=credit_cost)
                 if usage_error:
                     return TaskSubmitResponse(success=False, message=usage_error)
                 is_paid = used_paid
@@ -1291,6 +1324,7 @@ async def submit_review_task(
                 "english_ratio": request.english_ratio,
                 "search_years": request.search_years,
                 "max_search_queries": request.max_search_queries,
+                "credit_cost": credit_cost,
             },
             user_id=user_id,
             is_paid=is_paid
@@ -1751,16 +1785,28 @@ async def generate_comparison_matrix(
         )
 
     try:
+        # 检查并扣除 credit（对比矩阵需要 1 credit）
+        from authkit.database import SessionLocal as AuthSessionLocal
+        if AuthSessionLocal:
+            auth_db = AuthSessionLocal()
+            try:
+                usage_error, used_paid = check_and_deduct_credit(user_id, auth_db, cost=1)
+                if usage_error:
+                    return TaskSubmitResponse(success=False, message=usage_error)
+            finally:
+                auth_db.close()
+
         # 创建任务
         task = task_manager.create_task(
             topic=request.topic,
             params={
                 "type": "comparison_matrix_only",
                 "language": request.language,
-                "reuse_task_id": request.reuse_task_id
+                "reuse_task_id": request.reuse_task_id,
+                "credit_cost": 1,
             },
             user_id=user_id,
-            is_paid=False  # 对比矩阵暂时免费
+            is_paid=False
         )
 
         # 启动后台任务
@@ -2071,6 +2117,78 @@ async def get_search_history_detail(
 
     except HTTPException:
         raise
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/search-history/{task_id}/related-tasks")
+async def get_related_tasks(
+    task_id: str,
+    user_id: Optional[int] = Depends(get_current_user_id),
+    db_session: Session = Depends(get_db)
+):
+    """
+    查询搜索任务已生成的对比矩阵和综述任务
+
+    通过查询 ReviewTask.params 中的 reuse_task_id 来找到所有基于该搜索任务生成的子任务
+    """
+    if not user_id:
+        raise HTTPException(status_code=401, detail="请先登录")
+
+    try:
+        from models import ReviewTask
+        from database import db
+
+        session_gen = db.get_session()
+        session = next(session_gen)
+        try:
+            # 查询所有任务，过滤 params 中 reuse_task_id 匹配的
+            all_tasks = session.query(ReviewTask).order_by(
+                ReviewTask.created_at.desc()
+            ).limit(200).all()
+
+            related = []
+            seen_ids = set()
+
+            for task in all_tasks:
+                params = task.params or {}
+                reuse_id = params.get("reuse_task_id", "")
+                if reuse_id != task_id:
+                    continue
+                if task.id in seen_ids:
+                    continue
+                seen_ids.add(task.id)
+
+                task_type = "comparison_matrix" if params.get("type") == "comparison_matrix_only" else "review"
+                related.append({
+                    "task_id": task.id,
+                    "topic": task.topic,
+                    "status": task.status,
+                    "type": task_type,
+                    "created_at": task.created_at.isoformat() if task.created_at else None
+                })
+
+            # 同时检查内存中的任务
+            for tid, task_obj in task_manager._tasks.items():
+                if tid in seen_ids:
+                    continue
+                params = getattr(task_obj, 'params', {}) or {}
+                if params.get("reuse_task_id") == task_id:
+                    task_type = "comparison_matrix" if params.get("type") == "comparison_matrix_only" else "review"
+                    related.append({
+                        "task_id": task_obj.task_id,
+                        "topic": task_obj.topic,
+                        "status": task_obj.status.value,
+                        "type": task_type,
+                        "created_at": task_obj.created_at.isoformat() if task_obj.created_at else None
+                    })
+
+            return {"success": True, "data": related}
+        finally:
+            session.close()
+
     except Exception as e:
         import traceback
         traceback.print_exc()

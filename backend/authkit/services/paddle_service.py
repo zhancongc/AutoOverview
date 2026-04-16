@@ -215,19 +215,19 @@ PADDLE_PRICING = {
     "single": {
         "name": "Starter",
         "price": 5.99,
-        "credits": 1,
+        "credits": 2,
         "currency": "USD",
     },
     "semester": {
         "name": "Semester Pro",
         "price": 27.99,
-        "credits": 12,
+        "credits": 6,
         "currency": "USD",
     },
     "yearly": {
         "name": "Annual Premium",
         "price": 64.99,
-        "credits": 36,
+        "credits": 12,
         "currency": "USD",
     },
     "unlock": {

@@ -313,8 +313,9 @@ class ReviewTaskExecutor:
                     if AuthSessionLocal:
                         auth_db = AuthSessionLocal()
                         try:
-                            refund_credit(task_user_id, auth_db)
-                            logger.info("已退还用户 %s 的综述额度", task_user_id)
+                            credit_cost = params.get('credit_cost', 2)
+                            refund_credit(task_user_id, auth_db, cost=credit_cost)
+                            logger.info("已退还用户 %s 的 %s 个 credit", task_user_id, credit_cost)
                         finally:
                             auth_db.close()
                 except Exception as refund_err:
@@ -592,8 +593,9 @@ class ReviewTaskExecutor:
                     if AuthSessionLocal:
                         auth_db = AuthSessionLocal()
                         try:
-                            refund_credit(task_user_id, auth_db)
-                            logger.info("已退还用户 %s 的综述额度", task_user_id)
+                            credit_cost = params.get('credit_cost', 2)
+                            refund_credit(task_user_id, auth_db, cost=credit_cost)
+                            logger.info("已退还用户 %s 的 %s 个 credit", task_user_id, credit_cost)
                         finally:
                             auth_db.close()
                 except Exception as refund_err:
@@ -758,3 +760,19 @@ class ReviewTaskExecutor:
                 error_message=str(e),
                 completed_at=datetime.now()
             )
+
+            # 退还 credit（对比矩阵需要 1 credit）
+            task_user_id = getattr(task, 'user_id', None)
+            if task_user_id:
+                try:
+                    from main import refund_credit
+                    from authkit.database import SessionLocal as AuthSessionLocal
+                    if AuthSessionLocal:
+                        auth_db = AuthSessionLocal()
+                        try:
+                            refund_credit(task_user_id, auth_db, cost=1)
+                            logger.info("已退还用户 %s 的 1 个 credit（对比矩阵失败）", task_user_id)
+                        finally:
+                            auth_db.close()
+                except Exception as refund_err:
+                    logger.error("额度退还失败: user_id=%s, error=%s", task_user_id, refund_err)
