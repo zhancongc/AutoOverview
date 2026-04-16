@@ -13,8 +13,8 @@
         "search_desc": "Free academic paper search",
         "matrix": "Comparison Matrix",
         "matrix_desc": "Compare research perspectives",
-        "generate": "Generate Review",
-        "generate_desc": "AI-generated structured review"
+        "generate": "Literature Summary",
+        "generate_desc": "AI-assisted structured literature summary"
       }
     },
     "stats": {
@@ -125,7 +125,7 @@
       "databases": "Supported: Web of Science, IEEE, CrossRef, Semantic Scholar"
     },
     "nav": {
-      "generate": "Generate",
+      "generate": "Summary",
       "features": "Features",
       "process": "How It Works",
       "cases": "Samples",
@@ -186,7 +186,7 @@
       "title": "Table of Contents",
       "actions": "Actions & TOC",
       "format": "Citation Format",
-      "generate": "Generate Review",
+      "generate": "Literature Summary",
       "toc": "Table of Contents"
     },
     "error": {
@@ -294,7 +294,7 @@
     },
     "nav": {
       "search": "Search Papers",
-      "generate": "Generate Review",
+      "generate": "Literature Summary",
       "comparison_matrix": "Comparison Matrix",
       "pricing": "Pricing"
     },
@@ -393,7 +393,7 @@
     "cancel": "Cancel",
     "generate_now": "Generate Now",
     "generating": "Generating...",
-    "generate_review": "Generate Review",
+    "generate_review": "Literature Summary",
     "generate_review_disabled_hint": "This matrix was generated independently, papers cannot be reused",
     "status_1": "Searching academic databases...",
     "status_2": "Analyzing paper metadata...",
@@ -403,11 +403,11 @@
     "no_results": "No papers found. Try different keywords."
   },
   "generate_page": {
-    "hero_badge": "Literature Review Generator",
-    "title": "Generate Literature Review",
-    "subtitle": "Enter your research topic, AI will search papers and generate a structured literature review draft",
+    "hero_badge": "Literature Summary Tool",
+    "title": "Literature Summary",
+    "subtitle": "Enter your research topic, AI will search papers and create a structured literature summary",
     "placeholder": "Enter your research topic, e.g., Deep Learning in Image Recognition",
-    "button": "Generate My Review",
+    "button": "Create Summary",
     "error_empty": "Please enter a research topic",
     "error_submit": "Submit failed, please retry",
     "error_status": "Failed to get task status",
@@ -416,7 +416,7 @@
     "submitting": "Submitting task...",
     "estimated_remaining": "Estimated remaining",
     "minutes": "minutes",
-    "completed": "Generation completed, redirecting...",
-    "estimate": "Review generation usually takes 3-5 minutes. You can close this page and check the result later in \"My Reviews\"."
+    "completed": "Summary completed, redirecting...",
+    "estimate": "Summary generation usually takes 3-5 minutes. You can close this page and check the result later in \"My Reviews\"."
   }
 }

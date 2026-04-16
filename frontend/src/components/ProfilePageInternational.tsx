@@ -250,7 +250,7 @@ export function ProfilePageInternational() {
           <a href="/" onClick={(e) => { e.preventDefault(); navigate('/') }}>Home</a>
           <a href="/search-papers" onClick={(e) => { e.preventDefault(); navigate('/search-papers') }}>Search Papers</a>
           <a href="/comparison-matrix" onClick={(e) => { e.preventDefault(); navigate('/comparison-matrix') }}>Comparison Matrix</a>
-          <a href="/generate" onClick={(e) => { e.preventDefault(); navigate('/generate') }}>Generate Review</a>
+          <a href="/generate" onClick={(e) => { e.preventDefault(); navigate('/generate') }}>Literature Summary</a>
         </div>
         <button className="mobile-menu-toggle" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
           <span className={`hamburger ${mobileMenuOpen ? 'open' : ''}`} />
@@ -273,7 +273,7 @@ export function ProfilePageInternational() {
           <a href="/" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/') }}>Home</a>
           <a href="/search-papers" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/search-papers') }}>Search Papers</a>
           <a href="/comparison-matrix" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/comparison-matrix') }}>Comparison Matrix</a>
-          <a href="/generate" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/generate') }}>Generate Review</a>
+          <a href="/generate" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/generate') }}>Literature Summary</a>
         </nav>
       </aside>
 
