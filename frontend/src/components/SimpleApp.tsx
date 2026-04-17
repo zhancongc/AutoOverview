@@ -99,9 +99,10 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
           <span className="logo-text">AutoOverview</span>
         </div>
         <div className="nav-links">
-          <a href="/search-papers" onClick={(e) => { e.preventDefault(); navigate('/search-papers') }}>{t('home.nav.search_papers')}</a>
-          <a href="/comparison-matrix" onClick={(e) => { e.preventDefault(); navigate('/comparison-matrix') }}>{t('home.nav.comparison_matrix')}</a>
-          <a href="/generate" onClick={(e) => { e.preventDefault(); navigate('/generate') }}>{t('home.nav.generate')}</a>
+          <a href="/" className={location.pathname === '/' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigate('/') }}>{t('nav.home')}</a>
+          <a href="/search-papers" className={location.pathname === '/search-papers' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigate('/search-papers') }}>{t('home.nav.search_papers')}</a>
+          <a href="/comparison-matrix" className={location.pathname === '/comparison-matrix' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigate('/comparison-matrix') }}>{t('home.nav.comparison_matrix')}</a>
+          <a href="/generate" className={location.pathname === '/generate' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigate('/generate') }}>{t('home.nav.generate')}</a>
         </div>
         <div className="nav-actions">
           {isLoggedIn ? (
@@ -140,13 +141,10 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
           <button className="sidebar-close" onClick={() => setMobileMenuOpen(false)}>&times;</button>
         </div>
         <nav className="sidebar-links">
-          <a href="#features" onClick={() => setMobileMenuOpen(false)}>{t('home.nav.features')}</a>
-          <a href="#process" onClick={() => setMobileMenuOpen(false)}>{t('home.nav.process')}</a>
-          <a href="#cases" onClick={() => setMobileMenuOpen(false)}>{t('home.nav.cases')}</a>
-          <a href="#pricing" onClick={() => setMobileMenuOpen(false)}>{t('home.nav.pricing')}</a>
-          <a href="/search-papers" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/search-papers') }}>{t('home.nav.search_papers')}</a>
-          <a href="/comparison-matrix" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/comparison-matrix') }}>{t('home.nav.comparison_matrix')}</a>
-          <a href="/generate" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/generate') }}>{t('home.nav.generate')}</a>
+          <a href="/" className={location.pathname === '/' ? 'active' : ''} onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/') }}>{t('nav.home')}</a>
+          <a href="/search-papers" className={location.pathname === '/search-papers' ? 'active' : ''} onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/search-papers') }}>{t('home.nav.search_papers')}</a>
+          <a href="/comparison-matrix" className={location.pathname === '/comparison-matrix' ? 'active' : ''} onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/comparison-matrix') }}>{t('home.nav.comparison_matrix')}</a>
+          <a href="/generate" className={location.pathname === '/generate' ? 'active' : ''} onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/generate') }}>{t('home.nav.generate')}</a>
         </nav>
         <div className="sidebar-bottom">
           {isLoggedIn ? (

@@ -3,7 +3,7 @@
  * Designed for overseas market with clean, professional academic style
  */
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { api } from '../api'
 import { getLocalUserInfo, isLoggedIn } from '../authApi'
@@ -14,11 +14,17 @@ import type { ReviewRecord } from '../types'
 import './SimpleAppInternational.css'
 import './ProfilePageInternational.css'
 
+type ProfileTab = 'reviews' | 'searches' | 'matrices'
+
 export function ProfilePageInternational() {
   const { i18n } = useTranslation()
   const navigate = useNavigate()
+  const location = useLocation()
+  const [activeTab, setActiveTab] = useState<ProfileTab>('reviews')
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [records, setRecords] = useState<ReviewRecord[]>([])
+  const [searches, setSearches] = useState<any[]>([])
+  const [matrices, setMatrices] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
   const [userInfo, setUserInfo] = useState<any>(null)
   const [credits, setCredits] = useState<number>(0)
@@ -40,6 +46,8 @@ export function ProfilePageInternational() {
     }
     setUserInfo(getLocalUserInfo())
     loadRecords()
+    loadSearches()
+    loadMatrices()
     api.getCredits().then(data => {
       setCredits(data.credits)
     }).catch(err => console.error('Failed to fetch credits:', err))
@@ -56,6 +64,52 @@ export function ProfilePageInternational() {
       console.error('Failed to load history:', err)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const loadSearches = async () => {
+    try {
+      const response = await api.getSearchHistory()
+      if (response.success) {
+        setSearches(response.searches)
+      }
+    } catch (err) {
+      console.error('Failed to load search history:', err)
+    }
+  }
+
+  const loadMatrices = async () => {
+    try {
+      // Filter records to only show comparison matrix type
+      const response = await api.getRecords()
+      if (response.success) {
+        const matrixRecords = response.records.filter(
+          (r: any) => r.task_type === 'comparison_matrix' || r.type === 'comparison_matrix'
+        )
+        setMatrices(matrixRecords)
+      }
+    } catch (err) {
+      console.error('Failed to load matrices:', err)
+    }
+  }
+
+  const handleViewSearch = (search: any) => {
+    localStorage.setItem('search_papers_topic', search.topic)
+    if (search.papers_sample) {
+      localStorage.setItem('search_papers_papers', JSON.stringify(search.papers_sample))
+    }
+    if (search.papers_summary) {
+      localStorage.setItem('search_papers_statistics', JSON.stringify(search.papers_summary))
+    }
+    localStorage.setItem('search_papers_task_id', search.id)
+    localStorage.setItem('search_papers_has_searched', 'true')
+    localStorage.setItem('search_papers_scroll_to_results', 'true')
+    navigate('/search-papers')
+  }
+
+  const handleViewMatrix = (matrix: any) => {
+    if (matrix.task_id) {
+      navigate(`/comparison-matrix?task_id=${matrix.task_id}`)
     }
   }
 
@@ -247,10 +301,10 @@ export function ProfilePageInternational() {
           <span className="logo-text">AutoOverview</span>
         </div>
         <div className="nav-links">
-          <a href="/" onClick={(e) => { e.preventDefault(); navigate('/') }}>Home</a>
-          <a href="/search-papers" onClick={(e) => { e.preventDefault(); navigate('/search-papers') }}>Search Papers</a>
-          <a href="/comparison-matrix" onClick={(e) => { e.preventDefault(); navigate('/comparison-matrix') }}>Comparison Matrix</a>
-          <a href="/generate" onClick={(e) => { e.preventDefault(); navigate('/generate') }}>Literature Summary</a>
+          <a href="/" className={location.pathname === '/' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigate('/') }}>Home</a>
+          <a href="/search-papers" className={location.pathname === '/search-papers' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigate('/search-papers') }}>Search Papers</a>
+          <a href="/comparison-matrix" className={location.pathname === '/comparison-matrix' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigate('/comparison-matrix') }}>Comparison Matrix</a>
+          <a href="/generate" className={location.pathname === '/generate' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigate('/generate') }}>Literature Summary</a>
         </div>
         <button className="mobile-menu-toggle" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
           <span className={`hamburger ${mobileMenuOpen ? 'open' : ''}`} />
@@ -270,10 +324,10 @@ export function ProfilePageInternational() {
           <button className="sidebar-close" onClick={() => setMobileMenuOpen(false)}>&times;</button>
         </div>
         <nav className="sidebar-links">
-          <a href="/" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/') }}>Home</a>
-          <a href="/search-papers" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/search-papers') }}>Search Papers</a>
-          <a href="/comparison-matrix" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/comparison-matrix') }}>Comparison Matrix</a>
-          <a href="/generate" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/generate') }}>Literature Summary</a>
+          <a href="/" className={location.pathname === '/' ? 'active' : ''} onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/') }}>Home</a>
+          <a href="/search-papers" className={location.pathname === '/search-papers' ? 'active' : ''} onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/search-papers') }}>Search Papers</a>
+          <a href="/comparison-matrix" className={location.pathname === '/comparison-matrix' ? 'active' : ''} onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/comparison-matrix') }}>Comparison Matrix</a>
+          <a href="/generate" className={location.pathname === '/generate' ? 'active' : ''} onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/generate') }}>Literature Summary</a>
         </nav>
       </aside>
 
@@ -296,77 +350,211 @@ export function ProfilePageInternational() {
         </div>
 
         {/* Stats */}
-        <div className="profile-stats">
-          <div className="stat-card">
-            <div className="stat-number">{records.length}</div>
-            <div className="stat-label">Reviews</div>
+        <div className="profile-stats-inline">
+          <div className="stat-item">
+            <span className="stat-value">{records.length}</span>
+            <span className="stat-label">Reviews</span>
           </div>
-          <div className="stat-card stat-card-paid">
-            <div className="stat-number">{credits}</div>
-            <div className="stat-label">Credits</div>
+          <div className="stat-divider" />
+          <div className="stat-item">
+            <span className="stat-value">{searches.length}</span>
+            <span className="stat-label">Searches</span>
           </div>
+          <div className="stat-divider" />
+          <div className="stat-item">
+            <span className="stat-value">{matrices.length}</span>
+            <span className="stat-label">Matrices</span>
+          </div>
+          <div className="stat-divider" />
+          <div className="stat-item stat-item-credits">
+            <span className="stat-value">{credits}</span>
+            <span className="stat-label">Credits</span>
+          </div>
+        </div>
+
+        {/* Tab Switcher */}
+        <div className="profile-tabs">
+          <button
+            className={`profile-tab ${activeTab === 'reviews' ? 'active' : ''}`}
+            onClick={() => setActiveTab('reviews')}
+          >
+            📖 My Reviews
+          </button>
+          <button
+            className={`profile-tab ${activeTab === 'searches' ? 'active' : ''}`}
+            onClick={() => setActiveTab('searches')}
+          >
+            🔍 My Searches
+          </button>
+          <button
+            className={`profile-tab ${activeTab === 'matrices' ? 'active' : ''}`}
+            onClick={() => setActiveTab('matrices')}
+          >
+            📊 Comparison Matrices
+          </button>
         </div>
 
         {/* History List */}
         <div className="profile-history">
-          <h2 className="history-title">📖 My Reviews</h2>
-
-          {loading ? (
-            <div className="history-loading">
-              <div className="spinner"></div>
-              <p>Loading history...</p>
-            </div>
-          ) : records.length === 0 ? (
-            <div className="history-empty">
-              <div className="empty-icon">📝</div>
-              <p className="empty-title">No reviews yet</p>
-              <p className="empty-desc">Enter a research topic and AI will automatically search papers and generate a professional review</p>
-              <button className="empty-button" onClick={() => navigate('/')}>
-                Generate Your First Review
-              </button>
-            </div>
-          ) : (
-            <div className="records-list">
-              {records.map((record) => (
-                <div
-                  key={record.id}
-                  className={`record-item ${record.status === 'processing' || record.status === 'failed' ? 'record-item-disabled' : ''}`}
-                  onClick={() => handleViewRecord(record)}
-                >
-                  <div className="record-main">
-                    <div className="record-top">
-                      <h3 className="record-topic">{record.topic}</h3>
-                      {record.status === 'success' ? (
-                        <span className="status-success">✓ Complete</span>
-                      ) : record.status === 'failed' ? (
-                        <span className="status-failed">✗ Failed</span>
-                      ) : (
-                        <span className="status-processing">⏳ Processing</span>
-                      )}
-                    </div>
-                    <div className="record-bottom">
-                      <div className="record-meta">
-                        <span className="record-time">{formatDate(record.created_at)}</span>
-                        {record.statistics && (
-                          <span className="record-stats-inline">📄 {record.statistics.total || 0} papers</span>
-                        )}
-                      </div>
-                      {record.status === 'success' && (
-                        <button
-                          className={`export-button ${!record.is_paid ? 'export-word-premium' : ''}`}
-                          onClick={(e) => handleExportRecord(record.id, e)}
-                          disabled={exportingId === record.id}
-                        >
-                          {exportingId === record.id ? 'Exporting...' :
-                           record.is_paid ? 'Export Word' :
-                           '🔓 Unlock Export'}
-                        </button>
-                      )}
-                    </div>
-                  </div>
+          {activeTab === 'reviews' && (
+            <>
+              {loading ? (
+                <div className="history-loading">
+                  <div className="spinner"></div>
+                  <p>Loading reviews...</p>
                 </div>
-              ))}
-            </div>
+              ) : records.length === 0 ? (
+                <div className="history-empty">
+                  <div className="empty-icon">📝</div>
+                  <p className="empty-title">No reviews yet</p>
+                  <p className="empty-desc">Enter a research topic and AI will create a structured literature summary</p>
+                  <button className="empty-button" onClick={() => navigate('/')}>
+                    Create Your First Summary
+                  </button>
+                </div>
+              ) : (
+                <div className="records-list">
+                  {records.map((record) => (
+                    <div
+                      key={record.id}
+                      className={`record-item ${record.status === 'processing' || record.status === 'failed' ? 'record-item-disabled' : ''}`}
+                      onClick={() => handleViewRecord(record)}
+                    >
+                      <div className="record-main">
+                        <div className="record-top">
+                          <h3 className="record-topic">{record.topic}</h3>
+                          {record.status === 'success' ? (
+                            <span className="status-success">✓ Complete</span>
+                          ) : record.status === 'failed' ? (
+                            <span className="status-failed">✗ Failed</span>
+                          ) : (
+                            <span className="status-processing">⏳ Processing</span>
+                          )}
+                        </div>
+                        <div className="record-bottom">
+                          <div className="record-meta">
+                            <span className="record-time">{formatDate(record.created_at)}</span>
+                            {record.statistics && (
+                              <span className="record-stats-inline">📄 {record.statistics.total || 0} papers</span>
+                            )}
+                          </div>
+                          {record.status === 'success' && (
+                            <button
+                              className={`export-button ${!record.is_paid ? 'export-word-premium' : ''}`}
+                              onClick={(e) => handleExportRecord(record.id, e)}
+                              disabled={exportingId === record.id}
+                            >
+                              {exportingId === record.id ? 'Exporting...' :
+                               record.is_paid ? 'Export Word' :
+                               '🔓 Unlock Export'}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+
+          {activeTab === 'searches' && (
+            <>
+              {loading ? (
+                <div className="history-loading">
+                  <div className="spinner"></div>
+                  <p>Loading searches...</p>
+                </div>
+              ) : searches.length === 0 ? (
+                <div className="history-empty">
+                  <div className="empty-icon">🔍</div>
+                  <p className="empty-title">No searches yet</p>
+                  <p className="empty-desc">Search academic papers to find related research</p>
+                  <button className="empty-button" onClick={() => navigate('/search-papers')}>
+                    Search Papers
+                  </button>
+                </div>
+              ) : (
+                <div className="records-list">
+                  {searches.map((search) => (
+                    <div
+                      key={search.id}
+                      className="record-item"
+                      onClick={() => handleViewSearch(search)}
+                    >
+                      <div className="record-main">
+                        <div className="record-top">
+                          <h3 className="record-topic">{search.topic}</h3>
+                          <span className="status-success">✓ Complete</span>
+                        </div>
+                        <div className="record-bottom">
+                          <div className="record-meta">
+                            <span className="record-time">{formatDate(search.created_at)}</span>
+                            {search.papers_count && (
+                              <span className="record-stats-inline">📄 {search.papers_count} papers</span>
+                            )}
+                          </div>
+                          <button className="export-button">
+                            View Results
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+
+          {activeTab === 'matrices' && (
+            <>
+              {loading ? (
+                <div className="history-loading">
+                  <div className="spinner"></div>
+                  <p>Loading matrices...</p>
+                </div>
+              ) : matrices.length === 0 ? (
+                <div className="history-empty">
+                  <div className="empty-icon">📊</div>
+                  <p className="empty-title">No comparison matrices yet</p>
+                  <p className="empty-desc">Generate a comparison matrix to compare research perspectives</p>
+                  <button className="empty-button" onClick={() => navigate('/comparison-matrix')}>
+                    Create Comparison Matrix
+                  </button>
+                </div>
+              ) : (
+                <div className="records-list">
+                  {matrices.map((matrix) => (
+                    <div
+                      key={matrix.id}
+                      className="record-item"
+                      onClick={() => handleViewMatrix(matrix)}
+                    >
+                      <div className="record-main">
+                        <div className="record-top">
+                          <h3 className="record-topic">{matrix.topic}</h3>
+                          {matrix.status === 'success' ? (
+                            <span className="status-success">✓ Complete</span>
+                          ) : matrix.status === 'failed' ? (
+                            <span className="status-failed">✗ Failed</span>
+                          ) : (
+                            <span className="status-processing">⏳ Processing</span>
+                          )}
+                        </div>
+                        <div className="record-bottom">
+                          <div className="record-meta">
+                            <span className="record-time">{formatDate(matrix.created_at)}</span>
+                          </div>
+                          <button className="export-button">
+                            View Matrix
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>

@@ -476,10 +476,10 @@ export function SearchPapersPage() {
           <span className="logo-text">AutoOverview</span>
         </div>
         <div className="nav-links">
-          <a href="/" onClick={(e) => { e.preventDefault(); navigate('/') }}>{t('nav.home')}</a>
-          <a href="/search-papers" className="active">{t('search_papers.nav.search')}</a>
-          <a href="/comparison-matrix" onClick={(e) => { e.preventDefault(); navigate('/comparison-matrix') }}>{t('search_papers.nav.comparison_matrix')}</a>
-          <a href="/generate" onClick={(e) => { e.preventDefault(); navigate('/generate') }}>{t('search_papers.nav.generate')}</a>
+          <a href="/" className={location.pathname === '/' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigate('/') }}>{t('nav.home')}</a>
+          <a href="/search-papers" className={location.pathname === '/search-papers' ? 'active' : ''}>{t('search_papers.nav.search')}</a>
+          <a href="/comparison-matrix" className={location.pathname === '/comparison-matrix' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigate('/comparison-matrix') }}>{t('search_papers.nav.comparison_matrix')}</a>
+          <a href="/generate" className={location.pathname === '/generate' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigate('/generate') }}>{t('search_papers.nav.generate')}</a>
         </div>
         <div className="nav-actions">
           {loggedIn ? (

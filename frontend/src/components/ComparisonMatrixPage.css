@@ -1,10 +1,47 @@
 /**
  * ComparisonMatrixPage - 文献对比矩阵页面样式
+ * Chinese site: Red theme; English site: Blue theme
  */
+
+/* Default variables (Chinese red theme) */
+.comparison-matrix-page {
+  --cm-primary: #D63031;
+  --cm-primary-dark: #B71C1C;
+  --cm-primary-light: #fde8e8;
+  --cm-accent: #D63031;
+  --cm-bg-gradient-start: #fff5f5;
+  --cm-bg-gradient-end: #fff8f8;
+  --cm-table-header-bg: #fff5f5;
+  --cm-table-even-bg: #fffdfd;
+  --cm-table-hover-bg: #fff5f5;
+  --cm-border-light: #f5c6c6;
+  --cm-cream-white: #FFFBF5;
+  --cm-charcoal: #2D3436;
+  --cm-text-gray: #636E72;
+  --cm-border-gray: #E8ECEF;
+}
+
+/* English site: blue theme */
+html.intl .comparison-matrix-page {
+  --cm-primary: #1a365d;
+  --cm-primary-dark: #2c5282;
+  --cm-primary-light: #ebf8ff;
+  --cm-accent: #3182ce;
+  --cm-bg-gradient-start: #f7fafc;
+  --cm-bg-gradient-end: #ffffff;
+  --cm-table-header-bg: #ebf8ff;
+  --cm-table-even-bg: #f7fafc;
+  --cm-table-hover-bg: #ebf8ff;
+  --cm-border-light: #bee3f8;
+  --cm-cream-white: #FFFBF5;
+  --cm-charcoal: #2D3436;
+  --cm-text-gray: #636E72;
+  --cm-border-gray: #E8ECEF;
+}
 
 .comparison-matrix-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #fef5e7 0%, #fff8e1 100%);
+  background: linear-gradient(135deg, var(--cm-bg-gradient-start) 0%, var(--cm-bg-gradient-end) 100%);
 }
 
 /* ========== Navigation Styles ========== */
@@ -26,7 +63,7 @@
   gap: 10px;
   font-weight: 700;
   font-size: 1.25rem;
-  color: #d35400;
+  color: var(--cm-primary);
 }
 
 .comparison-matrix-page .logo-icon {
@@ -48,7 +85,7 @@
 
 .comparison-matrix-page .nav-links a:hover,
 .comparison-matrix-page .nav-links a.active {
-  color: #e67e22;
+  color: var(--cm-primary);
 }
 
 .comparison-matrix-page .nav-link-btn {
@@ -63,11 +100,11 @@
 }
 
 .comparison-matrix-page .nav-link-btn:hover {
-  color: #e67e22;
+  color: var(--cm-primary);
 }
 
 .comparison-matrix-page .nav-btn-primary {
-  background: #e67e22;
+  background: var(--cm-primary);
   color: white;
   border: none;
   padding: 8px 16px;
@@ -79,7 +116,7 @@
 }
 
 .comparison-matrix-page .nav-btn-primary:hover {
-  background: #d35400;
+  background: var(--cm-primary-dark);
 }
 
 .comparison-matrix-page .nav-actions {
@@ -108,16 +145,16 @@
 }
 
 .comparison-matrix-page .nav-btn-login:hover {
-  color: #e67e22;
+  color: var(--cm-primary);
 }
 
 .comparison-matrix-page .nav-btn-register {
-  background: #e67e22;
+  background: var(--cm-primary);
   color: white;
 }
 
 .comparison-matrix-page .nav-btn-register:hover {
-  background: #d35400;
+  background: var(--cm-primary-dark);
 }
 
 .comparison-matrix-page .user-menu {
@@ -301,19 +338,20 @@
 
 .comparison-matrix-page .progress-bar {
   height: 100%;
-  background: linear-gradient(90deg, #e67e22 0%, #d35400 100%);
+  background: linear-gradient(90deg, var(--cm-primary) 0%, var(--cm-primary-dark) 100%);
   border-radius: 4px;
   transition: width 0.5s ease;
 }
 
 /* Page Content */
 .comparison-matrix-page .page-content {
-  padding: 40px 20px;
+  padding: 40px 20px 40px;
 }
 
 .matrix-container {
   max-width: 900px;
   margin: 0 auto;
+  padding-top: 40px;
 }
 
 .matrix-header {
@@ -354,7 +392,7 @@
 .header-title h1 {
   margin: 0 0 8px;
   font-size: 1.75rem;
-  color: #d35400;
+  color: var(--cm-primary);
 }
 
 .matrix-topic {
@@ -407,8 +445,8 @@
 
 .stats-action-btn {
   background: white;
-  color: #e67e22;
-  border: 2px solid #e67e22;
+  color: var(--cm-primary);
+  border: 2px solid var(--cm-primary);
   padding: 8px 16px;
   border-radius: 8px;
   font-size: 0.9rem;
@@ -419,18 +457,18 @@
 }
 
 .stats-action-btn:hover {
-  background: #fff8e1;
+  background: var(--cm-primary-light);
 }
 
 .stats-action-btn-primary {
-  background: #e67e22;
+  background: var(--cm-primary);
   color: white;
-  border: 2px solid #e67e22;
+  border: 2px solid var(--cm-primary);
 }
 
 .stats-action-btn-primary:hover {
-  background: #d35400;
-  border-color: #d35400;
+  background: var(--cm-primary-dark);
+  border-color: var(--cm-primary-dark);
 }
 
 .matrix-content {
@@ -443,23 +481,23 @@
 
 .matrix-content h1 {
   font-size: 1.5rem;
-  color: #d35400;
+  color: var(--cm-primary);
   margin-top: 0;
   margin-bottom: 20px;
-  border-bottom: 2px solid #f39c12;
+  border-bottom: 2px solid var(--cm-accent);
   padding-bottom: 12px;
 }
 
 .matrix-content h2 {
   font-size: 1.25rem;
-  color: #e67e22;
+  color: var(--cm-primary);
   margin-top: 28px;
   margin-bottom: 16px;
 }
 
 .matrix-content h3 {
   font-size: 1.1rem;
-  color: #d35400;
+  color: var(--cm-primary);
   margin-top: 20px;
   margin-bottom: 12px;
 }
@@ -501,17 +539,17 @@
 }
 
 .matrix-content th {
-  background: #fef5e7;
-  color: #d35400;
+  background: var(--cm-table-header-bg);
+  color: var(--cm-primary);
   font-weight: 600;
 }
 
 .matrix-content tr:nth-child(even) {
-  background: #fffdf5;
+  background: var(--cm-table-even-bg);
 }
 
 .matrix-content tr:hover {
-  background: #fff8e1;
+  background: var(--cm-table-hover-bg);
 }
 
 .matrix-actions {
@@ -522,8 +560,8 @@
 
 .action-btn {
   background: white;
-  color: #e67e22;
-  border: 2px solid #e67e22;
+  color: var(--cm-primary);
+  border: 2px solid var(--cm-primary);
   padding: 12px 28px;
   border-radius: 10px;
   font-size: 1rem;
@@ -533,24 +571,24 @@
 }
 
 .action-btn:hover {
-  background: #fff8e1;
+  background: var(--cm-primary-light);
 }
 
 .action-btn-primary {
-  background: #e67e22;
+  background: var(--cm-primary);
   color: white;
-  border: 2px solid #e67e22;
+  border: 2px solid var(--cm-primary);
 }
 
 .action-btn-primary:hover {
-  background: #d35400;
-  border-color: #d35400;
+  background: var(--cm-primary-dark);
+  border-color: var(--cm-primary-dark);
 }
 
 /* Sidebar Generate Button */
 .comparison-matrix-page .sidebar-generate-btn {
   width: 100%;
-  background: #e67e22;
+  background: var(--cm-primary);
   color: white;
   border: none;
   padding: 12px 16px;
@@ -563,7 +601,7 @@
 }
 
 .comparison-matrix-page .sidebar-generate-btn:hover {
-  background: #d35400;
+  background: var(--cm-primary-dark);
 }
 
 /* Modal Styles */
@@ -633,7 +671,7 @@
 }
 
 .comparison-matrix-page .topic-input:focus {
-  border-color: #e67e22;
+  border-color: var(--cm-primary);
 }
 
 .comparison-matrix-page .topic-input:disabled {
@@ -674,13 +712,13 @@
 }
 
 .comparison-matrix-page .modal-btn-primary {
-  background: #e67e22;
+  background: var(--cm-primary);
   color: white;
   border: none;
 }
 
 .comparison-matrix-page .modal-btn-primary:hover:not(:disabled) {
-  background: #d35400;
+  background: var(--cm-primary-dark);
 }
 
 .loading-container,
@@ -694,7 +732,7 @@
 
 .loading-container p,
 .error-container p {
-  color: #d35400;
+  color: var(--cm-primary);
   font-size: 1.1rem;
   margin-bottom: 20px;
 }
@@ -702,8 +740,8 @@
 .spinner {
   width: 50px;
   height: 50px;
-  border: 4px solid rgba(230, 126, 34, 0.3);
-  border-top-color: #e67e22;
+  border: 4px solid rgba(214, 48, 49, 0.3);
+  border-top-color: var(--cm-primary);
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -713,7 +751,7 @@
 }
 
 .back-btn {
-  background: #e67e22;
+  background: var(--cm-primary);
   color: white;
   border: none;
   padding: 12px 28px;
@@ -725,7 +763,144 @@
 }
 
 .back-btn:hover {
-  background: #d35400;
+  background: var(--cm-primary-dark);
+}
+
+/* ========== Matrix Segmented Tabs ========== */
+.matrix-segmented-tabs {
+  display: flex;
+  background: var(--cm-cream-white);
+  border-radius: 10px;
+  padding: 3px;
+  gap: 2px;
+  margin-bottom: 20px;
+}
+
+.matrix-segmented-tabs .segmented-tab {
+  padding: 0.45rem 1.1rem;
+  background: none;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--cm-text-gray);
+  transition: all 0.2s ease;
+  font-family: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, sans-serif;
+  white-space: nowrap;
+}
+
+.matrix-segmented-tabs .segmented-tab:hover {
+  color: var(--cm-charcoal);
+}
+
+.matrix-segmented-tabs .segmented-tab.active {
+  background: white;
+  color: var(--cm-primary);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* ========== Matrix References ========== */
+.matrix-references {
+  background: white;
+  border-radius: 16px;
+  padding: 32px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+}
+
+.matrix-references h2 {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+  color: var(--cm-primary);
+  border-bottom: 2px solid var(--cm-accent);
+  padding-bottom: 0.5rem;
+  text-align: center;
+}
+
+.references-summary {
+  font-size: 0.85rem;
+  color: #888;
+  margin: 0.25rem 0 1.5rem;
+  text-align: center;
+}
+
+.references-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.reference-item {
+  display: flex;
+  gap: 1rem;
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+  background: #f9f9f9;
+  border-radius: 8px;
+  transition: all 0.2s;
+  border: 1px solid transparent;
+}
+
+.reference-item:hover {
+  background: var(--cm-primary-light);
+  border-color: var(--cm-primary);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.reference-number {
+  font-weight: 600;
+  color: var(--cm-primary);
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.reference-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.reference-title {
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 0.5rem;
+  font-size: 0.95rem;
+}
+
+.reference-meta {
+  font-size: 0.85rem;
+  color: #666;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.reference-doi {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.35rem 0.75rem;
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 20px;
+  text-decoration: none;
+  font-size: 0.8rem;
+  font-weight: 500;
+  transition: all 0.2s;
+  color: #555;
+  border-color: var(--cm-primary);
+  margin-top: 0.5rem;
+  width: fit-content;
+}
+
+.reference-doi:hover {
+  background: var(--cm-primary);
+  color: white;
+  border-color: var(--cm-primary);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 @media (max-width: 768px) {
@@ -776,7 +951,6 @@
   .comparison-matrix-page .modal-footer {
     padding: 20px;
   }
-}
 
   .matrix-header {
     padding: 16px;
@@ -818,11 +992,21 @@
     padding: 20px 16px;
   }
 
-  .matrix-actions {
-    flex-direction: column;
+  .matrix-references {
+    padding: 20px 16px;
   }
 
-  .action-btn {
-    width: 100%;
+  .matrix-segmented-tabs {
+    justify-content: center;
+  }
+
+  .matrix-segmented-tabs .segmented-tab {
+    padding: 0.45rem 1rem;
+    font-size: 0.85rem;
+  }
+
+  .reference-item {
+    flex-direction: column;
+    gap: 0.5rem;
   }
 }

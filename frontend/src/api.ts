@@ -562,6 +562,7 @@ export const api = {
         total_time_seconds: number;
         generated_at: string;
       };
+      papers: any[];
     };
   }> {
     const token = localStorage.getItem('auth_token');

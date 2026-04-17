@@ -55,6 +55,11 @@ html.intl .search-papers-page {
   color: var(--academic-red);
 }
 
+/* English site: blue active nav link */
+html.intl .search-papers-page .nav-links a.active {
+  color: var(--academic-blue-primary);
+}
+
 /* Hero needs top padding for fixed nav */
 .search-papers-page .home-nav {
   position: fixed;

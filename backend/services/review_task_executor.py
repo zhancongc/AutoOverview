@@ -713,21 +713,27 @@ class ReviewTaskExecutor:
                 result={
                     "topic": topic,
                     "comparison_matrix": comparison_matrix,
-                    "statistics": statistics
+                    "statistics": statistics,
+                    "papers": all_papers
                 }
             )
 
             # 同时更新数据库中的任务 params，以便后续查询
             from models import ReviewTask
+            from sqlalchemy.orm.attributes import flag_modified
             review_task = db_session.query(ReviewTask).filter_by(id=task_id).first()
             if review_task:
                 review_task.status = "completed"
                 review_task.completed_at = datetime.now()
                 # 将结果存储在 params 中，作为临时方案
-                params = review_task.params or {}
+                # 创建新的 params 字典以确保 SQLAlchemy 检测到变更
+                params = dict(review_task.params or {})
                 params["comparison_matrix"] = comparison_matrix
                 params["statistics"] = statistics
+                params["papers"] = all_papers
                 review_task.params = params
+                # 显式标记 params 字段为已修改
+                flag_modified(review_task, "params")
                 db_session.commit()
 
             stage_recorder.update_task_status(

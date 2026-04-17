@@ -146,15 +146,19 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
           <span className="logo-text">AutoOverview</span>
         </div>
         <div className="nav-links">
-          <a href="/search-papers" onClick={(e) => {
+          <a href="/" className={location.pathname === '/' ? 'active' : ''} onClick={(e) => {
+            e.preventDefault()
+            navigate('/')
+          }}>{t('home.nav.home')}</a>
+          <a href="/search-papers" className={location.pathname === '/search-papers' ? 'active' : ''} onClick={(e) => {
             e.preventDefault()
             navigate('/search-papers')
           }}>{t('home.nav.search_papers')}</a>
-          <a href="/comparison-matrix" onClick={(e) => {
+          <a href="/comparison-matrix" className={location.pathname === '/comparison-matrix' ? 'active' : ''} onClick={(e) => {
             e.preventDefault()
             navigate('/comparison-matrix')
           }}>{t('home.nav.comparison_matrix')}</a>
-          <a href="/generate" onClick={(e) => {
+          <a href="/generate" className={location.pathname === '/generate' ? 'active' : ''} onClick={(e) => {
             e.preventDefault()
             navigate('/generate')
           }}>{t('home.nav.generate')}</a>
@@ -197,56 +201,17 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
         </div>
         <nav className="sidebar-links">
           <a
-            href="#features"
+            href="/"
+            className={location.pathname === '/' ? 'active' : ''}
             onClick={(e) => {
               e.preventDefault()
               setMobileMenuOpen(false)
-              const el = document.getElementById('features')
-              if (el) {
-                window.location.hash = 'features'
-                el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-              }
+              navigate('/')
             }}
-          >{t('home.nav.features')}</a>
-          <a
-            href="#process"
-            onClick={(e) => {
-              e.preventDefault()
-              setMobileMenuOpen(false)
-              const el = document.getElementById('process')
-              if (el) {
-                window.location.hash = 'process'
-                el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-              }
-            }}
-          >{t('home.nav.process')}</a>
-          <a
-            href="#cases"
-            onClick={(e) => {
-              e.preventDefault()
-              setMobileMenuOpen(false)
-              const el = document.getElementById('cases')
-              if (el) {
-                window.location.hash = 'cases'
-                el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-              }
-            }}
-          >{t('home.nav.cases')}</a>
-          <a
-            href="#pricing"
-            onClick={(e) => {
-              e.preventDefault()
-              setMobileMenuOpen(false)
-              const el = document.getElementById('pricing')
-              if (el) {
-                const navHeight = 60
-                const elPosition = el.getBoundingClientRect().top + window.pageYOffset
-                window.scrollTo({ top: elPosition - navHeight, behavior: 'smooth' })
-              }
-            }}
-          >{t('home.nav.pricing')}</a>
+          >{t('nav.home')}</a>
           <a
             href="/search-papers"
+            className={location.pathname === '/search-papers' ? 'active' : ''}
             onClick={(e) => {
               e.preventDefault()
               setMobileMenuOpen(false)
@@ -255,6 +220,7 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
           >{t('home.nav.search_papers')}</a>
           <a
             href="/comparison-matrix"
+            className={location.pathname === '/comparison-matrix' ? 'active' : ''}
             onClick={(e) => {
               e.preventDefault()
               setMobileMenuOpen(false)
@@ -263,6 +229,7 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
           >{t('home.nav.comparison_matrix')}</a>
           <a
             href="/generate"
+            className={location.pathname === '/generate' ? 'active' : ''}
             onClick={(e) => {
               e.preventDefault()
               setMobileMenuOpen(false)

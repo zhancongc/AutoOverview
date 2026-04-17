@@ -132,13 +132,13 @@
       "pricing": "Pricing",
       "search_papers": "Search Papers",
       "comparison_matrix": "Comparison Matrix",
-      "profile": "My Reviews",
+      "profile": "My Account",
       "login_register": "Login / Register",
       "logout": "Logout"
     },
     "progress": {
       "hint": "You can leave this page. The review will continue generating in the background.",
-      "view_profile": "Go to My Reviews →",
+      "view_profile": "Go to My Account →",
       "restoring": "Restoring task status...",
       "processing": "Processing..."
     },
@@ -215,7 +215,7 @@
     "logo": "AutoOverview",
     "home": "Home",
     "pricing": "Pricing",
-    "profile": "My Reviews",
+    "profile": "My Account",
     "login": "Login / Register",
     "logout": "Logout"
   },
@@ -417,6 +417,6 @@
     "estimated_remaining": "Estimated remaining",
     "minutes": "minutes",
     "completed": "Summary completed, redirecting...",
-    "estimate": "Summary generation usually takes 3-5 minutes. You can close this page and check the result later in \"My Reviews\"."
+    "estimate": "Summary generation usually takes 3-5 minutes. You can close this page and check the result later in \"My Account\"."
   }
 }

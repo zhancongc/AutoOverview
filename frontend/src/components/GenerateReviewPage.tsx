@@ -3,7 +3,7 @@
  * 从首页脱钩，专注于综述生成流程：输入 → 提交 → 进度条 → 跳转结果
  */
 import { useState, useEffect, useRef } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { api } from '../api'
 import { isLoggedIn as checkLoggedIn } from '../authApi'
@@ -21,6 +21,7 @@ interface TaskProgress {
 export function GenerateReviewPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const location = useLocation()
   const [searchParams] = useSearchParams()
 
   const [isChineseSite, setIsChineseSite] = useState(false)
@@ -318,10 +319,10 @@ export function GenerateReviewPage() {
         <span className="logo-text">AutoOverview</span>
       </div>
       <div className="nav-links">
-        <a href="/" onClick={(e) => { e.preventDefault(); navigate('/') }}>{t('nav.home')}</a>
-        <a href="/search-papers" onClick={(e) => { e.preventDefault(); navigate('/search-papers') }}>{t('search_papers.nav.search')}</a>
-        <a href="/comparison-matrix" onClick={(e) => { e.preventDefault(); navigate('/comparison-matrix') }}>{t('search_papers.nav.comparison_matrix')}</a>
-        <a href="/generate" className="active" onClick={(e) => { e.preventDefault() }}>{t('search_papers.nav.generate')}</a>
+        <a href="/" className={location.pathname === '/' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigate('/') }}>{t('nav.home')}</a>
+        <a href="/search-papers" className={location.pathname === '/search-papers' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigate('/search-papers') }}>{t('search_papers.nav.search')}</a>
+        <a href="/comparison-matrix" className={location.pathname === '/comparison-matrix' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigate('/comparison-matrix') }}>{t('search_papers.nav.comparison_matrix')}</a>
+        <a href="/generate" className={location.pathname === '/generate' ? 'active' : ''} onClick={(e) => { e.preventDefault() }}>{t('search_papers.nav.generate')}</a>
       </div>
       <div className="nav-actions">
         {isLoggedIn ? (
@@ -357,10 +358,10 @@ export function GenerateReviewPage() {
           <button className="sidebar-close" onClick={() => setMobileMenuOpen(false)}>&times;</button>
         </div>
         <nav className="sidebar-links">
-          <a href="/" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/') }}>{t('nav.home')}</a>
-          <a href="/search-papers" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/search-papers') }}>{t('search_papers.nav.search')}</a>
-          <a href="/comparison-matrix" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/comparison-matrix') }}>{t('search_papers.nav.comparison_matrix')}</a>
-          <a href="/generate" className="active" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false) }}>{t('search_papers.nav.generate')}</a>
+          <a href="/" className={location.pathname === '/' ? 'active' : ''} onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/') }}>{t('nav.home')}</a>
+          <a href="/search-papers" className={location.pathname === '/search-papers' ? 'active' : ''} onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/search-papers') }}>{t('search_papers.nav.search')}</a>
+          <a href="/comparison-matrix" className={location.pathname === '/comparison-matrix' ? 'active' : ''} onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/comparison-matrix') }}>{t('search_papers.nav.comparison_matrix')}</a>
+          <a href="/generate" className={location.pathname === '/generate' ? 'active' : ''} onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false) }}>{t('search_papers.nav.generate')}</a>
         </nav>
         <div className="sidebar-bottom">
           {isLoggedIn ? (

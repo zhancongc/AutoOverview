@@ -5,13 +5,15 @@
  * 2. 查看模式：URL 带 task_id → 直接展示矩阵结果
  */
 import { useState, useEffect, useCallback } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { api } from '../api'
 import { isLoggedIn as checkLoggedIn } from '../authApi'
 import { LoginModal } from './LoginModal'
+import { LoginModalInternational } from './LoginModalInternational'
+import { PayPalPaymentModal } from './PayPalPaymentModal'
 import './ComparisonMatrixPage.css'
 import './SearchPapersPage.css'
 
@@ -44,7 +46,10 @@ interface ComparisonMatrixData {
     total_time_seconds: number
     generated_at: string
   }
+  papers: Paper[]
 }
+
+type TabType = 'matrix' | 'references'
 
 type SortMode = 'citations' | 'year'
 type CombinedPhase = 'idle' | 'searching' | 'generating_matrix'
@@ -52,6 +57,7 @@ type CombinedPhase = 'idle' | 'searching' | 'generating_matrix'
 export function ComparisonMatrixPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const location = useLocation()
   const [searchParams] = useSearchParams()
   const taskId = searchParams.get('task_id') || ''
 
@@ -60,6 +66,10 @@ export function ComparisonMatrixPage() {
   const [loggedIn, setLoggedIn] = useState(checkLoggedIn())
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [showLoginModal, setShowLoginModal] = useState(false)
+  const [showPaymentModal, setShowPaymentModal] = useState<string | false>(false)
+  const [plans, setPlans] = useState<any[]>([])
+  const [plansLoading, setPlansLoading] = useState(true)
+  const [credits, setCredits] = useState<number>(0)
 
   // Search state
   const [topic, setTopic] = useState('')
@@ -74,6 +84,9 @@ export function ComparisonMatrixPage() {
   // Matrix generation state
   const [isGeneratingReview, setIsGeneratingReview] = useState(false)
 
+  // Pending generation state (for continuing after payment)
+  const [pendingTopic, setPendingTopic] = useState<string>('')
+
   // Combined flow state (一键生成)
   const [combinedPhase, setCombinedPhase] = useState<CombinedPhase>('idle')
   const [combinedProgress, setCombinedProgress] = useState(0)
@@ -86,9 +99,26 @@ export function ComparisonMatrixPage() {
   const [matrixError, setMatrixError] = useState('')
   const [progress, setProgress] = useState(0)
   const [matrixSearchTaskId, setMatrixSearchTaskId] = useState<string>('')
+  const [activeTab, setActiveTab] = useState<TabType>('matrix')
 
   useEffect(() => {
     setIsChineseSite(!document.documentElement.classList.contains('intl'))
+  }, [])
+
+  // Load plans and credits on mount
+  useEffect(() => {
+    api.getSubscriptionPlans().then(data => {
+      setPlans(data.plans)
+      setPlansLoading(false)
+    }).catch(() => {
+      setPlansLoading(false)
+    })
+
+    if (checkLoggedIn()) {
+      api.getCredits().then(data => {
+        setCredits(data.credits)
+      }).catch(() => {})
+    }
   }, [])
 
   // If URL has task_id, load matrix directly
@@ -131,22 +161,11 @@ export function ComparisonMatrixPage() {
       setCombinedProgress(Math.min(40 + (attempts / maxAttempts) * 55, 95))
 
       try {
-        const result = await api.getComparisonMatrix(matrixTaskId)
-        if (result.success && result.data) {
-          setCombinedProgress(100)
-          setCombinedPhase('idle')
-          localStorage.removeItem('cm_matrix_task_id')
-          navigate(`/comparison-matrix?task_id=${matrixTaskId}`)
-          return
-        }
-      } catch (err: any) {
-        if (err.response?.status !== 404) throw err
-      }
-
-      try {
         const taskResult = await api.getTaskStatus(matrixTaskId)
         if (taskResult.success && taskResult.data) {
           const task = taskResult.data
+
+          // 检查是否完成（优先从 task.result 获取数据）
           if (task.status === 'completed' && task.result) {
             setCombinedProgress(100)
             setCombinedPhase('idle')
@@ -263,11 +282,38 @@ export function ComparisonMatrixPage() {
       // Poll for matrix result
       await pollMatrixResult(matrixTaskId)
     } catch (err: any) {
-      setSearchError(err.response?.data?.detail || t('comparison_matrix_page.error'))
-      setCombinedPhase('idle')
-      localStorage.removeItem('cm_matrix_task_id')
+      const errorMsg = err.response?.data?.detail || t('comparison_matrix_page.error')
+      // Check if error is about insufficient credits
+      if (errorMsg.toLowerCase().includes('credit') || errorMsg.toLowerCase().includes('额度')) {
+        setPendingTopic(topic)
+        setSearchError('')
+        setCombinedPhase('idle')
+        localStorage.removeItem('cm_matrix_task_id')
+        // Show payment modal
+        setShowPaymentModal('starter') // Default to starter plan
+      } else {
+        setSearchError(errorMsg)
+        setCombinedPhase('idle')
+        localStorage.removeItem('cm_matrix_task_id')
+      }
     }
   }, [topic, t, isChineseSite, navigate])
+
+  // Handle payment success and continue generation
+  const handlePaymentSuccess = async () => {
+    setShowPaymentModal(false)
+    // Refresh credits
+    api.getCredits().then(data => {
+      setCredits(data.credits)
+    }).catch(() => {})
+    // If there's a pending topic, continue generating
+    if (pendingTopic) {
+      const topicToGenerate = pendingTopic
+      setPendingTopic('')
+      setTopic(topicToGenerate)
+      await handleGenerateAll()
+    }
+  }
 
   // Keep handleSearch for error retry
   const handleSearch = useCallback(async () => {
@@ -342,46 +388,44 @@ export function ComparisonMatrixPage() {
         setProgress(Math.min(10 + (attempts / maxAttempts) * 80, 90))
 
         try {
-          const result = await api.getComparisonMatrix(id)
-          if (result.success && result.data) {
-            setMatrixData({
-              topic: result.data.topic,
-              comparison_matrix: result.data.comparison_matrix,
-              statistics: result.data.statistics
-            })
-            setProgress(100)
-            setMatrixLoading(false)
-            api.getTaskStatus(id).then(taskResult => {
-              if (taskResult.success && taskResult.data) {
-                const taskData: any = taskResult.data
-                if (taskData.params?.reuse_task_id) {
-                  setMatrixSearchTaskId(taskData.params.reuse_task_id)
-                }
-              }
-            }).catch(() => {})
-            return
-          }
-        } catch (err: any) {
-          if (err.response?.status !== 404) throw err
-        }
-
-        try {
           const taskResult = await api.getTaskStatus(id)
           if (taskResult.success && taskResult.data) {
             const task = taskResult.data
             const taskData: any = task
+
+            // 获取 reuse_task_id
             if (taskData.params?.reuse_task_id) {
               setMatrixSearchTaskId(taskData.params.reuse_task_id)
             }
-            if (task.status === 'completed' && task.result) {
-              setMatrixData({
-                topic: task.result.topic || task.topic,
-                comparison_matrix: task.result.comparison_matrix,
-                statistics: task.result.statistics
-              })
-              setProgress(100)
-              setMatrixLoading(false)
-              return
+
+            // 检查任务状态
+            if (task.status === 'completed') {
+              // 优先从 task.result 获取数据
+              if (task.result) {
+                setMatrixData({
+                  topic: task.result.topic || task.topic,
+                  comparison_matrix: task.result.comparison_matrix,
+                  statistics: task.result.statistics,
+                  papers: task.result.papers || task.params?.papers || []
+                })
+                setProgress(100)
+                setMatrixLoading(false)
+                return
+              }
+
+              // 备用：从 params 获取数据（数据库已保存）
+              const params = task.params || {}
+              if (params.comparison_matrix) {
+                setMatrixData({
+                  topic: task.topic,
+                  comparison_matrix: params.comparison_matrix,
+                  statistics: params.statistics || {},
+                  papers: params.papers || []
+                })
+                setProgress(100)
+                setMatrixLoading(false)
+                return
+              }
             } else if (task.status === 'failed') {
               setMatrixError(task.error || t('comparison_matrix_page.error'))
               setMatrixLoading(false)
@@ -390,8 +434,8 @@ export function ComparisonMatrixPage() {
               setMatrixLoadingMsg(task.progress.message)
             }
           }
-        } catch {
-          // ignore
+        } catch (err: any) {
+          if (err.response?.status !== 404) throw err
         }
 
         await new Promise(resolve => setTimeout(resolve, 5000))
@@ -448,6 +492,10 @@ export function ComparisonMatrixPage() {
   const handleLoginSuccess = () => {
     setShowLoginModal(false)
     setLoggedIn(true)
+    // Refresh credits after login
+    api.getCredits().then(data => {
+      setCredits(data.credits)
+    }).catch(() => {})
   }
 
   // === Export Markdown ===
@@ -483,10 +531,10 @@ export function ComparisonMatrixPage() {
         <span className="logo-text">AutoOverview</span>
       </div>
       <div className="nav-links">
-        <a href="/" onClick={(e) => { e.preventDefault(); navigate('/') }}>{t('nav.home')}</a>
-        <a href="/search-papers" onClick={(e) => { e.preventDefault(); navigate('/search-papers') }}>{t('search_papers.nav.search')}</a>
-        <a href="/comparison-matrix" className="active" onClick={(e) => { e.preventDefault(); navigate('/comparison-matrix') }}>{t('search_papers.nav.comparison_matrix')}</a>
-        <a href="/generate" onClick={(e) => { e.preventDefault(); navigate('/generate') }}>{t('search_papers.nav.generate')}</a>
+        <a href="/" className={location.pathname === '/' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigate('/') }}>{t('nav.home')}</a>
+        <a href="/search-papers" className={location.pathname === '/search-papers' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigate('/search-papers') }}>{t('search_papers.nav.search')}</a>
+        <a href="/comparison-matrix" className={location.pathname === '/comparison-matrix' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigate('/comparison-matrix') }}>{t('search_papers.nav.comparison_matrix')}</a>
+        <a href="/generate" className={location.pathname === '/generate' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigate('/generate') }}>{t('search_papers.nav.generate')}</a>
       </div>
       <div className="nav-actions">
         {loggedIn ? (
@@ -522,10 +570,10 @@ export function ComparisonMatrixPage() {
           <button className="sidebar-close" onClick={() => setMobileMenuOpen(false)}>&times;</button>
         </div>
         <nav className="sidebar-links">
-          <a href="/" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/') }}>{t('nav.home')}</a>
-          <a href="/search-papers" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/search-papers') }}>{t('search_papers.nav.search')}</a>
-          <a href="/comparison-matrix" className="active" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false) }}>{t('search_papers.nav.comparison_matrix')}</a>
-          <a href="/generate" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/generate') }}>{t('search_papers.nav.generate')}</a>
+          <a href="/" className={location.pathname === '/' ? 'active' : ''} onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/') }}>{t('nav.home')}</a>
+          <a href="/search-papers" className={location.pathname === '/search-papers' ? 'active' : ''} onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/search-papers') }}>{t('search_papers.nav.search')}</a>
+          <a href="/comparison-matrix" className={location.pathname === '/comparison-matrix' ? 'active' : ''} onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false) }}>{t('search_papers.nav.comparison_matrix')}</a>
+          <a href="/generate" className={location.pathname === '/generate' ? 'active' : ''} onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/generate') }}>{t('search_papers.nav.generate')}</a>
         </nav>
         <div className="sidebar-bottom">
           {loggedIn ? (
@@ -638,45 +686,90 @@ export function ComparisonMatrixPage() {
             </div>
           </div>
 
-          <div className="matrix-content">
-            <ReactMarkdown
-              remarkPlugins={[remarkGfm]}
-              components={{
-                table: ({ ...props }) => (
-                  <div className="table-wrapper">
-                    <table {...props} />
-                  </div>
-                ),
-                th: ({ ...props }) => <th {...props} />,
-                td: ({ ...props }) => <td {...props} />
-              }}
+          <div className="matrix-segmented-tabs">
+            <button
+              className={`segmented-tab ${activeTab === 'matrix' ? 'active' : ''}`}
+              onClick={() => setActiveTab('matrix')}
             >
-              {matrixData.comparison_matrix}
-            </ReactMarkdown>
+              Comparison Matrix
+            </button>
+            <button
+              className={`segmented-tab ${activeTab === 'references' ? 'active' : ''}`}
+              onClick={() => setActiveTab('references')}
+            >
+              References
+            </button>
           </div>
 
-          <div className="matrix-actions">
-            <button
-              className="action-btn action-btn-primary"
-              onClick={handleGenerateReview}
-              disabled={!matrixSearchTaskId || isGeneratingReview}
-              title={!matrixSearchTaskId ? t('comparison_matrix_page.generate_review_disabled_hint') : undefined}
-            >
-              {isGeneratingReview ? t('comparison_matrix_page.generating') : t('comparison_matrix_page.generate_review')}
-            </button>
-            <button
-              className="action-btn"
-              onClick={handleExportMarkdown}
-            >
-              {t('comparison_matrix_page.export_markdown')}
-            </button>
-            <button
-              className="action-btn"
-              onClick={() => navigate('/comparison-matrix')}
-            >
-              {t('comparison_matrix_page.continue_search')}
-            </button>
-          </div>
+          {activeTab === 'matrix' ? (
+            <div className="matrix-content">
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                components={{
+                  table: ({ ...props }) => (
+                    <div className="table-wrapper">
+                      <table {...props} />
+                    </div>
+                  ),
+                  th: ({ ...props }) => <th {...props} />,
+                  td: ({ ...props }) => <td {...props} />
+                }}
+              >
+                {matrixData.comparison_matrix}
+              </ReactMarkdown>
+            </div>
+          ) : (
+            <div className="matrix-references">
+              <h2>References</h2>
+              <p className="references-summary">
+                {matrixData.papers?.length || 0} papers total
+                {(() => {
+                  const currentYear = new Date().getFullYear()
+                  const recentCount = (matrixData.papers || []).filter((p: any) => p.year && p.year >= currentYear - 5).length
+                  const englishCount = (matrixData.papers || []).filter((p: any) => p.is_english).length
+                  return (
+                    <>
+                      {matrixData.papers?.length > 0 && (
+                        <>
+                          {' · '}
+                          <span>{recentCount} recent (last 5 years)</span>
+                          {' · '}
+                          <span>{englishCount} English papers</span>
+                        </>
+                      )}
+                    </>
+                  )
+                })()}
+              </p>
+              <div className="references-list">
+                {(matrixData.papers || []).map((paper: any, index: number) => (
+                  <div key={paper.id || index} className="reference-item">
+                    <div className="reference-number">{index + 1}</div>
+                    <div className="reference-content">
+                      <div className="reference-title">
+                        {paper.title}
+                      </div>
+                      <div className="reference-meta">
+                        {paper.authors?.slice(0, 3).join(', ')}{paper.authors?.length > 3 ? ' et al.' : ''}
+                        {paper.year && ` · ${paper.year}`}
+                        {paper.cited_by_count >= 0 && ` · ${paper.cited_by_count} citations`}
+                      </div>
+                      {paper.doi && (
+                        <a
+                          href={`https://doi.org/${paper.doi}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="reference-doi"
+                        >
+                          DOI: {paper.doi}
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {showLoginModal && <LoginModal onClose={() => setShowLoginModal(false)} onLoginSuccess={handleLoginSuccess} />}
@@ -754,6 +847,37 @@ export function ComparisonMatrixPage() {
             <button className="sp-error-retry" onClick={handleSearch}>
               {t('search_papers.error.retry')}
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Pending generation - show continue button */}
+      {pendingTopic && !searchError && (
+        <div className="sp-error">
+          <div className="sp-error-card">
+            <p className="sp-error-message">
+              You need credits to generate the comparison matrix. Purchase credits and then continue.
+            </p>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+              <button
+                className="sp-error-retry"
+                onClick={() => setShowPaymentModal('starter')}
+              >
+                Purchase Credits
+              </button>
+              <button
+                className="sp-error-retry"
+                style={{ backgroundColor: '#10b981' }}
+                onClick={() => {
+                  const topicToGenerate = pendingTopic
+                  setPendingTopic('')
+                  setTopic(topicToGenerate)
+                  handleGenerateAll()
+                }}
+              >
+                Continue Generation
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -863,7 +987,23 @@ export function ComparisonMatrixPage() {
         <p className="sp-footer-copy">&copy; {new Date().getFullYear()} AutoOverview. {t('search_papers.footer.rights')}</p>
       </footer>
 
-      {showLoginModal && <LoginModal onClose={() => setShowLoginModal(false)} onLoginSuccess={handleLoginSuccess} />}
+      {showLoginModal && (
+        <>
+          {isChineseSite ? (
+            <LoginModal onClose={() => setShowLoginModal(false)} onLoginSuccess={handleLoginSuccess} />
+          ) : (
+            <LoginModalInternational onClose={() => setShowLoginModal(false)} onLoginSuccess={handleLoginSuccess} />
+          )}
+        </>
+      )}
+
+      {showPaymentModal && (
+        <PayPalPaymentModal
+          onClose={() => setShowPaymentModal(false)}
+          onPaymentSuccess={handlePaymentSuccess}
+          planType={showPaymentModal}
+        />
+      )}
     </div>
   )
 }

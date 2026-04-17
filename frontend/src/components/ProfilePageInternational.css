@@ -21,10 +21,7 @@ html.intl {
     flex-direction: column;
   }
 
-  /* Add top padding for fixed nav */
-  .profile-page-international .profile-container {
-    padding-top: 80px;
-  }
+  /* Top padding handled in main container below */
 
   /* ==================== Top Navigation ==================== */
 
@@ -32,8 +29,8 @@ html.intl {
     background: rgba(255, 255, 255, 0.85);
     backdrop-filter: blur(20px);
     padding: 0.5rem 2rem;
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
     align-items: center;
     border-bottom: 1px solid var(--border-gray);
     position: fixed;
@@ -43,25 +40,33 @@ html.intl {
     z-index: 100;
   }
 
+  .profile-page-international .nav-logo {
+    justify-self: start;
+  }
+
   .profile-page-international .nav-links {
-    flex: 1;
     display: flex;
     justify-content: center;
     gap: 2rem;
     align-items: center;
   }
 
+  .profile-page-international .mobile-menu-toggle {
+    justify-self: end;
+  }
+
   .profile-page-international .nav-links a {
     font-family: 'Source Sans Pro', sans-serif;
     font-size: 0.9rem;
-    font-weight: 600;
+    font-weight: 700;
     color: var(--charcoal);
     text-decoration: none;
     transition: color 0.2s;
     letter-spacing: 0.01em;
   }
 
-  .profile-page-international .nav-links a:hover {
+  .profile-page-international .nav-links a:hover,
+  .profile-page-international .nav-links a.active {
     color: var(--academic-blue);
   }
 
@@ -94,7 +99,7 @@ html.intl {
   .profile-page-international .nav-btn {
     padding: 0.65rem 1.5rem;
     font-size: 0.9rem;
-    font-weight: 600;
+    font-weight: 700;
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -121,7 +126,7 @@ html.intl {
     border: 1.5px solid var(--light-gray);
     padding: 0.65rem 1.5rem;
     font-size: 0.9rem;
-    font-weight: 600;
+    font-weight: 700;
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.3s;
@@ -145,14 +150,15 @@ html.intl {
   .profile-page-international .nav-links a {
     font-family: 'Source Sans Pro', sans-serif;
     font-size: 0.9rem;
-    font-weight: 600;
+    font-weight: 700;
     color: var(--charcoal);
     text-decoration: none;
     transition: color 0.2s;
     letter-spacing: 0.01em;
   }
 
-  .profile-page-international .nav-links a:hover {
+  .profile-page-international .nav-links a:hover,
+  .profile-page-international .nav-links a.active {
     color: var(--academic-blue);
   }
 
@@ -163,6 +169,7 @@ html.intl {
     max-width: 1000px;
     margin: 0 auto;
     padding: 3rem;
+    padding-top: 100px;
     flex: 1;
   }
 
@@ -213,66 +220,90 @@ html.intl {
     margin: 0;
   }
 
-  /* ==================== Stats Cards ==================== */
+  /* ==================== Stats Inline ==================== */
 
-  .profile-page-international .profile-stats {
+  .profile-page-international .profile-stats-inline {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1.5rem;
-    margin-bottom: 2.5rem;
-  }
-
-  .profile-page-international .stat-card-free {
-    border-left: 3px solid #74b9ff;
-  }
-
-  .profile-page-international .stat-card-free .stat-number {
-    color: #0984e3;
-  }
-
-  .profile-page-international .stat-card-paid {
-    border-left: 3px solid #fdcb6e;
-  }
-
-  .profile-page-international .stat-card-paid .stat-number {
-    color: #e17055;
-  }
-
-  .profile-page-international .stat-card {
+    grid-template-columns: repeat(4, 1fr);
     background: white;
-    border-radius: 20px;
-    padding: 2rem;
-    text-align: center;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
     border: 1px solid var(--border-gray);
-    transition: all 0.3s;
   }
 
-  .profile-page-international .stat-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  .profile-page-international .stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
   }
 
-  .profile-page-international .stat-number {
-    font-family: 'Playfair Display', Georgia, serif;
-    font-size: 3rem;
+  .profile-page-international .stat-value {
+    font-size: 2.25rem;
     font-weight: 700;
     color: var(--academic-blue);
     line-height: 1;
-    margin-bottom: 0.5rem;
   }
 
   .profile-page-international .stat-label {
     font-family: 'Source Sans Pro', sans-serif;
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     color: var(--text-gray);
-    font-weight: 600;
+    font-weight: 700;
+  }
+
+  .profile-page-international .stat-divider {
+    display: none;
+  }
+
+  .profile-page-international .stat-item-credits .stat-value {
+    color: var(--academic-blue);
   }
 
   .profile-page-international .stat-sub {
     font-size: 0.8rem;
     color: var(--text-gray);
     margin-top: 0.25rem;
+  }
+
+  /* ==================== Tab Switcher ==================== */
+
+  .profile-page-international .profile-tabs {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+    background: white;
+    padding: 0.5rem;
+    border-radius: 16px;
+    border: 1px solid var(--border-gray);
+  }
+
+  .profile-page-international .profile-tab {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-gray);
+    background: transparent;
+    border: 1.5px solid transparent;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: 'Inter', sans-serif;
+  }
+
+  .profile-page-international .profile-tab:hover {
+    color: var(--academic-blue-primary);
+    background: var(--academic-blue-light);
+    border-color: var(--academic-blue-primary);
+  }
+
+  .profile-page-international .profile-tab.active {
+    color: white;
+    background: var(--academic-blue-primary);
+    border-color: var(--academic-blue-primary);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
   }
 
   /* ==================== History Section ==================== */
@@ -283,14 +314,6 @@ html.intl {
     padding: 2.5rem;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.06);
     border: 1px solid var(--border-gray);
-  }
-
-  .profile-page-international .history-title {
-    font-family: 'Playfair Display', Georgia, serif;
-    font-size: 1.75rem;
-    font-weight: 700;
-    color: var(--ink-black);
-    margin: 0 0 2rem 0;
   }
 
   /* ==================== Loading State ==================== */
@@ -350,7 +373,7 @@ html.intl {
   .profile-page-international .empty-button {
     padding: 0.85rem 2rem;
     font-size: 1rem;
-    font-weight: 600;
+    font-weight: 700;
     color: white;
     background: linear-gradient(135deg, var(--academic-blue) 0%, var(--academic-blue-dark) 100%);
     border: none;
@@ -421,7 +444,7 @@ html.intl {
   .profile-page-international .record-topic {
     font-family: 'Source Sans Pro', sans-serif;
     font-size: 1.05rem;
-    font-weight: 600;
+    font-weight: 700;
     color: var(--ink-black);
     margin: 0;
     overflow: hidden;
@@ -458,7 +481,7 @@ html.intl {
     border-radius: 8px;
     cursor: pointer;
     font-size: 0.8rem;
-    font-weight: 600;
+    font-weight: 700;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     font-family: 'Source Sans Pro', sans-serif;
     box-shadow: 0 2px 8px rgba(9, 136, 227, 0.2);
@@ -510,7 +533,7 @@ html.intl {
     color: #2E7D32;
     border-radius: 8px;
     font-size: 0.8rem;
-    font-weight: 600;
+    font-weight: 700;
     font-family: 'Source Sans Pro', sans-serif;
   }
 
@@ -521,7 +544,7 @@ html.intl {
     color: var(--academic-blue);
     border-radius: 8px;
     font-size: 0.8rem;
-    font-weight: 600;
+    font-weight: 700;
     font-family: 'Source Sans Pro', sans-serif;
   }
 
@@ -532,7 +555,7 @@ html.intl {
     color: #FF9800;
     border-radius: 8px;
     font-size: 0.8rem;
-    font-weight: 600;
+    font-weight: 700;
     font-family: 'Source Sans Pro', sans-serif;
   }
 
@@ -570,7 +593,7 @@ html.intl {
 
   .profile-page-international .profile-footer .footer-copyright {
     margin: 0;
-    font-weight: 600;
+    font-weight: 700;
     color: var(--charcoal);
   }
 
@@ -673,17 +696,17 @@ html.intl {
       gap: 1rem;
     }
 
-    .profile-page-international .stat-card {
-      padding: 1rem 0.5rem;
-      border-radius: 14px;
+    .profile-page-international .profile-stats-inline {
+      grid-template-columns: repeat(2, 1fr);
+      padding: 1rem;
     }
 
-    .profile-page-international .stat-number {
-      font-size: 2rem;
+    .profile-page-international .stat-value {
+      font-size: 1.75rem;
     }
 
     .profile-page-international .stat-label {
-      font-size: 0.8rem;
+      font-size: 0.75rem;
     }
 
     .profile-page-international .profile-history {
@@ -800,7 +823,7 @@ html.intl {
     border: none;
     padding: 0.75rem 1.5rem;
     border-radius: 8px;
-    font-weight: 600;
+    font-weight: 700;
     font-size: 0.9rem;
     cursor: pointer;
     transition: all 0.2s;
@@ -906,7 +929,7 @@ html.intl {
   .edit-profile-label {
     display: block;
     font-size: 0.9rem;
-    font-weight: 600;
+    font-weight: 700;
     color: var(--charcoal);
     margin-bottom: 0.5rem;
     font-family: 'Source Sans Pro', sans-serif;
@@ -943,7 +966,7 @@ html.intl {
     border: none;
     border-radius: 8px;
     font-size: 0.95rem;
-    font-weight: 600;
+    font-weight: 700;
     font-family: 'Source Sans Pro', sans-serif;
     cursor: pointer;
     transition: all 0.2s;
@@ -985,7 +1008,7 @@ html.intl {
     padding: 0.5rem 1rem;
     border-radius: 8px;
     font-size: 0.85rem;
-    font-weight: 600;
+    font-weight: 700;
     font-family: 'Source Sans Pro', sans-serif;
     cursor: pointer;
     transition: all 0.2s;
@@ -1009,7 +1032,7 @@ html.intl {
     padding: 0.5rem 1rem;
     border-radius: 8px;
     font-size: 0.85rem;
-    font-weight: 600;
+    font-weight: 700;
     font-family: 'Source Sans Pro', sans-serif;
     cursor: pointer;
     transition: all 0.2s;
@@ -1034,7 +1057,7 @@ html.intl {
     padding: 0.5rem 1.5rem;
     border-radius: 8px;
     font-size: 0.8rem;
-    font-weight: 600;
+    font-weight: 700;
     font-family: 'Source Sans Pro', sans-serif;
     cursor: pointer;
     transition: all 0.2s;
@@ -1100,7 +1123,7 @@ html.intl {
   .close-account-warning {
     margin: 0 0 0.75rem;
     font-size: 0.9375rem;
-    font-weight: 600;
+    font-weight: 700;
     color: #c53030;
     font-family: 'Source Sans Pro', sans-serif;
   }
@@ -1154,7 +1177,7 @@ html.intl {
     border: none;
     border-radius: 8px;
     font-size: 0.9375rem;
-    font-weight: 600;
+    font-weight: 700;
     font-family: 'Source Sans Pro', sans-serif;
     cursor: pointer;
     transition: all 0.2s;

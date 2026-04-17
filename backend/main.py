@@ -388,15 +388,77 @@ async def get_records(
     user_id: Optional[int] = Depends(get_current_user_id),
     db_session: Session = Depends(get_db)
 ):
-    """获取当前用户的生成记录列表"""
+    """获取当前用户的生成记录列表（包括综述和对比矩阵）"""
     if not user_id:
         raise HTTPException(status_code=401, detail="未登录")
-    records = record_service.list_records(db_session, skip, limit, user_id=user_id)
+
+    from models import ReviewTask
+
+    # 1. 获取 ReviewRecord 记录（综述）
+    records = record_service.list_records(db_session, skip=0, limit=100, user_id=user_id)
+    result = []
+
+    # 添加 ReviewRecord 记录
+    for r in records:
+        d = record_service.record_to_dict(r)
+        d["task_type"] = "review"
+        d["task_id"] = None  # ReviewRecord 没有 task_id
+        result.append(d)
+
+    # 2. 获取对比矩阵任务（ReviewTask 中 type == "comparison_matrix_only"）
+    # 查询所有用户的任务，然后在 Python 中过滤（更可靠）
+    all_user_tasks = (
+        db_session.query(ReviewTask)
+        .filter(ReviewTask.user_id == user_id)
+        .order_by(ReviewTask.created_at.desc())
+        .limit(200)
+        .all()
+    )
+
+    # 在 Python 中过滤对比矩阵任务
+    matrix_tasks = []
+    for task in all_user_tasks:
+        params = task.params or {}
+        if params.get("type") == "comparison_matrix_only":
+            matrix_tasks.append(task)
+
+    # 添加对比矩阵任务
+    for task in matrix_tasks:
+        params = task.params or {}
+        # 从 params 中获取数据
+        comparison_matrix = params.get("comparison_matrix", "")
+        statistics = params.get("statistics", {})
+
+        # 映射状态：ReviewTask 使用 "completed"，但前端期望 "success"
+        mapped_status = task.status
+        if mapped_status == "completed":
+            mapped_status = "success"
+
+        result.append({
+            "id": None,  # 对比矩阵没有 ReviewRecord id
+            "task_id": task.id,
+            "topic": task.topic,
+            "review": comparison_matrix,  # 复用 review 字段存对比矩阵
+            "papers": params.get("papers", []),
+            "statistics": statistics,
+            "status": mapped_status,
+            "error_message": task.error_message,
+            "is_paid": False,
+            "created_at": task.created_at.isoformat() if task.created_at else None,
+            "updated_at": task.completed_at.isoformat() if task.completed_at else None,
+            "task_type": "comparison_matrix"
+        })
+
+    # 按创建时间排序，最新的在前
+    result.sort(key=lambda x: x["created_at"] or "", reverse=True)
+
+    # 应用分页
+    paginated_result = result[skip : skip + limit]
 
     return {
         "success": True,
-        "count": len(records),
-        "records": [record_service.record_to_dict(r) for r in records]
+        "count": len(paginated_result),
+        "records": paginated_result
     }
 
 @app.get("/api/search-history")
@@ -1451,6 +1513,18 @@ async def get_task_status(
                 "statistics": review_record.statistics if isinstance(review_record.statistics, dict) else {},
                 "created_at": review_record.created_at.isoformat() if review_record.created_at else ""
             }
+    # 处理对比矩阵任务（从 params 中获取数据）
+    elif review_task.status == "completed":
+        params = review_task.params or {}
+        if params.get("type") == "comparison_matrix_only":
+            # 从 params 中构建 result
+            if "comparison_matrix" in params:
+                response_data["result"] = {
+                    "topic": review_task.topic,
+                    "comparison_matrix": params.get("comparison_matrix"),
+                    "statistics": params.get("statistics", {}),
+                    "papers": params.get("papers", [])
+                }
 
     return {
         "success": True,
@@ -1809,6 +1883,15 @@ async def generate_comparison_matrix(
             is_paid=False
         )
 
+        # 同时创建数据库记录（ReviewTask）
+        from services.stage_recorder import stage_recorder
+        stage_recorder.create_task(
+            task_id=task.task_id,
+            topic=request.topic,
+            params=task.params,
+            user_id=user_id
+        )
+
         # 启动后台任务
         async def run_comparison_matrix_task():
             executor = ReviewTaskExecutor()
@@ -1870,7 +1953,8 @@ async def get_comparison_matrix(
                 "task_id": task_id,
                 "topic": task.topic,
                 "comparison_matrix": task.result.get("comparison_matrix", ""),
-                "statistics": task.result.get("statistics", {})
+                "statistics": task.result.get("statistics", {}),
+                "papers": task.result.get("papers", [])
             }
         }
 
@@ -1896,6 +1980,7 @@ async def get_comparison_matrix(
     # 尝试从 params 中获取结果（暂时存储在这里）
     comparison_matrix = params.get("comparison_matrix", "")
     statistics = params.get("statistics", {})
+    papers = params.get("papers", [])
 
     if not comparison_matrix:
         raise HTTPException(status_code=404, detail="对比矩阵数据不存在")
@@ -1910,7 +1995,8 @@ async def get_comparison_matrix(
             "task_id": task_id,
             "topic": review_task.topic,
             "comparison_matrix": comparison_matrix,
-            "statistics": statistics
+            "statistics": statistics,
+            "papers": papers
         }
     }
 
