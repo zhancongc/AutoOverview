@@ -473,9 +473,9 @@ export function ProfilePage() {
       {/* 页脚 */}
       <footer className="profile-footer">
         <div className="footer-content">
-          <p className="footer-copyright">© 2026 AutoOverview. All rights reserved.</p>
+          <p className="footer-copyright">© 2026 Danmo Scholar. All rights reserved.</p>
           <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer" className="footer-icp">
-            沪ICP备2023018158号-4
+            沪ICP备2023018158号
           </a>
         </div>
       </footer>

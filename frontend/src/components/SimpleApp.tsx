@@ -547,9 +547,9 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
             <a href="/privacy-policy" className="footer-link">{t('home.footer.privacy')}</a>
             <a href="/refund-policy" className="footer-link">{t('home.footer.refund')}</a>
           </div>
-          <p className="footer-copyright">© 2026 AutoOverview. All rights reserved.</p>
+          <p className="footer-copyright">© 2026 Danmo Scholar. All rights reserved.</p>
           <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer" className="footer-icp">
-            沪ICP备2023018158号-4
+            沪ICP备2023018158号
           </a>
         </div>
       </footer>
