@@ -52,8 +52,7 @@ export function RefundPolicyPage() {
           <h3>2.3 Subscription Credits</h3>
           <p>
             Purchased credit packages (Single, Semester, Academic Year) are non-refundable once any credit
-            from that package has been used. Unused credits in a package cannot be refunded for cash but may
-            be used until their expiration date.
+            from that package has been used. Unused credits in a package cannot be refunded for cash.
           </p>
         </section>
 
@@ -103,7 +102,6 @@ export function RefundPolicyPage() {
             <li>Dissatisfaction with the quality or content of a generated analysis</li>
             <li>Analyses that do not meet specific expectations or requirements</li>
             <li>Changes in academic circumstances (e.g., topic change, project cancellation)</li>
-            <li>Failure to use credits before expiration</li>
           </ul>
           <p className="policy-note">
             <strong>Note:</strong> We provide sample/demo cases on our website so you can evaluate the quality
@@ -154,27 +152,7 @@ export function RefundPolicyPage() {
         </section>
 
         <section className="legal-section">
-          <h2>6. Credit Expiration</h2>
-
-          <h3>6.1 Expiration Policies</h3>
-          <p>
-            Different credit packages have different expiration periods:
-          </p>
-          <ul>
-            <li><strong>Single Review:</strong> Credits do not expire but are for one-time use</li>
-            <li><strong>Semester Pack:</strong> Credits expire 6 months from purchase</li>
-            <li><strong>Academic Year Pack:</strong> Credits expire 12 months from purchase</li>
-          </ul>
-
-          <h3>6.2 Expired Credits</h3>
-          <p>
-            <strong>Expired credits cannot be refunded or extended.</strong> Please plan your usage accordingly
-            and consider the expiration date when selecting a package.
-          </p>
-        </section>
-
-        <section className="legal-section">
-          <h2>7. Service Modifications & Discontinuation</h2>
+          <h2>6. Service Modifications & Discontinuation</h2>
 
           <h3>7.1 Feature Changes</h3>
           <p>
@@ -192,9 +170,9 @@ export function RefundPolicyPage() {
         </section>
 
         <section className="legal-section">
-          <h2>8. Requesting a Refund</h2>
+          <h2>7. Requesting a Refund</h2>
 
-          <h3>8.1 Contact Information</h3>
+          <h3>7.1 Contact Information</h3>
           <p>
             To request a refund or report a technical issue, contact us at:
             <br />
@@ -203,7 +181,7 @@ export function RefundPolicyPage() {
             </a>
           </p>
 
-          <h3>8.2 Required Information</h3>
+          <h3>7.2 Required Information</h3>
           <p>
             Please include the following information in your refund request:
           </p>
@@ -214,14 +192,14 @@ export function RefundPolicyPage() {
             <li>Supporting documentation (if applicable)</li>
           </ul>
 
-          <h3>8.3 Processing Time</h3>
+          <h3>7.3 Processing Time</h3>
           <p>
             Refund requests are typically reviewed within 5-10 business days. If approved, refunds will be
             processed to the original payment method within 14 business days. We will send you an email
             confirmation once your refund has been processed.
           </p>
 
-          <h3>8.4 Technical Issues</h3>
+          <h3>7.4 Technical Issues</h3>
           <p>
             If you experienced a technical failure that prevented you from using the service (e.g., review
             generation failed, export errors), please contact us with details of the issue. We may offer a
@@ -230,15 +208,15 @@ export function RefundPolicyPage() {
         </section>
 
         <section className="legal-section">
-          <h2>9. Chargebacks</h2>
+          <h2>8. Chargebacks</h2>
 
-          <h3>9.1 Dispute Resolution</h3>
+          <h3>8.1 Dispute Resolution</h3>
           <p>
             We encourage you to contact us directly before initiating a chargeback with your payment provider.
             Many issues can be resolved quickly through direct communication.
           </p>
 
-          <h3>9.2 Chargeback Consequences</h3>
+          <h3>8.2 Chargeback Consequences</h3>
           <p>
             If you initiate a chargeback without contacting us first, and the chargeback is found to be
             illegitimate (i.e., the service was delivered as described), we reserve the right to:
@@ -251,15 +229,15 @@ export function RefundPolicyPage() {
         </section>
 
         <section className="legal-section">
-          <h2>10. Free Credits & Promotions</h2>
+          <h2>9. Free Credits & Promotions</h2>
 
-          <h3>10.1 Promotional Credits</h3>
+          <h3>9.1 Promotional Credits</h3>
           <p>
             Free credits provided through promotions, referrals, or special offers have no cash value and
             cannot be refunded or exchanged for cash.
           </p>
 
-          <h3>10.2 Registration Credits</h3>
+          <h3>9.2 Registration Credits</h3>
           <p>
             The 1 free credit provided upon registration is for new users to try the service. It cannot be
             refunded or exchanged, even if not used.
@@ -267,7 +245,7 @@ export function RefundPolicyPage() {
         </section>
 
         <section className="legal-section">
-          <h2>11. Policy Modifications</h2>
+          <h2>10. Policy Modifications</h2>
           <p>
             We reserve the right to modify this Refund Policy at any time. Changes will be effective
             immediately upon posting to the website. Your continued use of the Service after changes
@@ -279,16 +257,16 @@ export function RefundPolicyPage() {
         </section>
 
         <section className="legal-section">
-          <h2>12. Understanding Our Service Model</h2>
+          <h2>11. Understanding Our Service Model</h2>
 
-          <h3>12.1 Low-Frequency, Essential Service</h3>
+          <h3>11.1 Low-Frequency, Essential Service</h3>
           <p>
             AutoOverview is designed as a low-frequency but essential AI-assisted tool for academic work. Unlike
             subscription services with recurring monthly charges, our credit-based model allows you to pay
             for what you need, when you need it.
           </p>
 
-          <h3>12.2 Making Informed Decisions</h3>
+          <h3>11.2 Making Informed Decisions</h3>
           <p>
             To ensure satisfaction with your purchase:
           </p>
@@ -296,10 +274,9 @@ export function RefundPolicyPage() {
             <li>Review demo cases on our homepage</li>
             <li>Start with a Single Review package if you're new to the service</li>
             <li>Choose a package that matches your expected usage frequency</li>
-            <li>Be aware of credit expiration dates</li>
           </ul>
 
-          <h3>12.3 Quality Expectations</h3>
+          <h3>11.3 Quality Expectations</h3>
           <p>
             Our AI-assisted tool provides high-quality literature analysis drafts that serve as excellent research starting
             points. However, all AI-generated content must be reviewed, verified, and supplemented with your own
@@ -308,7 +285,7 @@ export function RefundPolicyPage() {
         </section>
 
         <section className="legal-section">
-          <h2>13. Contact Information</h2>
+          <h2>12. Contact Information</h2>
           <p>
             For questions about this Refund Policy or refund requests:
             <br />

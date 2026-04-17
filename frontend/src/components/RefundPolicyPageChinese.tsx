@@ -52,8 +52,7 @@ export function RefundPolicyPageChinese() {
           <h3>2.3 套餐积分</h3>
           <p>
             购买的积分套餐（单次、学期、学年）一旦使用了该套餐中的任何积分，
-            即不可退款。套餐中未使用的积分不能退款，
-            但可以在到期日前使用。
+            即不可退款。套餐中未使用的积分不能退款。
           </p>
         </section>
 
@@ -103,7 +102,6 @@ export function RefundPolicyPageChinese() {
             <li>对生成综述的质量或内容不满意</li>
             <li>不符合特定期望或要求的综述</li>
             <li>学术情况变化（例如，主题变更、项目取消）</li>
-            <li>未能在到期前使用积分</li>
           </ul>
           <p className="policy-note">
             <strong>注意：</strong>我们在我们的网站上提供示例/演示案例，以便您在购买前
@@ -132,27 +130,7 @@ export function RefundPolicyPageChinese() {
         </section>
 
         <section className="legal-section">
-          <h2>5. 积分过期</h2>
-
-          <h3>5.1 过期政策</h3>
-          <p>
-            不同的积分套餐有不同的过期期限：
-          </p>
-          <ul>
-            <li><strong>单次综述：</strong>积分不过期，但仅限一次性使用</li>
-            <li><strong>学期套餐：</strong>积分自购买之日起 6 个月过期</li>
-            <li><strong>学年套餐：</strong>积分自购买之日起 12 个月过期</li>
-          </ul>
-
-          <h3>5.2 过期积分</h3>
-          <p>
-            <strong>过期积分不能退款或延期。</strong>请相应地规划您的使用，
-            并在选择套餐时考虑过期日期。
-          </p>
-        </section>
-
-        <section className="legal-section">
-          <h2>6. 服务修改与终止</h2>
+          <h2>5. 服务修改与终止</h2>
 
           <h3>6.1 功能变更</h3>
           <p>
@@ -170,9 +148,9 @@ export function RefundPolicyPageChinese() {
         </section>
 
         <section className="legal-section">
-          <h2>7. 请求退款</h2>
+          <h2>6. 请求退款</h2>
 
-          <h3>7.1 联系信息</h3>
+          <h3>6.1 联系信息</h3>
           <p>
             要请求退款或报告技术问题，请联系我们：
             <br />
@@ -181,7 +159,7 @@ export function RefundPolicyPageChinese() {
             </a>
           </p>
 
-          <h3>7.2 所需信息</h3>
+          <h3>6.2 所需信息</h3>
           <p>
             请在退款请求中包含以下信息：
           </p>
@@ -192,14 +170,14 @@ export function RefundPolicyPageChinese() {
             <li>支持性文件（如适用）</li>
           </ul>
 
-          <h3>7.3 处理时间</h3>
+          <h3>6.3 处理时间</h3>
           <p>
             退款请求通常在 5-10 个工作日内审核。如果获得批准，退款将在
             14 个工作日内处理到原始付款方式。一旦您的退款已处理，
             我们将向您发送电子邮件确认。
           </p>
 
-          <h3>7.4 技术问题</h3>
+          <h3>6.4 技术问题</h3>
           <p>
             如果您遇到技术故障，导致无法使用服务（例如，综述
             生成失败、导出错误），请联系我们提供问题的详细信息。在调查问题后，
@@ -208,15 +186,15 @@ export function RefundPolicyPageChinese() {
         </section>
 
         <section className="legal-section">
-          <h2>8. 拒付</h2>
+          <h2>7. 拒付</h2>
 
-          <h3>8.1 争议解决</h3>
+          <h3>7.1 争议解决</h3>
           <p>
             我们鼓励您在向您的付款提供商发起拒付之前直接联系我们。
             许多问题可以通过直接沟通快速解决。
           </p>
 
-          <h3>8.2 拒付后果</h3>
+          <h3>7.2 拒付后果</h3>
           <p>
             如果您在未先联系我们的情况下发起拒付，并且拒付被发现是
             不合法的（即服务已按描述交付），我们保留以下权利：
@@ -229,15 +207,15 @@ export function RefundPolicyPageChinese() {
         </section>
 
         <section className="legal-section">
-          <h2>9. 免费积分与促销</h2>
+          <h2>8. 免费积分与促销</h2>
 
-          <h3>9.1 促销积分</h3>
+          <h3>8.1 促销积分</h3>
           <p>
             通过促销、推荐或特别优惠提供的免费积分没有现金价值，
             不能退款或兑换现金。
           </p>
 
-          <h3>9.2 注册积分</h3>
+          <h3>8.2 注册积分</h3>
           <p>
             注册时提供的 1 个免费积分供新用户试用服务。即使未使用，
             也不能退款或兑换。
@@ -245,7 +223,7 @@ export function RefundPolicyPageChinese() {
         </section>
 
         <section className="legal-section">
-          <h2>10. 政策修改</h2>
+          <h2>9. 政策修改</h2>
           <p>
             我们保留随时修改本退款政策的权利。变更将在
             发布到网站后立即生效。变更后继续使用服务即
@@ -257,7 +235,7 @@ export function RefundPolicyPageChinese() {
         </section>
 
         <section className="legal-section">
-          <h2>11. 联系信息</h2>
+          <h2>10. 联系信息</h2>
           <p>
             有关本退款政策或退款请求的问题：
             <br />
