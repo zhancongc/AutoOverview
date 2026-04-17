@@ -177,12 +177,14 @@ DEFAULT_PLANS = [
             "在线查看 + Word 导出",
             "参考文献包含真实文献 DOI 链接",
             "支持导出 BibTeX、RIS、Word 格式",
+            "约 ¥4.9/积分",
         ],
         "features_en": [
             "6 Credits (3 reviews or 6 comparison matrices)",
             "Online viewing + Word export",
             "DOI-verifiable citations",
             "Export BibTeX, XML, RIS formats",
+            "~$1.67/Credit",
         ]
     },
     {
