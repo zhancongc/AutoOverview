@@ -400,7 +400,8 @@
     "status_3": "Filtering high-quality papers...",
     "status_4": "Organizing search results...",
     "estimate": "Estimated 30-60 seconds",
-    "no_results": "No papers found. Try different keywords."
+    "no_results": "No papers found. Try different keywords.",
+    "history": "📋 View Matrix History"
   },
   "generate_page": {
     "hero_badge": "Literature Summary Tool",
@@ -410,6 +411,7 @@
     "button": "Create Summary",
     "error_empty": "Please enter a research topic",
     "error_submit": "Submit failed, please retry",
+    "history": "📋 View Review History",
     "error_status": "Failed to get task status",
     "error_network": "Network error, please check your connection",
     "error_task_failed": "Task failed, please retry",

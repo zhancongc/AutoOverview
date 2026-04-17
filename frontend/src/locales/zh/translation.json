@@ -425,7 +425,8 @@
     "status_3": "正在筛选高质量文献...",
     "status_4": "正在整理搜索结果...",
     "estimate": "预计需要 30-60 秒",
-    "no_results": "未找到相关文献，请尝试其他关键词"
+    "no_results": "未找到相关文献，请尝试其他关键词",
+    "history": "📋 查看矩阵历史"
   },
   "generate_page": {
     "hero_badge": "文献综述生成",
@@ -435,6 +436,7 @@
     "button": "生成我的综述",
     "error_empty": "请输入研究主题",
     "error_submit": "提交失败，请重试",
+    "history": "📋 查看综述历史",
     "error_status": "获取任务状态失败",
     "error_network": "网络错误，请检查网络连接",
     "error_task_failed": "任务执行失败，请重试",

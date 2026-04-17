@@ -441,6 +441,17 @@ export function GenerateReviewPage() {
             </button>
           </div>
 
+          {isLoggedIn && (
+            <div className="sp-search-history-link">
+              <button
+                className="sp-history-btn"
+                onClick={() => navigate('/profile?tab=reviews')}
+              >
+                {t('generate_page.history')}
+              </button>
+            </div>
+          )}
+
           {error && !isGenerating && (
             <div className="home-error" style={{ marginTop: '12px' }}>
               <span>{error}</span>

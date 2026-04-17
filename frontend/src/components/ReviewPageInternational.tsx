@@ -9,7 +9,7 @@ import { ReviewViewerInternational } from './ReviewViewerInternational'
 
 import { PayPalPaymentModal } from './PayPalPaymentModal'
 import { ConfirmModalInternational } from './ConfirmModalInternational'
-import { CitationFormatSelector } from './CitationFormatSelector'
+import { CitationFormatSelector, type CitationFormat } from './CitationFormatSelector'
 import { api } from '../api'
 import type { Paper } from '../types'
 import './ReviewPageInternational.css'
@@ -24,7 +24,6 @@ interface ReviewState {
 }
 
 type TabType = 'content' | 'references'
-type CitationFormat = 'ieee' | 'apa' | 'mla' | 'gb_t_7714'
 
 interface TocItem {
   id: string

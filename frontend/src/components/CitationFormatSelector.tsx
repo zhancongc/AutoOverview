@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import './CitationFormatSelector.css'
 
-type CitationFormat = 'ieee' | 'apa' | 'mla' | 'gb_t_7714'
+export type CitationFormat = 'ieee' | 'apa' | 'mla' | 'gb_t_7714'
 
 interface CitationFormatSelectorProps {
   currentFormat: CitationFormat
@@ -10,7 +10,7 @@ interface CitationFormatSelectorProps {
   disabled?: boolean
 }
 
-const FORMAT_KEYS: CitationFormat[] = ['ieee', 'apa', 'mla', 'gb_t_7714']
+const ALL_FORMATS: CitationFormat[] = ['ieee', 'apa', 'mla', 'gb_t_7714']
 
 export function CitationFormatSelector({
   currentFormat,
@@ -18,7 +18,11 @@ export function CitationFormatSelector({
   disabled = false
 }: CitationFormatSelectorProps) {
   const { t } = useTranslation()
-  const formats = useMemo(() => FORMAT_KEYS, [])
+  const isChineseSite = !document.documentElement.classList.contains('intl')
+  const formats = useMemo(() =>
+    isChineseSite ? ALL_FORMATS : ALL_FORMATS.filter(f => f !== 'gb_t_7714'),
+    [isChineseSite]
+  )
 
   return (
     <div className="citation-format-selector">
