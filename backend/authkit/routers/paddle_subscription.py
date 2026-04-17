@@ -136,7 +136,7 @@ def create_paddle_subscription(
         price_id = paddle.create_price(plan["price"], plan["currency"])
 
         # Create checkout link
-        success_url = os.getenv("FRONTEND_URL", "http://localhost:3006")
+        success_url = os.getenv("EN_FRONTEND_URL") or os.getenv("FRONTEND_URL", "http://localhost:3006")
         checkout_url = paddle.create_checkout_link(
             price_id=price_id,
             customer_email=current_user.email,
@@ -371,7 +371,7 @@ def create_paddle_unlock(
         price_id = paddle.create_price(plan["price"], plan["currency"])
 
         # Create checkout link
-        success_url = os.getenv("FRONTEND_URL", "http://localhost:3006")
+        success_url = os.getenv("EN_FRONTEND_URL") or os.getenv("FRONTEND_URL", "http://localhost:3006")
         checkout_url = paddle.create_checkout_link(
             price_id=price_id,
             customer_email=current_user.email,

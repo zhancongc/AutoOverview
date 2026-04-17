@@ -146,7 +146,7 @@ def create_paypal_subscription(
         import os
 
         paypal = get_paypal_service()
-        frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3006")
+        frontend_url = os.getenv("EN_FRONTEND_URL") or os.getenv("FRONTEND_URL", "http://localhost:3006")
 
         # Create PayPal order
         order_data = paypal.create_order(
@@ -463,7 +463,7 @@ def create_paypal_unlock(
         import os
 
         paypal = get_paypal_service()
-        frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3006")
+        frontend_url = os.getenv("EN_FRONTEND_URL") or os.getenv("FRONTEND_URL", "http://localhost:3006")
 
         # Create PayPal order
         order_data = paypal.create_order(
