@@ -336,7 +336,7 @@
     },
     "loading": {
       "title": "正在搜索学术数据库...",
-      "estimate": "通常需要 30-60 秒",
+      "estimate": "通常需要 2-3 分钟",
       "status_1": "正在分析您的主题...",
       "status_2": "正在搜索学术数据库...",
       "status_3": "正在获取论文元数据...",
@@ -424,9 +424,12 @@
     "status_2": "正在分析论文元数据...",
     "status_3": "正在筛选高质量文献...",
     "status_4": "正在整理搜索结果...",
-    "estimate": "预计需要 30-60 秒",
+    "estimate": "预计需要 2-3 分钟",
     "no_results": "未找到相关文献，请尝试其他关键词",
-    "history": "📋 查看矩阵历史"
+    "history": "📋 查看矩阵历史",
+    "review_cta_title": "需要生成完整文献综述？",
+    "review_cta_desc": "生成对比矩阵后，可以继续生成包含规范引用的结构化文献综述。",
+    "review_cta_button": "前往生成文献综述"
   },
   "generate_page": {
     "hero_badge": "文献综述生成",

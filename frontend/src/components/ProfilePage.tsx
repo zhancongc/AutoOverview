@@ -15,16 +15,12 @@ export function ProfilePage() {
   const { i18n } = useTranslation()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const [activeTab, setActiveTab] = useState<ProfileTab>('reviews')
+  const tabParam = searchParams.get('tab')
+  const [activeTab, setActiveTab] = useState<ProfileTab>(
+    tabParam === 'reviews' ? 'reviews' : 'searches'
+  )
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
-  // 检查 URL 参数，设置默认 tab
-  useEffect(() => {
-    const tabParam = searchParams.get('tab')
-    if (tabParam === 'searches') {
-      setActiveTab('searches')
-    }
-  }, [searchParams])
   const [records, setRecords] = useState<ReviewRecord[]>([])
   const [searches, setSearches] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
@@ -273,16 +269,16 @@ export function ProfilePage() {
         {/* Tab 切换 */}
         <div className="profile-tabs">
           <button
-            className={`profile-tab ${activeTab === 'reviews' ? 'active' : ''}`}
-            onClick={() => setActiveTab('reviews')}
-          >
-            📖 我的综述
-          </button>
-          <button
             className={`profile-tab ${activeTab === 'searches' ? 'active' : ''}`}
-            onClick={() => setActiveTab('searches')}
+            onClick={() => { setActiveTab('searches'); navigate('/profile?tab=searches', { replace: true }) }}
           >
             🔍 我的查询
+          </button>
+          <button
+            className={`profile-tab ${activeTab === 'reviews' ? 'active' : ''}`}
+            onClick={() => { setActiveTab('reviews'); navigate('/profile?tab=reviews', { replace: true }) }}
+          >
+            📖 我的综述
           </button>
         </div>
 

@@ -149,7 +149,7 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
           <a href="/" className={location.pathname === '/' ? 'active' : ''} onClick={(e) => {
             e.preventDefault()
             navigate('/')
-          }}>{t('home.nav.home')}</a>
+          }}>{t('nav.home')}</a>
           <a href="/search-papers" className={location.pathname === '/search-papers' ? 'active' : ''} onClick={(e) => {
             e.preventDefault()
             navigate('/search-papers')

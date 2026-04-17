@@ -20,7 +20,7 @@ class AdminStatsService:
     def get_overview_stats(self) -> dict:
         """获取统计概览（总数据）"""
         from ..models.stats import SiteStats
-        from models import ReviewRecord
+        from models import ReviewRecord, ReviewTask
         from authkit.models.payment import Subscription
         from authkit.models import User
 
@@ -52,6 +52,9 @@ class AdminStatsService:
         # 5. 今日数据
         today_stats = self._get_today_stats()
 
+        # 6. 北极星指标
+        funnel_stats = self._get_funnel_stats()
+
         return {
             "visits": {
                 "total": total_visits,
@@ -67,7 +70,8 @@ class AdminStatsService:
                 "paid": paid_generations
             },
             "payments": payment_stats,
-            "today": today_stats
+            "today": today_stats,
+            "funnel": funnel_stats
         }
 
     def get_daily_stats(self, days: int = 30) -> list:
@@ -309,4 +313,79 @@ class AdminStatsService:
             "today_generations": today_generations,
             "today_payments": total_today_payments,
             "today_payments_by_currency": today_payments_by_currency
+        }
+
+    def _get_funnel_stats(self) -> dict:
+        """获取北极星指标（漏斗统计）"""
+        from models import ReviewTask, ReviewRecord
+        from datetime import timedelta
+
+        today = date.today()
+        thirty_days_ago = today - timedelta(days=30)
+
+        # 1. 搜索 UV - 最近 30 天的总访问量
+        search_uv = 0
+        for i in range(30):
+            date_str = (today - timedelta(days=i)).isoformat()
+            search_uv += self._get_visits_by_date(date_str)
+
+        # 2. 计算预览 -> 矩阵转化率
+        # 预览任务：type == "search_only"
+        preview_tasks = self.db.query(func.count(ReviewTask.id)).filter(
+            and_(
+                ReviewTask.created_at >= thirty_days_ago,
+                ReviewTask.params.op('->>')('type') == 'search_only'
+            )
+        ).scalar() or 0
+
+        # 矩阵任务：type == "comparison_matrix_only"
+        matrix_tasks = self.db.query(func.count(ReviewTask.id)).filter(
+            and_(
+                ReviewTask.created_at >= thirty_days_ago,
+                ReviewTask.params.op('->>')('type') == 'comparison_matrix_only'
+            )
+        ).scalar() or 0
+
+        preview_to_matrix_rate = 0.0
+        if preview_tasks > 0:
+            preview_to_matrix_rate = matrix_tasks / preview_tasks
+
+        # 3. 计算矩阵 -> 综述转化率
+        # 综述任务（有 review_record_id 的任务，且不是 comparison_matrix_only）
+        review_tasks = self.db.query(func.count(ReviewTask.id)).filter(
+            and_(
+                ReviewTask.created_at >= thirty_days_ago,
+                ReviewTask.review_record_id.isnot(None),
+                ReviewTask.params.op('->>')('type') != 'comparison_matrix_only'
+            )
+        ).scalar() or 0
+
+        matrix_to_review_rate = 0.0
+        if matrix_tasks > 0:
+            matrix_to_review_rate = review_tasks / max(matrix_tasks, 1)
+
+        # 4. Credits 消耗速率 - 最近 30 天的总消耗
+        # 计算所有任务的 credit_cost 总和
+        all_tasks_30d = self.db.query(ReviewTask).filter(
+            ReviewTask.created_at >= thirty_days_ago
+        ).all()
+
+        total_credits_consumed = 0
+        for task in all_tasks_30d:
+            params = task.params or {}
+            credit_cost = params.get("credit_cost", 0)
+            total_credits_consumed += credit_cost
+
+        # 计算日均消耗
+        daily_credit_rate = total_credits_consumed / 30.0
+
+        return {
+            "search_uv": search_uv,
+            "preview_to_matrix_rate": round(preview_to_matrix_rate * 100, 2),
+            "matrix_to_review_rate": round(matrix_to_review_rate * 100, 2),
+            "total_credits_consumed": total_credits_consumed,
+            "daily_credit_rate": round(daily_credit_rate, 2),
+            "preview_tasks": preview_tasks,
+            "matrix_tasks": matrix_tasks,
+            "review_tasks": review_tasks
         }

@@ -48,107 +48,13 @@ html.intl {
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
     border-bottom: 1px solid var(--light-gray);
-    padding: 0.35rem 2rem;
+    padding: 0.5rem 2rem;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    z-index: 100;
   }
 
   /* Add padding to hero section to account for fixed nav */
   .simple-home-international .home-hero-wrapper {
     padding-top: calc(var(--spacing-lg) + 60px);
-  }
-
-  .simple-home-international .nav-logo {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-weight: 600;
-    font-size: 1.1rem;
-    color: var(--academic-blue-primary);
-  }
-
-  .simple-home-international .logo-icon {
-    font-size: 1.35rem;
-  }
-
-  .simple-home-international .nav-links {
-    display: flex;
-    gap: 1.5rem;
-    align-items: center;
-  }
-
-  .simple-home-international .nav-links a {
-    font-size: 0.875rem;
-  }
-
-  .simple-home-international .nav-links a {
-    color: var(--text-gray);
-    text-decoration: none;
-    font-weight: 700;
-    transition: color 0.2s;
-  }
-
-  .simple-home-international .nav-links a:hover,
-  .simple-home-international .nav-links a.active {
-    color: var(--academic-blue-primary);
-  }
-
-  .simple-home-international .nav-actions {
-    display: flex;
-    gap: 1rem;
-    align-items: center;
-  }
-
-  .simple-home-international .user-menu {
-    display: flex;
-    gap: 0.75rem;
-    align-items: center;
-  }
-
-  .simple-home-international .user-info {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    background: transparent;
-    border: 1px solid #d1d5db;
-    border-radius: 6px;
-    padding: 0.4rem 0.75rem;
-    cursor: pointer;
-    color: var(--text-gray);
-    font-weight: 500;
-    transition: all 0.2s;
-  }
-
-  .simple-home-international .user-info:hover {
-    border-color: var(--academic-blue-primary);
-    color: var(--academic-blue-primary);
-    background: rgba(37, 99, 235, 0.04);
-  }
-
-  .simple-home-international .nav-btn {
-    padding: 0.4rem 1rem;
-    font-size: 0.875rem;
-    font-weight: 600;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-
-  .simple-home-international .nav-btn-register {
-    background: var(--academic-blue-primary);
-    color: var(--cream-white);
-    border: none;
-  }
-
-  .simple-home-international .nav-btn-register:hover {
-    background: var(--academic-blue-secondary);
   }
 
   .simple-home-international .nav-btn-logout {

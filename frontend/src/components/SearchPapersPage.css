@@ -358,15 +358,16 @@ html.intl .search-papers-page .nav-links a.active {
   padding: 0 2rem;
 }
 
+/* Chinese site: red theme */
 .search-papers-page .sp-comparison-cta-card {
   display: flex;
   align-items: center;
   gap: 1.5rem;
-  background: linear-gradient(135deg, #fef5e7 0%, #fdebd0 100%);
-  border: 2px solid #f39c12;
+  background: linear-gradient(135deg, #fff5f5 0%, #ffe8e8 100%);
+  border: 2px solid #D63031;
   border-radius: 16px;
   padding: 1.5rem 2rem;
-  box-shadow: 0 4px 16px rgba(243, 156, 18, 0.15);
+  box-shadow: 0 4px 16px rgba(214, 48, 49, 0.12);
 }
 
 .search-papers-page .sp-comparison-icon {
@@ -381,19 +382,19 @@ html.intl .search-papers-page .nav-links a.active {
 .search-papers-page .sp-comparison-content h3 {
   font-size: 1.25rem;
   font-weight: 700;
-  color: #d35400;
+  color: #B71C1C;
   margin: 0 0 0.5rem;
 }
 
 .search-papers-page .sp-comparison-content p {
   font-size: 0.95rem;
-  color: #7b4f00;
+  color: #c53030;
   margin: 0;
   line-height: 1.6;
 }
 
 .search-papers-page .sp-comparison-btn {
-  background: #e67e22;
+  background: #D63031;
   color: white;
   border: none;
   padding: 0.875rem 1.75rem;
@@ -403,13 +404,125 @@ html.intl .search-papers-page .nav-links a.active {
   cursor: pointer;
   transition: all 0.2s;
   white-space: nowrap;
-  box-shadow: 0 4px 12px rgba(230, 126, 34, 0.3);
+  box-shadow: 0 4px 12px rgba(214, 48, 49, 0.3);
 }
 
 .search-papers-page .sp-comparison-btn:hover {
-  background: #d35400;
+  background: #B71C1C;
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(230, 126, 34, 0.4);
+  box-shadow: 0 6px 16px rgba(214, 48, 49, 0.4);
+}
+
+/* English site: blue theme */
+html.intl .search-papers-page .sp-comparison-cta-card {
+  background: linear-gradient(135deg, #ebf8ff 0%, #bee3f8 100%);
+  border: 2px solid #3182ce;
+  box-shadow: 0 4px 16px rgba(49, 130, 206, 0.12);
+}
+
+html.intl .search-papers-page .sp-comparison-content h3 {
+  color: #1a365d;
+}
+
+html.intl .search-papers-page .sp-comparison-content p {
+  color: #2c5282;
+}
+
+html.intl .search-papers-page .sp-comparison-btn {
+  background: #3182ce;
+  box-shadow: 0 4px 12px rgba(49, 130, 206, 0.3);
+}
+
+html.intl .search-papers-page .sp-comparison-btn:hover {
+  background: #2c5282;
+  box-shadow: 0 6px 16px rgba(49, 130, 206, 0.4);
+}
+
+/* ==================== Literature Summary CTA ==================== */
+.search-papers-page .sp-review-cta {
+  max-width: 1000px;
+  margin: 2.5rem auto 1.5rem;
+  padding: 0 2rem;
+}
+
+/* Chinese site: red theme */
+.search-papers-page .sp-review-cta-card {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  background: linear-gradient(135deg, #fff5f5 0%, #ffe8e8 100%);
+  border: 2px solid #D63031;
+  border-radius: 16px;
+  padding: 1.5rem 2rem;
+  box-shadow: 0 4px 16px rgba(214, 48, 49, 0.12);
+}
+
+.search-papers-page .sp-review-cta-icon {
+  font-size: 2.5rem;
+  flex-shrink: 0;
+}
+
+.search-papers-page .sp-review-cta-content {
+  flex: 1;
+}
+
+.search-papers-page .sp-review-cta-content h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #B71C1C;
+  margin: 0 0 0.5rem;
+}
+
+.search-papers-page .sp-review-cta-content p {
+  font-size: 0.95rem;
+  color: #c53030;
+  margin: 0;
+  line-height: 1.6;
+}
+
+.search-papers-page .sp-review-cta-btn {
+  background: #D63031;
+  color: white;
+  border: none;
+  padding: 0.875rem 1.75rem;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(214, 48, 49, 0.3);
+}
+
+.search-papers-page .sp-review-cta-btn:hover {
+  background: #B71C1C;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(214, 48, 49, 0.4);
+}
+
+/* English site: blue theme */
+html.intl .search-papers-page .sp-review-cta-card {
+  background: linear-gradient(135deg, #ebf8ff 0%, #bee3f8 100%);
+  border: 2px solid #3182ce;
+  box-shadow: 0 4px 16px rgba(49, 130, 206, 0.12);
+}
+
+html.intl .search-papers-page .sp-review-cta-content h3 {
+  color: #1a365d;
+}
+
+html.intl .search-papers-page .sp-review-cta-content p {
+  color: #2c5282;
+}
+
+html.intl .search-papers-page .sp-review-cta-btn {
+  background: #3182ce;
+  box-shadow: 0 4px 12px rgba(49, 130, 206, 0.3);
+}
+
+html.intl .search-papers-page .sp-review-cta-btn:hover {
+  background: #2c5282;
+  box-shadow: 0 6px 16px rgba(49, 130, 206, 0.4);
 }
 
 /* ==================== Statistics Bar ==================== */
@@ -898,7 +1011,18 @@ html.intl .search-papers-page .nav-links a.active {
     gap: 1rem;
   }
 
-  .search-papers-page .sp-comparison-icon {
+  .search-papers-page .sp-review-cta {
+    padding: 0 1.25rem;
+  }
+
+  .search-papers-page .sp-review-cta-card {
+    flex-direction: column;
+    text-align: center;
+    padding: 1.5rem;
+    gap: 1rem;
+  }
+
+  .search-papers-page .sp-review-cta-icon {
     font-size: 2rem;
   }
 

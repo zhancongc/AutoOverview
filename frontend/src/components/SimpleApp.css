@@ -353,6 +353,94 @@
   color: var(--academic-red);
 }
 
+/* ==================== English site nav overrides ==================== */
+
+html.intl .home-nav {
+  background: #ffffff;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border-bottom: 1px solid var(--light-gray);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+html.intl .nav-logo {
+  gap: 0.5rem;
+  font-weight: 600;
+  font-size: 1.1rem;
+  color: var(--academic-blue-primary);
+}
+
+html.intl .logo-icon {
+  font-size: 1.35rem;
+  filter: none;
+}
+
+html.intl .logo-text {
+  font-family: inherit;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--academic-blue-primary);
+  letter-spacing: 0;
+}
+
+html.intl .nav-links a {
+  color: var(--text-gray);
+  font-weight: 700;
+  font-size: 0.875rem;
+}
+
+html.intl .nav-links a:hover,
+html.intl .nav-links a.active {
+  color: var(--academic-blue-primary);
+}
+
+html.intl .user-info {
+  background: transparent;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 0.4rem 0.75rem;
+  color: var(--text-gray);
+  font-weight: 500;
+  font-family: inherit;
+  gap: 0.5rem;
+}
+
+html.intl .user-info:hover {
+  border-color: var(--academic-blue-primary);
+  color: var(--academic-blue-primary);
+  background: rgba(37, 99, 235, 0.04);
+}
+
+html.intl .user-avatar {
+  font-size: 1rem;
+}
+
+html.intl .user-name {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+html.intl .nav-btn-register {
+  background: var(--academic-blue-primary);
+  color: var(--cream-white);
+  border: none;
+  box-shadow: none;
+  border-radius: 6px;
+  padding: 0.4rem 1rem;
+  font-size: 0.875rem;
+}
+
+html.intl .nav-btn-register:hover {
+  background: var(--academic-blue-secondary);
+  box-shadow: none;
+  transform: none;
+}
+
+html.intl .nav-btn-logout:hover {
+  border-color: var(--academic-blue-primary);
+  color: var(--academic-blue-primary);
+}
+
 /* ==================== 左侧侧边栏 - 桌面端 ==================== */
 
 .left-sidebar {

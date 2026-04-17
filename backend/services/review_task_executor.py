@@ -18,6 +18,7 @@ from services.paper_search_agent import PaperSearchAgent
 from services.citation_validator_v2 import CitationValidatorV2
 from services.review_record_service import ReviewRecordService
 from services.stage_recorder import stage_recorder
+from services.progress_messages import get_progress
 
 
 class ReviewTaskExecutor:
@@ -81,10 +82,11 @@ class ReviewTaskExecutor:
             logger.debug(f"[步骤1] 搜索文献: {topic}")
             logger.debug("=" * 80)
 
+            language = params.get('language', 'zh')
             task_manager.update_task_status(
                 task_id,
                 TaskStatus.PROCESSING,
-                progress={"step": "searching", "message": "正在搜索文献..."}
+                progress=get_progress("searching", language)
             )
 
             semantic_scholar_api_key = os.getenv("SEMANTIC_SCHOLAR_API_KEY")
@@ -133,7 +135,7 @@ class ReviewTaskExecutor:
             task_manager.update_task_status(
                 task_id,
                 TaskStatus.PROCESSING,
-                progress={"step": "generating", "message": "正在生成综述..."}
+                progress=get_progress("generating", language)
             )
 
             final_generator = SmartReviewGeneratorFinal(
@@ -454,10 +456,11 @@ class ReviewTaskExecutor:
 
             logger.debug(f"[execute_task_with_papers] 使用已有 {len(all_papers)} 篇文献生成综述")
 
+            language = params.get('language', 'zh')
             task_manager.update_task_status(
                 task_id,
                 TaskStatus.PROCESSING,
-                progress={"step": "generating", "message": "正在生成综述..."}
+                progress=get_progress("generating", language)
             )
 
             final_generator = SmartReviewGeneratorFinal(
@@ -630,7 +633,7 @@ class ReviewTaskExecutor:
         task_manager.update_task_status(
             task_id,
             TaskStatus.PROCESSING,
-            progress={"step": "preparing", "message": "正在准备..."}
+            progress=get_progress("preparing", language)
         )
 
         try:
@@ -655,7 +658,7 @@ class ReviewTaskExecutor:
                 task_manager.update_task_status(
                     task_id,
                     TaskStatus.PROCESSING,
-                    progress={"step": "searching", "message": "正在搜索文献..."}
+                    progress=get_progress("searching", language)
                 )
 
                 ss_service = get_semantic_scholar_service()
@@ -676,7 +679,7 @@ class ReviewTaskExecutor:
             task_manager.update_task_status(
                 task_id,
                 TaskStatus.PROCESSING,
-                progress={"step": "generating", "message": "正在生成对比矩阵..."}
+                progress=get_progress("generating_matrix", language)
             )
 
             api_key = os.getenv("DEEPSEEK_API_KEY")

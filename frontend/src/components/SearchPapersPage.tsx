@@ -8,6 +8,9 @@ import { useTranslation } from 'react-i18next'
 import { api } from '../api'
 import { isLoggedIn as checkLoggedIn } from '../authApi'
 import { LoginModal } from './LoginModal'
+import { PayPalPaymentModal } from './PayPalPaymentModal'
+import { ConfirmModalInternational } from './ConfirmModalInternational'
+import { ConfirmModal } from './ConfirmModal'
 import './SimpleApp.css'
 import './SearchPapersPage.css'
 
@@ -62,6 +65,9 @@ export function SearchPapersPage() {
   const [showLoginModal, setShowLoginModal] = useState(false)
   const [pendingSearchTopic, setPendingSearchTopic] = useState('')
   const [shouldScrollToResults, setShouldScrollToResults] = useState(false)
+  const [credits, setCredits] = useState<number>(0)
+  const [showPaymentModal, setShowPaymentModal] = useState<string | false>(false)
+  const [showCreditConfirm, setShowCreditConfirm] = useState<'review' | 'matrix' | false>(false)
   const statusIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   // SEO meta tags
@@ -79,6 +85,9 @@ export function SearchPapersPage() {
     }
     // Check if Chinese site
     setIsChineseSite(!document.documentElement.classList.contains('intl'))
+    if (checkLoggedIn()) {
+      api.getCredits().then(data => setCredits(data.credits)).catch(() => {})
+    }
     return () => {
       document.title = 'AutoOverview - AI Literature Review Generator'
     }
@@ -312,27 +321,36 @@ export function SearchPapersPage() {
   const handleGenerateFromSearch = async () => {
     if (!searchTaskId || !topic.trim()) return
 
-    const loggedIn = checkLoggedIn()
-    if (!loggedIn) {
-      // 未登录：跳转首页 generate 区域，带上复用参数，登录后自动继续
+    if (!checkLoggedIn()) {
       navigate(`/?reuse_task_id=${searchTaskId}&topic=${encodeURIComponent(topic)}#generate`)
       return
     }
 
-    // 检查是否已有进行中的综述任务
+    // Check credits and confirm
+    try {
+      const creditsData = await api.getCredits()
+      setCredits(creditsData.credits)
+      if (creditsData.credits < 1) {
+        setShowPaymentModal('starter')
+        return
+      }
+    } catch { /* proceed */ }
+    setShowCreditConfirm('review')
+  }
+
+  const doGenerateFromSearch = async () => {
+    if (!searchTaskId || !topic.trim()) return
+
     try {
       const activeTask = await api.getActiveTask()
       if (activeTask.active && activeTask.task_id) {
-        // 已有活跃任务，提示后跳转到首页展示进度
-        setError(t('search_papers.error.active_task', '您已有一个正在生成中的综述任务'))
+        setError(t('search_papers.error.active_task'))
         setTimeout(() => {
-          navigate(`/?task_id=${activeTask.task_id}#generate`)
+          navigate(`/generate?task_id=${activeTask.task_id}`)
         }, 1500)
         return
       }
-    } catch {
-      // 获取失败不阻塞，继续提交
-    }
+    } catch { /* don't block */ }
 
     setIsGenerating(true)
     try {
@@ -342,13 +360,11 @@ export function SearchPapersPage() {
       })
 
       if (response.success && response.data?.task_id) {
-        // 跳转首页 generate 区域，展示进度条
-        navigate(`/?task_id=${response.data.task_id}#generate`)
+        navigate(`/generate?task_id=${response.data.task_id}`)
       } else {
         const msg = response.message || ''
         if (msg.includes('credits') || msg.includes('额度')) {
-          // 额度不足，跳转首页定价区域购买
-          navigate(`/?reuse_task_id=${searchTaskId}&topic=${encodeURIComponent(topic)}#pricing`)
+          setShowPaymentModal('starter')
         } else {
           setError(msg || t('search_papers.error.generic'))
         }
@@ -363,26 +379,32 @@ export function SearchPapersPage() {
   const handleGenerateComparisonMatrix = async () => {
     if (!topic.trim()) return
 
-    const loggedIn = checkLoggedIn()
-    if (!loggedIn) {
+    if (!checkLoggedIn()) {
       setPendingSearchTopic(topic)
       setShowLoginModal(true)
       return
     }
 
-    // 检查是否已有进行中的任务
+    // Check credits and confirm
+    try {
+      const creditsData = await api.getCredits()
+      setCredits(creditsData.credits)
+      if (creditsData.credits < 1) {
+        setShowPaymentModal('starter')
+        return
+      }
+    } catch { /* proceed */ }
+    setShowCreditConfirm('matrix')
+  }
+
+  const doGenerateComparisonMatrix = async () => {
     try {
       const activeTask = await api.getActiveTask()
       if (activeTask.active && activeTask.task_id) {
-        setError(t('search_papers.error.active_task', '您已有一个正在生成中的任务'))
-        setTimeout(() => {
-          navigate(`/?task_id=${activeTask.task_id}#generate`)
-        }, 1500)
+        setError(t('search_papers.error.active_task'))
         return
       }
-    } catch {
-      // 获取失败不阻塞，继续提交
-    }
+    } catch { /* don't block */ }
 
     setIsGeneratingComparisonMatrix(true)
     try {
@@ -393,13 +415,17 @@ export function SearchPapersPage() {
       })
 
       if (response.success && response.data?.task_id) {
-        // 跳转到对比矩阵页面
         navigate(`/comparison-matrix?task_id=${response.data.task_id}`)
       } else {
         setError(response.message || t('search_papers.error.generic'))
       }
     } catch (err: any) {
-      setError(err.response?.data?.detail || t('search_papers.error.generic'))
+      const detail = err.response?.data?.detail || ''
+      if (detail.toLowerCase().includes('credit') || detail.toLowerCase().includes('额度')) {
+        setShowPaymentModal('starter')
+      } else {
+        setError(detail || t('search_papers.error.generic'))
+      }
     } finally {
       setIsGeneratingComparisonMatrix(false)
     }
@@ -612,26 +638,6 @@ export function SearchPapersPage() {
         </div>
       )}
 
-      {/* Statistics */}
-      {statistics && !isLoading && papers.length > 0 && (
-        <div className="sp-statistics">
-          <div className="sp-statistics-bar">
-            <span className="sp-stat-badge">
-              <span className="sp-stat-number">{statistics.total}</span> {t('search_papers.results.found')}
-            </span>
-            <span className="sp-stat-badge">
-              {Math.round(statistics.recent_ratio * 100)}% {t('search_papers.results.recent')}
-            </span>
-            <span className="sp-stat-badge">
-              {Math.round(statistics.english_ratio * 100)}% {t('search_papers.results.english')}
-            </span>
-            <span className="sp-stat-badge">
-              {Math.round(statistics.avg_citations)} {t('search_papers.results.avg_citations')}
-            </span>
-          </div>
-        </div>
-      )}
-
       {/* Comparison Matrix CTA */}
       {!isLoading && papers.length > 0 && (
         <div className="sp-comparison-cta">
@@ -667,6 +673,26 @@ export function SearchPapersPage() {
                 </button>
               )
             })()}
+          </div>
+        </div>
+      )}
+
+      {/* Statistics */}
+      {statistics && !isLoading && papers.length > 0 && (
+        <div className="sp-statistics">
+          <div className="sp-statistics-bar">
+            <span className="sp-stat-badge">
+              <span className="sp-stat-number">{statistics.total}</span> {t('search_papers.results.found')}
+            </span>
+            <span className="sp-stat-badge">
+              {Math.round(statistics.recent_ratio * 100)}% {t('search_papers.results.recent')}
+            </span>
+            <span className="sp-stat-badge">
+              {Math.round(statistics.english_ratio * 100)}% {t('search_papers.results.english')}
+            </span>
+            <span className="sp-stat-badge">
+              {Math.round(statistics.avg_citations)} {t('search_papers.results.avg_citations')}
+            </span>
           </div>
         </div>
       )}
@@ -831,6 +857,51 @@ export function SearchPapersPage() {
         <LoginModal
           onClose={() => setShowLoginModal(false)}
           onLoginSuccess={handleLoginSuccess}
+        />
+      )}
+
+      {/* Credit Confirm Modal */}
+      {showCreditConfirm && isChineseSite && (
+        <ConfirmModal
+          title="确认扣除额度"
+          message={`您有 ${credits} 个额度。\n此操作将消耗 1 个额度，是否继续？`}
+          confirmText={showCreditConfirm === 'review' ? '生成综述' : '生成矩阵'}
+          cancelText="取消"
+          onConfirm={() => {
+            const action = showCreditConfirm
+            setShowCreditConfirm(false)
+            if (action === 'review') doGenerateFromSearch()
+            else doGenerateComparisonMatrix()
+          }}
+          onCancel={() => setShowCreditConfirm(false)}
+          type="warning"
+        />
+      )}
+      {showCreditConfirm && !isChineseSite && (
+        <ConfirmModalInternational
+          message={`You have ${credits} credits.\nThis will use 1 credit. Continue?`}
+          confirmText={showCreditConfirm === 'review' ? 'Generate Summary' : 'Generate Matrix'}
+          cancelText="Cancel"
+          onConfirm={() => {
+            const action = showCreditConfirm
+            setShowCreditConfirm(false)
+            if (action === 'review') doGenerateFromSearch()
+            else doGenerateComparisonMatrix()
+          }}
+          onCancel={() => setShowCreditConfirm(false)}
+          type="warning"
+        />
+      )}
+
+      {/* Payment Modal */}
+      {showPaymentModal && !isChineseSite && (
+        <PayPalPaymentModal
+          onClose={() => setShowPaymentModal(false)}
+          onPaymentSuccess={() => {
+            setShowPaymentModal(false)
+            api.getCredits().then(data => setCredits(data.credits)).catch(() => {})
+          }}
+          planType={showPaymentModal}
         />
       )}
     </div>

@@ -96,12 +96,6 @@ html.intl {
     padding-bottom: 1.5rem;
   }
 
-  .confirm-modal-icon {
-    font-size: 3rem;
-    display: block;
-    margin-bottom: 0.75rem;
-  }
-
   .confirm-modal-title {
     font-size: 1.25rem;
     font-weight: 700;
@@ -183,14 +177,14 @@ html.intl {
   }
 
   .confirm-modal-btn-warning {
-    background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+    background: linear-gradient(135deg, var(--academic-blue-primary) 0%, var(--academic-blue-secondary) 100%);
     color: white;
-    box-shadow: 0 4px 12px rgba(243, 156, 18, 0.25);
+    box-shadow: 0 4px 12px rgba(26, 54, 93, 0.25);
   }
 
   .confirm-modal-btn-warning:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(243, 156, 18, 0.35);
+    box-shadow: 0 8px 20px rgba(26, 54, 93, 0.35);
   }
 
   /* Responsive Design */

@@ -3,7 +3,7 @@
  * Designed for overseas market with clean, professional academic style
  */
 import { useState, useEffect } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { api } from '../api'
 import { getLocalUserInfo, isLoggedIn } from '../authApi'
@@ -20,7 +20,11 @@ export function ProfilePageInternational() {
   const { i18n } = useTranslation()
   const navigate = useNavigate()
   const location = useLocation()
-  const [activeTab, setActiveTab] = useState<ProfileTab>('reviews')
+  const [searchParams] = useSearchParams()
+  const tabParam = searchParams.get('tab') as ProfileTab | null
+  const [activeTab, setActiveTab] = useState<ProfileTab>(
+    tabParam && ['searches', 'matrices', 'reviews'].includes(tabParam) ? tabParam : 'searches'
+  )
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [records, setRecords] = useState<ReviewRecord[]>([])
   const [searches, setSearches] = useState<any[]>([])
@@ -355,22 +359,22 @@ export function ProfilePageInternational() {
         {/* Tab Switcher */}
         <div className="profile-tabs">
           <button
-            className={`profile-tab ${activeTab === 'reviews' ? 'active' : ''}`}
-            onClick={() => setActiveTab('reviews')}
-          >
-            📖 My Reviews
-          </button>
-          <button
             className={`profile-tab ${activeTab === 'searches' ? 'active' : ''}`}
-            onClick={() => setActiveTab('searches')}
+            onClick={() => { setActiveTab('searches'); navigate('/profile?tab=searches', { replace: true }) }}
           >
             🔍 My Searches
           </button>
           <button
             className={`profile-tab ${activeTab === 'matrices' ? 'active' : ''}`}
-            onClick={() => setActiveTab('matrices')}
+            onClick={() => { setActiveTab('matrices'); navigate('/profile?tab=matrices', { replace: true }) }}
           >
             📊 Comparison Matrices
+          </button>
+          <button
+            className={`profile-tab ${activeTab === 'reviews' ? 'active' : ''}`}
+            onClick={() => { setActiveTab('reviews'); navigate('/profile?tab=reviews', { replace: true }) }}
+          >
+            📖 My Reviews
           </button>
         </div>
 

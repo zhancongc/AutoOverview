@@ -12,13 +12,16 @@ import { api } from '../api'
 import { isLoggedIn as checkLoggedIn } from '../authApi'
 import { LoginModal } from './LoginModal'
 import { LoginModalInternational } from './LoginModalInternational'
+import { PayPalPaymentModal } from './PayPalPaymentModal'
+import { ConfirmModalInternational } from './ConfirmModalInternational'
+import { ConfirmModal } from './ConfirmModal'
 import { useMatrixAuth, ComparisonMatrixData, TabType } from './ComparisonMatrixShared'
 import './ComparisonMatrixPage.css'
 
 export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const { isChineseSite, showLoginModal, setShowLoginModal, handleLoginSuccess } = useMatrixAuth()
+  const { isChineseSite, showLoginModal, setShowLoginModal, handleLoginSuccess, credits, setCredits } = useMatrixAuth()
 
   const [matrixData, setMatrixData] = useState<ComparisonMatrixData | null>(null)
   const [matrixLoading, setMatrixLoading] = useState(true)
@@ -28,6 +31,8 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
   const [matrixSearchTaskId, setMatrixSearchTaskId] = useState('')
   const [activeTab, setActiveTab] = useState<TabType>('matrix')
   const [isGeneratingReview, setIsGeneratingReview] = useState(false)
+  const [showPaymentModal, setShowPaymentModal] = useState<string | false>(false)
+  const [showCreditConfirm, setShowCreditConfirm] = useState(false)
 
   useEffect(() => {
     loadMatrixData(taskId)
@@ -114,12 +119,29 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
       setShowLoginModal(true)
       return
     }
+
+    // Check credits
+    try {
+      const creditsData = await api.getCredits()
+      setCredits(creditsData.credits)
+      if (creditsData.credits < 1) {
+        setShowPaymentModal('starter')
+        return
+      }
+    } catch { /* proceed anyway */ }
+
+    // Confirm credit deduction
+    setShowCreditConfirm(true)
+  }
+
+  const doGenerateReview = async () => {
     if (!matrixSearchTaskId || !matrixData?.topic) return
 
+    // Check concurrent tasks
     try {
       const activeTask = await api.getActiveTask()
       if (activeTask.active) {
-        alert(t('comparison_matrix_page.error'))
+        alert(t('comparison_matrix_page.active_task'))
         return
       }
     } catch { /* don't block */ }
@@ -131,11 +153,11 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
         reuseTaskId: matrixSearchTaskId,
       })
       if (response.success && response.data?.task_id) {
-        navigate(`/?task_id=${response.data.task_id}#generate`)
+        navigate(`/generate?task_id=${response.data.task_id}`)
       } else {
         const msg = response.message || ''
         if (msg.includes('credits') || msg.includes('额度')) {
-          navigate(`/?reuse_task_id=${matrixSearchTaskId}&topic=${encodeURIComponent(matrixData.topic)}#pricing`)
+          setShowPaymentModal('starter')
         } else {
           alert(msg || t('comparison_matrix_page.error'))
         }
@@ -145,6 +167,11 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
     } finally {
       setIsGeneratingReview(false)
     }
+  }
+
+  const handlePaymentSuccess = async () => {
+    setShowPaymentModal(false)
+    api.getCredits().then(data => setCredits(data.credits)).catch(() => {})
   }
 
   const handleExportMarkdown = () => {
@@ -166,16 +193,80 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
       <button className="back-button" onClick={() => navigate('/comparison-matrix', { replace: true })}>
         ←
       </button>
-      <div className="header-title" style={{ flex: 1, minWidth: 0 }}>
-        <h1 style={{ fontSize: '1rem', fontWeight: 600, margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-          {t('comparison_matrix_page.title')}
-        </h1>
+      <div className="review-segmented-tabs">
+        <button
+          className={`segmented-tab ${activeTab === 'matrix' ? 'active' : ''}`}
+          onClick={() => setActiveTab('matrix')}
+        >
+          Comparison Matrix
+        </button>
+        <button
+          className={`segmented-tab ${activeTab === 'references' ? 'active' : ''}`}
+          onClick={() => setActiveTab('references')}
+        >
+          References
+        </button>
       </div>
-      <div style={{ width: 40 }} />
+      <div className="header-actions">
+        <button
+          className="stats-action-btn stats-action-btn-primary"
+          onClick={handleGenerateReview}
+          disabled={!matrixSearchTaskId || isGeneratingReview}
+          title={!matrixSearchTaskId ? t('comparison_matrix_page.generate_review_disabled_hint') : undefined}
+        >
+          {isGeneratingReview ? t('comparison_matrix_page.generating') : t('comparison_matrix_page.generate_review')}
+        </button>
+        <button className="stats-action-btn" onClick={handleExportMarkdown}>
+          {t('comparison_matrix_page.export_markdown')}
+        </button>
+        <button className="stats-action-btn" onClick={() => navigate('/comparison-matrix')}>
+          {t('comparison_matrix_page.continue_search')}
+        </button>
+      </div>
     </div>
   )
 
   const LoginModalComponent = isChineseSite ? LoginModal : LoginModalInternational
+
+  const creditConfirmMessage = isChineseSite
+    ? `您有 ${credits} 个额度。\n生成文献综述将消耗 1 个额度，是否继续？`
+    : `You have ${credits} credits.\nGenerate a Literature Summary will use 1 credit. Continue?`
+  const creditConfirmBtn = isChineseSite ? '生成' : 'Generate'
+  const creditCancelBtn = isChineseSite ? '取消' : 'Cancel'
+
+  const renderModals = () => (
+    <>
+      {showLoginModal && <LoginModalComponent onClose={() => setShowLoginModal(false)} onLoginSuccess={handleLoginSuccess} />}
+      {showCreditConfirm && isChineseSite && (
+        <ConfirmModal
+          title="确认扣除额度"
+          message={creditConfirmMessage}
+          confirmText={creditConfirmBtn}
+          cancelText={creditCancelBtn}
+          onConfirm={() => { setShowCreditConfirm(false); doGenerateReview() }}
+          onCancel={() => setShowCreditConfirm(false)}
+          type="warning"
+        />
+      )}
+      {showCreditConfirm && !isChineseSite && (
+        <ConfirmModalInternational
+          message={creditConfirmMessage}
+          confirmText={creditConfirmBtn}
+          cancelText={creditCancelBtn}
+          onConfirm={() => { setShowCreditConfirm(false); doGenerateReview() }}
+          onCancel={() => setShowCreditConfirm(false)}
+          type="warning"
+        />
+      )}
+      {showPaymentModal && !isChineseSite && (
+        <PayPalPaymentModal
+          onClose={() => setShowPaymentModal(false)}
+          onPaymentSuccess={handlePaymentSuccess}
+          planType={showPaymentModal}
+        />
+      )}
+    </>
+  )
 
   // ========== Loading ==========
   if (matrixLoading) {
@@ -188,7 +279,7 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
           </div>
           <p>{matrixLoadingMsg || t('comparison_matrix_page.loading')}</p>
         </div>
-        {showLoginModal && <LoginModalComponent onClose={() => setShowLoginModal(false)} onLoginSuccess={handleLoginSuccess} />}
+        {renderModals()}
       </div>
     )
   }
@@ -204,7 +295,7 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
             {t('comparison_matrix_page.go_search')}
           </button>
         </div>
-        {showLoginModal && <LoginModalComponent onClose={() => setShowLoginModal(false)} onLoginSuccess={handleLoginSuccess} />}
+        {renderModals()}
       </div>
     )
   }
@@ -216,16 +307,10 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
         {renderCompactHeader()}
 
         <div className="matrix-container" style={{ marginTop: 60 }}>
-          <header className="matrix-header">
-            <div className="header-content">
-              <div className="header-title">
-                <h1>{t('comparison_matrix_page.title')}</h1>
-                <p className="matrix-topic">{matrixData.topic}</p>
-              </div>
-            </div>
-          </header>
-
           <div className="matrix-stats">
+            <p className="matrix-topic" style={{ fontSize: '1.05rem', color: '#1f2937', fontWeight: 600, margin: '0 0 0.75rem', lineHeight: 1.4 }}>
+              {matrixData.topic}
+            </p>
             <div className="stats-left">
               <div className="stat-item">
                 <span className="stat-label">{t('comparison_matrix_page.papers_used')}</span>
@@ -242,43 +327,6 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
                 </span>
               </div>
             </div>
-            <div className="stats-actions">
-              <button
-                className="stats-action-btn stats-action-btn-primary"
-                onClick={handleGenerateReview}
-                disabled={!matrixSearchTaskId || isGeneratingReview}
-                title={!matrixSearchTaskId ? t('comparison_matrix_page.generate_review_disabled_hint') : undefined}
-              >
-                {isGeneratingReview ? t('comparison_matrix_page.generating') : t('comparison_matrix_page.generate_review')}
-              </button>
-              <button
-                className="stats-action-btn"
-                onClick={handleExportMarkdown}
-              >
-                {t('comparison_matrix_page.export_markdown')}
-              </button>
-              <button
-                className="stats-action-btn"
-                onClick={() => navigate('/comparison-matrix')}
-              >
-                {t('comparison_matrix_page.continue_search')}
-              </button>
-            </div>
-          </div>
-
-          <div className="matrix-segmented-tabs">
-            <button
-              className={`segmented-tab ${activeTab === 'matrix' ? 'active' : ''}`}
-              onClick={() => setActiveTab('matrix')}
-            >
-              Comparison Matrix
-            </button>
-            <button
-              className={`segmented-tab ${activeTab === 'references' ? 'active' : ''}`}
-              onClick={() => setActiveTab('references')}
-            >
-              References
-            </button>
           </div>
 
           {activeTab === 'matrix' ? (
@@ -352,7 +400,7 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
           )}
         </div>
 
-        {showLoginModal && <LoginModalComponent onClose={() => setShowLoginModal(false)} onLoginSuccess={handleLoginSuccess} />}
+        {renderModals()}
       </div>
     )
   }

@@ -41,17 +41,6 @@ export function ConfirmModalInternational({
     return () => document.removeEventListener('keydown', handleEscape)
   }, [onCancel])
 
-  const getIcon = () => {
-    switch (type) {
-      case 'warning':
-        return '⚠️'
-      case 'danger':
-        return '🔒'
-      default:
-        return '💡'
-    }
-  }
-
   const getConfirmButtonClass = () => {
     switch (type) {
       case 'danger':
@@ -69,7 +58,6 @@ export function ConfirmModalInternational({
         <button className="confirm-modal-close" onClick={onCancel}>&times;</button>
 
         <div className="confirm-modal-header">
-          <span className="confirm-modal-icon">{getIcon()}</span>
           <h2 className="confirm-modal-title">{defaultTitle}</h2>
         </div>
 

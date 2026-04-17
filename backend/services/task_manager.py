@@ -12,6 +12,8 @@ from datetime import datetime
 from typing import Dict, List, Optional, Any, Set
 from enum import Enum
 
+from services.progress_messages import get_progress
+
 
 class TaskStatus(str, Enum):
     """任务状态"""
@@ -46,6 +48,7 @@ class Task:
             "status": self.status.value,
             "user_id": self.user_id,
             "is_paid": self.is_paid,
+            "params": self.params,
             "created_at": self.created_at.isoformat(),
             "started_at": self.started_at.isoformat() if self.started_at else None,
             "completed_at": self.completed_at.isoformat() if self.completed_at else None,
@@ -249,10 +252,9 @@ class TaskManager:
                 queue_pos = self._get_queue_position(task_id)
                 task = self._tasks.get(task_id)
                 if task:
-                    progress_msg = {
-                        "step": "waiting",
-                        "message": f"系统繁忙，排队中…前面还有 {queue_pos} 个任务（约需等待 {queue_pos * 3} 分钟）"
-                    }
+                    # 从任务参数中获取语言，默认为中文
+                    language = task.params.get("language", "zh") if task.params else "zh"
+                    progress_msg = get_progress("waiting", language, queue_pos=queue_pos)
                     task.progress = progress_msg
                     # 同步排队进度到 Redis
                     if self._persistence:

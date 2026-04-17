@@ -476,7 +476,9 @@ export function GenerateReviewPage() {
                 style={{
                   width: `${getProgressPercentage()}%`,
                   height: '100%',
-                  background: 'linear-gradient(90deg, #e67e22, #d35400)',
+                  background: isChineseSite
+                    ? 'linear-gradient(90deg, #D63031, #B71C1C)'
+                    : 'linear-gradient(90deg, #3182ce, #2c5282)',
                   borderRadius: '4px',
                   transition: 'width 0.5s ease'
                 }}
@@ -506,7 +508,7 @@ export function GenerateReviewPage() {
           <a href="/privacy-policy">{t('search_papers.footer.privacy')}</a>
           <a href="/refund-policy">{t('search_papers.footer.refund')}</a>
         </div>
-        <p className="sp-footer-copy">&copy; {new Date().getFullYear()} AutoOverview. {t('search_papers.footer.rights')}</p>
+        <p>{t('search_papers.footer.copyright')}</p>
       </footer>
 
       {/* Modals */}

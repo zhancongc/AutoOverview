@@ -15,6 +15,17 @@ interface PlanCurrencyStats {
   name: string;
 }
 
+interface FunnelStats {
+  search_uv: number;
+  preview_to_matrix_rate: number;
+  matrix_to_review_rate: number;
+  total_credits_consumed: number;
+  daily_credit_rate: number;
+  preview_tasks: number;
+  matrix_tasks: number;
+  review_tasks: number;
+}
+
 interface OverviewStats {
   visits: {
     total: number;
@@ -52,6 +63,7 @@ interface OverviewStats {
       };
     };
   };
+  funnel: FunnelStats;
 }
 
 interface DailyStats {
@@ -158,6 +170,16 @@ export const DavidPage: React.FC = () => {
 
   const todayCny = overview.today.today_payments_by_currency?.CNY || { count: 0, revenue: 0 };
   const todayUsd = overview.today.today_payments_by_currency?.USD || { count: 0, revenue: 0 };
+  const funnel = overview.funnel || {
+    search_uv: 0,
+    preview_to_matrix_rate: 0,
+    matrix_to_review_rate: 0,
+    total_credits_consumed: 0,
+    daily_credit_rate: 0,
+    preview_tasks: 0,
+    matrix_tasks: 0,
+    review_tasks: 0
+  };
 
   return (
     <div className="david-page">
@@ -166,6 +188,37 @@ export const DavidPage: React.FC = () => {
           <h1>数据统计中心</h1>
           <p className="david-subtitle">实时监控系统运营数据</p>
         </header>
+
+        {/* 北极星指标 */}
+        <section className="david-section">
+          <h2 className="section-title">北极星指标 (近30天)</h2>
+          <div className="stats-grid">
+            <StatCard
+              title="搜索 UV"
+              value={formatNumber(funnel.search_uv)}
+              subtitle="获客能力与引流渠道质量"
+              color="blue"
+            />
+            <StatCard
+              title="预览 → 矩阵转化率"
+              value={`${funnel.preview_to_matrix_rate}%`}
+              subtitle={`目标 >15% | 预览 ${formatNumber(funnel.preview_tasks)} → 矩阵 ${formatNumber(funnel.matrix_tasks)}`}
+              color={funnel.preview_to_matrix_rate >= 15 ? 'green' : 'orange'}
+            />
+            <StatCard
+              title="矩阵 → 综述转化率"
+              value={`${funnel.matrix_to_review_rate}%`}
+              subtitle={`目标 >30% | 矩阵 ${formatNumber(funnel.matrix_tasks)} → 综述 ${formatNumber(funnel.review_tasks)}`}
+              color={funnel.matrix_to_review_rate >= 30 ? 'green' : 'orange'}
+            />
+            <StatCard
+              title="Credits 消耗速率"
+              value={`${formatNumber(funnel.daily_credit_rate)}/天`}
+              subtitle={`近30天总消耗 ${formatNumber(funnel.total_credits_consumed)} credits`}
+              color="purple"
+            />
+          </div>
+        </section>
 
         {/* 概览卡片 */}
         <section className="david-section">

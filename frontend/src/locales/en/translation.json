@@ -125,7 +125,7 @@
       "databases": "Supported: Web of Science, IEEE, CrossRef, Semantic Scholar"
     },
     "nav": {
-      "generate": "Summary",
+      "generate": "Literature Summary",
       "features": "Features",
       "process": "How It Works",
       "cases": "Samples",
@@ -311,7 +311,7 @@
     },
     "loading": {
       "title": "Searching academic databases...",
-      "estimate": "This usually takes 30-60 seconds",
+      "estimate": "This usually takes 2-3 minutes",
       "status_1": "Analyzing your topic...",
       "status_2": "Searching academic databases...",
       "status_3": "Retrieving paper metadata...",
@@ -356,8 +356,8 @@
     "history": "📋 View Search History",
     "comparison_matrix": {
       "title": "Generate Literature Comparison Matrix",
-      "description": "Get viewpoint comparisons, divergence analysis, and comparison tables for just $0.99",
-      "button": "Generate Now ($0.99)",
+      "description": "Get viewpoint comparisons, divergence analysis, and comparison tables for just 1 credit",
+      "button": "Generate Now",
       "view_result": "View Comparison Matrix"
     }
   },
@@ -376,6 +376,7 @@
     "phase_generating": "Generating comparison matrix...",
     "loading": "Loading comparison matrix...",
     "error": "Failed to load",
+    "active_task": "You already have a task in progress. Please wait for it to complete.",
     "not_found": "Comparison matrix data not found",
     "go_search": "Search Papers",
     "back": "Back",
@@ -399,9 +400,12 @@
     "status_2": "Analyzing paper metadata...",
     "status_3": "Filtering high-quality papers...",
     "status_4": "Organizing search results...",
-    "estimate": "Estimated 30-60 seconds",
+    "estimate": "Estimated 2-3 minutes",
     "no_results": "No papers found. Try different keywords.",
-    "history": "📋 View Matrix History"
+    "history": "📋 View Matrix History",
+    "review_cta_title": "Need a Full Literature Summary?",
+    "review_cta_desc": "After generating the comparison matrix, continue to create a comprehensive, structured literature summary with proper citations.",
+    "review_cta_button": "Get Literature Summary"
   },
   "generate_page": {
     "hero_badge": "Literature Summary Tool",

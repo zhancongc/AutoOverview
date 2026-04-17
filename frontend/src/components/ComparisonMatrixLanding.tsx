@@ -11,6 +11,8 @@ import { isLoggedIn as checkLoggedIn } from '../authApi'
 import { LoginModal } from './LoginModal'
 import { LoginModalInternational } from './LoginModalInternational'
 import { PayPalPaymentModal } from './PayPalPaymentModal'
+import { ConfirmModalInternational } from './ConfirmModalInternational'
+import { ConfirmModal } from './ConfirmModal'
 import { useMatrixAuth, Paper, Statistics, SortMode, CombinedPhase } from './ComparisonMatrixShared'
 import './ComparisonMatrixPage.css'
 import './SearchPapersPage.css'
@@ -19,10 +21,11 @@ export function ComparisonMatrixLanding() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const location = useLocation()
-  const { isChineseSite, loggedIn, showLoginModal, setShowLoginModal, handleLoginSuccess, setCredits } = useMatrixAuth()
+  const { isChineseSite, loggedIn, showLoginModal, setShowLoginModal, handleLoginSuccess, setCredits, credits } = useMatrixAuth()
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [showPaymentModal, setShowPaymentModal] = useState<string | false>(false)
+  const [showCreditConfirm, setShowCreditConfirm] = useState(false)
 
   // Search state
   const [topic, setTopic] = useState('')
@@ -210,6 +213,61 @@ export function ComparisonMatrixLanding() {
     }
   }
 
+  const handleGenerateReview = async () => {
+    if (!topic.trim()) return
+
+    if (!checkLoggedIn()) {
+      setShowLoginModal(true)
+      return
+    }
+
+    // Check credits and confirm
+    try {
+      const creditsData = await api.getCredits()
+      setCredits(creditsData.credits)
+      if (creditsData.credits < 1) {
+        setShowPaymentModal('starter')
+        return
+      }
+    } catch { /* proceed */ }
+    setShowCreditConfirm(true)
+  }
+
+  const doGenerateReview = async () => {
+    if (!topic.trim()) return
+
+    try {
+      const activeTask = await api.getActiveTask()
+      if (activeTask.active && activeTask.task_id) {
+        setSearchError('You already have a review in progress. Redirecting to view progress...')
+        setTimeout(() => {
+          navigate(`/generate?task_id=${activeTask.task_id}`)
+        }, 1500)
+        return
+      }
+    } catch { /* don't block */ }
+
+    try {
+      const response = await api.submitReviewTask(topic, {
+        language: isChineseSite ? 'zh' : 'en',
+        reuseTaskId: localStorage.getItem('cm_search_task_id') || '',
+      })
+
+      if (response.success && response.data?.task_id) {
+        navigate(`/generate?task_id=${response.data.task_id}`)
+      } else {
+        const msg = response.message || ''
+        if (msg.includes('credits') || msg.includes('额度')) {
+          setShowPaymentModal('starter')
+        } else {
+          setSearchError(msg || 'Something went wrong')
+        }
+      }
+    } catch {
+      setSearchError('Something went wrong')
+    }
+  }
+
   const handleSearch = useCallback(async () => {
     if (!topic.trim()) return
 
@@ -343,6 +401,12 @@ export function ComparisonMatrixLanding() {
 
   const LoginModalComponent = isChineseSite ? LoginModal : LoginModalInternational
 
+  const creditConfirmMessage = isChineseSite
+    ? `您有 ${credits} 个额度。\n生成文献综述将消耗 1 个额度，是否继续？`
+    : `You have ${credits} credits.\nGenerate a Literature Summary will use 1 credit. Continue?`
+  const creditConfirmBtn = isChineseSite ? '生成' : 'Generate'
+  const creditCancelBtn = isChineseSite ? '取消' : 'Cancel'
+
   return (
     <div className="search-papers-page">
       {renderNav()}
@@ -457,6 +521,22 @@ export function ComparisonMatrixLanding() {
         </div>
       )}
 
+      {/* Literature Summary CTA */}
+      {hasSearched && !isLoading && papers.length > 0 && (
+        <div className="sp-review-cta">
+          <div className="sp-review-cta-card">
+            <div className="sp-review-cta-icon">📝</div>
+            <div className="sp-review-cta-content">
+              <h3>{t('comparison_matrix_page.review_cta_title')}</h3>
+              <p>{t('comparison_matrix_page.review_cta_desc')}</p>
+            </div>
+            <button className="sp-review-cta-btn" onClick={handleGenerateReview}>
+              {t('comparison_matrix_page.review_cta_button')}
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Statistics */}
       {statistics && !isLoading && papers.length > 0 && (
         <div className="sp-statistics">
@@ -559,7 +639,7 @@ export function ComparisonMatrixLanding() {
           <a href="/privacy-policy">{t('search_papers.footer.privacy')}</a>
           <a href="/refund-policy">{t('search_papers.footer.refund')}</a>
         </div>
-        <p className="sp-footer-copy">&copy; {new Date().getFullYear()} AutoOverview. {t('search_papers.footer.rights')}</p>
+        <p>{t('search_papers.footer.copyright')}</p>
       </footer>
 
       {showLoginModal && (
@@ -571,6 +651,29 @@ export function ComparisonMatrixLanding() {
           onClose={() => setShowPaymentModal(false)}
           onPaymentSuccess={handlePaymentSuccess}
           planType={showPaymentModal}
+        />
+      )}
+
+      {/* Credit Confirm Modal */}
+      {showCreditConfirm && isChineseSite && (
+        <ConfirmModal
+          title="确认扣除额度"
+          message={creditConfirmMessage}
+          confirmText={creditConfirmBtn}
+          cancelText={creditCancelBtn}
+          onConfirm={() => { setShowCreditConfirm(false); doGenerateReview() }}
+          onCancel={() => setShowCreditConfirm(false)}
+          type="warning"
+        />
+      )}
+      {showCreditConfirm && !isChineseSite && (
+        <ConfirmModalInternational
+          message={creditConfirmMessage}
+          confirmText={creditConfirmBtn}
+          cancelText={creditCancelBtn}
+          onConfirm={() => { setShowCreditConfirm(false); doGenerateReview() }}
+          onCancel={() => setShowCreditConfirm(false)}
+          type="warning"
         />
       )}
     </div>
