@@ -9,20 +9,21 @@ import type { ReviewRecord } from '../types'
 import './SimpleApp.css'
 import './ProfilePage.css'
 
-type ProfileTab = 'reviews' | 'searches'
+type ProfileTab = 'reviews' | 'searches' | 'matrices'
 
 export function ProfilePage() {
   const { i18n } = useTranslation()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const tabParam = searchParams.get('tab')
+  const tabParam = searchParams.get('tab') as ProfileTab | null
   const [activeTab, setActiveTab] = useState<ProfileTab>(
-    tabParam === 'reviews' ? 'reviews' : 'searches'
+    tabParam && ['searches', 'matrices', 'reviews'].includes(tabParam) ? tabParam : 'searches'
   )
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const [records, setRecords] = useState<ReviewRecord[]>([])
   const [searches, setSearches] = useState<any[]>([])
+  const [matrices, setMatrices] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
   const [userInfo, setUserInfo] = useState<any>(null)
   const [credits, setCredits] = useState<number>(0)
@@ -39,35 +40,31 @@ export function ProfilePage() {
       return
     }
     setUserInfo(getLocalUserInfo())
-    loadRecords()
-    loadSearches()
+    loadAllRecords()
     api.getCredits().then(data => {
       setCredits(data.credits)
     }).catch(err => console.error('获取额度失败:', err))
   }, [])
 
-  const loadRecords = async () => {
+  const loadAllRecords = async () => {
     setLoading(true)
     try {
-      const response = await api.getRecords()
-      if (response.success) {
-        setRecords(response.records.filter((r: any) => r.task_type !== 'comparison_matrix'))
+      const [recordsRes, searchesRes] = await Promise.all([
+        api.getRecords(),
+        api.getSearchHistory()
+      ])
+      if (recordsRes.success) {
+        const all = recordsRes.records
+        setRecords(all.filter((r: any) => r.task_type !== 'comparison_matrix'))
+        setMatrices(all.filter((r: any) => r.task_type === 'comparison_matrix'))
+      }
+      if (searchesRes.success) {
+        setSearches(searchesRes.searches)
       }
     } catch (err) {
       console.error('加载历史记录失败:', err)
     } finally {
       setLoading(false)
-    }
-  }
-
-  const loadSearches = async () => {
-    try {
-      const response = await api.getSearchHistory()
-      if (response.success) {
-        setSearches(response.searches)
-      }
-    } catch (err) {
-      console.error('加载搜索历史失败:', err)
     }
   }
 
@@ -84,6 +81,12 @@ export function ProfilePage() {
     localStorage.setItem('search_papers_has_searched', 'true')
     localStorage.setItem('search_papers_scroll_to_results', 'true')
     navigate('/search-papers')
+  }
+
+  const handleViewMatrix = (matrix: any) => {
+    if (matrix.task_id) {
+      navigate(`/comparison-matrix?task_id=${matrix.task_id}`)
+    }
   }
 
   const handleViewRecord = (record: ReviewRecord) => {
@@ -166,7 +169,7 @@ export function ProfilePage() {
       const result = await api.unlockRecordWithCredit(confirmRecordId)
       if (result.success) {
         // 刷新记录列表和额度
-        await loadRecords()
+        await loadAllRecords()
         const creditsData = await api.getCredits()
         setCredits(creditsData.credits)
 
@@ -257,6 +260,14 @@ export function ProfilePage() {
         {/* 统计信息 */}
         <div className="profile-stats">
           <div className="stat-card">
+            <div className="stat-number">{searches.length}</div>
+            <div className="stat-label">查询次数</div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-number">{matrices.length}</div>
+            <div className="stat-label">矩阵数量</div>
+          </div>
+          <div className="stat-card">
             <div className="stat-number">{records.length}</div>
             <div className="stat-label">综述数量</div>
           </div>
@@ -272,7 +283,13 @@ export function ProfilePage() {
             className={`profile-tab ${activeTab === 'searches' ? 'active' : ''}`}
             onClick={() => { setActiveTab('searches'); navigate('/profile?tab=searches', { replace: true }) }}
           >
-            🔍 我的查询
+            🔍 文献查询
+          </button>
+          <button
+            className={`profile-tab ${activeTab === 'matrices' ? 'active' : ''}`}
+            onClick={() => { setActiveTab('matrices'); navigate('/profile?tab=matrices', { replace: true }) }}
+          >
+            📊 对比矩阵
           </button>
           <button
             className={`profile-tab ${activeTab === 'reviews' ? 'active' : ''}`}
@@ -335,6 +352,60 @@ export function ProfilePage() {
                               {exportingId === record.id ? '导出中...' :
                                record.is_paid ? '导出 Word' :
                                '🔓 解锁导出'}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
+          ) : activeTab === 'matrices' ? (
+            <>
+              {loading ? (
+                <div className="history-loading">
+                  <div className="spinner"></div>
+                  <p>加载对比矩阵中...</p>
+                </div>
+              ) : matrices.length === 0 ? (
+                <div className="history-empty">
+                  <div className="empty-icon">📊</div>
+                  <p className="empty-title">还没有对比矩阵</p>
+                  <p className="empty-desc">选择文献，生成对比矩阵</p>
+                  <button className="empty-button" onClick={() => navigate('/comparison-matrix')}>
+                    去生成对比矩阵
+                  </button>
+                </div>
+              ) : (
+                <div className="records-list">
+                  {matrices.map((matrix) => (
+                    <div
+                      key={matrix.id}
+                      className={`record-item ${matrix.status === 'processing' || matrix.status === 'failed' ? 'record-item-disabled' : ''}`}
+                      onClick={() => handleViewMatrix(matrix)}
+                    >
+                      <div className="record-main">
+                        <div className="record-top">
+                          <h3 className="record-topic">{matrix.topic || '对比矩阵'}</h3>
+                          {matrix.status === 'success' ? (
+                            <span className="status-success">✓ 已完成</span>
+                          ) : matrix.status === 'failed' ? (
+                            <span className="status-failed">✗ 失败</span>
+                          ) : (
+                            <span className="status-processing">⏳ 进行中</span>
+                          )}
+                        </div>
+                        <div className="record-bottom">
+                          <div className="record-meta">
+                            <span className="record-time">{formatDate(matrix.created_at)}</span>
+                            {matrix.papers && (
+                              <span className="record-stats-inline">📄 {matrix.papers.length} 篇文献</span>
+                            )}
+                          </div>
+                          {matrix.status === 'success' && (
+                            <button className="export-button">
+                              查看矩阵
                             </button>
                           )}
                         </div>
@@ -416,7 +487,7 @@ export function ProfilePage() {
             setShowPayModal(false)
             setUnlockMode(false)
             // 刷新记录列表
-            await loadRecords()
+            await loadAllRecords()
             // 继续导出
             if (pendingExportRecordId !== null) {
               handleExportRecord(pendingExportRecordId, { stopPropagation: () => {} } as React.MouseEvent)
@@ -438,7 +509,7 @@ export function ProfilePage() {
             // 刷新用户状态和记录列表
             const creditsData = await api.getCredits()
             setCredits(creditsData.credits)
-            await loadRecords()
+            await loadAllRecords()
             // 如果有待导出的记录，继续导出
             if (pendingExportRecordId !== null) {
               handleExportRecord(pendingExportRecordId, { stopPropagation: () => {} } as React.MouseEvent)
