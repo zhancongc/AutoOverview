@@ -1,6 +1,6 @@
 /**
  * Terms & Conditions Page - Chinese Version
- * Legal terms for AutoOverview SaaS service
+ * Legal terms for 澹墨学术 SaaS service
  */
 import { Link } from 'react-router-dom'
 import './LegalPages.css'
@@ -17,7 +17,7 @@ export function TermsAndConditionsPageChinese() {
         <section className="legal-section">
           <h2>1. 协议接受</h2>
           <p>
-            访问或使用 AutoOverview（"服务"）即表示您同意受本用户协议的约束。
+            访问或使用 澹墨学术（"服务"）即表示您同意受本用户协议的约束。
             如果您不同意这些条款，请不要使用我们的服务。
           </p>
         </section>
@@ -25,7 +25,7 @@ export function TermsAndConditionsPageChinese() {
         <section className="legal-section">
           <h2>2. 服务描述</h2>
           <p>
-            AutoOverview 是一个 AI 驱动的文献综述生成服务，专为学术和研究目的而设计。
+            澹墨学术 是一个 AI 驱动的文献综述生成服务，专为学术和研究目的而设计。
             该服务根据用户提供的研究主题，自动搜索学术数据库并生成全面的文献综述。
           </p>
           <p><strong>主要功能：</strong></p>
@@ -54,8 +54,8 @@ export function TermsAndConditionsPageChinese() {
           <h2>4. 知识产权</h2>
           <p><strong>4.1 服务所有权</strong></p>
           <p>
-            AutoOverview 平台、技术和所有内容（不包括用户提交的主题）均归
-            AutoOverview 所有，并受知识产权法保护。
+            澹墨学术 平台、技术和所有内容（不包括用户提交的主题）均归
+            澹墨学术 所有，并受知识产权法保护。
           </p>
 
           <p><strong>4.2 生成内容</strong></p>
@@ -105,7 +105,7 @@ export function TermsAndConditionsPageChinese() {
 
           <p><strong>6.2 损害赔偿</strong></p>
           <p>
-            在任何情况下，AutoOverview 均不对任何间接、附带、特殊、后果性或
+            在任何情况下，澹墨学术 均不对任何间接、附带、特殊、后果性或
             惩罚性损害承担责任，包括但不限于利润、数据、使用、商誉或其他
             无形损失的损失。
           </p>
@@ -189,7 +189,7 @@ export function TermsAndConditionsPageChinese() {
         </section>
 
         <footer className="legal-footer">
-          <p>© 2026 AutoOverview. 保留所有权利。</p>
+          <p>© 2026 澹墨学术. 保留所有权利。</p>
         </footer>
       </div>
     </div>

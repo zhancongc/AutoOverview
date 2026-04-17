@@ -413,7 +413,7 @@ export function ReviewViewer({ content, papers = [], hasPurchased = false, onToc
         >
           {!hasPurchased && (
             <div className="review-watermark" onClick={onRequestUnlock} style={onRequestUnlock ? { cursor: 'pointer' } : undefined}>
-              <span className="watermark-text">AutoOverview 预览版</span>
+              <span className="watermark-text">澹墨学术 预览版</span>
               <span className="watermark-subtext">购买后解锁无水印 Word 导出</span>
             </div>
           )}

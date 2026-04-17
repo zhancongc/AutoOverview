@@ -1,6 +1,6 @@
 /**
  * Privacy Policy Page - Chinese Version
- * Privacy practices for AutoOverview SaaS service
+ * Privacy practices for 澹墨学术 SaaS service
  */
 import { Link } from 'react-router-dom'
 import './LegalPages.css'
@@ -17,7 +17,7 @@ export function PrivacyPolicyPageChinese() {
         <section className="legal-section">
           <h2>1. 引言</h2>
           <p>
-            AutoOverview（"我们"、"我们的"）尊重您的隐私，并致力于保护您的
+            澹墨学术（"我们"、"我们的"）尊重您的隐私，并致力于保护您的
             个人数据。本隐私政策解释了当您使用我们的 AI 驱动的文献综述生成服务时，
             我们如何收集、使用、披露和保护您的信息。
           </p>
@@ -248,7 +248,7 @@ export function PrivacyPolicyPageChinese() {
         </section>
 
         <footer className="legal-footer">
-          <p>© 2026 AutoOverview. 保留所有权利。</p>
+          <p>© 2026 澹墨学术. 保留所有权利。</p>
         </footer>
       </div>
     </div>

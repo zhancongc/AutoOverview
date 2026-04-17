@@ -1,6 +1,6 @@
 /**
  * Refund Policy Page - Chinese Version
- * Refund terms for AutoOverview SaaS service
+ * Refund terms for 澹墨学术 SaaS service
  */
 import { Link } from 'react-router-dom'
 import './LegalPages.css'
@@ -17,12 +17,12 @@ export function RefundPolicyPageChinese() {
         <section className="legal-section">
           <h2>1. 概述</h2>
           <p>
-            在 AutoOverview，我们努力提供高质量的 AI 驱动文献综述服务。
+            在 澹墨学术，我们努力提供高质量的 AI 驱动文献综述服务。
             本退款政策概述了可以退款的情况。
             请在购买前仔细阅读本政策。
           </p>
           <p className="policy-highlight">
-            <strong>重要提示：</strong>AutoOverview 是一种低频、必要的学术 SaaS 服务。
+            <strong>重要提示：</strong>澹墨学术 是一种低频、必要的学术 SaaS 服务。
             由于 AI 生成内容和即时服务交付的性质，退款处理方式
             与传统产品不同。
           </p>
@@ -250,7 +250,7 @@ export function RefundPolicyPageChinese() {
         </section>
 
         <footer className="legal-footer">
-          <p>© 2026 AutoOverview. 保留所有权利。</p>
+          <p>© 2026 澹墨学术. 保留所有权利。</p>
         </footer>
       </div>
     </div>
