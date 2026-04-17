@@ -221,11 +221,11 @@ DEFAULT_PLANS = [
         "sort_order": 3,
         "badge": "超值", "badge_en": "Best Value",
         "features": [
-            "12 个积分（6 篇综述 或 12 篇对比矩阵）",
+            "18 个积分（9 篇综述 或 18 篇对比矩阵）",
             "在线查看 + Word 导出",
             "参考文献包含真实文献 DOI 链接",
             "支持导出 BibTeX、RIS、Word 格式",
-            "约 ¥4.2/积分",
+            "约 ¥2.8/积分",
         ],
         "features_en": [
             "50 Credits (25 reviews or 50 comparison matrices)",
