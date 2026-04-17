@@ -258,22 +258,25 @@ export function ProfilePage() {
         </div>
 
         {/* 统计信息 */}
-        <div className="profile-stats">
-          <div className="stat-card">
-            <div className="stat-number">{searches.length}</div>
-            <div className="stat-label">查询次数</div>
+        <div className="profile-stats-inline">
+          <div className="stat-item">
+            <span className="stat-value">{searches.length}</span>
+            <span className="stat-label">查询次数</span>
           </div>
-          <div className="stat-card">
-            <div className="stat-number">{matrices.length}</div>
-            <div className="stat-label">矩阵数量</div>
+          <div className="stat-divider" />
+          <div className="stat-item">
+            <span className="stat-value">{matrices.length}</span>
+            <span className="stat-label">矩阵数量</span>
           </div>
-          <div className="stat-card">
-            <div className="stat-number">{records.length}</div>
-            <div className="stat-label">综述数量</div>
+          <div className="stat-divider" />
+          <div className="stat-item">
+            <span className="stat-value">{records.length}</span>
+            <span className="stat-label">综述数量</span>
           </div>
-          <div className="stat-card stat-card-paid">
-            <div className="stat-number">{credits}</div>
-            <div className="stat-label">积分</div>
+          <div className="stat-divider" />
+          <div className="stat-item stat-item-credits">
+            <span className="stat-value">{credits}</span>
+            <span className="stat-label">积分</span>
           </div>
         </div>
 

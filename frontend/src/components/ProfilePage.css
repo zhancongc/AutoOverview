@@ -219,6 +219,46 @@
   margin-bottom: 2.5rem;
 }
 
+.profile-stats-inline {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  border: 1px solid var(--border-gray);
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.stat-value {
+  font-size: 2.25rem;
+  font-weight: 700;
+  color: var(--academic-red);
+  line-height: 1;
+  font-family: 'Playfair Display', Georgia, serif;
+}
+
+.stat-label {
+  font-family: 'Source Sans Pro', sans-serif;
+  font-size: 0.9rem;
+  color: var(--text-gray);
+  font-weight: 600;
+}
+
+.stat-divider {
+  display: none;
+}
+
+.stat-item-credits .stat-value {
+  color: var(--academic-red);
+}
+
 .stat-card-free {
   border-left: 3px solid #74b9ff;
 }
@@ -257,13 +297,6 @@
   color: var(--academic-red);
   line-height: 1;
   margin-bottom: 0.5rem;
-}
-
-.stat-label {
-  font-family: 'Source Sans Pro', sans-serif;
-  font-size: 0.95rem;
-  color: var(--text-gray);
-  font-weight: 600;
 }
 
 .stat-sub {
@@ -646,6 +679,19 @@
     gap: 1rem;
   }
 
+  .profile-stats-inline {
+    grid-template-columns: repeat(2, 1fr);
+    padding: 1rem;
+  }
+
+  .stat-value {
+    font-size: 1.75rem;
+  }
+
+  .stat-label {
+    font-size: 0.75rem;
+  }
+
   .stat-card {
     padding: 1rem 0.5rem;
     border-radius: 14px;
@@ -653,10 +699,6 @@
 
   .stat-number {
     font-size: 2rem;
-  }
-
-  .stat-label {
-    font-size: 0.8rem;
   }
 
   .profile-history {
