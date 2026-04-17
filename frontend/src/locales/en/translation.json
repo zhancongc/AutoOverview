@@ -167,6 +167,14 @@
       "mla": "MLA",
       "gb_t_7714": "GB/T 7714"
     },
+    "citation_tooltip": {
+      "paper_unavailable": "Paper information unavailable",
+      "paper_missing": "The referenced paper information is missing or index out of range",
+      "view_original": "View Original",
+      "expand_abstract": "Expand Abstract",
+      "collapse_abstract": "Collapse Abstract",
+      "unknown_author": "Unknown Author"
+    },
     "export": {
       "title": "Export",
       "word": "Export to Word",

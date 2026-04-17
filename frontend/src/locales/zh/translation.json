@@ -192,6 +192,14 @@
       "mla": "MLA",
       "gb_t_7714": "GB/T 7714"
     },
+    "citation_tooltip": {
+      "paper_unavailable": "文献信息不可用",
+      "paper_missing": "该引用的文献信息缺失或索引超出范围",
+      "view_original": "查看原文",
+      "expand_abstract": "展开摘要",
+      "collapse_abstract": "收起摘要",
+      "unknown_author": "未知作者"
+    },
     "export": {
       "title": "导出",
       "word": "导出 Word",

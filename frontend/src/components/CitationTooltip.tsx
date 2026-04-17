@@ -22,6 +22,7 @@ interface CitationTooltipProps {
 }
 
 export function CitationTooltip({ index, paper, targetPosition, isFixed, onClose }: CitationTooltipProps) {
+  const { t } = useTranslation()
   const [abstractExpanded, setAbstractExpanded] = useState(false)
   const tooltipRef = useRef<HTMLDivElement>(null)
 
@@ -75,7 +76,7 @@ export function CitationTooltip({ index, paper, targetPosition, isFixed, onClose
     const links = []
 
     if (paper?.url) {
-      links.push({ name: '查看原文', url: paper.url })
+      links.push({ name: t('citation_tooltip.view_original', 'View Original'), url: paper.url })
     }
 
     if (paper?.doi) {
@@ -103,7 +104,7 @@ export function CitationTooltip({ index, paper, targetPosition, isFixed, onClose
       >
         <div className="citation-tooltip-header">
           <div className="citation-tooltip-title">
-            [{index}] 文献信息不可用
+            [{index}] {t('citation_tooltip.paper_unavailable', 'Paper information unavailable')}
           </div>
           {isFixed && (
             <button className="citation-tooltip-close" onClick={onClose}>
@@ -113,7 +114,7 @@ export function CitationTooltip({ index, paper, targetPosition, isFixed, onClose
         </div>
         <div className="citation-tooltip-meta">
           <p style={{ color: '#666', fontSize: '0.9rem' }}>
-            该引用的文献信息缺失或索引超出范围
+            {t('citation_tooltip.paper_missing', 'The referenced paper information is missing or index out of range')}
           </p>
         </div>
       </div>
@@ -153,7 +154,7 @@ export function CitationTooltip({ index, paper, targetPosition, isFixed, onClose
       {/* 元数据 */}
       <div className="citation-tooltip-meta">
         <div className="citation-tooltip-authors">
-          {paper.authors.length > 0 ? paper.authors.join(', ') : '未知作者'}
+          {paper.authors.length > 0 ? paper.authors.join(', ') : t('citation_tooltip.unknown_author', 'Unknown Author')}
         </div>
         <div className="citation-tooltip-venue">
           {paper.venue && <span>{paper.venue}</span>}
@@ -172,7 +173,7 @@ export function CitationTooltip({ index, paper, targetPosition, isFixed, onClose
             <span className="citation-tooltip-abstract-toggle-icon">
               {abstractExpanded ? '▼' : '▶'}
             </span>
-            {abstractExpanded ? '收起摘要' : '展开摘要'}
+            {abstractExpanded ? t('citation_tooltip.collapse_abstract', 'Collapse Abstract') : t('citation_tooltip.expand_abstract', 'Expand Abstract')}
           </button>
           {abstractExpanded && (
             <div className="citation-tooltip-abstract">{paper.abstract}</div>
