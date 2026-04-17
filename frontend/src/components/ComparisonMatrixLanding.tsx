@@ -186,7 +186,7 @@ export function ComparisonMatrixLanding() {
       await pollMatrixResult(matrixTaskId)
     } catch (err: any) {
       const errorMsg = err.response?.data?.detail || t('comparison_matrix_page.error')
-      if (errorMsg.toLowerCase().includes('credit') || errorMsg.toLowerCase().includes('额度')) {
+      if (errorMsg.toLowerCase().includes('credit') || errorMsg.toLowerCase().includes('积分')) {
         setPendingTopic(topic)
         setSearchError('')
         setCombinedPhase('idle')
@@ -257,7 +257,7 @@ export function ComparisonMatrixLanding() {
         navigate(`/generate?task_id=${response.data.task_id}`)
       } else {
         const msg = response.message || ''
-        if (msg.includes('credits') || msg.includes('额度')) {
+        if (msg.includes('credits') || msg.includes('积分')) {
           setShowPaymentModal('starter')
         } else {
           setSearchError(msg || 'Something went wrong')
@@ -402,7 +402,7 @@ export function ComparisonMatrixLanding() {
   const LoginModalComponent = isChineseSite ? LoginModal : LoginModalInternational
 
   const creditConfirmMessage = isChineseSite
-    ? `您有 ${credits} 个额度。\n生成文献综述将消耗 1 个额度，是否继续？`
+    ? `您有 ${credits} 个积分。\n生成文献综述将消耗 1 个积分，是否继续？`
     : `You have ${credits} credits.\nGenerate a Literature Summary will use 1 credit. Continue?`
   const creditConfirmBtn = isChineseSite ? '生成' : 'Generate'
   const creditCancelBtn = isChineseSite ? '取消' : 'Cancel'
@@ -495,14 +495,16 @@ export function ComparisonMatrixLanding() {
         <div className="sp-error">
           <div className="sp-error-card">
             <p className="sp-error-message">
-              You need credits to generate the comparison matrix. Purchase credits and then continue.
+              {isChineseSite
+                ? '您需要积分才能生成对比矩阵。购买积分后继续。'
+                : 'You need credits to generate the comparison matrix. Purchase credits and then continue.'}
             </p>
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
               <button
                 className="sp-error-retry"
                 onClick={() => setShowPaymentModal('starter')}
               >
-                Purchase Credits
+                {isChineseSite ? '购买积分' : 'Purchase Credits'}
               </button>
               <button
                 className="sp-error-retry"
@@ -514,7 +516,7 @@ export function ComparisonMatrixLanding() {
                   handleGenerateAll()
                 }}
               >
-                Continue Generation
+                {isChineseSite ? '继续生成' : 'Continue Generation'}
               </button>
             </div>
           </div>
@@ -657,7 +659,7 @@ export function ComparisonMatrixLanding() {
       {/* Credit Confirm Modal */}
       {showCreditConfirm && isChineseSite && (
         <ConfirmModal
-          title="确认扣除额度"
+          title="确认扣除积分"
           message={creditConfirmMessage}
           confirmText={creditConfirmBtn}
           cancelText={creditCancelBtn}

@@ -150,7 +150,7 @@ export function PaymentModal({ onClose, onPaymentSuccess, planType, recordId }: 
           <p className="payment-modal-price">
             <span className="amount">¥{plan.price}</span>
           </p>
-          <p className="payment-modal-credits">{plan.credits} 篇综述生成额度</p>
+          <p className="payment-modal-credits">{plan.credits} 篇综述生成积分</p>
           <ul className="payment-modal-features">
             {plan.features.map((f: string, i: number) => (
               <li key={i}>✓ {f}</li>
@@ -213,7 +213,7 @@ export function PaymentModal({ onClose, onPaymentSuccess, planType, recordId }: 
             <div className="payment-modal-success">
               <span className="payment-success-icon">✓</span>
               <h3>支付成功</h3>
-              <p>{plan.type === 'unlock' ? '已解锁该综述 Word 导出权限' : `已获得 ${plan.credits} 篇综述生成额度`}</p>
+              <p>{plan.type === 'unlock' ? '已解锁该综述 Word 导出权限' : `已获得 ${plan.credits} 篇综述生成积分`}</p>
               <button className="payment-modal-btn" onClick={handleClose}>完成</button>
             </div>
           )}

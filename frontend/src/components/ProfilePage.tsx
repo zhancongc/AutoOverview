@@ -43,7 +43,7 @@ export function ProfilePage() {
     loadAllRecords()
     api.getCredits().then(data => {
       setCredits(data.credits)
-    }).catch(err => console.error('获取额度失败:', err))
+    }).catch(err => console.error('获取积分失败:', err))
   }, [])
 
   const loadAllRecords = async () => {
@@ -122,15 +122,15 @@ export function ProfilePage() {
       return
     }
 
-    // 免费生成的综述，检查是否有付费额度
+    // 免费生成的综述，检查是否有付费积分
     if (credits > 0) {
-      // 有额度，弹出确认框
+      // 有积分，弹出确认框
       setConfirmRecordId(id)
       setShowCreditConfirmModal(true)
       return
     }
 
-    // 没有额度，直接弹出支付弹窗
+    // 没有积分，直接弹出支付弹窗
     setUnlockMode(true)
     setPendingExportRecordId(id)
     setShowPayModal(true)
@@ -168,7 +168,7 @@ export function ProfilePage() {
     try {
       const result = await api.unlockRecordWithCredit(confirmRecordId)
       if (result.success) {
-        // 刷新记录列表和额度
+        // 刷新记录列表和积分
         await loadAllRecords()
         const creditsData = await api.getCredits()
         setCredits(creditsData.credits)
@@ -523,7 +523,7 @@ export function ProfilePage() {
         />
       )}
 
-      {/* 使用额度确认弹窗 */}
+      {/* 使用积分确认弹窗 */}
       {showCreditConfirmModal && confirmRecordId !== null && (
         <ConfirmModal
           title="使用积分解锁"

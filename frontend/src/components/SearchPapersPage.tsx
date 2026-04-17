@@ -363,7 +363,7 @@ export function SearchPapersPage() {
         navigate(`/generate?task_id=${response.data.task_id}`)
       } else {
         const msg = response.message || ''
-        if (msg.includes('credits') || msg.includes('额度')) {
+        if (msg.includes('credits') || msg.includes('积分')) {
           setShowPaymentModal('starter')
         } else {
           setError(msg || t('search_papers.error.generic'))
@@ -421,7 +421,7 @@ export function SearchPapersPage() {
       }
     } catch (err: any) {
       const detail = err.response?.data?.detail || ''
-      if (detail.toLowerCase().includes('credit') || detail.toLowerCase().includes('额度')) {
+      if (detail.toLowerCase().includes('credit') || detail.toLowerCase().includes('积分')) {
         setShowPaymentModal('starter')
       } else {
         setError(detail || t('search_papers.error.generic'))
@@ -863,8 +863,8 @@ export function SearchPapersPage() {
       {/* Credit Confirm Modal */}
       {showCreditConfirm && isChineseSite && (
         <ConfirmModal
-          title="确认扣除额度"
-          message={`您有 ${credits} 个额度。\n此操作将消耗 1 个额度，是否继续？`}
+          title="确认扣除积分"
+          message={`您有 ${credits} 个积分。\n此操作将消耗 1 个积分，是否继续？`}
           confirmText={showCreditConfirm === 'review' ? '生成综述' : '生成矩阵'}
           cancelText="取消"
           onConfirm={() => {

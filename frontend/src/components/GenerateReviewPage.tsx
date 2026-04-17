@@ -173,7 +173,7 @@ export function GenerateReviewPage() {
       })
 
       if (!submitResponse.success || !submitResponse.data?.task_id) {
-        if (submitResponse.message?.includes('额度已用完') || submitResponse.message?.includes('credits')) {
+        if (submitResponse.message?.includes('积分已用完') || submitResponse.message?.includes('credits')) {
           setError(submitResponse.message)
           setShowPaymentModal('single')
         } else {

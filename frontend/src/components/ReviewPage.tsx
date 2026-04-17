@@ -76,12 +76,12 @@ export function ReviewPage() {
   // 判断是否可以使用引用格式切换（有 taskId 或 recordId）
   const canSwitchFormat = !!(taskId || state?.recordId || recordIdParam || taskData?.recordId)
 
-  // 加载用户额度和检测语言
+  // 加载用户积分和检测语言
   useEffect(() => {
     api.getCredits().then(data => {
       setCredits(data.credits)
       setFreeCredits(data.free_credits)
-    }).catch(err => console.error('获取额度失败:', err))
+    }).catch(err => console.error('获取积分失败:', err))
 
     // Detect language from i18n or browser
     const storedLang = localStorage.getItem('i18nextLng')
@@ -521,7 +521,7 @@ export function ReviewPage() {
     try {
       const result = await api.unlockRecordWithCredit(reviewData.recordId)
       if (result.success) {
-        // 刷新额度
+        // 刷新积分
         const creditsData = await api.getCredits()
         setCredits(creditsData.credits)
         setFreeCredits(creditsData.free_credits)
@@ -562,14 +562,14 @@ export function ReviewPage() {
       return
     }
 
-    // 免费生成的综述，检查是否有付费额度
+    // 免费生成的综述，检查是否有付费积分
     if (credits > 0) {
-      // 有额度，弹出确认框
+      // 有积分，弹出确认框
       setShowCreditConfirmModal(true)
       return
     }
 
-    // 没有额度，弹出单次解锁支付弹窗
+    // 没有积分，弹出单次解锁支付弹窗
     setUnlockMode(true)
     setShowPayModal(true)
   }
@@ -847,7 +847,7 @@ export function ReviewPage() {
         </>
       )}
 
-      {/* 使用额度确认弹窗 */}
+      {/* 使用积分确认弹窗 */}
       {showCreditConfirmModal && (
         <ConfirmModal
           title={t('review.export.confirm_title')}

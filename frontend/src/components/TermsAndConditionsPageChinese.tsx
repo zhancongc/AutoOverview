@@ -33,7 +33,7 @@ export function TermsAndConditionsPageChinese() {
             <li>从学术数据库自动搜索论文</li>
             <li>AI 生成带有正确引用的文献综述</li>
             <li>多种格式的导出功能</li>
-            <li>基于额度的使用系统</li>
+            <li>基于积分的使用系统</li>
           </ul>
         </section>
 
@@ -43,7 +43,7 @@ export function TermsAndConditionsPageChinese() {
           <ul>
             <li>注册时提供准确完整的信息</li>
             <li>仅将服务用于合法的学术目的</li>
-            <li>不试图规避使用限制或额度限制</li>
+            <li>不试图规避使用限制或积分限制</li>
             <li>不与他人共享您的账户凭证</li>
             <li>在提交或发表前验证生成的内容</li>
             <li>根据学术标准正确引用 AI 生成的内容</li>
@@ -72,19 +72,19 @@ export function TermsAndConditionsPageChinese() {
         </section>
 
         <section className="legal-section">
-          <h2>5. 支付与额度</h2>
-          <p><strong>5.1 基于额度的系统</strong></p>
+          <h2>5. 支付与积分</h2>
+          <p><strong>5.1 基于积分的系统</strong></p>
           <p>
-            本服务采用基于额度的系统。每生成一篇文献综述消耗一个额度。
-            额度可以通过各种套餐购买（单次、学期、学年）。
+            本服务采用基于积分的系统。每生成一篇文献综述消耗一个积分。
+            积分可以通过各种套餐购买（单次、学期、学年）。
           </p>
 
           <p><strong>5.2 支付条款</strong></p>
           <ul>
             <li>支付通过支付宝安全处理（中国用户）</li>
             <li>所有价格以人民币显示</li>
-            <li>已使用的额度不予退款</li>
-            <li>未使用的额度根据所购买套餐条款过期</li>
+            <li>已使用的积分不予退款</li>
+            <li>未使用的积分根据所购买套餐条款过期</li>
           </ul>
 
           <p><strong>5.3 服务可用性</strong></p>
@@ -139,7 +139,7 @@ export function TermsAndConditionsPageChinese() {
 
           <p><strong>8.2 退款</strong></p>
           <p>
-            除适用法律要求外，暂停或终止的账户无权获得未使用额度的退款。
+            除适用法律要求外，暂停或终止的账户无权获得未使用积分的退款。
             有关详情，请参阅我们的退款政策。
           </p>
         </section>

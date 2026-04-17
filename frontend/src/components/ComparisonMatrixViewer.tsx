@@ -156,7 +156,7 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
         navigate(`/generate?task_id=${response.data.task_id}`)
       } else {
         const msg = response.message || ''
-        if (msg.includes('credits') || msg.includes('额度')) {
+        if (msg.includes('credits') || msg.includes('积分')) {
           setShowPaymentModal('starter')
         } else {
           alert(msg || t('comparison_matrix_page.error'))
@@ -229,7 +229,7 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
   const LoginModalComponent = isChineseSite ? LoginModal : LoginModalInternational
 
   const creditConfirmMessage = isChineseSite
-    ? `您有 ${credits} 个额度。\n生成文献综述将消耗 1 个额度，是否继续？`
+    ? `您有 ${credits} 个积分。\n生成文献综述将消耗 1 个积分，是否继续？`
     : `You have ${credits} credits.\nGenerate a Literature Summary will use 1 credit. Continue?`
   const creditConfirmBtn = isChineseSite ? '生成' : 'Generate'
   const creditCancelBtn = isChineseSite ? '取消' : 'Cancel'
@@ -239,7 +239,7 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
       {showLoginModal && <LoginModalComponent onClose={() => setShowLoginModal(false)} onLoginSuccess={handleLoginSuccess} />}
       {showCreditConfirm && isChineseSite && (
         <ConfirmModal
-          title="确认扣除额度"
+          title="确认扣除积分"
           message={creditConfirmMessage}
           confirmText={creditConfirmBtn}
           cancelText={creditCancelBtn}

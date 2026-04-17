@@ -61,7 +61,7 @@ export function PrivacyPolicyPageChinese() {
           <h3>3.1 服务提供</h3>
           <ul>
             <li>根据您的研究主题处理和生成文献综述</li>
-            <li>管理您的账户和额度</li>
+            <li>管理您的账户和积分</li>
             <li>提供客户支持</li>
             <li>发送交易电子邮件（收据、使用通知）</li>
           </ul>
@@ -187,7 +187,7 @@ export function PrivacyPolicyPageChinese() {
           </p>
           <ul>
             <li>您的账户将立即被标记为非活动状态</li>
-            <li>所有对您的综述和额度的访问将被撤销</li>
+            <li>所有对您的综述和积分的访问将被撤销</li>
             <li>您的数据将在 30 天内安排永久删除</li>
             <li>您可以通过联系支持在 30 天内请求重新激活账户</li>
           </ul>

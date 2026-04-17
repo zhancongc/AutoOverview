@@ -260,7 +260,7 @@ export const api = {
     return response.data;
   },
 
-  // 使用额度解锁综述（扣除1个付费额度）
+  // 使用积分解锁综述（扣除1个付费积分）
   async unlockRecordWithCredit(recordId: number): Promise<{ success: boolean; message: string }> {
     const token = localStorage.getItem('auth_token');
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
