@@ -195,7 +195,7 @@ DEFAULT_PLANS = [
         "name": "标准包", "name_en": "Semester Pro",
         "price": 19.8, "price_usd": 24.99,
         "original_price": 69.8, "original_price_usd": 39.99,
-        "credits": 20,
+        "credits": 18,
         "credits_cn": 6,
         "recommended": True,
         "sort_order": 2,
@@ -208,11 +208,11 @@ DEFAULT_PLANS = [
             "约 ¥3.3/积分",
         ],
         "features_en": [
-            "20 Credits (10 reviews or 20 comparison matrices)",
+            "18 Credits (9 reviews or 18 comparison matrices)",
             "Online viewing + Word export",
             "DOI-verifiable citations",
             "Export BibTeX, XML, RIS formats",
-            "~$1.25/Credit",
+            "~$1.39/Credit",
         ]
     },
     {

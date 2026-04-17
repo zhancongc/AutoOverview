@@ -221,7 +221,7 @@ PADDLE_PRICING = {
     "semester": {
         "name": "Semester Pro",
         "price": 27.99,
-        "credits": 20,
+        "credits": 18,
         "currency": "USD",
     },
     "yearly": {

@@ -186,7 +186,7 @@ def test_add_credits_after_payment():
     print("\n[测试] 支付成功后增加积分...")
 
     user = MockUser(meta_data={"review_credits": 2, "free_credits": 0})
-    credits_to_add = 20  # semester plan
+    credits_to_add = 18  # semester plan
 
     current = user.get_meta("review_credits", 0)
     user.set_meta("review_credits", current + credits_to_add)
