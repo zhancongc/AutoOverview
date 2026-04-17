@@ -157,13 +157,13 @@
       "pricing": "定价",
       "search_papers": "搜索文献",
       "comparison_matrix": "对比矩阵",
-      "profile": "我的综述",
+      "profile": "个人中心",
       "login_register": "登录 / 注册",
       "logout": "退出登录"
     },
     "progress": {
       "hint": "您可以离开此页面，综述会在后台继续生成。",
-      "view_profile": "查看我的综述 →",
+      "view_profile": "查看个人中心 →",
       "restoring": "正在恢复任务状态...",
       "processing": "正在处理..."
     },
@@ -248,7 +248,7 @@
     "logo": "AutoOverview",
     "home": "首页",
     "pricing": "定价",
-    "profile": "我的综述",
+    "profile": "个人中心",
     "login": "登录 / 注册",
     "logout": "退出登录"
   },
@@ -455,6 +455,6 @@
     "estimated_remaining": "预计剩余",
     "minutes": "分钟",
     "completed": "生成完成，即将跳转...",
-    "estimate": "综述生成通常需要 3-5 分钟，您可以关闭此页面，稍后在「我的综述」中查看结果"
+    "estimate": "综述生成通常需要 3-5 分钟，您可以关闭此页面，稍后在「个人中心」中查看结果"
   }
 }
