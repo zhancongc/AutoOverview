@@ -7,7 +7,7 @@
 
 set -e
 
-DOMAIN="autooverview.snappicker.com"
+DOMAIN="danmo.tech"
 NGINX_CONF="/etc/nginx/sites-available/autooverview"
 CERTBOT_EMAIL="service@snappicker.com"
 
@@ -60,7 +60,7 @@ if grep -q "server_name ${DOMAIN};" "$NGINX_CONF"; then
     log_success "nginx 配置域名正确: ${DOMAIN}"
 else
     log_error "nginx 配置中未找到域名 ${DOMAIN}"
-    log_error "请检查 ${NGINX_CONF}"
+    log_error "请检查 ${NGINX_CONF} 中的 server_name 是否为 ${DOMAIN}"
     exit 1
 fi
 

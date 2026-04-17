@@ -11,6 +11,7 @@ import { LoginModal } from './LoginModal'
 import { PayPalPaymentModal } from './PayPalPaymentModal'
 import { ConfirmModalInternational } from './ConfirmModalInternational'
 import { ConfirmModal } from './ConfirmModal'
+import { ExportFormatModal, ExportFormat } from './ExportFormatModal'
 import './SimpleApp.css'
 import './SearchPapersPage.css'
 
@@ -68,6 +69,9 @@ export function SearchPapersPage() {
   const [credits, setCredits] = useState<number>(0)
   const [showPaymentModal, setShowPaymentModal] = useState<string | false>(false)
   const [showCreditConfirm, setShowCreditConfirm] = useState<'review' | 'matrix' | false>(false)
+  const [dailyLimit, setDailyLimit] = useState<{ limit: number; used: number; remaining: number } | null>(null)
+  const [showExportModal, setShowExportModal] = useState(false)
+  const [exportFormat, setExportFormat] = useState<ExportFormat>('bibtex')
   const statusIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   // SEO meta tags
@@ -87,6 +91,7 @@ export function SearchPapersPage() {
     setIsChineseSite(!document.documentElement.classList.contains('intl'))
     if (checkLoggedIn()) {
       api.getCredits().then(data => setCredits(data.credits)).catch(() => {})
+      api.getSearchDailyLimit().then(data => setDailyLimit(data)).catch(() => {})
     }
     return () => {
       document.title = 'AutoOverview - AI Literature Review Generator'
@@ -221,11 +226,16 @@ export function SearchPapersPage() {
         localStorage.setItem('search_papers_statistics', JSON.stringify(stats))
         localStorage.setItem('search_papers_task_id', taskId || '')
         localStorage.setItem('search_papers_has_searched', 'true')
+        // 刷新每日搜索限额
+        api.getSearchDailyLimit().then(data => setDailyLimit(data)).catch(() => {})
       } else {
         setError(response.message || t('search_papers.error.generic'))
       }
     } catch (err: any) {
-      if (err.code === 'ECONNABORTED' || err.message?.includes('timeout')) {
+      if (err.response?.status === 429) {
+        setError(t('search_papers.input.limit_exceeded', { limit: dailyLimit?.limit ?? 5 }))
+        api.getSearchDailyLimit().then(data => setDailyLimit(data)).catch(() => {})
+      } else if (err.code === 'ECONNABORTED' || err.message?.includes('timeout')) {
         setError(t('search_papers.error.timeout'))
       } else {
         setError(t('search_papers.error.generic'))
@@ -246,76 +256,105 @@ export function SearchPapersPage() {
 
     setIsExporting(true)
     try {
-      const { Document, Packer, Paragraph, TextRun, AlignmentType, HeadingLevel } = await import('docx')
+      const safeName = topic.replace(/[\/\\:]/g, '-').substring(0, 50)
       const { saveAs } = await import('file-saver')
 
-      const children: any[] = []
+      if (exportFormat === 'bibtex') {
+        const content = generateBibTeX(sortedPapers)
+        const blob = new Blob([content], { type: 'application/x-bibtex;charset=utf-8' })
+        saveAs(blob, `${safeName}.bib`)
+      } else if (exportFormat === 'ris') {
+        const content = generateRIS(sortedPapers)
+        const blob = new Blob([content], { type: 'application/x-research-info-systems;charset=utf-8' })
+        saveAs(blob, `${safeName}.ris`)
+      } else {
+        const { Document, Packer, Paragraph, TextRun, AlignmentType, HeadingLevel } = await import('docx')
+        const children: any[] = []
 
-      // 标题
-      children.push(new Paragraph({
-        text: topic,
-        heading: HeadingLevel.TITLE,
-        alignment: AlignmentType.CENTER,
-      }))
-
-      // 统计
-      children.push(new Paragraph({
-        children: [new TextRun({ text: `${t('search_papers.results.found')} ${papers.length} ${t('search_papers.paper.citations')}`, bold: true })],
-        alignment: AlignmentType.CENTER,
-        spacing: { after: 400 },
-      }))
-
-      // 文献列表
-      for (let i = 0; i < sortedPapers.length; i++) {
-        const paper = sortedPapers[i]
-
-        // [序号] 标题
         children.push(new Paragraph({
-          children: [new TextRun({ text: `[${i + 1}] ${paper.title}`, bold: true })],
-          spacing: { before: 200 },
+          text: topic,
+          heading: HeadingLevel.TITLE,
+          alignment: AlignmentType.CENTER,
         }))
 
-        // 作者
-        if (paper.authors && paper.authors.length > 0) {
-          const authorText = paper.authors.slice(0, 5).join(', ') + (paper.authors.length > 5 ? ' et al.' : '')
+        children.push(new Paragraph({
+          children: [new TextRun({ text: `${t('search_papers.results.found')} ${papers.length} ${t('search_papers.paper.citations')}`, bold: true })],
+          alignment: AlignmentType.CENTER,
+          spacing: { after: 400 },
+        }))
+
+        for (let i = 0; i < sortedPapers.length; i++) {
+          const paper = sortedPapers[i]
           children.push(new Paragraph({
-            children: [new TextRun({ text: `    Authors: ${authorText}`, size: 20 })],
+            children: [new TextRun({ text: `[${i + 1}] ${paper.title}`, bold: true })],
+            spacing: { before: 200 },
           }))
+          if (paper.authors && paper.authors.length > 0) {
+            const authorText = paper.authors.slice(0, 5).join(', ') + (paper.authors.length > 5 ? ' et al.' : '')
+            children.push(new Paragraph({
+              children: [new TextRun({ text: `    Authors: ${authorText}`, size: 20 })],
+            }))
+          }
+          const metaParts: string[] = []
+          if (paper.year) metaParts.push(`Year: ${paper.year}`)
+          if (paper.cited_by_count > 0) metaParts.push(`Citations: ${paper.cited_by_count}`)
+          if (paper.doi) metaParts.push(`DOI: ${paper.doi}`)
+          if (metaParts.length > 0) {
+            children.push(new Paragraph({
+              children: [new TextRun({ text: `    ${metaParts.join(' | ')}`, size: 20 })],
+            }))
+          }
+          if (paper.abstract) {
+            const abstractText = paper.abstract.length > 500 ? paper.abstract.substring(0, 500) + '...' : paper.abstract
+            children.push(new Paragraph({
+              children: [new TextRun({ text: `    Abstract: ${abstractText}`, size: 20, italics: true })],
+            }))
+          }
         }
 
-        // 元信息
-        const metaParts: string[] = []
-        if (paper.year) metaParts.push(`Year: ${paper.year}`)
-        if (paper.cited_by_count > 0) metaParts.push(`Citations: ${paper.cited_by_count}`)
-        if (paper.doi) metaParts.push(`DOI: ${paper.doi}`)
-        if (metaParts.length > 0) {
-          children.push(new Paragraph({
-            children: [new TextRun({ text: `    ${metaParts.join(' | ')}`, size: 20 })],
-          }))
-        }
-
-        // 摘要
-        if (paper.abstract) {
-          const abstractText = paper.abstract.length > 500 ? paper.abstract.substring(0, 500) + '...' : paper.abstract
-          children.push(new Paragraph({
-            children: [new TextRun({ text: `    Abstract: ${abstractText}`, size: 20, italics: true })],
-          }))
-        }
+        const doc = new Document({ sections: [{ children }] })
+        const blob = await Packer.toBlob(doc)
+        saveAs(blob, `${safeName}.docx`)
       }
-
-      const doc = new Document({
-        sections: [{ children }],
-      })
-
-      const blob = await Packer.toBlob(doc)
-      const safeName = topic.replace(/[\/\\:]/g, '-').substring(0, 50)
-      saveAs(blob, `${safeName}_papers.docx`)
     } catch (err) {
       console.error('Export failed:', err)
       setError(t('search_papers.error.generic'))
     } finally {
       setIsExporting(false)
     }
+  }
+
+  const generateBibTeX = (paperList: Paper[]): string => {
+    return paperList.map((paper, i) => {
+      const key = paper.authors?.[0]?.split(' ').pop()?.toLowerCase() || 'unknown'
+        + (paper.year || '') + '_' + (i + 1)
+      const authors = paper.authors?.map(a => a).join(' and ') || 'Unknown'
+      let entry = `@article{${key},\n`
+      entry += `  title={${paper.title}},\n`
+      entry += `  author={${authors}},\n`
+      if (paper.year) entry += `  year={${paper.year}},\n`
+      if (paper.doi) entry += `  doi={${paper.doi}},\n`
+      if (paper.abstract) entry += `  abstract={${paper.abstract}},\n`
+      entry += `}`
+      return entry
+    }).join('\n\n')
+  }
+
+  const generateRIS = (paperList: Paper[]): string => {
+    return paperList.map(paper => {
+      let ris = `TY  - JOUR\n`
+      ris += `TI  - ${paper.title}\n`
+      if (paper.authors) {
+        paper.authors.forEach(a => {
+          ris += `AU  - ${a}\n`
+        })
+      }
+      if (paper.year) ris += `PY  - ${paper.year}\n`
+      if (paper.doi) ris += `DO  - ${paper.doi}\n`
+      if (paper.abstract) ris += `AB  - ${paper.abstract}\n`
+      ris += `ER  - \n`
+      return ris
+    }).join('\n')
   }
 
   const handleGenerateFromSearch = async () => {
@@ -447,6 +486,8 @@ export function SearchPapersPage() {
   const handleLoginSuccess = useCallback(() => {
     setShowLoginModal(false)
     setLoggedIn(true)
+    // 刷新每日搜索限额
+    api.getSearchDailyLimit().then(data => setDailyLimit(data)).catch(() => {})
     // 如果有待搜索的主题，自动继续搜索
     if (pendingSearchTopic) {
       setTopic(pendingSearchTopic)
@@ -472,11 +513,18 @@ export function SearchPapersPage() {
               setPapers(response.data.papers || [])
               setStatistics(response.data.statistics || null)
               setSearchTaskId(response.data.task_id || null)
+              // 刷新每日搜索限额
+              api.getSearchDailyLimit().then(data => setDailyLimit(data)).catch(() => {})
             } else {
               setError(response.message || 'Search failed')
             }
           } catch (err: any) {
-            setError(err.response?.data?.detail || t('search_papers.error.generic'))
+            if (err.response?.status === 429) {
+              setError(t('search_papers.input.limit_exceeded', { limit: 5 }))
+              api.getSearchDailyLimit().then(data => setDailyLimit(data)).catch(() => {})
+            } else {
+              setError(err.response?.data?.detail || t('search_papers.error.generic'))
+            }
           } finally {
             setIsLoading(false)
           }
@@ -583,11 +631,19 @@ export function SearchPapersPage() {
             <button
               className="sp-search-btn"
               onClick={handleSearch}
-              disabled={isLoading || !topic.trim()}
+              disabled={isLoading || !topic.trim() || (dailyLimit !== null && dailyLimit.remaining <= 0)}
             >
               {isLoading ? t('search_papers.input.button_searching') : t('search_papers.input.button')}
             </button>
           </div>
+          {loggedIn && dailyLimit && (
+            <p className={`sp-search-limit ${dailyLimit.remaining === 0 ? 'zero' : ''}`}>
+              {dailyLimit.remaining > 0
+                ? t('search_papers.input.limit_info', { remaining: dailyLimit.remaining })
+                : t('search_papers.input.limit_exceeded', { limit: dailyLimit.limit })
+              }
+            </p>
+          )}
           <p className="sp-search-helper">{t('search_papers.input.helper')}</p>
           {loggedIn && (
             <div className="sp-search-history-link">
@@ -738,7 +794,7 @@ export function SearchPapersPage() {
               })()}
               <button
                 className="sp-btn-export"
-                onClick={handleExportPapers}
+                onClick={() => setShowExportModal(true)}
                 disabled={isExporting}
               >
                 {isExporting ? t('search_papers.results.exporting') : t('search_papers.results.export')}
@@ -857,6 +913,19 @@ export function SearchPapersPage() {
         <LoginModal
           onClose={() => setShowLoginModal(false)}
           onLoginSuccess={handleLoginSuccess}
+        />
+      )}
+
+      {/* Export Format Modal */}
+      {showExportModal && (
+        <ExportFormatModal
+          selectedFormat={exportFormat}
+          onSelectFormat={setExportFormat}
+          onConfirm={() => {
+            setShowExportModal(false)
+            handleExportPapers()
+          }}
+          onCancel={() => setShowExportModal(false)}
         />
       )}
 

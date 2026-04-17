@@ -120,6 +120,30 @@ class ReviewTaskExecutor:
             )
             stage_recorder.update_task_status(task_id, status="processing", current_stage="文献搜索完成")
 
+            # 通知前端：文献搜索完成，附带文献列表
+            papers_preview = []
+            for p in all_papers[:30]:
+                papers_preview.append({
+                    "id": p.get("id", ""),
+                    "title": p.get("title", ""),
+                    "authors": p.get("authors", []),
+                    "year": p.get("year"),
+                    "cited_by_count": p.get("cited_by_count", 0),
+                    "abstract": (p.get("abstract") or "")[:300],
+                    "doi": p.get("doi"),
+                    "is_english": p.get("is_english", True),
+                })
+            task_manager.update_task_status(
+                task_id,
+                TaskStatus.PROCESSING,
+                progress={
+                    "step": "papers_found",
+                    "message": get_progress_message("papers_found", language, papers_count=len(all_papers)),
+                    "papers": papers_preview,
+                    "papers_count": len(all_papers),
+                }
+            )
+
             # =====================================================
             # 步骤2: SmartReviewGeneratorFinal 生成综述
             # =====================================================

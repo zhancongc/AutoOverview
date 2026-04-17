@@ -138,6 +138,38 @@ def refund_credit(user_id: int, db_session: Session, cost: int = 2) -> None:
     db_session.commit()
 
 
+def check_daily_search_limit(user_id: int, db_session: Session) -> tuple[bool, int, int]:
+    """
+    检查并递增用户每日搜索次数。
+    返回 (是否允许, 剩余次数, 每日上限)。
+    """
+    from authkit.models import User
+    from datetime import date
+    from config import Config
+
+    limit = Config.DAILY_SEARCH_LIMIT
+    user = db_session.query(User).filter(User.id == user_id).first()
+    if not user:
+        return True, limit, limit
+
+    today_str = date.today().isoformat()
+    stored_date = user.get_meta("search_count_date", "")
+    stored_count = user.get_meta("search_count", 0)
+
+    if stored_date != today_str:
+        stored_count = 0
+
+    if stored_count >= limit:
+        return False, 0, limit
+
+    new_count = stored_count + 1
+    user.set_meta("search_count_date", today_str)
+    user.set_meta("search_count", new_count)
+    db_session.commit()
+
+    return True, limit - new_count, limit
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """应用生命周期管理"""
@@ -1060,7 +1092,38 @@ async def get_credits(user_id: Optional[int] = Depends(get_current_user_id)):
         auth_db.close()
 
 
-@app.get("/api/papers/statistics")
+@app.get("/api/search/daily-limit")
+async def get_search_daily_limit(user_id: Optional[int] = Depends(get_current_user_id)):
+    """获取当前用户每日搜索限制状态"""
+    from config import Config
+    limit = Config.DAILY_SEARCH_LIMIT
+
+    if not user_id:
+        return {"limit": limit, "used": 0, "remaining": limit}
+
+    from authkit.database import SessionLocal as AuthSessionLocal
+    if not AuthSessionLocal:
+        return {"limit": limit, "used": 0, "remaining": limit}
+
+    auth_db = AuthSessionLocal()
+    try:
+        from authkit.models import User
+        from datetime import date
+        user = auth_db.query(User).filter(User.id == user_id).first()
+        if not user:
+            return {"limit": limit, "used": 0, "remaining": limit}
+
+        today_str = date.today().isoformat()
+        stored_date = user.get_meta("search_count_date", "")
+        used = user.get_meta("search_count", 0) if stored_date == today_str else 0
+
+        return {
+            "limit": limit,
+            "used": used,
+            "remaining": max(0, limit - used),
+        }
+    finally:
+        auth_db.close()
 async def get_papers_statistics():
     """获取论文库统计信息"""
     try:
@@ -1739,6 +1802,20 @@ async def search_papers_only(
     """
     if not user_id:
         raise HTTPException(status_code=401, detail="请先登录")
+
+    # 每日搜索次数限制检查
+    from authkit.database import SessionLocal as AuthSessionLocal
+    if AuthSessionLocal:
+        auth_db = AuthSessionLocal()
+        try:
+            allowed, remaining, limit = check_daily_search_limit(user_id, auth_db)
+            if not allowed:
+                raise HTTPException(
+                    status_code=429,
+                    detail=f"今日搜索次数已达上限（{limit} 次），请明天再试"
+                )
+        finally:
+            auth_db.close()
 
     try:
         executor = ReviewTaskExecutor()

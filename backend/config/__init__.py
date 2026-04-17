@@ -30,6 +30,9 @@ class Config:
     # 每次API调用返回的论文数量上限
     PAPERS_PER_PAGE = int(os.getenv("PAPERS_PER_PAGE", "100"))
 
+    # 注册用户每日文献搜索次数限制
+    DAILY_SEARCH_LIMIT = int(os.getenv("DAILY_SEARCH_LIMIT", "5"))
+
     # ==================== API 速率限制 ====================
     # AMiner API 每秒调用次数限制
     AMINER_RATE_LIMIT = float(os.getenv("AMINER_RATE_LIMIT", "1.0"))

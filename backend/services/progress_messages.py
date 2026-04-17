@@ -17,6 +17,10 @@ PROGRESS_MESSAGES = {
         "zh": "正在搜索文献...",
         "en": "Searching papers..."
     },
+    "papers_found": {
+        "zh": "已找到 {papers_count} 篇相关文献，正在生成综述...",
+        "en": "Found {papers_count} related papers, generating review..."
+    },
     "generating": {
         "zh": "正在生成综述...",
         "en": "Generating review..."

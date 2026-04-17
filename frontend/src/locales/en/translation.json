@@ -315,7 +315,9 @@
       "placeholder": "Enter a paper title, e.g., Attention Is All You Need",
       "button": "Search Papers",
       "button_searching": "Searching...",
-      "helper": "We'll find related papers from Web of Science, IEEE Xplore, CrossRef, and Semantic Scholar."
+      "helper": "We'll find related papers from Web of Science, IEEE Xplore, CrossRef, and Semantic Scholar.",
+      "limit_info": "{{remaining}} searches remaining today",
+      "limit_exceeded": "Daily search limit reached ({{limit}}). Please try again tomorrow"
     },
     "loading": {
       "title": "Searching academic databases...",
@@ -337,6 +339,17 @@
       "sort_citations": "Citations",
       "export": "Export References",
       "exporting": "Exporting..."
+    },
+    "export": {
+      "title": "Select Export Format",
+      "bibtex": "BibTeX (.bib)",
+      "bibtex_desc": "For LaTeX, Zotero, Mendeley, and more",
+      "ris": "RIS (.ris)",
+      "ris_desc": "For EndNote, Zotero, Mendeley, and more",
+      "word": "Word (.docx)",
+      "word_desc": "Formatted paper list document",
+      "confirm": "Export",
+      "cancel": "Cancel"
     },
     "paper": {
       "citations": "citations",
@@ -431,6 +444,7 @@
     "estimated_remaining": "Estimated remaining",
     "minutes": "minutes",
     "completed": "Summary completed, redirecting...",
-    "estimate": "Summary generation usually takes 3-5 minutes. You can close this page and check the result later in \"My Account\"."
+    "estimate": "Summary generation usually takes 3-5 minutes. You can close this page and check the result later in \"My Account\".",
+    "papers_found": "Found {{count}} related papers"
   }
 }

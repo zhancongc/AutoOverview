@@ -340,7 +340,9 @@
       "placeholder": "请输入论文标题，例如：基于深度学习的图像识别研究综述",
       "button": "免费搜索文献",
       "button_searching": "搜索中...",
-      "helper": "我们将从 Web of Science、IEEE Xplore、CrossRef、Semantic Scholar 搜索相关文献。"
+      "helper": "我们将从 Web of Science、IEEE Xplore、CrossRef、Semantic Scholar 搜索相关文献。",
+      "limit_info": "今日还可搜索 {{remaining}} 次",
+      "limit_exceeded": "今日搜索次数已达上限（{{limit}} 次），请明天再试"
     },
     "loading": {
       "title": "正在搜索学术数据库...",
@@ -362,6 +364,17 @@
       "sort_citations": "引用数",
       "export": "导出参考文献清单",
       "exporting": "导出中..."
+    },
+    "export": {
+      "title": "选择导出格式",
+      "bibtex": "BibTeX (.bib)",
+      "bibtex_desc": "适用于 LaTeX、Zotero、Mendeley 等工具",
+      "ris": "RIS (.ris)",
+      "ris_desc": "适用于 EndNote、Zotero、Mendeley 等工具",
+      "word": "Word (.docx)",
+      "word_desc": "带格式化表格的文献清单文档",
+      "confirm": "导出",
+      "cancel": "取消"
     },
     "paper": {
       "citations": "引用",
@@ -455,6 +468,7 @@
     "estimated_remaining": "预计剩余",
     "minutes": "分钟",
     "completed": "生成完成，即将跳转...",
-    "estimate": "综述生成通常需要 3-5 分钟，您可以关闭此页面，稍后在「个人中心」中查看结果"
+    "estimate": "综述生成通常需要 3-5 分钟，您可以关闭此页面，稍后在「个人中心」中查看结果",
+    "papers_found": "已找到 {{count}} 篇相关文献"
   }
 }

@@ -190,6 +190,17 @@ html.intl .search-papers-page .nav-links a.active {
   margin-top: 0.75rem;
 }
 
+.search-papers-page .sp-search-limit {
+  font-size: 0.8rem;
+  color: #718096;
+  margin-top: 0.5rem;
+}
+
+.search-papers-page .sp-search-limit.zero {
+  color: #e53e3e;
+  font-weight: 500;
+}
+
 .search-papers-page .sp-search-history-link {
   margin-top: 1rem;
   text-align: center;
@@ -647,6 +658,25 @@ html.intl .search-papers-page .sp-review-cta-btn:hover {
 .search-papers-page .sp-btn-export:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* Papers section (generate page preview) */
+.search-papers-page .sp-papers-section {
+  max-width: 720px;
+  margin: 0 auto 2rem;
+  padding: 0 1.5rem;
+}
+
+.search-papers-page .sp-papers-header h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--charcoal);
+  margin-bottom: 1rem;
+}
+
+.search-papers-page .sp-papers-list {
+  max-height: 480px;
+  overflow-y: auto;
 }
 
 .search-papers-page .sp-paper-card {

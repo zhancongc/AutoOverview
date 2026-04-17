@@ -16,6 +16,19 @@ import './SearchPapersPage.css'
 interface TaskProgress {
   step: string
   message: string
+  papers?: Paper[]
+  papers_count?: number
+}
+
+interface Paper {
+  id: string
+  title: string
+  authors: string[]
+  year: number | null
+  cited_by_count: number
+  abstract: string | null
+  doi: string | null
+  is_english: boolean
 }
 
 export function GenerateReviewPage() {
@@ -38,6 +51,7 @@ export function GenerateReviewPage() {
   const [prevCredits, setPrevCredits] = useState<number>(0)
   const [showToast, setShowToast] = useState(false)
   const [toastMessage, setToastMessage] = useState('')
+  const [foundPapers, setFoundPapers] = useState<Paper[]>([])
   const isPollingRef = useRef(false)
 
   useEffect(() => {
@@ -126,6 +140,10 @@ export function GenerateReviewPage() {
 
         setProgress({ step: taskInfo.progress?.step || 'processing', message: taskInfo.progress?.message || t('home.progress.processing') })
 
+        if (taskInfo.progress?.papers && taskInfo.progress.papers.length > 0) {
+          setFoundPapers(taskInfo.progress.papers)
+        }
+
         const elapsed = Date.now() - startTime
         const elapsedMinutes = elapsed / (60 * 1000)
         let nextInterval: number
@@ -161,6 +179,7 @@ export function GenerateReviewPage() {
     setIsGenerating(true)
     setProgress({ step: 'init', message: t('generate_page.submitting') })
     setError('')
+    setFoundPapers([])
 
     try {
       const submitResponse = await api.submitReviewTask(topic, {
@@ -211,6 +230,10 @@ export function GenerateReviewPage() {
             step: taskInfo.progress?.step || 'processing',
             message: progressMessage
           })
+
+          if (taskInfo.progress?.papers && taskInfo.progress.papers.length > 0) {
+            setFoundPapers(taskInfo.progress.papers)
+          }
 
           if (taskInfo.status === 'completed' && taskInfo.result) {
             setProgress({ step: 'completed', message: t('generate_page.completed') })
@@ -486,6 +509,56 @@ export function GenerateReviewPage() {
             </div>
             <p className="sp-loading-status">{progress.message}</p>
             <p className="sp-loading-estimate">{t('generate_page.estimate')}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Found Papers Preview */}
+      {isGenerating && foundPapers.length > 0 && (
+        <div className="sp-papers-section">
+          <div className="sp-papers-header">
+            <h3>{t('generate_page.papers_found', { count: foundPapers.length })}</h3>
+          </div>
+          <div className="sp-papers-list">
+            {foundPapers.map((paper, index) => (
+              <div key={paper.id || index} className="sp-paper-card">
+                <div className="sp-paper-top">
+                  <span className="sp-paper-number">[{index + 1}]</span>
+                  <div className="sp-paper-title">
+                    {paper.doi ? (
+                      <a href={`https://doi.org/${paper.doi}`} target="_blank" rel="noopener noreferrer">
+                        {paper.title}
+                      </a>
+                    ) : (
+                      paper.title
+                    )}
+                  </div>
+                </div>
+                <div className="sp-paper-meta">
+                  {paper.year && <span className="sp-paper-tag sp-tag-year">{paper.year}</span>}
+                  {paper.cited_by_count > 0 && (
+                    <span className="sp-paper-tag sp-tag-citations">
+                      {paper.cited_by_count} {t('search_papers.paper.citations')}
+                    </span>
+                  )}
+                  {paper.is_english && <span className="sp-paper-tag sp-tag-lang">EN</span>}
+                </div>
+                {paper.abstract && (
+                  <p className="sp-paper-abstract">
+                    {paper.abstract.length > 250
+                      ? paper.abstract.substring(0, 250) + '...'
+                      : paper.abstract
+                    }
+                  </p>
+                )}
+                {paper.authors && paper.authors.length > 0 && (
+                  <p className="sp-paper-authors">
+                    {paper.authors.slice(0, 4).join(', ')}
+                    {paper.authors.length > 4 && ` ${t('search_papers.paper.et_al')}`}
+                  </p>
+                )}
+              </div>
+            ))}
           </div>
         </div>
       )}

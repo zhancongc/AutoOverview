@@ -41,6 +41,17 @@ export interface TaskInfo {
   progress?: {
     step: string;
     message: string;
+    papers?: Array<{
+      id: string;
+      title: string;
+      authors: string[];
+      year: number | null;
+      cited_by_count: number;
+      abstract: string | null;
+      doi: string | null;
+      is_english: boolean;
+    }>;
+    papers_count?: number;
   };
   result?: any;
   has_result: boolean;
@@ -350,6 +361,14 @@ export const api = {
     const headers: Record<string, string> = {};
     if (token) headers.Authorization = `Bearer ${token}`;
     const response = await axios.get(`${API_BASE}/usage/credits`, { headers });
+    return response.data;
+  },
+
+  async getSearchDailyLimit(): Promise<{ limit: number; used: number; remaining: number }> {
+    const token = localStorage.getItem('auth_token');
+    const headers: Record<string, string> = {};
+    if (token) headers.Authorization = `Bearer ${token}`;
+    const response = await axios.get(`${API_BASE}/search/daily-limit`, { headers });
     return response.data;
   },
 
