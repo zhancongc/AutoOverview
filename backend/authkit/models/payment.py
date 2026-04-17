@@ -173,10 +173,10 @@ DEFAULT_PLANS = [
         "sort_order": 1,
         "badge": None, "badge_en": None,
         "features": [
-            "2 个 Credit（1 篇综述 或 2 篇对比矩阵）",
+            "2 个积分（1 篇综述 或 2 篇对比矩阵）",
             "在线查看 + Word 导出",
             "参考文献包含真实文献 DOI 链接",
-            "支持导出 BibTeX、XML、RIS 格式",
+            "支持导出 BibTeX、RIS、Word 格式",
         ],
         "features_en": [
             "6 Credits (3 reviews or 6 comparison matrices)",
@@ -195,11 +195,11 @@ DEFAULT_PLANS = [
         "sort_order": 2,
         "badge": "热门", "badge_en": "Popular",
         "features": [
-            "6 个 Credit（3 篇综述 或 6 篇对比矩阵）",
+            "6 个积分（3 篇综述 或 6 篇对比矩阵）",
             "在线查看 + Word 导出",
             "参考文献包含真实文献 DOI 链接",
-            "支持导出 BibTeX、XML、RIS 格式",
-            "约 ¥3.3/Credit",
+            "支持导出 BibTeX、RIS、Word 格式",
+            "约 ¥3.3/积分",
         ],
         "features_en": [
             "20 Credits (10 reviews or 20 comparison matrices)",
@@ -219,11 +219,11 @@ DEFAULT_PLANS = [
         "sort_order": 3,
         "badge": "超值", "badge_en": "Best Value",
         "features": [
-            "12 个 Credit（6 篇综述 或 12 篇对比矩阵）",
+            "12 个积分（6 篇综述 或 12 篇对比矩阵）",
             "在线查看 + Word 导出",
             "参考文献包含真实文献 DOI 链接",
-            "支持导出 BibTeX、XML、RIS 格式",
-            "约 ¥4.2/Credit",
+            "支持导出 BibTeX、RIS、Word 格式",
+            "约 ¥4.2/积分",
         ],
         "features_en": [
             "50 Credits (25 reviews or 50 comparison matrices)",

@@ -87,7 +87,7 @@ def check_and_deduct_credit(user_id: int, db_session: Session, cost: int = 2) ->
     total = free_credits + paid_credits
 
     if total < cost:
-        return f"Credit 不足，当前 {total} 个 Credit，需要 {cost} 个。请购买后继续使用", False
+        return f"积分不足，当前 {total} 个积分，需要 {cost} 个。请购买后继续使用", False
 
     # 优先扣除付费额度，再用免费额度
     used_paid = False
