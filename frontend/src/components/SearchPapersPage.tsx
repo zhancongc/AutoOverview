@@ -94,7 +94,7 @@ export function SearchPapersPage() {
       api.getSearchDailyLimit().then(data => setDailyLimit(data)).catch(() => {})
     }
     return () => {
-      document.title = 'AutoOverview - AI Literature Review Generator'
+      document.title = '澹墨学术 - AI Literature Review Generator'
     }
   }, [t])
 
@@ -887,7 +887,7 @@ export function SearchPapersPage() {
               )
             })()}
             <p className="sp-cta-badge">
-              {t('search_papers.cta.badge')} <a href="/">AutoOverview</a>
+              {t('search_papers.cta.badge')} <a href="/">澹墨学术</a>
             </p>
           </div>
         </div>
