@@ -1,6 +1,6 @@
 # AutoOverview 文档中心
 
-> 最后更新: 2026-04-11
+> 最后更新: 2026-04-18
 
 欢迎使用 AutoOverview 文档中心！本页面为您提供渐进式的文档导航，帮助您快速找到所需信息。
 
@@ -29,16 +29,13 @@
 
 ### 开发指南
 - [../CLAUDE.md](../CLAUDE.md) - Claude Code 项目指引（关键约定）
-- [../AUTH_INTEGRATION.md](../AUTH_INTEGRATION.md) - AuthKit 集成指南
-- [../backend/authkit/README.md](../backend/authkit/README.md) - AuthKit 认证模块文档
-- [DEPLOYMENT.md](DEPLOYMENT.md) - 服务器部署配置（跨服务器通信、防火墙配置）
-- [SCRIPTS.md](SCRIPTS.md) - 辅助脚本使用说明（用户管理、服务器部署等）
+- [DEPLOYMENT.md](DEPLOYMENT.md) - 服务器部署配置
+- [SCRIPTS.md](SCRIPTS.md) - 辅助脚本使用说明
+- [PRE_COMMIT_CHECKLIST.md](PRE_COMMIT_CHECKLIST.md) - 提交前检查清单
 
 ---
 
 ## 🔧 深入技术（选读）
-
-需要了解更多技术细节？请查看：
 
 | 文档 | 说明 |
 |------|------|
@@ -51,26 +48,3 @@
 ## 📂 完整文档目录
 
 如需查看所有文档（包括归档文档），请访问 [MAP.md](MAP.md)。
-
----
-
-## 项目结构速览
-
-```
-PaperOverview/
-├── backend/
-│   ├── main.py                  # FastAPI 主入口
-│   ├── authkit/                 # 认证 & 支付模块
-│   │   ├── models/              # 数据模型
-│   │   ├── routers/             # API 路由
-│   │   ├── services/            # 业务逻辑
-│   │   └── middleware/          # 中间件（统计等）
-│   └── services/                # 核心业务逻辑
-└── frontend/
-    └── src/components/          # React 组件
-        ├── SimpleApp.tsx        # 主页
-        ├── ReviewPage.tsx       # 综述详情页
-        └── DavidPage.tsx        # 数据统计页
-```
-
-更多详细结构请查看 [MAP.md](MAP.md)。
