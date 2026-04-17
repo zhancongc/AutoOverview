@@ -237,7 +237,7 @@
 }
 
 .stat-value {
-  font-size: 2.25rem;
+  font-size: 3rem;
   font-weight: 700;
   color: var(--academic-red);
   line-height: 1;
@@ -685,7 +685,7 @@
   }
 
   .stat-value {
-    font-size: 1.75rem;
+    font-size: 2.25rem;
   }
 
   .stat-label {
