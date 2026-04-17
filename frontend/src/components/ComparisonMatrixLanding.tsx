@@ -336,7 +336,7 @@ export function ComparisonMatrixLanding() {
     <nav className="home-nav">
       <div className="nav-logo" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
         <span className="logo-icon">📚</span>
-        <span className="logo-text">AutoOverview</span>
+        <span className="logo-text">澹墨学术</span>
       </div>
       <div className="nav-links">
         <a href="/" className={location.pathname === '/' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigate('/') }}>{t('nav.home')}</a>
@@ -374,7 +374,7 @@ export function ComparisonMatrixLanding() {
       <aside className={`mobile-sidebar ${mobileMenuOpen ? 'sidebar-open' : ''}`}>
         <div className="sidebar-header">
           <span className="logo-icon">📚</span>
-          <span className="logo-text">AutoOverview</span>
+          <span className="logo-text">澹墨学术</span>
           <button className="sidebar-close" onClick={() => setMobileMenuOpen(false)}>&times;</button>
         </div>
         <nav className="sidebar-links">

@@ -547,7 +547,7 @@ export function SearchPapersPage() {
       <nav className="home-nav">
         <div className="nav-logo" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
           <span className="logo-icon">📚</span>
-          <span className="logo-text">AutoOverview</span>
+          <span className="logo-text">澹墨学术</span>
         </div>
         <div className="nav-links">
           <a href="/" className={location.pathname === '/' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigate('/') }}>{t('nav.home')}</a>
@@ -585,7 +585,7 @@ export function SearchPapersPage() {
       <aside className={`mobile-sidebar ${mobileMenuOpen ? 'sidebar-open' : ''}`}>
         <div className="sidebar-header">
           <span className="logo-icon">📚</span>
-          <span className="logo-text">AutoOverview</span>
+          <span className="logo-text">澹墨学术</span>
           <button className="sidebar-close" onClick={() => setMobileMenuOpen(false)}>&times;</button>
         </div>
         <nav className="sidebar-links">
@@ -903,7 +903,7 @@ export function SearchPapersPage() {
         <p>{t('search_papers.footer.copyright')}</p>
         {isChineseSite && (
           <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer" className="sp-footer-icp">
-            沪ICP备2023018158号-4
+            沪ICP备2023018158号
           </a>
         )}
       </footer>
