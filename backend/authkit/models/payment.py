@@ -23,7 +23,8 @@ class Plan(PaymentBase):
     price_usd = Column(Float, nullable=True, comment="USD 价格")
     original_price = Column(Float, nullable=True, comment="CNY 原价（划线价）")
     original_price_usd = Column(Float, nullable=True, comment="USD 原价")
-    credits = Column(Integer, nullable=False, comment="包含的 Credit 点数")
+    credits = Column(Integer, nullable=False, comment="包含的 Credit 点数（英文站）")
+    credits_cn = Column(Integer, nullable=True, comment="包含的积分点数（中文站）")
     recommended = Column(Boolean, default=False, comment="是否推荐")
     features = Column(Text, nullable=True, comment="中文特性（JSON格式）")
     features_en = Column(Text, nullable=True, comment="英文特性（JSON格式）")
@@ -45,6 +46,7 @@ class Plan(PaymentBase):
             "original_price": self.original_price,
             "original_price_usd": self.original_price_usd,
             "credits": self.credits,
+            "credits_cn": self.credits_cn if self.credits_cn is not None else self.credits,
             "recommended": self.recommended,
             "features": self._parse(self.features),
             "features_en": self._parse(self.features_en) or self._parse(self.features),
@@ -169,6 +171,7 @@ DEFAULT_PLANS = [
         "price": 9.9, "price_usd": 9.99,
         "original_price": 29.8, "original_price_usd": 14.99,
         "credits": 6,
+        "credits_cn": 2,
         "recommended": False,
         "sort_order": 1,
         "badge": None, "badge_en": None,
@@ -193,6 +196,7 @@ DEFAULT_PLANS = [
         "price": 19.8, "price_usd": 24.99,
         "original_price": 69.8, "original_price_usd": 39.99,
         "credits": 20,
+        "credits_cn": 6,
         "recommended": True,
         "sort_order": 2,
         "badge": "热门", "badge_en": "Popular",
@@ -217,6 +221,7 @@ DEFAULT_PLANS = [
         "price": 49.8, "price_usd": 49.99,
         "original_price": 109.8, "original_price_usd": 69.99,
         "credits": 50,
+        "credits_cn": 18,
         "recommended": False,
         "sort_order": 3,
         "badge": "超值", "badge_en": "Best Value",
@@ -241,6 +246,7 @@ DEFAULT_PLANS = [
         "price": 9.9, "price_usd": 9.99,
         "original_price": None, "original_price_usd": None,
         "credits": 0,
+        "credits_cn": 0,
         "recommended": False,
         "sort_order": 4,
         "badge": None, "badge_en": None,
@@ -298,6 +304,7 @@ def init_plans_in_db(session):
             existing.original_price = plan_data.get("original_price")
             existing.original_price_usd = plan_data.get("original_price_usd")
             existing.credits = plan_data["credits"]
+            existing.credits_cn = plan_data.get("credits_cn")
             existing.recommended = plan_data["recommended"]
             existing.features = json.dumps(plan_data["features"])
             existing.features_en = json.dumps(plan_data["features_en"]) if plan_data.get("features_en") else None
@@ -315,6 +322,7 @@ def init_plans_in_db(session):
                 original_price=plan_data.get("original_price"),
                 original_price_usd=plan_data.get("original_price_usd"),
                 credits=plan_data["credits"],
+                credits_cn=plan_data.get("credits_cn"),
                 recommended=plan_data["recommended"],
                 features=json.dumps(plan_data["features"]),
                 features_en=json.dumps(plan_data["features_en"]) if plan_data.get("features_en") else None,

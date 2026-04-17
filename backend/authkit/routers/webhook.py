@@ -114,11 +114,15 @@ def process_payment(params: dict, db: Session) -> str:
                     logger.warning(f"综述记录 {sub.record_id} 不存在")
         else:
             # 套餐购买：增加综述额度
-            from ..models.payment import PLAN_CREDITS
+            from ..models.payment import PLAN_CREDITS, Plan
             from ..models import User
             user = db.query(User).filter(User.id == sub.user_id).first()
             if user:
-                credits_to_add = PLAN_CREDITS.get(sub.plan_type, 1)
+                plan_record = db.query(Plan).filter_by(type=sub.plan_type, is_active=True).first()
+                if plan_record:
+                    credits_to_add = plan_record.credits_cn if plan_record.credits_cn is not None else plan_record.credits
+                else:
+                    credits_to_add = PLAN_CREDITS.get(sub.plan_type, 1)
                 current_credits = user.get_meta("review_credits", 0)
                 user.set_meta("review_credits", current_credits + credits_to_add)
                 user.set_meta("has_purchased", True)

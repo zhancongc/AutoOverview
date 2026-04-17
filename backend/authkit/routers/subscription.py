@@ -66,10 +66,10 @@ def _add_credits(user_id: int, plan_type: str, db: Session):
     user = _get_user_model(user_id, db)
     if not user:
         return
-    # 从数据库读取 credits，fallback 到 PLAN_CREDITS
+    # 从数据库读取 credits_cn（中文站），fallback 到 credits 再到 PLAN_CREDITS
     plan_record = db.query(Plan).filter_by(type=plan_type, is_active=True).first()
     if plan_record:
-        credits_to_add = plan_record.credits
+        credits_to_add = plan_record.credits_cn if plan_record.credits_cn is not None else plan_record.credits
     else:
         credits_to_add = PLAN_CREDITS.get(plan_type, 1)
     current_credits = user.get_meta("review_credits", 0)
