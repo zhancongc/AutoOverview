@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { api } from '../api'
 import { getLocalUserInfo, isLoggedIn } from '../authApi'
@@ -14,6 +14,7 @@ type ProfileTab = 'reviews' | 'searches' | 'matrices'
 export function ProfilePage() {
   const { i18n } = useTranslation()
   const navigate = useNavigate()
+  const location = useLocation()
   const [searchParams] = useSearchParams()
   const tabParam = searchParams.get('tab') as ProfileTab | null
   const [activeTab, setActiveTab] = useState<ProfileTab>(
@@ -214,11 +215,12 @@ export function ProfilePage() {
           <span className="logo-text">AutoOverview</span>
         </div>
         <div className="nav-links">
-          <a href="/" onClick={(e) => { e.preventDefault(); navigate('/') }}>首页</a>
-          <a href="/search-papers" onClick={(e) => { e.preventDefault(); navigate('/search-papers') }}>搜索文献</a>
-          <a href="/comparison-matrix" onClick={(e) => { e.preventDefault(); navigate('/comparison-matrix') }}>对比矩阵</a>
-          <a href="/generate" onClick={(e) => { e.preventDefault(); navigate('/generate') }}>生成综述</a>
+          <a href="/" className={location.pathname === '/' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigate('/') }}>首页</a>
+          <a href="/search-papers" className={location.pathname === '/search-papers' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigate('/search-papers') }}>搜索文献</a>
+          <a href="/comparison-matrix" className={location.pathname === '/comparison-matrix' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigate('/comparison-matrix') }}>对比矩阵</a>
+          <a href="/generate" className={location.pathname === '/generate' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigate('/generate') }}>生成综述</a>
         </div>
+        <div className="nav-actions"></div>
         <button className="mobile-menu-toggle" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
           <span className={`hamburger ${mobileMenuOpen ? 'open' : ''}`} />
         </button>
