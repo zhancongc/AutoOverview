@@ -426,6 +426,11 @@ export function ComparisonMatrixPage() {
                 setMatrixLoading(false)
                 return
               }
+
+              // completed 但无数据 → 保存可能失败，停止轮询
+              setMatrixError(t('comparison_matrix_page.error'))
+              setMatrixLoading(false)
+              return
             } else if (task.status === 'failed') {
               setMatrixError(task.error || t('comparison_matrix_page.error'))
               setMatrixLoading(false)

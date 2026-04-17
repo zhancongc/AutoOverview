@@ -55,7 +55,7 @@ export function ProfilePage() {
     try {
       const response = await api.getRecords()
       if (response.success) {
-        setRecords(response.records)
+        setRecords(response.records.filter((r: any) => r.task_type !== 'comparison_matrix'))
       }
     } catch (err) {
       console.error('加载历史记录失败:', err)

@@ -45,51 +45,31 @@ export function ProfilePageInternational() {
       return
     }
     setUserInfo(getLocalUserInfo())
-    loadRecords()
-    loadSearches()
-    loadMatrices()
+    loadAllRecords()
     api.getCredits().then(data => {
       setCredits(data.credits)
     }).catch(err => console.error('Failed to fetch credits:', err))
   }, [navigate])
 
-  const loadRecords = async () => {
+  const loadAllRecords = async () => {
     setLoading(true)
     try {
-      const response = await api.getRecords()
-      if (response.success) {
-        setRecords(response.records)
+      const [recordsRes, searchesRes] = await Promise.all([
+        api.getRecords(),
+        api.getSearchHistory()
+      ])
+      if (recordsRes.success) {
+        const all = recordsRes.records
+        setRecords(all.filter((r: any) => r.task_type !== 'comparison_matrix'))
+        setMatrices(all.filter((r: any) => r.task_type === 'comparison_matrix'))
+      }
+      if (searchesRes.success) {
+        setSearches(searchesRes.searches)
       }
     } catch (err) {
-      console.error('Failed to load history:', err)
+      console.error('Failed to load records:', err)
     } finally {
       setLoading(false)
-    }
-  }
-
-  const loadSearches = async () => {
-    try {
-      const response = await api.getSearchHistory()
-      if (response.success) {
-        setSearches(response.searches)
-      }
-    } catch (err) {
-      console.error('Failed to load search history:', err)
-    }
-  }
-
-  const loadMatrices = async () => {
-    try {
-      // Filter records to only show comparison matrix type
-      const response = await api.getRecords()
-      if (response.success) {
-        const matrixRecords = response.records.filter(
-          (r: any) => r.task_type === 'comparison_matrix' || r.type === 'comparison_matrix'
-        )
-        setMatrices(matrixRecords)
-      }
-    } catch (err) {
-      console.error('Failed to load matrices:', err)
     }
   }
 
@@ -193,7 +173,7 @@ export function ProfilePageInternational() {
       const result = await api.unlockRecordWithCredit(confirmRecordId)
       if (result.success) {
         // Refresh records and credits
-        await loadRecords()
+        await loadAllRecords()
         const creditsData = await api.getCredits()
         setCredits(creditsData.credits)
 
@@ -592,7 +572,7 @@ export function ProfilePageInternational() {
             setShowPayModal(false)
             setUnlockMode(false)
             // Refresh records
-            await loadRecords()
+            await loadAllRecords()
             // Continue export
             if (pendingExportRecordId !== null) {
               handleExportRecord(pendingExportRecordId, { stopPropagation: () => {} } as React.MouseEvent)
@@ -614,7 +594,7 @@ export function ProfilePageInternational() {
             // Refresh user status and records
             const creditsData = await api.getCredits()
             setCredits(creditsData.credits)
-            await loadRecords()
+            await loadAllRecords()
             // If has pending export, continue
             if (pendingExportRecordId !== null) {
               handleExportRecord(pendingExportRecordId, { stopPropagation: () => {} } as React.MouseEvent)
