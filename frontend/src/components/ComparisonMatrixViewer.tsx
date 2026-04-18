@@ -371,7 +371,7 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
           {isGeneratingReview ? t('comparison_matrix_page.generating') : t('comparison_matrix_page.generate_review')}
         </button>
         <button className="stats-action-btn" onClick={() => setShowMatrixExportModal(true)}>
-          {isChineseSite ? '导出' : 'Export'}
+          {isChineseSite ? '导出矩阵' : 'Export Matrix'}
         </button>
         <button className="stats-action-btn" onClick={() => setShowExportModal(true)} disabled={getPapersForExport().length === 0}>
           {t('comparison_matrix_page.export_references')}
@@ -572,7 +572,7 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
                 setShowMatrixExportModal(true)
               }}
             >
-              {isChineseSite ? '导出' : 'Export'}
+              {isChineseSite ? '导出矩阵' : 'Export Matrix'}
             </button>
             <button
               className="sidebar-action-btn sidebar-action-secondary"
@@ -646,7 +646,7 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
                 setShowMatrixExportModal(true)
               }}
             >
-              {isChineseSite ? '导出' : 'Export'}
+              {isChineseSite ? '导出矩阵' : 'Export Matrix'}
             </button>
             <button
               className="sidebar-action-btn sidebar-action-secondary"
@@ -809,7 +809,7 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
                 setShowMatrixExportModal(true)
               }}
             >
-              {isChineseSite ? '导出' : 'Export'}
+              {isChineseSite ? '导出矩阵' : 'Export Matrix'}
             </button>
             <button
               className="sidebar-action-btn sidebar-action-secondary"
