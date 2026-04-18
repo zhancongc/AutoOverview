@@ -37,6 +37,7 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
   const [showCreditConfirm, setShowCreditConfirm] = useState(false)
   const [showExportModal, setShowExportModal] = useState(false)
   const [exportFormat, setExportFormat] = useState<ExportFormat>('bibtex')
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   useEffect(() => {
     loadMatrixData(taskId)
@@ -277,13 +278,13 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
           className={`segmented-tab ${activeTab === 'matrix' ? 'active' : ''}`}
           onClick={() => setActiveTab('matrix')}
         >
-          Comparison Matrix
+          {isChineseSite ? '对比矩阵' : 'Comparison Matrix'}
         </button>
         <button
           className={`segmented-tab ${activeTab === 'references' ? 'active' : ''}`}
           onClick={() => setActiveTab('references')}
         >
-          References
+          {isChineseSite ? '参考文献' : 'References'}
         </button>
       </div>
       <div className="header-actions">
@@ -302,6 +303,28 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
           {t('comparison_matrix_page.export_references')}
         </button>
       </div>
+      <button
+        className="mobile-menu-toggle review-mobile-toggle"
+        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+        style={{
+          display: 'flex',
+          minWidth: '44px',
+          height: '44px',
+          fontSize: '1.5rem',
+          color: '#1A1A1A',
+          background: 'transparent',
+          border: 'none',
+          cursor: 'pointer',
+          borderRadius: '8px',
+          padding: '0.5rem',
+          flexShrink: 0,
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 2000
+        }}
+      >
+        ☰
+      </button>
     </div>
   )
 
@@ -410,6 +433,52 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
           )}
         </div>
         {renderModals()}
+
+        {/* 移动端侧边栏遮罩 */}
+        {mobileMenuOpen && (
+          <div className="mobile-sidebar-overlay" onClick={() => setMobileMenuOpen(false)} />
+        )}
+
+        {/* 移动端侧边栏 */}
+        <aside className={`mobile-sidebar ${mobileMenuOpen ? 'sidebar-open' : ''}`}>
+          <div className="sidebar-header">
+            <span className="sidebar-header-title">{isChineseSite ? '操作' : 'Actions'}</span>
+            <button className="sidebar-close" onClick={() => setMobileMenuOpen(false)}>&times;</button>
+          </div>
+          <div className="sidebar-actions">
+            <button
+              className="sidebar-action-btn sidebar-action-primary"
+              onClick={() => {
+                setMobileMenuOpen(false)
+                handleGenerateReview()
+              }}
+              disabled={!matrixSearchTaskId || isGeneratingReview}
+            >
+              {isGeneratingReview
+                ? (isChineseSite ? '生成中...' : 'Generating...')
+                : t('comparison_matrix_page.generate_review')}
+            </button>
+            <button
+              className="sidebar-action-btn"
+              onClick={() => {
+                setMobileMenuOpen(false)
+                handleExportMarkdown()
+              }}
+            >
+              {t('comparison_matrix_page.export_markdown')}
+            </button>
+            <button
+              className="sidebar-action-btn"
+              onClick={() => {
+                setMobileMenuOpen(false)
+                setShowExportModal(true)
+              }}
+              disabled={getPapersForExport().length === 0}
+            >
+              {t('comparison_matrix_page.export_references')}
+            </button>
+          </div>
+        </aside>
       </div>
     )
   }
@@ -426,6 +495,52 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
           </button>
         </div>
         {renderModals()}
+
+        {/* 移动端侧边栏遮罩 */}
+        {mobileMenuOpen && (
+          <div className="mobile-sidebar-overlay" onClick={() => setMobileMenuOpen(false)} />
+        )}
+
+        {/* 移动端侧边栏 */}
+        <aside className={`mobile-sidebar ${mobileMenuOpen ? 'sidebar-open' : ''}`}>
+          <div className="sidebar-header">
+            <span className="sidebar-header-title">{isChineseSite ? '操作' : 'Actions'}</span>
+            <button className="sidebar-close" onClick={() => setMobileMenuOpen(false)}>&times;</button>
+          </div>
+          <div className="sidebar-actions">
+            <button
+              className="sidebar-action-btn sidebar-action-primary"
+              onClick={() => {
+                setMobileMenuOpen(false)
+                handleGenerateReview()
+              }}
+              disabled={!matrixSearchTaskId || isGeneratingReview}
+            >
+              {isGeneratingReview
+                ? (isChineseSite ? '生成中...' : 'Generating...')
+                : t('comparison_matrix_page.generate_review')}
+            </button>
+            <button
+              className="sidebar-action-btn"
+              onClick={() => {
+                setMobileMenuOpen(false)
+                handleExportMarkdown()
+              }}
+            >
+              {t('comparison_matrix_page.export_markdown')}
+            </button>
+            <button
+              className="sidebar-action-btn"
+              onClick={() => {
+                setMobileMenuOpen(false)
+                setShowExportModal(true)
+              }}
+              disabled={getPapersForExport().length === 0}
+            >
+              {t('comparison_matrix_page.export_references')}
+            </button>
+          </div>
+        </aside>
       </div>
     )
   }
@@ -531,6 +646,52 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
         </div>
 
         {renderModals()}
+
+        {/* 移动端侧边栏遮罩 */}
+        {mobileMenuOpen && (
+          <div className="mobile-sidebar-overlay" onClick={() => setMobileMenuOpen(false)} />
+        )}
+
+        {/* 移动端侧边栏 */}
+        <aside className={`mobile-sidebar ${mobileMenuOpen ? 'sidebar-open' : ''}`}>
+          <div className="sidebar-header">
+            <span className="sidebar-header-title">{isChineseSite ? '操作' : 'Actions'}</span>
+            <button className="sidebar-close" onClick={() => setMobileMenuOpen(false)}>&times;</button>
+          </div>
+          <div className="sidebar-actions">
+            <button
+              className="sidebar-action-btn sidebar-action-primary"
+              onClick={() => {
+                setMobileMenuOpen(false)
+                handleGenerateReview()
+              }}
+              disabled={!matrixSearchTaskId || isGeneratingReview}
+            >
+              {isGeneratingReview
+                ? (isChineseSite ? '生成中...' : 'Generating...')
+                : t('comparison_matrix_page.generate_review')}
+            </button>
+            <button
+              className="sidebar-action-btn"
+              onClick={() => {
+                setMobileMenuOpen(false)
+                handleExportMarkdown()
+              }}
+            >
+              {t('comparison_matrix_page.export_markdown')}
+            </button>
+            <button
+              className="sidebar-action-btn"
+              onClick={() => {
+                setMobileMenuOpen(false)
+                setShowExportModal(true)
+              }}
+              disabled={getPapersForExport().length === 0}
+            >
+              {t('comparison_matrix_page.export_references')}
+            </button>
+          </div>
+        </aside>
       </div>
     )
   }

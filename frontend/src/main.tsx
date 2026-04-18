@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import ReactDOM from 'react-dom/client'
-import { BrowserRouter, Routes, Route, Navigate, useSearchParams } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useSearchParams, useLocation } from 'react-router-dom'
 import App from './App'
 import { SimpleApp } from './components/SimpleApp'
 import { SimpleAppInternational } from './components/SimpleAppInternational'
@@ -52,9 +52,12 @@ function BackToTop() {
   )
 }
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <ErrorBoundary>
-    <BrowserRouter>
+function AppContent() {
+  const location = useLocation()
+  const showFeedback = !['/review', '/comparison-matrix'].some(path => location.pathname.startsWith(path))
+
+  return (
+    <>
       <Routes>
         <Route path="/login" element={isEnglishVersion ? <SimpleAppInternational autoShowLogin /> : <SimpleApp autoShowLogin />} />
         <Route path="/" element={isEnglishVersion ? <SimpleAppInternational /> : <SimpleApp />} />
@@ -86,7 +89,15 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         <Route path="/generate" element={<GenerateReviewPage />} />
       </Routes>
       <BackToTop />
-      <FeedbackFloatingButton />
+      {showFeedback && <FeedbackFloatingButton />}
+    </>
+  )
+}
+
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <ErrorBoundary>
+    <BrowserRouter>
+      <AppContent />
     </BrowserRouter>
   </ErrorBoundary>,
 )
