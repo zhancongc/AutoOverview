@@ -607,10 +607,10 @@ export function ReviewViewer({ content, papers = [], hasPurchased = false, onToc
             {/* 参考文献列表 - 标准格式 */}
             {papers.length > 0 && referencesInfo && (
               <>
-                {referencesInfo.level === 1 && <h1 id="references-section-title" onClick={() => setShowReferencesPopup(true)} style={{ cursor: 'pointer' }}>{referencesInfo.number}. 参考文献</h1>}
-                {referencesInfo.level === 2 && <h2 id="references-section-title" onClick={() => setShowReferencesPopup(true)} style={{ cursor: 'pointer' }}>{referencesInfo.number}. 参考文献</h2>}
-                {referencesInfo.level === 3 && <h3 id="references-section-title" onClick={() => setShowReferencesPopup(true)} style={{ cursor: 'pointer' }}>{referencesInfo.number}. 参考文献</h3>}
-                {referencesInfo.level === 4 && <h4 id="references-section-title" onClick={() => setShowReferencesPopup(true)} style={{ cursor: 'pointer' }}>{referencesInfo.number}. 参考文献</h4>}
+                {referencesInfo.level === 1 && <h1 id="references-section-title" onClick={() => setShowReferencesPopup(true)} style={{ cursor: 'pointer', fontWeight: 'bold' }}>{referencesInfo.number}. 参考文献</h1>}
+                {referencesInfo.level === 2 && <h2 id="references-section-title" onClick={() => setShowReferencesPopup(true)} style={{ cursor: 'pointer', fontWeight: 'bold' }}>{referencesInfo.number}. 参考文献</h2>}
+                {referencesInfo.level === 3 && <h3 id="references-section-title" onClick={() => setShowReferencesPopup(true)} style={{ cursor: 'pointer', fontWeight: 'bold' }}>{referencesInfo.number}. 参考文献</h3>}
+                {referencesInfo.level === 4 && <h4 id="references-section-title" onClick={() => setShowReferencesPopup(true)} style={{ cursor: 'pointer', fontWeight: 'bold' }}>{referencesInfo.number}. 参考文献</h4>}
                 <ol style={{ listStyle: 'decimal', paddingLeft: '1.75rem', margin: 0 }}>
                   {papers.map((paper: any, index: number) => (
                     <ReferenceListItem key={paper.id} paper={paper} index={index} />
