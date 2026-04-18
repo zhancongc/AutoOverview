@@ -414,8 +414,8 @@
     "history": "📋 查看搜索历史",
     "comparison_matrix": {
       "title": "生成文献对比矩阵",
-      "description": "仅需 ¥5.00，即可获取观点对比、分歧原因分析和对比表格",
-      "button": "立即生成 (¥5.00)",
+      "description": "仅需 1 积分，即可获取观点对比、分歧原因分析和对比表格",
+      "button": "立即生成 (1 积分)",
       "view_result": "查看对比矩阵"
     }
   },
