@@ -49,7 +49,7 @@ export function ProfilePageInternational() {
   const [matrixExportFormat, setMatrixExportFormat] = useState<'markdown' | 'word'>('markdown')
   const [exportingMatrix, setExportingMatrix] = useState(false)
   const [exportModalReview, setExportModalReview] = useState<{ id: number; topic: string } | null>(null)
-  const [reviewExportFormat, setReviewExportFormat] = useState<'markdown' | 'word'>('word')
+  const [reviewExportFormat, setReviewExportFormat] = useState<'markdown' | 'word'>('markdown')
   const [exportingReview, setExportingReview] = useState(false)
 
   useEffect(() => {

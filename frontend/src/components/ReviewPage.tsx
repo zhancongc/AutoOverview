@@ -54,7 +54,7 @@ export function ReviewPage() {
   const [showPayModal, setShowPayModal] = useState(false)
   const [exporting, setExporting] = useState(false)
   const [showReviewExportModal, setShowReviewExportModal] = useState(false)
-  const [reviewExportFormat, setReviewExportFormat] = useState<'markdown' | 'word'>('word')
+  const [reviewExportFormat, setReviewExportFormat] = useState<'markdown' | 'word'>('markdown')
   const [exportingReview, setExportingReview] = useState(false)
   const [unlockMode, setUnlockMode] = useState(false)
   const [language, setLanguage] = useState<'zh' | 'en'>('zh')
