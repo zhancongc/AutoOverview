@@ -226,6 +226,8 @@ export function SearchPapersPage() {
         localStorage.setItem('search_papers_statistics', JSON.stringify(stats))
         localStorage.setItem('search_papers_task_id', taskId || '')
         localStorage.setItem('search_papers_has_searched', 'true')
+        // 设置滚动标记，搜索完成后滚动到结果区域
+        setShouldScrollToResults(true)
         // 刷新每日搜索限额
         api.getSearchDailyLimit().then(data => setDailyLimit(data)).catch(() => {})
       } else {
@@ -510,9 +512,18 @@ export function SearchPapersPage() {
               searchYears: 10
             })
             if (response.success && response.data) {
-              setPapers(response.data.papers || [])
-              setStatistics(response.data.statistics || null)
+              const papers = response.data.all_papers || response.data.papers || []
+              const stats = response.data.statistics || null
+              setPapers(papers)
+              setStatistics(stats)
               setSearchTaskId(response.data.task_id || null)
+              // 保存搜索结果到 localStorage
+              localStorage.setItem('search_papers_papers', JSON.stringify(papers))
+              localStorage.setItem('search_papers_statistics', JSON.stringify(stats))
+              localStorage.setItem('search_papers_task_id', response.data.task_id || '')
+              localStorage.setItem('search_papers_has_searched', 'true')
+              // 设置滚动标记，搜索完成后滚动到结果区域
+              setShouldScrollToResults(true)
               // 刷新每日搜索限额
               api.getSearchDailyLimit().then(data => setDailyLimit(data)).catch(() => {})
             } else {
