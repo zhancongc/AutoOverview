@@ -144,7 +144,7 @@
       "role3": "高校教师"
     },
     "footer": {
-      "copyright": "© 2026 AutoOverview. All rights reserved.",
+      "copyright": "© 2026 Danmo Scholar. All rights reserved.",
       "terms": "用户协议",
       "privacy": "隐私政策",
       "refund": "退款政策"
@@ -341,8 +341,11 @@
       "button": "免费搜索文献",
       "button_searching": "搜索中...",
       "helper": "我们将从 Web of Science、IEEE Xplore、CrossRef、Semantic Scholar 搜索相关文献。",
-      "limit_info": "今日还可搜索 {{remaining}} 次",
-      "limit_exceeded": "今日搜索次数已达上限（{{limit}} 次），请明天再试"
+      "limit_info": "24小时内还可搜索 {{remaining}} 次",
+      "free_searches": "免费搜索: {{remaining}} 次",
+      "limit_exceeded": "24小时内搜索次数已达上限（{{limit}} 次）",
+      "bonus_info": "额外搜索: {{bonus}} 次",
+      "limit_exceeded_full": "搜索次数已用完，购买套餐可获得更多搜索次数"
     },
     "loading": {
       "title": "正在搜索学术数据库...",
@@ -388,7 +391,7 @@
       "badge": "免费工具 by"
     },
     "footer": {
-      "copyright": "© 2026 AutoOverview. All rights reserved.",
+      "copyright": "© 2026 Danmo Scholar. All rights reserved.",
       "terms": "用户协议",
       "privacy": "隐私政策",
       "refund": "退款政策"

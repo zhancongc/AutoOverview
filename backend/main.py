@@ -138,36 +138,44 @@ def refund_credit(user_id: int, db_session: Session, cost: int = 2) -> None:
     db_session.commit()
 
 
-def check_daily_search_limit(user_id: int, db_session: Session) -> tuple[bool, int, int]:
+def check_daily_search_limit(user_id: int, db_session: Session) -> tuple[bool, int, int, int]:
     """
-    检查并递增用户每日搜索次数。
-    返回 (是否允许, 剩余次数, 每日上限)。
+    检查并递增用户搜索次数（24h 滚动窗口 + 付费搜索额度）。
+    优先使用免费额度，免费用完后扣付费赠送次数。
+    返回 (是否允许, 免费剩余, 免费上限, 付费搜索剩余)。
     """
+    import time
     from authkit.models import User
-    from datetime import date
     from config import Config
 
     limit = Config.DAILY_SEARCH_LIMIT
     user = db_session.query(User).filter(User.id == user_id).first()
     if not user:
-        return True, limit, limit
+        return True, limit, limit, 0
 
-    today_str = date.today().isoformat()
-    stored_date = user.get_meta("search_count_date", "")
-    stored_count = user.get_meta("search_count", 0)
+    # 过滤 24h 内的时间戳
+    cutoff = time.time() - 86400
+    timestamps = [ts for ts in user.get_meta("search_timestamps", []) if ts > cutoff]
+    search_bonus = user.get_meta("search_bonus", 0)
 
-    if stored_date != today_str:
-        stored_count = 0
+    # 优先使用免费额度
+    if len(timestamps) < limit:
+        timestamps.append(time.time())
+        user.set_meta("search_timestamps", timestamps)
+        db_session.commit()
+        return True, limit - len(timestamps), limit, search_bonus
 
-    if stored_count >= limit:
-        return False, 0, limit
+    # 免费用完，尝试扣付费额度
+    if search_bonus > 0:
+        user.set_meta("search_bonus", search_bonus - 1)
+        user.set_meta("search_timestamps", timestamps)  # 清理过期时间戳
+        db_session.commit()
+        return True, 0, limit, search_bonus - 1
 
-    new_count = stored_count + 1
-    user.set_meta("search_count_date", today_str)
-    user.set_meta("search_count", new_count)
+    # 都用完了
+    user.set_meta("search_timestamps", timestamps)
     db_session.commit()
-
-    return True, limit - new_count, limit
+    return False, 0, limit, 0
 
 
 @asynccontextmanager
@@ -1095,32 +1103,34 @@ async def get_credits(user_id: Optional[int] = Depends(get_current_user_id)):
 @app.get("/api/search/daily-limit")
 async def get_search_daily_limit(user_id: Optional[int] = Depends(get_current_user_id)):
     """获取当前用户每日搜索限制状态"""
+    import time
     from config import Config
     limit = Config.DAILY_SEARCH_LIMIT
 
     if not user_id:
-        return {"limit": limit, "used": 0, "remaining": limit}
+        return {"limit": limit, "used": 0, "remaining": limit, "bonus": 0}
 
     from authkit.database import SessionLocal as AuthSessionLocal
     if not AuthSessionLocal:
-        return {"limit": limit, "used": 0, "remaining": limit}
+        return {"limit": limit, "used": 0, "remaining": limit, "bonus": 0}
 
     auth_db = AuthSessionLocal()
     try:
         from authkit.models import User
-        from datetime import date
         user = auth_db.query(User).filter(User.id == user_id).first()
         if not user:
-            return {"limit": limit, "used": 0, "remaining": limit}
+            return {"limit": limit, "used": 0, "remaining": limit, "bonus": 0}
 
-        today_str = date.today().isoformat()
-        stored_date = user.get_meta("search_count_date", "")
-        used = user.get_meta("search_count", 0) if stored_date == today_str else 0
+        cutoff = time.time() - 86400
+        timestamps = [ts for ts in user.get_meta("search_timestamps", []) if ts > cutoff]
+        used = len(timestamps)
+        bonus = user.get_meta("search_bonus", 0)
 
         return {
             "limit": limit,
             "used": used,
             "remaining": max(0, limit - used),
+            "bonus": bonus,
         }
     finally:
         auth_db.close()
@@ -1808,11 +1818,11 @@ async def search_papers_only(
     if AuthSessionLocal:
         auth_db = AuthSessionLocal()
         try:
-            allowed, remaining, limit = check_daily_search_limit(user_id, auth_db)
+            allowed, remaining, limit, bonus = check_daily_search_limit(user_id, auth_db)
             if not allowed:
                 raise HTTPException(
                     status_code=429,
-                    detail=f"今日搜索次数已达上限（{limit} 次），请明天再试"
+                    detail="搜索次数已用完，购买套餐可获得更多搜索次数"
                 )
         finally:
             auth_db.close()

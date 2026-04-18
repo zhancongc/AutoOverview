@@ -48,7 +48,6 @@ export function GenerateReviewPage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [credits, setCredits] = useState<number>(0)
-  const [prevCredits, setPrevCredits] = useState<number>(0)
   const [showToast, setShowToast] = useState(false)
   const [toastMessage, setToastMessage] = useState('')
   const [foundPapers, setFoundPapers] = useState<Paper[]>([])
@@ -290,7 +289,6 @@ export function GenerateReviewPage() {
     setError('')
     try {
       const data = await api.getCredits()
-      setPrevCredits(credits)
       setCredits(data.credits)
       setToastMessage(t('common.payment_success'))
       setShowToast(true)
@@ -339,7 +337,7 @@ export function GenerateReviewPage() {
     <nav className="home-nav">
       <div className="nav-logo" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
         <span className="logo-icon">📚</span>
-        <span className="logo-text">澹墨学术</span>
+        <span className="logo-text">{isChineseSite ? '澹墨学术' : 'AutoOverview'}</span>
       </div>
       <div className="nav-links">
         <a href="/" className={location.pathname === '/' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigate('/') }}>{t('nav.home')}</a>
@@ -377,7 +375,7 @@ export function GenerateReviewPage() {
       <aside className={`mobile-sidebar ${mobileMenuOpen ? 'sidebar-open' : ''}`}>
         <div className="sidebar-header">
           <span className="logo-icon">📚</span>
-          <span className="logo-text">澹墨学术</span>
+          <span className="logo-text">{isChineseSite ? '澹墨学术' : 'AutoOverview'}</span>
           <button className="sidebar-close" onClick={() => setMobileMenuOpen(false)}>&times;</button>
         </div>
         <nav className="sidebar-links">
@@ -417,12 +415,6 @@ export function GenerateReviewPage() {
       {/* Input Card */}
       <div className="sp-search-section">
         <div className="sp-search-card">
-          {isLoggedIn && (
-            <span className={`credits-badge ${prevCredits !== credits ? 'credits-updated' : ''}`} style={{ marginBottom: '12px' }}>
-              {t('input.credits_remaining')} <span className="credits-number">{credits}</span>
-            </span>
-          )}
-
           {/* Language toggle */}
           <div className="language-toggle-wrapper" style={{ marginBottom: '12px' }}>
             <span className="language-label">{t('input.language')}</span>
@@ -451,7 +443,7 @@ export function GenerateReviewPage() {
             onChange={(e) => setTopic(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleKeyDown(e) } }}
             disabled={isGenerating}
-            rows={3}
+            rows={2}
           />
 
           <div className="sp-search-actions">
@@ -463,6 +455,12 @@ export function GenerateReviewPage() {
               {isGenerating ? t('input.button_generating') : t('generate_page.button')}
             </button>
           </div>
+
+          {isLoggedIn && (
+            <p className={`sp-search-limit ${credits === 0 ? 'zero' : ''}`}>
+              {t('home.input.credits_remaining')} <span className="credits-number">{credits}</span>
+            </p>
+          )}
 
           {isLoggedIn && (
             <div className="sp-search-history-link">

@@ -373,9 +373,10 @@ class ReviewTaskExecutor:
         from services.paper_metadata_dao import PaperMetadataDAO
         from database import db as database
 
-        # 1. 执行搜索
-        ss_service = get_semantic_scholar_service()
-        search_agent = PaperSearchAgent(ss_service=ss_service)
+        # 1. 执行搜索（使用 OpenAlex，速率更高）
+        from services.openalex_search import get_openalex_service
+        search_service = get_openalex_service()
+        search_agent = PaperSearchAgent(ss_service=search_service)
         all_papers = await search_agent.search(
             topic=topic,
             search_years=params.get('search_years', 10),
@@ -685,8 +686,9 @@ class ReviewTaskExecutor:
                     progress=get_progress("searching", language)
                 )
 
-                ss_service = get_semantic_scholar_service()
-                search_agent = PaperSearchAgent(ss_service=ss_service)
+                from services.openalex_search import get_openalex_service
+                search_service = get_openalex_service()
+                search_agent = PaperSearchAgent(ss_service=search_service)
                 all_papers = await search_agent.search(
                     topic=topic,
                     search_years=10,

@@ -56,6 +56,11 @@ def _activate_subscription(subscription: Subscription, trade_no: str, db: Sessio
         current_credits = user.get_meta("review_credits", 0)
         user.set_meta("review_credits", current_credits + credits_to_add)
         user.set_meta("has_purchased", True)
+        # 增加搜索次数（中文站）
+        SEARCH_BONUS_CN = {"single": 100, "semester": 300, "yearly": 900}
+        bonus = SEARCH_BONUS_CN.get(subscription.plan_type, 0)
+        if bonus > 0:
+            user.set_meta("search_bonus", user.get_meta("search_bonus", 0) + bonus)
         logger.info(f"✅ 用户 {user.id} 获得 {credits_to_add} 篇付费额度，当前付费 {current_credits + credits_to_add}")
 
     db.commit()

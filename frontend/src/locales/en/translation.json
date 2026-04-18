@@ -86,8 +86,7 @@
     },
     "pricing": {
       "title": "Simple, Transparent Pricing",
-      "subtitle": "No subscription. Credits never expire.",
-      "note": "No subscription • Credits never expire • Get 2 free Credits on registration",
+      "subtitle": "No subscription • Credits never expire • Get 2 free Credits on registration",
       "buy_now": "Get Started",
       "no_subscription": "No subscription required",
       "credits_never_expire": "Credits never expire"
@@ -118,7 +117,7 @@
       "link": "Learn about our citation verification process →"
     },
     "footer": {
-      "copyright": "© 2026 AutoOverview. All rights reserved.",
+      "copyright": "© 2026 Danmo Scholar. All rights reserved.",
       "terms": "Terms & Conditions",
       "privacy": "Privacy Policy",
       "refund": "Refund Policy",
@@ -316,8 +315,11 @@
       "button": "Search Papers",
       "button_searching": "Searching...",
       "helper": "We'll find related papers from Web of Science, IEEE Xplore, CrossRef, and Semantic Scholar.",
-      "limit_info": "{{remaining}} searches remaining today",
-      "limit_exceeded": "Daily search limit reached ({{limit}}). Please try again tomorrow"
+      "limit_info": "{{remaining}} free searches remaining (24h)",
+      "free_searches": "Free searches: {{remaining}}",
+      "limit_exceeded": "Search limit reached ({{limit}} per 24h)",
+      "bonus_info": "Bonus searches: {{bonus}}",
+      "limit_exceeded_full": "All searches exhausted. Purchase a plan for more."
     },
     "loading": {
       "title": "Searching academic databases...",
@@ -363,7 +365,7 @@
       "badge": "Free tool by"
     },
     "footer": {
-      "copyright": "© 2026 AutoOverview. All rights reserved.",
+      "copyright": "© 2026 Danmo Scholar. All rights reserved.",
       "terms": "Terms & Conditions",
       "privacy": "Privacy Policy",
       "refund": "Refund Policy"

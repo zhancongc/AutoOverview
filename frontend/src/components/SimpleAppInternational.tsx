@@ -552,7 +552,6 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
           <div className="section-inner">
             <h2 className="section-title">{t('home.pricing.title')}</h2>
             <p className="section-subtitle">{t('home.pricing.subtitle')}</p>
-            <p className="pricing-note">{t('home.pricing.note')}</p>
 
             {plansLoading ? (
               <div className="pricing-grid">

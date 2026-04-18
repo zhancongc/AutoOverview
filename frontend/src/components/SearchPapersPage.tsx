@@ -69,7 +69,7 @@ export function SearchPapersPage() {
   const [credits, setCredits] = useState<number>(0)
   const [showPaymentModal, setShowPaymentModal] = useState<string | false>(false)
   const [showCreditConfirm, setShowCreditConfirm] = useState<'review' | 'matrix' | false>(false)
-  const [dailyLimit, setDailyLimit] = useState<{ limit: number; used: number; remaining: number } | null>(null)
+  const [dailyLimit, setDailyLimit] = useState<{ limit: number; used: number; remaining: number; bonus: number } | null>(null)
   const [showExportModal, setShowExportModal] = useState(false)
   const [exportFormat, setExportFormat] = useState<ExportFormat>('bibtex')
   const statusIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -233,7 +233,7 @@ export function SearchPapersPage() {
       }
     } catch (err: any) {
       if (err.response?.status === 429) {
-        setError(t('search_papers.input.limit_exceeded', { limit: dailyLimit?.limit ?? 5 }))
+        setError(t('search_papers.input.limit_exceeded_full'))
         api.getSearchDailyLimit().then(data => setDailyLimit(data)).catch(() => {})
       } else if (err.code === 'ECONNABORTED' || err.message?.includes('timeout')) {
         setError(t('search_papers.error.timeout'))
@@ -520,7 +520,7 @@ export function SearchPapersPage() {
             }
           } catch (err: any) {
             if (err.response?.status === 429) {
-              setError(t('search_papers.input.limit_exceeded', { limit: 5 }))
+              setError(t('search_papers.input.limit_exceeded_full'))
               api.getSearchDailyLimit().then(data => setDailyLimit(data)).catch(() => {})
             } else {
               setError(err.response?.data?.detail || t('search_papers.error.generic'))
@@ -547,7 +547,7 @@ export function SearchPapersPage() {
       <nav className="home-nav">
         <div className="nav-logo" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
           <span className="logo-icon">📚</span>
-          <span className="logo-text">澹墨学术</span>
+          <span className="logo-text">{isChineseSite ? '澹墨学术' : 'AutoOverview'}</span>
         </div>
         <div className="nav-links">
           <a href="/" className={location.pathname === '/' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigate('/') }}>{t('nav.home')}</a>
@@ -585,7 +585,7 @@ export function SearchPapersPage() {
       <aside className={`mobile-sidebar ${mobileMenuOpen ? 'sidebar-open' : ''}`}>
         <div className="sidebar-header">
           <span className="logo-icon">📚</span>
-          <span className="logo-text">澹墨学术</span>
+          <span className="logo-text">{isChineseSite ? '澹墨学术' : 'AutoOverview'}</span>
           <button className="sidebar-close" onClick={() => setMobileMenuOpen(false)}>&times;</button>
         </div>
         <nav className="sidebar-links">
@@ -631,17 +631,17 @@ export function SearchPapersPage() {
             <button
               className="sp-search-btn"
               onClick={handleSearch}
-              disabled={isLoading || !topic.trim() || (dailyLimit !== null && dailyLimit.remaining <= 0)}
+              disabled={isLoading || !topic.trim() || (dailyLimit !== null && dailyLimit.remaining <= 0 && dailyLimit.bonus <= 0)}
             >
               {isLoading ? t('search_papers.input.button_searching') : t('search_papers.input.button')}
             </button>
           </div>
           {loggedIn && dailyLimit && (
-            <p className={`sp-search-limit ${dailyLimit.remaining === 0 ? 'zero' : ''}`}>
-              {dailyLimit.remaining > 0
-                ? t('search_papers.input.limit_info', { remaining: dailyLimit.remaining })
-                : t('search_papers.input.limit_exceeded', { limit: dailyLimit.limit })
-              }
+            <p className={`sp-search-limit ${(dailyLimit.remaining === 0 && dailyLimit.bonus === 0) ? 'zero' : ''}`}>
+              {t('search_papers.input.free_searches', { remaining: dailyLimit.remaining })}
+              {dailyLimit.bonus > 0 && (
+                <>, {t('search_papers.input.bonus_info', { bonus: dailyLimit.bonus })}</>
+              )}
             </p>
           )}
           <p className="sp-search-helper">{t('search_papers.input.helper')}</p>
@@ -887,7 +887,7 @@ export function SearchPapersPage() {
               )
             })()}
             <p className="sp-cta-badge">
-              {t('search_papers.cta.badge')} <a href="/">澹墨学术</a>
+              {t('search_papers.cta.badge')} <a href="/">{isChineseSite ? '澹墨学术' : 'AutoOverview'}</a>
             </p>
           </div>
         </div>

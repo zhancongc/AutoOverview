@@ -303,6 +303,11 @@ def _activate_subscription(subscription, paypal_order_id: str, db: Session):
             current_credits = user.get_meta("review_credits", 0)
             user.set_meta("review_credits", current_credits + credits_to_add)
             user.set_meta("has_purchased", True)
+            # 增加搜索次数（英文站）
+            SEARCH_BONUS_EN = {"single": 150, "semester": 500, "yearly": 1500}
+            bonus = SEARCH_BONUS_EN.get(subscription.plan_type, 0)
+            if bonus > 0:
+                user.set_meta("search_bonus", user.get_meta("search_bonus", 0) + bonus)
             logger.info(f"[PayPal] Added {credits_to_add} credits to user {user.id}")
 
     db.commit()

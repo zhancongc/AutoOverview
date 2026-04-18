@@ -177,6 +177,7 @@ DEFAULT_PLANS = [
         "badge": None, "badge_en": None,
         "features": [
             "2 个积分（1 篇综述 或 2 篇对比矩阵）",
+            "100 次额外文献搜索",
             "在线查看 + Word 导出",
             "参考文献包含真实文献 DOI 链接",
             "支持导出 BibTeX、RIS、Word 格式",
@@ -184,6 +185,7 @@ DEFAULT_PLANS = [
         ],
         "features_en": [
             "6 Credits (3 reviews or 6 comparison matrices)",
+            "150 bonus paper searches",
             "Online viewing + Word export",
             "DOI-verifiable citations",
             "Export BibTeX, XML, RIS formats",
@@ -202,6 +204,7 @@ DEFAULT_PLANS = [
         "badge": "热门", "badge_en": "Popular",
         "features": [
             "6 个积分（3 篇综述 或 6 篇对比矩阵）",
+            "300 次额外文献搜索",
             "在线查看 + Word 导出",
             "参考文献包含真实文献 DOI 链接",
             "支持导出 BibTeX、RIS、Word 格式",
@@ -209,6 +212,7 @@ DEFAULT_PLANS = [
         ],
         "features_en": [
             "18 Credits (9 reviews or 18 comparison matrices)",
+            "500 bonus paper searches",
             "Online viewing + Word export",
             "DOI-verifiable citations",
             "Export BibTeX, XML, RIS formats",
@@ -227,6 +231,7 @@ DEFAULT_PLANS = [
         "badge": "超值", "badge_en": "Best Value",
         "features": [
             "18 个积分（9 篇综述 或 18 篇对比矩阵）",
+            "900 次额外文献搜索",
             "在线查看 + Word 导出",
             "参考文献包含真实文献 DOI 链接",
             "支持导出 BibTeX、RIS、Word 格式",
@@ -234,6 +239,7 @@ DEFAULT_PLANS = [
         ],
         "features_en": [
             "50 Credits (25 reviews or 50 comparison matrices)",
+            "1,500 bonus paper searches",
             "Online viewing + Word export",
             "DOI-verifiable citations",
             "Export BibTeX, XML, RIS formats",

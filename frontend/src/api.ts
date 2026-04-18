@@ -364,7 +364,7 @@ export const api = {
     return response.data;
   },
 
-  async getSearchDailyLimit(): Promise<{ limit: number; used: number; remaining: number }> {
+  async getSearchDailyLimit(): Promise<{ limit: number; used: number; remaining: number; bonus: number }> {
     const token = localStorage.getItem('auth_token');
     const headers: Record<string, string> = {};
     if (token) headers.Authorization = `Bearer ${token}`;

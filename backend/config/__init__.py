@@ -39,6 +39,8 @@ class Config:
 
     # OpenAlex API 每秒调用次数限制
     OPENALEX_RATE_LIMIT = float(os.getenv("OPENALEX_RATE_LIMIT", "5.0"))
+    # OpenAlex mailto header（提高速率限制）
+    OPENALEX_EMAIL = os.getenv("OPENALEX_EMAIL", "")
 
     # Semantic Scholar API 每秒调用次数限制
     SEMANTIC_SCHOLAR_RATE_LIMIT = float(os.getenv("SEMANTIC_SCHOLAR_RATE_LIMIT", "0.1"))
