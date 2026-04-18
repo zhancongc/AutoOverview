@@ -910,6 +910,10 @@ html.intl .search-papers-page .sp-review-cta-btn:hover {
 
 /* ==================== Responsive ==================== */
 @media (max-width: 768px) {
+  .search-papers-page .home-nav {
+    grid-template-columns: auto 1fr auto;
+  }
+
   .search-papers-page .sp-nav-links,
   .search-papers-page .sp-nav-actions,
   .search-papers-page .nav-links,
@@ -920,6 +924,8 @@ html.intl .search-papers-page .sp-review-cta-btn:hover {
   .search-papers-page .sp-mobile-toggle,
   .search-papers-page .mobile-menu-toggle {
     display: block !important;
+    justify-self: end;
+    grid-column: 3;
   }
 
   .search-papers-page .sp-hero {
@@ -1177,6 +1183,7 @@ html.intl .search-papers-page .sidebar-bottom {
 @media (max-width: 768px) {
   html.intl .search-papers-page .mobile-menu-toggle {
     display: block !important;
+    justify-self: end;
   }
 
   html.intl .search-papers-page .nav-links,

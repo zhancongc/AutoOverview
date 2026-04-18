@@ -1200,9 +1200,16 @@ html.intl {
 
   /* Responsive Mobile Styles */
   @media (max-width: 768px) {
+    .simple-home-international .home-nav,
+    .home-nav {
+      grid-template-columns: auto 1fr auto;
+    }
+
     .simple-home-international .mobile-menu-toggle,
     .mobile-menu-toggle {
       display: block;
+      justify-self: end;
+      grid-column: 3;
     }
 
     .simple-home-international .nav-links,

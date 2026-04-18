@@ -1011,6 +1011,7 @@ html.intl .comparison-matrix-page {
 @media (max-width: 768px) {
   .comparison-matrix-page .home-nav {
     padding: 12px 16px;
+    grid-template-columns: auto 1fr auto;
   }
 
   .comparison-matrix-page .nav-links {
@@ -1033,6 +1034,8 @@ html.intl .comparison-matrix-page {
 
   .comparison-matrix-page .mobile-menu-toggle {
     display: block;
+    justify-self: end;
+    grid-column: 3;
   }
 
   .comparison-matrix-page .mobile-sidebar-overlay {

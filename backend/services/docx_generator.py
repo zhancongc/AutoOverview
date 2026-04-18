@@ -7,7 +7,13 @@ from docx.shared import Pt, RGBColor, Inches
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.enum.style import WD_STYLE_TYPE
 import re
+import json
 from typing import List, Dict
+
+try:
+    from services.citation_formatter import format_references
+except ImportError:
+    format_references = None
 
 
 class DocxGenerator:
@@ -37,6 +43,24 @@ class DocxGenerator:
         """
         doc = Document()
 
+        # 解析 papers - 可能是 JSON 字符串
+        if isinstance(papers, str):
+            try:
+                papers = json.loads(papers)
+            except (json.JSONDecodeError, TypeError):
+                papers = []
+
+        # 确保 papers 是列表
+        if not isinstance(papers, list):
+            papers = []
+
+        # 解析 statistics - 可能是 JSON 字符串
+        if isinstance(statistics, str):
+            try:
+                statistics = json.loads(statistics)
+            except (json.JSONDecodeError, TypeError):
+                statistics = None
+
         # 设置文档样式
         self._setup_document_styles(doc)
 
@@ -45,20 +69,22 @@ class DocxGenerator:
         title.alignment = WD_ALIGN_PARAGRAPH.CENTER
 
         # 添加摘要/统计信息
-        if statistics:
+        if statistics and isinstance(statistics, dict):
             self._add_statistics(doc, statistics)
 
         # 根据格式重新格式化参考文献
-        if "## References" in review and papers and citation_format != "ieee":
-            from services.citation_formatter import format_references
+        if "## References" in review and papers and citation_format != "ieee" and format_references is not None:
+            try:
+                # 分离正文和参考文献
+                parts = review.split("## References", 1)
+                content_part = parts[0]
 
-            # 分离正文和参考文献
-            parts = review.split("## References", 1)
-            content_part = parts[0]
-
-            # 重新格式化参考文献
-            new_references = format_references(papers, citation_format)
-            review = content_part + "## References\n\n" + new_references
+                # 重新格式化参考文献
+                new_references = format_references(papers, citation_format)
+                review = content_part + "## References\n\n" + new_references
+            except Exception as e:
+                # 如果格式化失败，使用原始内容
+                pass
 
         # 解析并添加 Markdown 内容
         self._add_markdown_content(doc, review)
@@ -85,17 +111,27 @@ class DocxGenerator:
 
     def _add_statistics(self, doc, statistics):
         """添加统计信息"""
+        if not statistics or not isinstance(statistics, dict):
+            return
         doc.add_paragraph()
         p = doc.add_paragraph()
         p.add_run('文献统计：').bold = True
-        stats_text = (
-            f"文献总数：{statistics.get('total', 0)}篇 | "
-            f"近5年文献占比：{(statistics.get('recent_ratio', 0) * 100):.1f}% | "
-            f"英文文献占比：{(statistics.get('english_ratio', 0) * 100):.1f}% | "
-            f"总被引量：{statistics.get('total_citations', 0)}次"
-        )
-        p.add_run(stats_text)
-        p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        try:
+            total = statistics.get('total', 0)
+            recent_ratio = statistics.get('recent_ratio', 0) or 0
+            english_ratio = statistics.get('english_ratio', 0) or 0
+            total_citations = statistics.get('total_citations', 0)
+            stats_text = (
+                f"文献总数：{total}篇 | "
+                f"近5年文献占比：{(recent_ratio * 100):.1f}% | "
+                f"英文文献占比：{(english_ratio * 100):.1f}% | "
+                f"总被引量：{total_citations}次"
+            )
+            p.add_run(stats_text)
+            p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        except (TypeError, ValueError):
+            # 如果统计信息格式有问题，跳过
+            pass
 
     def _add_markdown_content(self, doc, review: str):
         """解析并添加 Markdown 内容到文档"""
@@ -174,61 +210,65 @@ class DocxGenerator:
         if not table_lines:
             return
 
-        # 解析每一行，获取单元格数据，同时过滤分隔线
-        table_data = []
-        header_found = False
+        try:
+            # 解析每一行，获取单元格数据，同时过滤分隔线
+            table_data = []
+            header_found = False
 
-        for line in table_lines:
-            # 分割单元格，移除首尾的 |
-            cells = [cell.strip() for cell in line.split('|')]
-            # 移除空的首尾单元格
-            if cells and not cells[0]:
-                cells = cells[1:]
-            if cells and not cells[-1]:
-                cells = cells[:-1]
+            for line in table_lines:
+                # 分割单元格，移除首尾的 |
+                cells = [cell.strip() for cell in line.split('|')]
+                # 移除空的首尾单元格
+                if cells and not cells[0]:
+                    cells = cells[1:]
+                if cells and not cells[-1]:
+                    cells = cells[:-1]
 
-            # 检查是否是分隔线（只包含 -、:、空格的单元格）
-            is_separator = False
-            if cells:
-                all_sep_cells = True
-                for cell in cells:
-                    cleaned = cell.replace('-', '').replace(':', '').replace(' ', '')
-                    if len(cleaned) > 0:
-                        all_sep_cells = False
-                        break
-                if all_sep_cells:
-                    is_separator = True
+                # 检查是否是分隔线（只包含 -、:、空格的单元格）
+                is_separator = False
+                if cells:
+                    all_sep_cells = True
+                    for cell in cells:
+                        cleaned = cell.replace('-', '').replace(':', '').replace(' ', '')
+                        if len(cleaned) > 0:
+                            all_sep_cells = False
+                            break
+                    if all_sep_cells:
+                        is_separator = True
 
-            if not is_separator and cells:
-                table_data.append(cells)
+                if not is_separator and cells:
+                    table_data.append(cells)
 
-        if not table_data:
-            return
+            if not table_data:
+                return
 
-        # 创建 Word 表格
-        rows = len(table_data)
-        cols = max(len(row) for row in table_data) if table_data else 0
+            # 创建 Word 表格
+            rows = len(table_data)
+            cols = max(len(row) for row in table_data) if table_data else 0
 
-        if cols == 0:
-            return
+            if cols == 0:
+                return
 
-        table = doc.add_table(rows=rows, cols=cols)
-        table.style = 'Table Grid'
+            table = doc.add_table(rows=rows, cols=cols)
+            table.style = 'Table Grid'
 
-        # 填充表格数据
-        for row_idx, row_data in enumerate(table_data):
-            for col_idx, cell_text in enumerate(row_data):
-                if col_idx < cols:
-                    cell = table.rows[row_idx].cells[col_idx]
-                    # 清理单元格文本（移除 Markdown 格式）
-                    clean_text = self._strip_markdown_formatting(cell_text)
-                    # 添加到单元格
-                    paragraph = cell.paragraphs[0]
-                    paragraph.text = clean_text
-                    # 第一行（表头）加粗
-                    if row_idx == 0:
-                        for run in paragraph.runs:
-                            run.bold = True
+            # 填充表格数据
+            for row_idx, row_data in enumerate(table_data):
+                for col_idx, cell_text in enumerate(row_data):
+                    if col_idx < cols:
+                        cell = table.rows[row_idx].cells[col_idx]
+                        # 清理单元格文本（移除 Markdown 格式）
+                        clean_text = self._strip_markdown_formatting(cell_text)
+                        # 添加到单元格
+                        paragraph = cell.paragraphs[0]
+                        paragraph.text = clean_text
+                        # 第一行（表头）加粗
+                        if row_idx == 0:
+                            for run in paragraph.runs:
+                                run.bold = True
+        except Exception:
+            # 如果表格解析失败，跳过表格，继续处理后面的内容
+            pass
 
     def _add_list_item(self, doc, line, ordered=False):
         """添加列表项"""

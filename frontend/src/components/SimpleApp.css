@@ -214,6 +214,9 @@
 .sidebar-bottom .nav-btn {
   width: 100%;
   text-align: center;
+  padding: 1rem 1.5rem;
+  font-size: 1.05rem;
+  border-radius: 10px;
 }
 
 @media (min-width: 769px) {
@@ -1929,6 +1932,8 @@ html.intl .nav-btn-logout:hover {
 @media (max-width: 768px) {
   .mobile-menu-toggle {
     display: block;
+    justify-self: end;
+    grid-column: 3;
   }
 
   .nav-links,
@@ -1942,6 +1947,7 @@ html.intl .nav-btn-logout:hover {
 
   .home-nav {
     padding: 0.5rem 1.25rem;
+    grid-template-columns: auto 1fr auto;
   }
 
   .logo-text {

@@ -212,15 +212,8 @@ export function CitationMarker({ index, paper }: CitationMarkerProps) {
   const [position, setPosition] = useState({ x: 0, y: 0 })
   const hoverTimerRef = useRef<NodeJS.Timeout | null>(null)
 
-  // 调试：打印 paper 数据
-  useEffect(() => {
-    console.log(`[CitationMarker] [${index}] paper:`, paper)
-  }, [index, paper])
-
   const handleMouseEnter = (e: any) => {
     if (isFixed) return
-
-    console.log(`[CitationMarker] MouseEnter [${index}]`)
 
     // 清除之前的定时器
     if (hoverTimerRef.current) {
@@ -232,14 +225,11 @@ export function CitationMarker({ index, paper }: CitationMarkerProps) {
       const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
       setPosition({ x: rect.right, y: rect.top })
       setShowTooltip(true)
-      console.log(`[CitationMarker] Showing tooltip [${index}]`)
     }, 200)
   }
 
   const handleMouseLeave = () => {
     if (isFixed) return
-
-    console.log(`[CitationMarker] MouseLeave [${index}]`)
 
     if (hoverTimerRef.current) {
       clearTimeout(hoverTimerRef.current)
@@ -248,7 +238,6 @@ export function CitationMarker({ index, paper }: CitationMarkerProps) {
   }
 
   const handleClick = (e: any) => {
-    console.log(`[CitationMarker] handleClick [${index}]`, { paper, isFixed })
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
     setPosition({ x: rect.right, y: rect.top })
 

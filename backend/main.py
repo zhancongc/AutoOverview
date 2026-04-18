@@ -454,7 +454,7 @@ async def get_records(
         db_session.query(ReviewTask)
         .filter(
             ReviewTask.user_id == user_id,
-            ReviewTask.params["type"].astext == "comparison_matrix_only"
+            ReviewTask.params.op('->>')('type') == "comparison_matrix_only"
         )
         .order_by(ReviewTask.created_at.desc())
         .limit(50)
@@ -1447,7 +1447,7 @@ async def submit_review_task(
                     try:
                         from models import ReviewTask
                         existing_matrix = auth_db.query(ReviewTask).filter(
-                            ReviewTask.params["reuse_task_id"].as_string() == request.reuse_task_id,
+                            ReviewTask.params.op('->>')('reuse_task_id') == request.reuse_task_id,
                             ReviewTask.status == "completed"
                         ).first()
                         if existing_matrix and existing_matrix.params and existing_matrix.params.get("type") == "comparison_matrix_only":
@@ -2177,7 +2177,7 @@ async def get_related_tasks(
         try:
             # 用 JSON 查询直接过滤，避免加载所有任务到内存
             related_tasks = session.query(ReviewTask).filter(
-                ReviewTask.params["reuse_task_id"].as_string() == task_id
+                ReviewTask.params.op('->>')('reuse_task_id') == task_id
             ).order_by(
                 ReviewTask.created_at.desc()
             ).limit(50).all()
