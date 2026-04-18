@@ -28,6 +28,14 @@ PROGRESS_MESSAGES = {
     "generating_matrix": {
         "zh": "正在生成对比矩阵...",
         "en": "Generating comparison matrix..."
+    },
+    "matrix_analyzing": {
+        "zh": "正在对比文献...",
+        "en": "Comparing literature..."
+    },
+    "matrix_optimizing": {
+        "zh": "正在优化对比表格...",
+        "en": "Optimizing comparison table..."
     }
 }
 

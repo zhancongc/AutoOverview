@@ -16,6 +16,7 @@ import { PayPalPaymentModal } from './PayPalPaymentModal'
 import { ConfirmModalInternational } from './ConfirmModalInternational'
 import { ConfirmModal } from './ConfirmModal'
 import { useMatrixAuth, ComparisonMatrixData, TabType } from './ComparisonMatrixShared'
+import { ExportFormatModal, ExportFormat } from './ExportFormatModal'
 import './ComparisonMatrixPage.css'
 
 export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
@@ -29,10 +30,13 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
   const [matrixError, setMatrixError] = useState('')
   const [progress, setProgress] = useState(0)
   const [matrixSearchTaskId, setMatrixSearchTaskId] = useState('')
+  const [pendingPapers, setPendingPapers] = useState<any[]>([])
   const [activeTab, setActiveTab] = useState<TabType>('matrix')
   const [isGeneratingReview, setIsGeneratingReview] = useState(false)
   const [showPaymentModal, setShowPaymentModal] = useState<string | false>(false)
   const [showCreditConfirm, setShowCreditConfirm] = useState(false)
+  const [showExportModal, setShowExportModal] = useState(false)
+  const [exportFormat, setExportFormat] = useState<ExportFormat>('bibtex')
 
   useEffect(() => {
     loadMatrixData(taskId)
@@ -97,6 +101,9 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
               return
             } else if (task.progress?.message) {
               setMatrixLoadingMsg(task.progress.message)
+            }
+            if (task.progress?.papers && task.progress.papers.length > 0) {
+              setPendingPapers(task.progress.papers)
             }
           }
         } catch (err: any) {
@@ -188,6 +195,78 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
     URL.revokeObjectURL(url)
   }
 
+  const getPapersForExport = () => {
+    return matrixData?.papers || pendingPapers || []
+  }
+
+  const generateBibTeX = (papers: any[]): string => {
+    return papers.map((paper, i) => {
+      const key = (paper.authors?.[0]?.split(' ').pop()?.toLowerCase() || 'unknown')
+        + (paper.year || '') + '_' + (i + 1)
+      const authors = paper.authors?.join(' and ') || 'Unknown'
+      let entry = `@article{${key},\n`
+      entry += `  title = {${paper.title}},\n`
+      entry += `  author = {${authors}},\n`
+      if (paper.year) entry += `  year = {${paper.year}},\n`
+      if (paper.doi) entry += `  doi = {${paper.doi}},\n`
+      if (paper.journal) entry += `  journal = {${paper.journal}},\n`
+      entry += `}`
+      return entry
+    }).join('\n\n')
+  }
+
+  const generateRIS = (papers: any[]): string => {
+    return papers.map(paper => {
+      let ris = `TY  - JOUR\n`
+      ris += `TI  - ${paper.title}\n`
+      if (paper.authors) {
+        paper.authors.forEach((a: string) => { ris += `AU  - ${a}\n` })
+      }
+      if (paper.year) ris += `PY  - ${paper.year}\n`
+      if (paper.doi) ris += `DO  - ${paper.doi}\n`
+      if (paper.journal) ris += `JO  - ${paper.journal}\n`
+      ris += `ER  - \n`
+      return ris
+    }).join('\n')
+  }
+
+  const handleExportReferences = async () => {
+    const papers = getPapersForExport()
+    if (papers.length === 0) return
+
+    const safeName = (matrixData?.topic || 'references').replace(/[\/\\:]/g, '-').substring(0, 50)
+    const { saveAs } = await import('file-saver')
+
+    if (exportFormat === 'bibtex') {
+      const content = generateBibTeX(papers)
+      const blob = new Blob([content], { type: 'application/x-bibtex;charset=utf-8' })
+      saveAs(blob, `${safeName}.bib`)
+    } else if (exportFormat === 'ris') {
+      const content = generateRIS(papers)
+      const blob = new Blob([content], { type: 'application/x-research-info-systems;charset=utf-8' })
+      saveAs(blob, `${safeName}.ris`)
+    } else {
+      const { Document, Packer, Paragraph, TextRun } = await import('docx')
+      const children: any[] = [
+        new Paragraph({ text: matrixData?.topic || 'References', heading: 'Heading1' as any }),
+        new Paragraph({ text: '' }),
+      ]
+      papers.forEach((paper: any, i: number) => {
+        const authors = paper.authors?.slice(0, 3).join(', ') + (paper.authors?.length > 3 ? ' et al.' : '')
+        children.push(new Paragraph({
+          children: [
+            new TextRun({ text: `[${i + 1}] `, bold: true }),
+            new TextRun({ text: `${paper.title}. ${authors}. ${paper.year || ''} ${paper.doi ? `DOI: ${paper.doi}` : ''}` }),
+          ],
+          spacing: { after: 200 },
+        }))
+      })
+      const doc = new Document({ sections: [{ children }] })
+      const blob = await Packer.toBlob(doc)
+      saveAs(blob, `${safeName}.docx`)
+    }
+  }
+
   const renderCompactHeader = () => (
     <div className="review-page-header" style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100, background: '#fff', borderBottom: '1px solid #e5e7eb' }}>
       <button className="back-button" onClick={() => navigate('/comparison-matrix', { replace: true })}>
@@ -219,8 +298,8 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
         <button className="stats-action-btn" onClick={handleExportMarkdown}>
           {t('comparison_matrix_page.export_markdown')}
         </button>
-        <button className="stats-action-btn" onClick={() => navigate('/comparison-matrix')}>
-          {t('comparison_matrix_page.continue_search')}
+        <button className="stats-action-btn" onClick={() => setShowExportModal(true)} disabled={getPapersForExport().length === 0}>
+          {t('comparison_matrix_page.export_references')}
         </button>
       </div>
     </div>
@@ -265,6 +344,17 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
           planType={showPaymentModal}
         />
       )}
+      {showExportModal && (
+        <ExportFormatModal
+          selectedFormat={exportFormat}
+          onSelectFormat={setExportFormat}
+          onConfirm={() => {
+            setShowExportModal(false)
+            handleExportReferences()
+          }}
+          onCancel={() => setShowExportModal(false)}
+        />
+      )}
     </>
   )
 
@@ -273,11 +363,51 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
     return (
       <div className="comparison-matrix-page">
         {renderCompactHeader()}
-        <div className="loading-container" style={{ marginTop: 80 }}>
-          <div className="progress-bar-container">
-            <div className="progress-bar" style={{ width: `${progress}%` }}></div>
-          </div>
-          <p>{matrixLoadingMsg || t('comparison_matrix_page.loading')}</p>
+        <div style={{ marginTop: 80, padding: '0 2rem', maxWidth: 900, margin: '80px auto 0' }}>
+          {activeTab === 'matrix' ? (
+            <div className="loading-container">
+              <div className="progress-bar-container">
+                <div className="progress-bar" style={{ width: `${progress}%` }}></div>
+              </div>
+              <p style={{ color: '#6b7280', marginTop: '1rem' }}>{matrixLoadingMsg || t('comparison_matrix_page.loading')}</p>
+            </div>
+          ) : (
+            <div className="matrix-references">
+              {pendingPapers.length > 0 ? (
+                <>
+                  <h2>References</h2>
+                  <p className="references-summary">{pendingPapers.length} papers found</p>
+                  <div className="references-list">
+                    {pendingPapers.map((paper: any, index: number) => (
+                      <div key={paper.id || index} className="reference-item">
+                        <div className="reference-number">{index + 1}</div>
+                        <div className="reference-content">
+                          <div className="reference-title">{paper.title}</div>
+                          <div className="reference-meta">
+                            {paper.authors?.slice(0, 3).join(', ')}{paper.authors?.length > 3 ? ' et al.' : ''}
+                            {paper.year && ` · ${paper.year}`}
+                            {paper.cited_by_count >= 0 && ` · ${paper.cited_by_count} citations`}
+                          </div>
+                          {paper.doi && (
+                            <a href={`https://doi.org/${paper.doi}`} target="_blank" rel="noopener noreferrer" className="reference-doi">
+                              DOI: {paper.doi}
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <div className="loading-container">
+                  <div className="progress-bar-container">
+                    <div className="progress-bar" style={{ width: `${progress}%` }}></div>
+                  </div>
+                  <p style={{ color: '#6b7280', marginTop: '1rem' }}>{matrixLoadingMsg || t('comparison_matrix_page.loading')}</p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
         {renderModals()}
       </div>

@@ -26,7 +26,6 @@ export function ComparisonMatrixLanding() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [showPaymentModal, setShowPaymentModal] = useState<string | false>(false)
   const [showCreditConfirm, setShowCreditConfirm] = useState(false)
-  const [dailyLimit, setDailyLimit] = useState<{ limit: number; used: number; remaining: number; bonus: number } | null>(null)
 
   // Search state
   const [topic, setTopic] = useState('')
@@ -54,11 +53,6 @@ export function ComparisonMatrixLanding() {
     if (savedStats) setStatistics(JSON.parse(savedStats))
     if (savedHasSearched) setHasSearched(savedHasSearched === 'true')
 
-    // Fetch daily search limit
-    if (checkLoggedIn()) {
-      api.getSearchDailyLimit().then(data => setDailyLimit(data)).catch(() => {})
-    }
-
     // Restore in-progress matrix generation
     const pendingMatrixTaskId = localStorage.getItem('cm_matrix_task_id')
     if (pendingMatrixTaskId && savedTopic) {
@@ -68,13 +62,6 @@ export function ComparisonMatrixLanding() {
       pollMatrixResult(pendingMatrixTaskId)
     }
   }, [])
-
-  // Fetch daily limit after login
-  useEffect(() => {
-    if (loggedIn) {
-      api.getSearchDailyLimit().then(data => setDailyLimit(data)).catch(() => {})
-    }
-  }, [loggedIn])
 
   const pollMatrixResult = async (matrixTaskId: string) => {
     let attempts = 0
@@ -158,7 +145,7 @@ export function ComparisonMatrixLanding() {
         localStorage.setItem('cm_statistics', JSON.stringify(stats))
         localStorage.setItem('cm_search_task_id', tid)
         localStorage.setItem('cm_has_searched', 'true')
-        api.getSearchDailyLimit().then(data => setDailyLimit(data)).catch(() => {})
+
       } else {
         setSearchError(response.message || t('comparison_matrix_page.error'))
         setCombinedPhase('idle')
@@ -168,7 +155,7 @@ export function ComparisonMatrixLanding() {
     } catch (err: any) {
       if (err.response?.status === 429) {
         setSearchError(t('search_papers.input.limit_exceeded_full'))
-        api.getSearchDailyLimit().then(data => setDailyLimit(data)).catch(() => {})
+
         setCombinedPhase('idle')
         setIsLoading(false)
         return
@@ -225,7 +212,6 @@ export function ComparisonMatrixLanding() {
     api.getCredits().then(data => {
       setCredits(data.credits)
     }).catch(() => {})
-    api.getSearchDailyLimit().then(data => setDailyLimit(data)).catch(() => {})
     if (pendingTopic) {
       const topicToGenerate = pendingTopic
       setPendingTopic('')
@@ -323,14 +309,14 @@ export function ComparisonMatrixLanding() {
         localStorage.setItem('cm_statistics', JSON.stringify(stats))
         localStorage.setItem('cm_search_task_id', tid)
         localStorage.setItem('cm_has_searched', 'true')
-        api.getSearchDailyLimit().then(data => setDailyLimit(data)).catch(() => {})
+
       } else {
         setSearchError(response.message || t('comparison_matrix_page.error'))
       }
     } catch (err: any) {
       if (err.response?.status === 429) {
         setSearchError(t('search_papers.input.limit_exceeded_full'))
-        api.getSearchDailyLimit().then(data => setDailyLimit(data)).catch(() => {})
+
       } else if (err.code === 'ECONNABORTED' || err.message?.includes('timeout')) {
         setSearchError(t('search_papers.error.timeout'))
       } else {

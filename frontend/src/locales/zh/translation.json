@@ -434,7 +434,7 @@
     "time_unit": "秒",
     "generated_at": "生成时间",
     "export_markdown": "导出 Markdown",
-    "continue_search": "继续搜索",
+    "export_references": "导出参考文献",
     "coming_soon": "导出功能即将上线！",
     "nav_generate": "生成对比矩阵",
     "generate_title": "生成文献对比矩阵",

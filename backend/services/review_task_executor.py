@@ -705,7 +705,11 @@ class ReviewTaskExecutor:
             task_manager.update_task_status(
                 task_id,
                 TaskStatus.PROCESSING,
-                progress=get_progress("generating_matrix", language)
+                progress={
+                    "step": "generating_matrix",
+                    "message": get_progress("generating_matrix", language),
+                    "papers": all_papers[:30]
+                }
             )
 
             api_key = os.getenv("DEEPSEEK_API_KEY")
