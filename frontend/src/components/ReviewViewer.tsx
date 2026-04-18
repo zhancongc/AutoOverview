@@ -170,8 +170,27 @@ export function ReviewViewer({ content, papers = [], hasPurchased = false, onToc
   }
 
   // 预处理 content：把没有 # 前缀但以 **数字.数字** 开头的粗体行转为 #### 标题
+  // 同时去掉正文中的 "## References" 部分（避免与 References tab 重复）
   const processedContent = useMemo(() => {
-    return content.split('\n').map(line => {
+    let lines = content.split('\n')
+
+    // 查找 "## References" 或类似标题的位置
+    let referencesIndex = -1
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim()
+      if (line.match(/^#{1,2}\s*(References|参考文献)/i)) {
+        referencesIndex = i
+        break
+      }
+    }
+
+    // 如果找到了 References 标题，去掉它及之后的所有内容
+    if (referencesIndex >= 0) {
+      lines = lines.slice(0, referencesIndex)
+    }
+
+    // 处理标题格式
+    return lines.map(line => {
       if (line.match(/^\*\*\d+\.\d+/) && !line.startsWith('#')) {
         return '#### ' + line
       }

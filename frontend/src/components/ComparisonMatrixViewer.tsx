@@ -459,7 +459,7 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
                 : t('comparison_matrix_page.generate_review')}
             </button>
             <button
-              className="sidebar-action-btn"
+              className="sidebar-action-btn sidebar-action-secondary"
               onClick={() => {
                 setMobileMenuOpen(false)
                 handleExportMarkdown()
@@ -468,7 +468,7 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
               {t('comparison_matrix_page.export_markdown')}
             </button>
             <button
-              className="sidebar-action-btn"
+              className="sidebar-action-btn sidebar-action-secondary"
               onClick={() => {
                 setMobileMenuOpen(false)
                 setShowExportModal(true)
@@ -533,7 +533,7 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
                 : t('comparison_matrix_page.generate_review')}
             </button>
             <button
-              className="sidebar-action-btn"
+              className="sidebar-action-btn sidebar-action-secondary"
               onClick={() => {
                 setMobileMenuOpen(false)
                 handleExportMarkdown()
@@ -542,7 +542,7 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
               {t('comparison_matrix_page.export_markdown')}
             </button>
             <button
-              className="sidebar-action-btn"
+              className="sidebar-action-btn sidebar-action-secondary"
               onClick={() => {
                 setMobileMenuOpen(false)
                 setShowExportModal(true)
@@ -696,7 +696,7 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
                 : t('comparison_matrix_page.generate_review')}
             </button>
             <button
-              className="sidebar-action-btn"
+              className="sidebar-action-btn sidebar-action-secondary"
               onClick={() => {
                 setMobileMenuOpen(false)
                 handleExportMarkdown()
@@ -705,7 +705,7 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
               {t('comparison_matrix_page.export_markdown')}
             </button>
             <button
-              className="sidebar-action-btn"
+              className="sidebar-action-btn sidebar-action-secondary"
               onClick={() => {
                 setMobileMenuOpen(false)
                 setShowExportModal(true)

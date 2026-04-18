@@ -1169,4 +1169,62 @@ html.intl .comparison-matrix-page {
     background: var(--cm-primary-light);
     color: var(--cm-primary);
   }
+
+  /* 侧边栏按钮样式 - 白色背景 */
+  .comparison-matrix-page .sidebar-action-btn {
+    width: 100%;
+    max-width: 100%;
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    border: 1px solid var(--cm-border-gray);
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'Source Sans Pro', sans-serif;
+    background: var(--cm-pure-white);
+    color: var(--cm-charcoal);
+    line-height: 1.4;
+    box-sizing: border-box;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-bottom: 0.5rem;
+  }
+
+  .comparison-matrix-page .sidebar-action-btn:hover {
+    background: var(--cm-cream-white);
+  }
+
+  .comparison-matrix-page .sidebar-action-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .comparison-matrix-page .sidebar-action-btn.sidebar-action-primary {
+    background: var(--cm-primary);
+    color: white;
+    border-color: var(--cm-primary);
+  }
+
+  .comparison-matrix-page .sidebar-action-btn.sidebar-action-primary:hover {
+    background: var(--cm-primary-dark);
+  }
+
+  .comparison-matrix-page .sidebar-action-btn.sidebar-action-secondary {
+    background: var(--cm-pure-white);
+    color: var(--cm-charcoal);
+    border: 1px solid var(--cm-border-gray);
+  }
+
+  .comparison-matrix-page .sidebar-action-btn.sidebar-action-secondary:hover {
+    background: var(--cm-cream-white);
+  }
+
+  .comparison-matrix-page .sidebar-actions {
+    padding: 0.75rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
 }
