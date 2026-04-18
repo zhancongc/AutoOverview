@@ -1117,4 +1117,56 @@ html.intl .comparison-matrix-page {
     flex-direction: column;
     gap: 0.5rem;
   }
+
+  /* ComparisonMatrixViewer 移动端样式 */
+  .comparison-matrix-page .review-page-header {
+    height: 52px;
+    padding: 0.5rem 0.75rem;
+  }
+
+  .comparison-matrix-page .review-page-header .header-actions {
+    display: none !important;
+  }
+
+  .comparison-matrix-page .review-page-header .review-mobile-toggle {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+
+  .comparison-matrix-page .review-segmented-tabs {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    max-width: 180px;
+  }
+
+  .comparison-matrix-page .sidebar-bottom {
+    padding: 1.25rem;
+    border-top: 1px solid #e5e7eb;
+    margin-top: auto;
+  }
+
+  .comparison-matrix-page .sidebar-user-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.75rem;
+    background: var(--cm-cream-white);
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--cm-charcoal);
+    transition: all 0.2s;
+  }
+
+  .comparison-matrix-page .sidebar-user-btn:hover {
+    background: var(--cm-primary-light);
+    color: var(--cm-primary);
+  }
 }

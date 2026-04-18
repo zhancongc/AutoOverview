@@ -478,6 +478,18 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
               {t('comparison_matrix_page.export_references')}
             </button>
           </div>
+          <div className="sidebar-bottom">
+            <button
+              className="sidebar-user-btn"
+              onClick={() => {
+                setMobileMenuOpen(false)
+                navigate('/profile')
+              }}
+            >
+              <span>👤</span>
+              <span>{isChineseSite ? '我的账户' : 'My Account'}</span>
+            </button>
+          </div>
         </aside>
       </div>
     )
@@ -538,6 +550,18 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
               disabled={getPapersForExport().length === 0}
             >
               {t('comparison_matrix_page.export_references')}
+            </button>
+          </div>
+          <div className="sidebar-bottom">
+            <button
+              className="sidebar-user-btn"
+              onClick={() => {
+                setMobileMenuOpen(false)
+                navigate('/profile')
+              }}
+            >
+              <span>👤</span>
+              <span>{isChineseSite ? '我的账户' : 'My Account'}</span>
             </button>
           </div>
         </aside>
@@ -689,6 +713,18 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
               disabled={getPapersForExport().length === 0}
             >
               {t('comparison_matrix_page.export_references')}
+            </button>
+          </div>
+          <div className="sidebar-bottom">
+            <button
+              className="sidebar-user-btn"
+              onClick={() => {
+                setMobileMenuOpen(false)
+                navigate('/profile')
+              }}
+            >
+              <span>👤</span>
+              <span>{isChineseSite ? '我的账户' : 'My Account'}</span>
             </button>
           </div>
         </aside>
