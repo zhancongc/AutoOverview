@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 from services.task_manager import TaskManager, TaskStatus, task_manager
 from services.paper_filter import PaperFilterService
 from services.smart_review_generator_final import SmartReviewGeneratorFinal
-from services.semantic_scholar_search import SemanticScholarService, get_semantic_scholar_service
+from services.openalex_search import get_openalex_service
 from services.paper_search_agent import PaperSearchAgent
 from services.citation_validator_v2 import CitationValidatorV2
 from services.review_record_service import ReviewRecordService
@@ -89,11 +89,10 @@ class ReviewTaskExecutor:
                 progress=get_progress("searching", language)
             )
 
-            semantic_scholar_api_key = os.getenv("SEMANTIC_SCHOLAR_API_KEY")
-            ss_service = get_semantic_scholar_service()
 
-            # 使用 LLM + Function Calling 驱动检索
-            search_agent = PaperSearchAgent(ss_service=ss_service)
+            # 使用 OpenAlex 检索（精度与 SS 同级，无需 API Key，速率更高）
+            search_service = get_openalex_service()
+            search_agent = PaperSearchAgent(ss_service=search_service)
             all_papers = await search_agent.search(
                 topic=topic,
                 search_years=params.get('search_years', 10),
@@ -398,7 +397,7 @@ class ReviewTaskExecutor:
         with next(database.get_session()) as session:
             paper_dao = PaperMetadataDAO(session)
             try:
-                saved_count = paper_dao.save_papers(all_papers, source="semantic_scholar")
+                saved_count = paper_dao.save_papers(all_papers, source="openalex")
                 logger.debug(f"[search_papers_only] 论文入总库: 新增 {saved_count} 篇")
             except Exception as e:
                 logger.error(f"[search_papers_only] 论文入库失败（不影响返回）: {e}")
