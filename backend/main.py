@@ -434,24 +434,57 @@ async def get_records(
     if not user_id:
         raise HTTPException(status_code=401, detail="未登录")
 
-    from models import ReviewTask
+    from models import ReviewTask, ReviewRecord
     from sqlalchemy import or_
 
-    # 1. 获取 ReviewRecord 记录（综述）
-    records = record_service.list_records(db_session, skip=0, limit=100, user_id=user_id)
     result = []
 
-    # 添加 ReviewRecord 记录
+    # 1. 获取 ReviewRecord 记录（综述）- 只查询需要的字段，不加载大字段
+    records = (
+        db_session.query(
+            ReviewRecord.id,
+            ReviewRecord.topic,
+            ReviewRecord.status,
+            ReviewRecord.error_message,
+            ReviewRecord.is_paid,
+            ReviewRecord.created_at,
+            ReviewRecord.updated_at,
+            ReviewRecord.statistics
+        )
+        .filter(ReviewRecord.user_id == user_id)
+        .order_by(ReviewRecord.created_at.desc())
+        .limit(100)
+        .all()
+    )
+
+    # 添加 ReviewRecord 记录 - 手动构建 dict，不加载 review/papers 大字段
     for r in records:
-        d = record_service.record_to_dict(r)
-        d["task_type"] = "review"
-        d["task_id"] = None  # ReviewRecord 没有 task_id
-        result.append(d)
+        result.append({
+            "id": r.id,
+            "topic": r.topic,
+            "status": r.status,
+            "error_message": r.error_message,
+            "is_paid": r.is_paid,
+            "created_at": r.created_at.isoformat() if r.created_at else None,
+            "updated_at": r.updated_at.isoformat() if r.updated_at else None,
+            "statistics": r.statistics or {},
+            "task_type": "review",
+            "task_id": None,
+            # 不包含 review 和 papers 大字段
+        })
 
     # 2. 获取对比矩阵任务（ReviewTask 中 params.type == "comparison_matrix_only"）
-    # 用 JSON 查询过滤，避免加载所有任务到内存
+    # 只查询需要的字段，不加载大 JSON 字段
     matrix_tasks = (
-        db_session.query(ReviewTask)
+        db_session.query(
+            ReviewTask.id,
+            ReviewTask.topic,
+            ReviewTask.status,
+            ReviewTask.error_message,
+            ReviewTask.created_at,
+            ReviewTask.completed_at,
+            ReviewTask.params
+        )
         .filter(
             ReviewTask.user_id == user_id,
             ReviewTask.params.op('->>')('type') == "comparison_matrix_only"
@@ -461,10 +494,9 @@ async def get_records(
         .all()
     )
 
-    # 添加对比矩阵任务
+    # 添加对比矩阵任务 - 只提取需要的信息
     for task in matrix_tasks:
         params = task.params or {}
-        comparison_matrix = params.get("comparison_matrix", "")
         statistics = params.get("statistics", {})
 
         # 映射状态：ReviewTask 使用 "completed"，但前端期望 "success"
@@ -473,18 +505,17 @@ async def get_records(
             mapped_status = "success"
 
         result.append({
-            "id": None,  # 对比矩阵没有 ReviewRecord id
+            "id": None,
             "task_id": task.id,
             "topic": task.topic,
-            "review": comparison_matrix,  # 复用 review 字段存对比矩阵
-            "papers": params.get("papers", []),
-            "statistics": statistics,
             "status": mapped_status,
             "error_message": task.error_message,
             "is_paid": False,
             "created_at": task.created_at.isoformat() if task.created_at else None,
             "updated_at": task.completed_at.isoformat() if task.completed_at else None,
+            "statistics": statistics,
             "task_type": "comparison_matrix"
+            # 不包含 comparison_matrix 和 papers 大字段
         })
 
     # 按创建时间排序，最新的在前
