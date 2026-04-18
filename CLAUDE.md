@@ -14,7 +14,7 @@ AutoOverview 是一个 AI 驱动的文献综述生成平台，支持中英文双
 
 ## 核心流程
 
-1. **阶段1**: PaperSearchAgent - LLM + Function Calling 驱动的文献检索（Semantic Scholar）
+1. **阶段1**: PaperSearchAgent - LLM + Function Calling 驱动的文献检索（OpenAlex）
 2. **阶段2**: SmartReviewGeneratorFinal - 生成综述（预处理 → 初始生成 → 5条引用规范应用 → IEEE 格式）
 3. **阶段3**: CitationValidatorV2 - 额外引用校验和修复
 
@@ -39,24 +39,25 @@ AutoOverview 是一个 AI 驱动的文献综述生成平台，支持中英文双
 - **文献搜索页**: `SearchPapersPage.tsx`（独立文献搜索，每日限制，导出 BibTeX/RIS/Word）
 - **综述页**: `ReviewPage.tsx`（正文/参考文献分 Tab，URL: `/review?task_id=xxx`）
 - **对比矩阵页**: `ComparisonMatrixPage.tsx` → `ComparisonMatrixViewer.tsx`
-- **渲染器**: `ReviewViewer.tsx`（Markdown + TOC 侧边栏，标题级别会自动标准化）
+- **渲染器**: `ReviewViewer.tsx`（Markdown + TOC 侧边栏，标题级别会自动标准化，参考文献点击弹出 CitationTooltip）
 - **数据统计**: `DavidPage.tsx`（访问量、注册量、付费数据统计，URL: `/david`）
 - **认证**: 验证码登录（无密码），`LoginModal.tsx`（中文）/ `LoginModalInternational.tsx`（英文）
 - **支付**:
   - 中文版：`PaymentModal.tsx`（支付宝扫码，CNY 定价）
   - 英文版：`PaddlePaymentModal.tsx`（Paddle 信用卡支付，USD 定价）
-- **导出**:
+- **导出**（全部前端生成，无需付费检查）:
+  - 综述: 弹窗选择 Markdown/Word（默认 Markdown），前端 `docx` 库生成 Word，`file-saver` 下载
+  - 对比矩阵: 弹窗选择 Markdown/Word（默认 Markdown），前端直接生成
+  - 文献列表: `ExportFormatModal.tsx`（前端生成 BibTeX/RIS/Word 三种格式，默认 BibTeX）
   - PDF: `frontend/src/utils/pdfExport.ts`（html2canvas + jsPDF，纯前端）
-  - Word: `backend/services/docx_generator.py`（服务端 python-docx）
-  - 文献列表: `ExportFormatModal.tsx`（前端生成 BibTeX/RIS/Word 三种格式）
 - **国际化**: `react-i18next` - 支持中英文动态切换
 - **路由**: hash 路由（`/#/login`, `/#/pricing`, `/#/profile`）
 
 ### 额度与导出逻辑
 - 免费额度：注册送 2 积分，可导出带水印 PDF
-- 付费额度：可导出无水印 Word（服务端 python-docx）
 - 生成时立即扣额度（`check_and_deduct_credit`），任务失败不退回
-- 导出 Word 时检查 `has_purchased`，未购买弹支付弹窗
+- 所有导出均为前端生成，不再检查付费状态（生成时已扣积分）
+- 导出不再跳转页面，统一弹窗选择格式后直接下载
 
 ### 每日搜索限制
 - 注册用户每日搜索文献次数限制，默认 5 次（`DAILY_SEARCH_LIMIT` 在 .env 配置）
