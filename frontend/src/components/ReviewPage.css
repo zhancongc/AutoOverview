@@ -130,7 +130,7 @@
 }
 
 .regenerate-button {
-  padding: 0.625rem 1.25rem;
+  padding: 0.625rem 1.5rem;
   background: var(--cream-white);
   color: var(--charcoal);
   border: 2px solid var(--border-gray);
@@ -140,6 +140,9 @@
   font-weight: 600;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   font-family: 'Source Sans Pro', sans-serif;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .regenerate-button:hover {

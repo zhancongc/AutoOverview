@@ -97,18 +97,11 @@ export function ProfilePage() {
       navigate('/')
       return
     }
-    if (record.task_id) {
+    // 优先使用 record_id，因为所有记录都有 id，而 task_id 可能为 null
+    if (record.id) {
+      navigate(`/review?record_id=${record.id}`)
+    } else if (record.task_id) {
       navigate(`/review?task_id=${record.task_id}`)
-    } else if (record.id) {
-      navigate('/review', {
-        state: {
-          title: record.topic,
-          content: record.review,
-          papers: record.papers,
-          recordId: record.id,
-          isPaid: record.is_paid ?? false,
-        }
-      })
     }
   }
 

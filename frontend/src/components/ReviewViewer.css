@@ -319,13 +319,13 @@
 }
 
 .review-references h2 {
-  font-size: 1.5rem;
-  margin-bottom: 0.5rem;
+  font-size: 2rem;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
   color: #333;
   border-bottom: 2px solid #D63031;
   padding-bottom: 0.5rem;
-  text-align: center;
-  padding-bottom: 0.5rem;
+  scroll-margin-top: 5rem;
 }
 
 .references-summary {
@@ -563,5 +563,187 @@
   .review-body {
     padding: 0.75rem;
     font-size: 0.95rem;
+  }
+}
+
+/* 参考文献弹窗 */
+.references-popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: 1rem;
+}
+
+.references-popup {
+  background: white;
+  border-radius: 12px;
+  max-width: 800px;
+  width: 100%;
+  max-height: 80vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+.references-popup-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #e8ecef;
+  background: #fafafa;
+}
+
+.references-popup-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.references-popup-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #636e72;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s;
+}
+
+.references-popup-close:hover {
+  background: #dfe6e9;
+  color: #2d3436;
+}
+
+.references-popup-list {
+  overflow-y: auto;
+  flex: 1;
+  padding: 1rem;
+}
+
+.references-popup-item {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 0.75rem;
+  background: #f9f9f9;
+  transition: all 0.2s;
+}
+
+.references-popup-item:hover {
+  background: #fef2f2;
+}
+
+.references-popup-index {
+  font-weight: 700;
+  color: #d63031;
+  font-size: 1rem;
+  flex-shrink: 0;
+  margin-top: 0.125rem;
+}
+
+.references-popup-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.references-popup-paper-title {
+  font-weight: 500;
+  color: #2d3436;
+  margin-bottom: 0.5rem;
+  line-height: 1.5;
+}
+
+.references-popup-paper-title a {
+  color: #2d3436;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.references-popup-paper-title a:hover {
+  color: #d63031;
+  text-decoration: underline;
+}
+
+.references-popup-paper-meta {
+  font-size: 0.9rem;
+  color: #636e72;
+  margin-bottom: 0.75rem;
+}
+
+.references-popup-links {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.references-popup-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.75rem;
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 20px;
+  text-decoration: none;
+  font-size: 0.8rem;
+  font-weight: 500;
+  transition: all 0.2s;
+  color: #555;
+  border-color: var(--link-color, #d63031);
+}
+
+.references-popup-link:hover {
+  background: var(--link-color, #d63031);
+  color: white;
+  border-color: var(--link-color, #d63031);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.references-popup-link-icon {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+@media (max-width: 640px) {
+  .references-popup-overlay {
+    padding: 0.5rem;
+  }
+
+  .references-popup {
+    border-radius: 8px;
+  }
+
+  .references-popup-header {
+    padding: 1rem;
+  }
+
+  .references-popup-list {
+    padding: 0.75rem;
+  }
+
+  .references-popup-item {
+    padding: 0.75rem;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .references-popup-links {
+    width: 100%;
   }
 }

@@ -19,7 +19,7 @@ from services.paper_search_agent import PaperSearchAgent
 from services.citation_validator_v2 import CitationValidatorV2
 from services.review_record_service import ReviewRecordService
 from services.stage_recorder import stage_recorder
-from services.progress_messages import get_progress
+from services.progress_messages import get_progress, get_progress_message
 
 
 class ReviewTaskExecutor:
@@ -325,17 +325,28 @@ class ReviewTaskExecutor:
             if task_id in task_manager._running_tasks:
                 task_manager.release_slot(task_id)
 
+            # 映射常见错误到友好提示
+            error_msg = "生成失败，请稍后重试"
+            error_str = str(e)
+            if "未找到关于" in error_str:
+                error_msg = error_str
+            elif "搜索到的文献数量不足" in error_str:
+                error_msg = error_str
+            elif "DEEPSEEK_API_KEY" in error_str:
+                error_msg = "服务配置异常，请联系客服"
+            elif "积分" in error_str or "credit" in error_str.lower():
+                error_msg = error_str
             task_manager.update_task_status(
                 task_id,
                 TaskStatus.FAILED,
-                error=str(e)
+                error=error_msg
             )
 
             stage_recorder.update_task_status(
                 task_id,
                 status="failed",
                 current_stage="失败",
-                error_message=str(e),
+                error_message=error_msg,
                 completed_at=datetime.now()
             )
 
@@ -627,17 +638,29 @@ class ReviewTaskExecutor:
             if task_id in task_manager._running_tasks:
                 task_manager.release_slot(task_id)
 
+            # 映射常见错误到友好提示
+            error_msg = "生成失败，请稍后重试"
+            error_str = str(e)
+            if "未找到关于" in error_str:
+                error_msg = error_str
+            elif "搜索到的文献数量不足" in error_str:
+                error_msg = error_str
+            elif "DEEPSEEK_API_KEY" in error_str:
+                error_msg = "服务配置异常，请联系客服"
+            elif "积分" in error_str or "credit" in error_str.lower():
+                error_msg = error_str
+
             stage_recorder.update_task_status(
                 task_id,
                 status="failed",
                 current_stage="失败",
-                error_message=str(e),
+                error_message=error_msg,
                 completed_at=datetime.now()
             )
             task_manager.update_task_status(
                 task_id,
                 TaskStatus.FAILED,
-                error=str(e)
+                error=error_msg
             )
 
             try:
@@ -839,17 +862,27 @@ class ReviewTaskExecutor:
             if task_id in task_manager._running_tasks:
                 task_manager.release_slot(task_id)
 
+            # 映射常见错误到友好提示
+            error_msg = "生成失败，请稍后重试"
+            error_str = str(e)
+            if "未找到关于" in error_str:
+                error_msg = error_str
+            elif "DEEPSEEK_API_KEY" in error_str:
+                error_msg = "服务配置异常，请联系客服"
+            elif "积分" in error_str or "credit" in error_str.lower():
+                error_msg = error_str
+
             task_manager.update_task_status(
                 task_id,
                 TaskStatus.FAILED,
-                error=str(e)
+                error=error_msg
             )
 
             stage_recorder.update_task_status(
                 task_id,
                 status="failed",
                 current_stage="失败",
-                error_message=str(e),
+                error_message=error_msg,
                 completed_at=datetime.now()
             )
 

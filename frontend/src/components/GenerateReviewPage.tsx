@@ -513,53 +513,60 @@ export function GenerateReviewPage() {
         </div>
       )}
 
-      {/* Found Papers Preview */}
+      {/* Found Papers Preview - Using SearchPapersPage style */}
       {isGenerating && foundPapers.length > 0 && (
-        <div className="sp-papers-section">
-          <div className="sp-papers-header">
-            <h3>{t('generate_page.papers_found', { count: foundPapers.length })}</h3>
+        <div className="sp-results">
+          <div className="sp-results-header">
+            <div className="sp-statistics-bar" style={{ marginBottom: 0 }}>
+              <span className="sp-stat-badge">
+                <span className="sp-stat-number">{foundPapers.length}</span> {t('search_papers.results.found')}
+              </span>
+            </div>
           </div>
-          <div className="sp-papers-list">
-            {foundPapers.map((paper, index) => (
-              <div key={paper.id || index} className="sp-paper-card">
-                <div className="sp-paper-top">
-                  <span className="sp-paper-number">[{index + 1}]</span>
-                  <div className="sp-paper-title">
-                    {paper.doi ? (
-                      <a href={`https://doi.org/${paper.doi}`} target="_blank" rel="noopener noreferrer">
-                        {paper.title}
-                      </a>
-                    ) : (
-                      paper.title
-                    )}
-                  </div>
-                </div>
-                <div className="sp-paper-meta">
-                  {paper.year && <span className="sp-paper-tag sp-tag-year">{paper.year}</span>}
-                  {paper.cited_by_count > 0 && (
-                    <span className="sp-paper-tag sp-tag-citations">
-                      {paper.cited_by_count} {t('search_papers.paper.citations')}
-                    </span>
+
+          {foundPapers.map((paper, index) => (
+            <div key={paper.id || index} className="sp-paper-card">
+              <div className="sp-paper-top">
+                <span className="sp-paper-number">[{index + 1}]</span>
+                <div className="sp-paper-title">
+                  {paper.doi ? (
+                    <a href={`https://doi.org/${paper.doi}`} target="_blank" rel="noopener noreferrer">
+                      {paper.title}
+                    </a>
+                  ) : (
+                    paper.title
                   )}
-                  {paper.is_english && <span className="sp-paper-tag sp-tag-lang">EN</span>}
                 </div>
-                {paper.abstract && (
-                  <p className="sp-paper-abstract">
-                    {paper.abstract.length > 250
-                      ? paper.abstract.substring(0, 250) + '...'
-                      : paper.abstract
-                    }
-                  </p>
+              </div>
+              <div className="sp-paper-meta">
+                {paper.year && (
+                  <span className="sp-paper-tag sp-tag-year">{paper.year}</span>
                 )}
-                {paper.authors && paper.authors.length > 0 && (
-                  <p className="sp-paper-authors">
-                    {paper.authors.slice(0, 4).join(', ')}
-                    {paper.authors.length > 4 && ` ${t('search_papers.paper.et_al')}`}
-                  </p>
+                {paper.cited_by_count > 0 && (
+                  <span className="sp-paper-tag sp-tag-citations">
+                    {paper.cited_by_count} {t('search_papers.paper.citations')}
+                  </span>
+                )}
+                {paper.is_english && (
+                  <span className="sp-paper-tag sp-tag-lang">EN</span>
                 )}
               </div>
-            ))}
-          </div>
+              {paper.abstract && (
+                <p className="sp-paper-abstract">
+                  {paper.abstract.length > 250
+                    ? paper.abstract.substring(0, 250) + '...'
+                    : paper.abstract
+                  }
+                </p>
+              )}
+              {paper.authors && paper.authors.length > 0 && (
+                <p className="sp-paper-authors">
+                  {paper.authors.slice(0, 4).join(', ')}
+                  {paper.authors.length > 4 && ` ${t('search_papers.paper.et_al')}`}
+                </p>
+              )}
+            </div>
+          ))}
         </div>
       )}
 

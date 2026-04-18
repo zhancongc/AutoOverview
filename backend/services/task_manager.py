@@ -169,7 +169,8 @@ class TaskManager:
     _tasks: Dict[str, Task] = {}
 
     # 并发控制
-    _max_concurrent_tasks = 3  # 最大并发任务数
+    import os
+    _max_concurrent_tasks = int(os.getenv("MAX_CONCURRENT_TASKS", "3"))  # 最大并发任务数，默认3
     _running_tasks: Set[str] = set()
     _waiting_tasks: Dict[str, float] = {}  # task_id -> monotonic timestamp
 

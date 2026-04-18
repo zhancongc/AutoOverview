@@ -24,7 +24,7 @@
 
 /* Add top padding for fixed nav */
 .profile-page .profile-container {
-  padding-top: calc(100px + 5rem);
+  padding-top: 70px;
 }
 
 /* ==================== 顶部导航栏 ==================== */

@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useRef, useCallback, Fragment } from 'rea
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { CitationMarker, CitationRangeMarker } from './CitationTooltip'
+import { useTranslation } from 'react-i18next'
 import './ReviewViewer.css'
 
 interface TableOfContents {
@@ -28,10 +29,13 @@ interface ReviewViewerProps {
 }
 
 export function ReviewViewer({ content, papers = [], hasPurchased = false, onTocUpdate, onRequestUnlock }: ReviewViewerProps) {
+  const { t } = useTranslation()
   const [toc, setToc] = useState<TableOfContents[]>([])
   const [activeId, setActiveId] = useState<string>('')
+  const [showReferencesPopup, setShowReferencesPopup] = useState(false)
   useRef<HTMLElement>(null)
   const isClickScrolling = useRef(false)
+  const popupRef = useRef<HTMLDivElement>(null)
 
   // 渲染带引用标记的文本
   const renderTextWithCitations = useCallback((text: any): any => {
@@ -169,8 +173,11 @@ export function ReviewViewer({ content, papers = [], hasPurchased = false, onToc
     return ''
   }
 
+  // 存储参考文献标题的信息
+  const [referencesInfo, setReferencesInfo] = useState<{ level: number, number: number } | null>(null)
+
   // 预处理 content：把没有 # 前缀但以 **数字.数字** 开头的粗体行转为 #### 标题
-  // 同时去掉正文中的 "## References" 部分（避免与 References tab 重复）
+  // 同时去掉正文中的 "## References" 部分（我们会手动添加带正确序号的版本）
   const processedContent = useMemo(() => {
     let lines = content.split('\n')
 
@@ -201,27 +208,49 @@ export function ReviewViewer({ content, papers = [], hasPurchased = false, onToc
   // 解析 Markdown 生成目录
   useEffect(() => {
     const lines = processedContent.split('\n')
-    const headings: Array<{ id: string; text: string; level: number }> = []
+    const headings: Array<{ id: string; text: string; level: number; originalLevel: number }> = []
     const idCount: Record<string, number> = {}
 
     lines.forEach((line) => {
       const match = line.match(/^(#{1,4})\s+(.+)$/)
       if (match) {
-        const level = match[1].length
+        const originalLevel = match[1].length
         const rawText = stripMd(match[2])
         const baseId = makeId(rawText)
         idCount[baseId] = (idCount[baseId] || 0) + 1
         const id = idCount[baseId] > 1 ? `${baseId}-${idCount[baseId]}` : baseId
 
-        headings.push({ id, text: rawText, level })
+        headings.push({ id, text: rawText, level: originalLevel, originalLevel })
         headingIdMap.current.set(rawText, id)
       }
     })
 
-    // 标准化标题级别：让最高级标题从 level 1 开始
+    // 找到正文一级标题的信息
+    let refLevel = 2 // 默认用 h2
+    let refNumber = 1
+    let minOriginalLevel = 2
+
     if (headings.length > 0) {
-      const minLevel = Math.min(...headings.map(h => h.level))
-      headings.forEach(h => { h.level = h.level - minLevel + 1 })
+      minOriginalLevel = Math.min(...headings.map(h => h.originalLevel))
+
+      // 找到最后一个以数字开头的标题（如"7. 结论"）
+      for (let i = headings.length - 1; i >= 0; i--) {
+        const numMatch = headings[i].text.match(/^(\d+)\./)
+        if (numMatch) {
+          refNumber = parseInt(numMatch[1]) + 1
+          // 这个标题的原始级别就是我们要给参考文献用的级别
+          refLevel = headings[i].originalLevel
+          break
+        }
+      }
+    }
+
+    setReferencesInfo({ level: refLevel, number: refNumber })
+
+    // 标准化标题级别：让最高级标题从 level 1 开始
+    let normalizedHeadings = [...headings]
+    if (normalizedHeadings.length > 0) {
+      normalizedHeadings = normalizedHeadings.map(h => ({ ...h, level: h.originalLevel - minOriginalLevel + 1 }))
     }
 
     // 构建嵌套的目录结构
@@ -250,11 +279,23 @@ export function ReviewViewer({ content, papers = [], hasPurchased = false, onToc
         stack.push({ node, level: item.level })
       })
 
+      // 添加"参考文献"到目录（带序号）
+      if (papers.length > 0) {
+        // 计算参考文献在目录中的 level（标准化后的）
+        const tocRefLevel = refLevel - minOriginalLevel + 1
+        result.push({
+          id: 'references-section-title',
+          text: `${refNumber}. 参考文献`,
+          level: tocRefLevel,
+          children: []
+        })
+      }
+
       return result
     }
 
-    setToc(buildTocTree(headings))
-  }, [processedContent])
+    setToc(buildTocTree(normalizedHeadings))
+  }, [processedContent, papers.length])
 
   // 通知父组件 TOC 更新
   useEffect(() => {
@@ -262,6 +303,20 @@ export function ReviewViewer({ content, papers = [], hasPurchased = false, onToc
       onTocUpdate(toc)
     }
   }, [toc, onTocUpdate])
+
+  // 点击外部关闭参考文献弹窗
+  useEffect(() => {
+    if (!showReferencesPopup) return
+
+    const handleClickOutside = (e: MouseEvent) => {
+      if (popupRef.current && !popupRef.current.contains(e.target as Node)) {
+        setShowReferencesPopup(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [showReferencesPopup])
 
   // 监听滚动，高亮当前章节
   useEffect(() => {
@@ -413,6 +468,42 @@ export function ReviewViewer({ content, papers = [], hasPurchased = false, onToc
     }
   }), [headingIdMap, makeId, renderTextWithCitations])
 
+  // 生成第三方平台验证链接
+  const getVerificationLinks = (paper: any) => {
+    const links = []
+
+    // 构建搜索查询
+    const searchQuery = encodeURIComponent(paper.title)
+
+    // Google Scholar
+    links.push({
+      name: 'Google Scholar',
+      url: `https://scholar.google.com/scholar?q=${searchQuery}`,
+      icon: '🔬',
+      color: '#4285f4'
+    })
+
+    // 百度学术
+    links.push({
+      name: '百度学术',
+      url: `https://xueshu.baidu.com/s?wd=${searchQuery}`,
+      icon: '🎓',
+      color: '#2932e1'
+    })
+
+    // DOI
+    if (paper.doi) {
+      links.push({
+        name: 'DOI',
+        url: `https://doi.org/${paper.doi}`,
+        icon: '🔗',
+        color: '#7f8c8d'
+      })
+    }
+
+    return links
+  }
+
   return (
     <div className={`review-viewer ${!hasPurchased ? 'review-protected' : ''}`}>
       <div className="review-content-wrapper">
@@ -440,6 +531,94 @@ export function ReviewViewer({ content, papers = [], hasPurchased = false, onToc
             <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>
               {processedContent}
             </ReactMarkdown>
+
+            {/* 参考文献列表 - 标准格式 */}
+            {papers.length > 0 && referencesInfo && (
+              <>
+                {referencesInfo.level === 1 && <h1 id="references-section-title" onClick={() => setShowReferencesPopup(true)} style={{ cursor: 'pointer' }}>{referencesInfo.number}. 参考文献</h1>}
+                {referencesInfo.level === 2 && <h2 id="references-section-title" onClick={() => setShowReferencesPopup(true)} style={{ cursor: 'pointer' }}>{referencesInfo.number}. 参考文献</h2>}
+                {referencesInfo.level === 3 && <h3 id="references-section-title" onClick={() => setShowReferencesPopup(true)} style={{ cursor: 'pointer' }}>{referencesInfo.number}. 参考文献</h3>}
+                {referencesInfo.level === 4 && <h4 id="references-section-title" onClick={() => setShowReferencesPopup(true)} style={{ cursor: 'pointer' }}>{referencesInfo.number}. 参考文献</h4>}
+                <ol style={{ listStyle: 'decimal', paddingLeft: '1.75rem', margin: 0 }}>
+                  {papers.map((paper: any) => {
+                    const verificationLinks = getVerificationLinks(paper)
+                    return (
+                      <li key={paper.id} style={{ marginBottom: '0.75rem', lineHeight: 1.6, color: '#2D3436' }}>
+                        <a
+                          href={verificationLinks[0]?.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title="点击在第三方平台查看"
+                          style={{ color: '#2D3436', textDecoration: 'none' }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.color = '#D63031'
+                            e.currentTarget.style.textDecoration = 'underline'
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.color = '#2D3436'
+                            e.currentTarget.style.textDecoration = 'none'
+                          }}
+                        >
+                          {paper.authors.join(', ')}. ({paper.year}). {paper.title}.
+                        </a>
+                      </li>
+                    )
+                  })}
+                </ol>
+              </>
+            )}
+
+            {/* 参考文献弹窗 */}
+            {showReferencesPopup && (
+              <div className="references-popup-overlay" onClick={() => setShowReferencesPopup(false)}>
+                <div ref={popupRef} className="references-popup" onClick={(e) => e.stopPropagation()}>
+                  <div className="references-popup-header">
+                    <span className="references-popup-title">{t('review.references.title', '参考文献')} ({papers.length})</span>
+                    <button className="references-popup-close" onClick={() => setShowReferencesPopup(false)}>✕</button>
+                  </div>
+                  <div className="references-popup-list">
+                    {papers.map((paper: any, index) => {
+                      const verificationLinks = getVerificationLinks(paper)
+                      return (
+                        <div key={paper.id} className="references-popup-item">
+                          <span className="references-popup-index">[{index + 1}]</span>
+                          <div className="references-popup-content">
+                            <div className="references-popup-paper-title">
+                              {verificationLinks[0]?.url ? (
+                                <a href={verificationLinks[0].url} target="_blank" rel="noopener noreferrer">
+                                  {paper.title}
+                                </a>
+                              ) : (
+                                paper.title
+                              )}
+                            </div>
+                            <div className="references-popup-paper-meta">
+                              <span>{paper.authors.join(', ')}</span>
+                              <span> ({paper.year})</span>
+                            </div>
+                            <div className="references-popup-links">
+                              {verificationLinks.map((link: any) => (
+                                <a
+                                  key={link.name}
+                                  href={link.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="references-popup-link"
+                                  style={{ '--link-color': link.color } as any}
+                                >
+                                  <span className="references-popup-link-icon">{link.icon}</span>
+                                  <span>{link.name}</span>
+                                </a>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </main>
       </div>

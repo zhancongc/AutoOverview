@@ -73,6 +73,7 @@ export function ReviewPage() {
   const shouldShowWatermark = !isPublicDocument && !isPaidDocument
   const canExportDirectly = isPublicDocument || isPaidDocument
 
+
   // 判断是否可以使用引用格式切换（有 taskId 或 recordId）
   const canSwitchFormat = !!(taskId || state?.recordId || recordIdParam || taskData?.recordId)
 

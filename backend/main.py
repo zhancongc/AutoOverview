@@ -457,6 +457,15 @@ async def get_records(
         .all()
     )
 
+    # 批量查找 review_record_id -> task_id 映射
+    record_ids = [r.id for r in records]
+    task_mappings = (
+        db_session.query(ReviewTask.id, ReviewTask.review_record_id)
+        .filter(ReviewTask.review_record_id.in_(record_ids))
+        .all()
+    ) if record_ids else []
+    record_to_task = {t.review_record_id: t.id for t in task_mappings}
+
     # 添加 ReviewRecord 记录 - 手动构建 dict，不加载 review/papers 大字段
     for r in records:
         result.append({
@@ -469,8 +478,7 @@ async def get_records(
             "updated_at": r.updated_at.isoformat() if r.updated_at else None,
             "statistics": r.statistics or {},
             "task_type": "review",
-            "task_id": None,
-            # 不包含 review 和 papers 大字段
+            "task_id": record_to_task.get(r.id),
         })
 
     # 2. 获取对比矩阵任务（ReviewTask 中 params.type == "comparison_matrix_only"）
