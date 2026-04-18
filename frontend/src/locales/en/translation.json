@@ -303,6 +303,20 @@
     "failed": "Failed to create payment session. Please try again.",
     "retry": "Retry"
   },
+  "input": {
+    "title": "Generate Literature Review",
+    "subtitle": "Enter your research topic, AI will search papers and create a structured literature review",
+    "language": "Language:",
+    "language_zh": "中文",
+    "language_en": "English",
+    "language_hint_zh": "For Chinese journals",
+    "language_hint_en": "For international journals",
+    "placeholder": "Enter your research topic, e.g., Deep Learning in Image Recognition",
+    "button": "Generate Literature Review",
+    "button_generating": "Generating...",
+    "credits_remaining": "credits remaining",
+    "retry": "Retry"
+  },
   "search_papers": {
     "meta": {
       "title": "Search Related Academic Papers - Free Tool | AutoOverview",

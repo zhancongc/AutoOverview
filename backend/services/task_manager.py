@@ -406,7 +406,14 @@ class TaskManager:
                 # 执行中被中断，标记为失败
                 task.status = TaskStatus.FAILED
                 task.completed_at = datetime.now()
-                task.error = "服务器重启导致任务中断，请重新提交"
+                # 根据 params 中的 language 决定错误消息语言
+                params = data.get("params", {})
+                language = params.get("language", "zh")
+                if language == "en":
+                    error_msg = "Task interrupted due to server restart. Please resubmit."
+                else:
+                    error_msg = "服务器重启导致任务中断，请重新提交"
+                task.error = error_msg
                 self._tasks[task_id] = task
                 failed_interrupted += 1
                 print(f"[TaskManager] 中断任务标记为失败: {task_id} ({task.topic})")
@@ -416,7 +423,7 @@ class TaskManager:
                     from services.stage_recorder import stage_recorder
                     stage_recorder.update_task_status(
                         task_id, status="failed",
-                        error_message="服务器重启导致任务中断，请重新提交",
+                        error_message=error_msg,
                         completed_at=datetime.now()
                     )
                 except Exception as e:
