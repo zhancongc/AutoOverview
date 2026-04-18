@@ -38,10 +38,25 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
   const [showExportModal, setShowExportModal] = useState(false)
   const [exportFormat, setExportFormat] = useState<ExportFormat>('bibtex')
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [exportingRef, setExportingRef] = useState(false)
 
   useEffect(() => {
     loadMatrixData(taskId)
   }, [taskId])
+
+  // When pendingPapers is empty but we have the search task ID, fetch papers from the search task
+  useEffect(() => {
+    if (pendingPapers.length > 0 || !matrixSearchTaskId || !matrixLoading) return
+    let cancelled = false
+    api.getTaskStatus(matrixSearchTaskId).then(res => {
+      if (cancelled) return
+      if (!res.success || !res.data) return
+      const d = res.data as any
+      const papers = d.progress?.papers || d.result?.papers || d.params?.papers || []
+      if (papers.length) setPendingPapers(papers)
+    }).catch(() => {})
+    return () => { cancelled = true }
+  }, [matrixSearchTaskId, matrixLoading, pendingPapers.length])
 
   const loadMatrixData = async (id: string) => {
     try {
@@ -128,18 +143,15 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
       return
     }
 
-    // Check credits
-    try {
-      const creditsData = await api.getCredits()
-      setCredits(creditsData.credits)
-      if (creditsData.credits < 1) {
-        setShowPaymentModal('starter')
-        return
-      }
-    } catch { /* proceed anyway */ }
-
-    // Confirm credit deduction
+    // Show confirm modal immediately, check credits in background
     setShowCreditConfirm(true)
+    api.getCredits().then(data => {
+      setCredits(data.credits)
+      if (data.credits < 1) {
+        setShowCreditConfirm(false)
+        setShowPaymentModal('starter')
+      }
+    }).catch(() => {})
   }
 
   const doGenerateReview = async () => {
@@ -235,36 +247,42 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
     const papers = getPapersForExport()
     if (papers.length === 0) return
 
-    const safeName = (matrixData?.topic || 'references').replace(/[\/\\:]/g, '-').substring(0, 50)
-    const { saveAs } = await import('file-saver')
+    setExportingRef(true)
+    try {
+      const safeName = (matrixData?.topic || 'references').replace(/[\/\\:]/g, '-').substring(0, 50)
+      const { saveAs } = await import('file-saver')
 
-    if (exportFormat === 'bibtex') {
-      const content = generateBibTeX(papers)
-      const blob = new Blob([content], { type: 'application/x-bibtex;charset=utf-8' })
-      saveAs(blob, `${safeName}.bib`)
-    } else if (exportFormat === 'ris') {
-      const content = generateRIS(papers)
-      const blob = new Blob([content], { type: 'application/x-research-info-systems;charset=utf-8' })
-      saveAs(blob, `${safeName}.ris`)
-    } else {
-      const { Document, Packer, Paragraph, TextRun } = await import('docx')
-      const children: any[] = [
-        new Paragraph({ text: matrixData?.topic || 'References', heading: 'Heading1' as any }),
-        new Paragraph({ text: '' }),
-      ]
-      papers.forEach((paper: any, i: number) => {
-        const authors = paper.authors?.slice(0, 3).join(', ') + (paper.authors?.length > 3 ? ' et al.' : '')
-        children.push(new Paragraph({
-          children: [
-            new TextRun({ text: `[${i + 1}] `, bold: true }),
-            new TextRun({ text: `${paper.title}. ${authors}. ${paper.year || ''} ${paper.doi ? `DOI: ${paper.doi}` : ''}` }),
-          ],
-          spacing: { after: 200 },
-        }))
-      })
-      const doc = new Document({ sections: [{ children }] })
-      const blob = await Packer.toBlob(doc)
-      saveAs(blob, `${safeName}.docx`)
+      if (exportFormat === 'bibtex') {
+        const content = generateBibTeX(papers)
+        const blob = new Blob([content], { type: 'application/x-bibtex;charset=utf-8' })
+        saveAs(blob, `${safeName}.bib`)
+      } else if (exportFormat === 'ris') {
+        const content = generateRIS(papers)
+        const blob = new Blob([content], { type: 'application/x-research-info-systems;charset=utf-8' })
+        saveAs(blob, `${safeName}.ris`)
+      } else {
+        const { Document, Packer, Paragraph, TextRun } = await import('docx')
+        const children: any[] = [
+          new Paragraph({ text: matrixData?.topic || 'References', heading: 'Heading1' as any }),
+          new Paragraph({ text: '' }),
+        ]
+        papers.forEach((paper: any, i: number) => {
+          const authors = paper.authors?.slice(0, 3).join(', ') + (paper.authors?.length > 3 ? ' et al.' : '')
+          children.push(new Paragraph({
+            children: [
+              new TextRun({ text: `[${i + 1}] `, bold: true }),
+              new TextRun({ text: `${paper.title}. ${authors}. ${paper.year || ''} ${paper.doi ? `DOI: ${paper.doi}` : ''}` }),
+            ],
+            spacing: { after: 200 },
+          }))
+        })
+        const doc = new Document({ sections: [{ children }] })
+        const blob = await Packer.toBlob(doc)
+        saveAs(blob, `${safeName}.docx`)
+      }
+    } finally {
+      setExportingRef(false)
+      setShowExportModal(false)
     }
   }
 
@@ -371,11 +389,9 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
         <ExportFormatModal
           selectedFormat={exportFormat}
           onSelectFormat={setExportFormat}
-          onConfirm={() => {
-            setShowExportModal(false)
-            handleExportReferences()
-          }}
+          onConfirm={handleExportReferences}
           onCancel={() => setShowExportModal(false)}
+          loading={exportingRef}
         />
       )}
     </>

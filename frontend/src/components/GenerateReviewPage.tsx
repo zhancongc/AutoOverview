@@ -344,6 +344,7 @@ export function GenerateReviewPage() {
         <a href="/search-papers" className={location.pathname === '/search-papers' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigate('/search-papers') }}>{t('search_papers.nav.search')}</a>
         <a href="/comparison-matrix" className={location.pathname === '/comparison-matrix' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigate('/comparison-matrix') }}>{t('search_papers.nav.comparison_matrix')}</a>
         <a href="/generate" className={location.pathname === '/generate' ? 'active' : ''} onClick={(e) => { e.preventDefault() }}>{t('search_papers.nav.generate')}</a>
+        <a href="/#pricing" onClick={(e) => { e.preventDefault(); navigate('/#pricing') }}>{t('home.nav.pricing')}</a>
       </div>
       <div className="nav-actions">
         {isLoggedIn ? (
@@ -383,6 +384,7 @@ export function GenerateReviewPage() {
           <a href="/search-papers" className={location.pathname === '/search-papers' ? 'active' : ''} onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/search-papers') }}>{t('search_papers.nav.search')}</a>
           <a href="/comparison-matrix" className={location.pathname === '/comparison-matrix' ? 'active' : ''} onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/comparison-matrix') }}>{t('search_papers.nav.comparison_matrix')}</a>
           <a href="/generate" className={location.pathname === '/generate' ? 'active' : ''} onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false) }}>{t('search_papers.nav.generate')}</a>
+          <a href="/#pricing" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/#pricing') }}>{t('home.nav.pricing')}</a>
         </nav>
         <div className="sidebar-bottom">
           {isLoggedIn ? (
@@ -458,7 +460,7 @@ export function GenerateReviewPage() {
 
           {isLoggedIn && (
             <p className={`sp-search-limit ${credits === 0 ? 'zero' : ''}`}>
-              {t('home.input.credits_remaining')} <span className="credits-number">{credits}</span>
+              {t('home.input.credits_remaining', { count: credits })}
             </p>
           )}
 

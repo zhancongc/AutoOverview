@@ -69,10 +69,17 @@ export function SearchPapersPage() {
   const [credits, setCredits] = useState<number>(0)
   const [showPaymentModal, setShowPaymentModal] = useState<string | false>(false)
   const [showCreditConfirm, setShowCreditConfirm] = useState<'review' | 'matrix' | false>(false)
-  const [dailyLimit, setDailyLimit] = useState<{ limit: number; used: number; remaining: number; bonus: number } | null>(null)
+  const [dailyLimit, setDailyLimit] = useState<{ limit: number; used: number; remaining: number; bonus: number; next_reset_at: number | null } | null>(null)
   const [showExportModal, setShowExportModal] = useState(false)
   const [exportFormat, setExportFormat] = useState<ExportFormat>('bibtex')
   const statusIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  const formatResetTime = (resetAt: number): string => {
+    const d = new Date(resetAt * 1000)
+    const hh = String(d.getHours()).padStart(2, '0')
+    const mm = String(d.getMinutes()).padStart(2, '0')
+    return `${hh}:${mm}`
+  }
 
   // SEO meta tags
   useEffect(() => {
@@ -371,7 +378,7 @@ export function SearchPapersPage() {
     try {
       const creditsData = await api.getCredits()
       setCredits(creditsData.credits)
-      if (creditsData.credits < 1) {
+      if (creditsData.credits < 2) {
         setShowPaymentModal('starter')
         return
       }
@@ -565,6 +572,7 @@ export function SearchPapersPage() {
           <a href="/search-papers" className={location.pathname === '/search-papers' ? 'active' : ''}>{t('search_papers.nav.search')}</a>
           <a href="/comparison-matrix" className={location.pathname === '/comparison-matrix' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigate('/comparison-matrix') }}>{t('search_papers.nav.comparison_matrix')}</a>
           <a href="/generate" className={location.pathname === '/generate' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigate('/generate') }}>{t('search_papers.nav.generate')}</a>
+          <a href="/#pricing" onClick={(e) => { e.preventDefault(); navigate('/#pricing') }}>{t('home.nav.pricing')}</a>
         </div>
         <div className="nav-actions">
           {loggedIn ? (
@@ -604,6 +612,7 @@ export function SearchPapersPage() {
           <a href="/search-papers" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false) }}>{t('search_papers.nav.search')}</a>
           <a href="/comparison-matrix" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/comparison-matrix') }}>{t('search_papers.nav.comparison_matrix')}</a>
           <a href="/generate" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/generate') }}>{t('search_papers.nav.generate')}</a>
+          <a href="/#pricing" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/#pricing') }}>{t('home.nav.pricing')}</a>
         </nav>
         <div className="sidebar-bottom">
           {loggedIn ? (
@@ -649,6 +658,14 @@ export function SearchPapersPage() {
           </div>
           {loggedIn && dailyLimit && (
             <p className={`sp-search-limit ${(dailyLimit.remaining === 0 && dailyLimit.bonus === 0) ? 'zero' : ''}`}>
+              {dailyLimit.next_reset_at && (
+                <span
+                  className="sp-limit-tooltip-trigger"
+                  data-tip={t('search_papers.input.reset_tooltip', {
+                    time: formatResetTime(dailyLimit.next_reset_at)
+                  })}
+                >?</span>
+              )}
               {t('search_papers.input.free_searches', { remaining: dailyLimit.remaining })}
               {dailyLimit.bonus > 0 && (
                 <>, {t('search_papers.input.bonus_info', { bonus: dailyLimit.bonus })}</>
@@ -944,7 +961,9 @@ export function SearchPapersPage() {
       {showCreditConfirm && isChineseSite && (
         <ConfirmModal
           title="确认扣除积分"
-          message={`您有 ${credits} 个积分。\n此操作将消耗 1 个积分，是否继续？`}
+          message={showCreditConfirm === 'review'
+            ? `您有 ${credits} 个积分。\n生成文献综述将消耗 2 个积分，是否继续？`
+            : `您有 ${credits} 个积分。\n生成对比矩阵将消耗 1 个积分，是否继续？`}
           confirmText={showCreditConfirm === 'review' ? '生成综述' : '生成矩阵'}
           cancelText="取消"
           onConfirm={() => {
@@ -959,7 +978,9 @@ export function SearchPapersPage() {
       )}
       {showCreditConfirm && !isChineseSite && (
         <ConfirmModalInternational
-          message={`You have ${credits} credits.\nThis will use 1 credit. Continue?`}
+          message={showCreditConfirm === 'review'
+            ? `You have ${credits} credits.\nGenerate a Literature Summary will use 2 credits. Continue?`
+            : `You have ${credits} credits.\nGenerate a Comparison Matrix will use 1 credit. Continue?`}
           confirmText={showCreditConfirm === 'review' ? 'Generate Summary' : 'Generate Matrix'}
           cancelText="Cancel"
           onConfirm={() => {

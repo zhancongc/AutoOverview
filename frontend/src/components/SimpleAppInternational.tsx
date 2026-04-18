@@ -162,6 +162,20 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
             e.preventDefault()
             navigate('/generate')
           }}>{t('home.nav.generate')}</a>
+          <a href="/#pricing" onClick={(e) => {
+            e.preventDefault()
+            if (location.pathname === '/') {
+              window.location.hash = 'pricing'
+              const el = document.getElementById('pricing')
+              if (el) {
+                const navHeight = 60
+                const elPosition = el.getBoundingClientRect().top + window.pageYOffset
+                window.scrollTo({ top: elPosition - navHeight, behavior: 'smooth' })
+              }
+            } else {
+              navigate('/#pricing')
+            }
+          }}>{t('home.nav.pricing')}</a>
         </div>
         <div className="nav-actions">
           {isLoggedIn ? (
@@ -236,6 +250,14 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
               navigate('/generate')
             }}
           >{t('home.nav.generate')}</a>
+          <a
+            href="/#pricing"
+            onClick={(e) => {
+              e.preventDefault()
+              setMobileMenuOpen(false)
+              navigate('/#pricing')
+            }}
+          >{t('home.nav.pricing')}</a>
         </nav>
         <div className="sidebar-bottom">
           {isLoggedIn ? (

@@ -37,7 +37,7 @@
       "placeholder": "Enter your research topic, e.g., Deep Learning in Image Recognition",
       "button": "Analyze Literature",
       "button_generating": "Analyzing...",
-      "credits_remaining": "credits remaining",
+      "credits_remaining": "{{count}} credits remaining",
       "retry": "Retry",
       "how_it_works": "How It Works",
       "alert_empty_topic": "Please enter a research topic",
@@ -314,7 +314,7 @@
     "placeholder": "Enter your research topic, e.g., Deep Learning in Image Recognition",
     "button": "Generate Literature Review",
     "button_generating": "Generating...",
-    "credits_remaining": "credits remaining",
+    "credits_remaining": "{{count}} credits remaining",
     "retry": "Retry"
   },
   "search_papers": {
@@ -342,7 +342,8 @@
       "free_searches": "Free searches: {{remaining}}",
       "limit_exceeded": "Search limit reached ({{limit}} per 24h)",
       "bonus_info": "Bonus searches: {{bonus}}",
-      "limit_exceeded_full": "All searches exhausted. Purchase a plan for more."
+      "limit_exceeded_full": "All searches exhausted. Purchase a plan for more.",
+      "reset_tooltip": "Resets at {{time}}"
     },
     "loading": {
       "title": "Searching academic databases...",
@@ -374,7 +375,8 @@
       "word": "Word (.docx)",
       "word_desc": "Formatted paper list document",
       "confirm": "Export",
-      "cancel": "Cancel"
+      "cancel": "Cancel",
+      "exporting": "Exporting..."
     },
     "paper": {
       "citations": "citations",

@@ -33,7 +33,7 @@
       "placeholder": "请输入您的研究主题，例如：深度学习在图像识别中的应用",
       "button": "生成我的结构化初稿",
       "button_generating": "生成中...",
-      "credits_remaining": "剩余",
+      "credits_remaining": "剩余 {{count}} 积分",
       "retry": "重试",
       "search_papers_hint": "只想查找相关文献？",
       "search_papers_link": "试试免费搜索工具",
@@ -322,7 +322,7 @@
     "placeholder": "请输入您的研究主题，例如：深度学习在图像识别中的应用",
     "button": "立即生成我的综述初稿",
     "button_generating": "生成中...",
-    "credits_remaining": "剩余",
+    "credits_remaining": "剩余 {{count}} 积分",
     "retry": "重试"
   },
   "pricing": {
@@ -354,7 +354,8 @@
       "free_searches": "免费搜索: {{remaining}} 次",
       "limit_exceeded": "24小时内搜索次数已达上限（{{limit}} 次）",
       "bonus_info": "额外搜索: {{bonus}} 次",
-      "limit_exceeded_full": "搜索次数已用完，购买套餐可获得更多搜索次数"
+      "limit_exceeded_full": "搜索次数已用完，购买套餐可获得更多搜索次数",
+      "reset_tooltip": "重置时间：{{time}}"
     },
     "loading": {
       "title": "正在搜索学术数据库...",
@@ -386,7 +387,8 @@
       "word": "Word (.docx)",
       "word_desc": "带格式化表格的文献清单文档",
       "confirm": "导出",
-      "cancel": "取消"
+      "cancel": "取消",
+      "exporting": "导出中..."
     },
     "paper": {
       "citations": "引用",

@@ -9,6 +9,7 @@ interface ExportFormatModalProps {
   onSelectFormat: (format: ExportFormat) => void
   onConfirm: () => void
   onCancel: () => void
+  loading?: boolean
 }
 
 export function ExportFormatModal({
@@ -16,6 +17,7 @@ export function ExportFormatModal({
   onSelectFormat,
   onConfirm,
   onCancel,
+  loading = false,
 }: ExportFormatModalProps) {
   const { t } = useTranslation()
 
@@ -68,11 +70,12 @@ export function ExportFormatModal({
         </div>
 
         <div className="confirm-modal-footer">
-          <button className="confirm-modal-btn confirm-modal-btn-cancel" onClick={onCancel}>
+          <button className="confirm-modal-btn confirm-modal-btn-cancel" onClick={onCancel} disabled={loading}>
             {t('search_papers.export.cancel')}
           </button>
-          <button className="confirm-modal-btn confirm-modal-btn-primary" onClick={onConfirm}>
-            {t('search_papers.export.confirm')}
+          <button className="confirm-modal-btn confirm-modal-btn-primary" onClick={onConfirm} disabled={loading}>
+            {loading && <span className="confirm-modal-spinner" />}
+            {loading ? t('search_papers.export.exporting', 'Exporting...') : t('search_papers.export.confirm')}
           </button>
         </div>
       </div>

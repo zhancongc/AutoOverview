@@ -1187,6 +1187,7 @@ async def get_search_daily_limit(user_id: Optional[int] = Depends(get_current_us
             "used": used,
             "remaining": max(0, limit - used),
             "bonus": bonus,
+            "next_reset_at": min(timestamps) + 86400 if timestamps else None,
         }
     finally:
         auth_db.close()

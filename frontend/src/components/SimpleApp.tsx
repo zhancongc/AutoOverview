@@ -106,6 +106,20 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
           <a href="/search-papers" className={location.pathname === '/search-papers' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigate('/search-papers') }}>{t('home.nav.search_papers')}</a>
           <a href="/comparison-matrix" className={location.pathname === '/comparison-matrix' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigate('/comparison-matrix') }}>{t('home.nav.comparison_matrix')}</a>
           <a href="/generate" className={location.pathname === '/generate' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigate('/generate') }}>{t('home.nav.generate')}</a>
+          <a href="/#pricing" onClick={(e) => {
+            e.preventDefault()
+            if (location.pathname === '/') {
+              window.location.hash = 'pricing'
+              const el = document.getElementById('pricing')
+              if (el) {
+                const navHeight = 60
+                const elPosition = el.getBoundingClientRect().top + window.pageYOffset
+                window.scrollTo({ top: elPosition - navHeight, behavior: 'smooth' })
+              }
+            } else {
+              navigate('/#pricing')
+            }
+          }}>{t('home.nav.pricing')}</a>
         </div>
         <div className="nav-actions">
           {isLoggedIn ? (
@@ -152,6 +166,21 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
           <a href="/search-papers" className={location.pathname === '/search-papers' ? 'active' : ''} onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/search-papers') }}>{t('home.nav.search_papers')}</a>
           <a href="/comparison-matrix" className={location.pathname === '/comparison-matrix' ? 'active' : ''} onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/comparison-matrix') }}>{t('home.nav.comparison_matrix')}</a>
           <a href="/generate" className={location.pathname === '/generate' ? 'active' : ''} onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/generate') }}>{t('home.nav.generate')}</a>
+          <a href="/#pricing" onClick={(e) => {
+            e.preventDefault()
+            setMobileMenuOpen(false)
+            if (location.pathname === '/') {
+              window.location.hash = 'pricing'
+              const el = document.getElementById('pricing')
+              if (el) {
+                const navHeight = 60
+                const elPosition = el.getBoundingClientRect().top + window.pageYOffset
+                window.scrollTo({ top: elPosition - navHeight, behavior: 'smooth' })
+              }
+            } else {
+              navigate('/#pricing')
+            }
+          }}>{t('home.nav.pricing')}</a>
         </nav>
         <div className="sidebar-bottom">
           {isLoggedIn ? (
@@ -204,6 +233,7 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
           }}>{t('home.nav.cases')}</a>
           <a href="#pricing" onClick={(e) => {
             e.preventDefault()
+            window.location.hash = 'pricing'
             const el = document.getElementById('pricing')
             if (el) {
               const navHeight = 60
