@@ -175,6 +175,9 @@ class OpenAlexService:
         搜索论文（接口与 SemanticScholarService 一致）
 
         OpenAlex 支持更高速率（10+ req/s），适合高频搜索场景。
+
+        针对多词组合查询（含 AND/OR），使用 title.search + abstract.search
+        代替全文 search 参数，显著提升精度。
         """
         filter_parts = []
 
@@ -195,15 +198,26 @@ class OpenAlexService:
         if open_access_pdf:
             filter_parts.append("is_oa:true")
 
+        # 判断查询复杂度，选择最优搜索策略
+        use_precise_search = self._should_use_precise_search(query)
+        if use_precise_search:
+            filter_parts.append(f"title.search:{query}")
+            sort_param = "publication_date:desc"
+            search_param = None
+        else:
+            sort_param = self._build_sort(sort)
+            search_param = query
+
         params = {
-            "search": query,
             "per_page": min(limit, 200),
-            "sort": self._build_sort(sort),
+            "sort": sort_param,
         }
+        if search_param:
+            params["search"] = search_param
         if filter_parts:
             params["filter"] = ",".join(filter_parts)
 
-        logger.debug(f"[OpenAlex] 搜索: query=\"{query[:50]}...\", limit={limit}")
+        logger.debug(f"[OpenAlex] 搜索: query=\"{query[:80]}\", mode={'precise' if use_precise_search else 'broad'}, limit={limit}")
 
         for attempt in range(self.max_retries):
             try:
@@ -231,6 +245,19 @@ class OpenAlexService:
                         continue
                     papers.append(paper)
 
+                # precise 模式结果不够时，补充一次 broad search
+                if use_precise_search and len(papers) < limit // 2:
+                    logger.debug(f"[OpenAlex] precise 模式仅 {len(papers)} 篇，补充 broad search")
+                    broad_papers = await self._broad_search(
+                        query, years_ago, limit, min_citations, venue,
+                        year_start, year_end, sort, open_access_pdf
+                    )
+                    seen_ids = {p.get("id") for p in papers}
+                    for p in broad_papers:
+                        if p.get("id") not in seen_ids:
+                            seen_ids.add(p.get("id"))
+                            papers.append(p)
+
                 logger.debug(f"[OpenAlex] 获取 {len(papers)} 篇论文")
                 return papers
 
@@ -248,6 +275,64 @@ class OpenAlexService:
                     return []
 
         return []
+
+    def _should_use_precise_search(self, query: str) -> bool:
+        """
+        判断是否应使用 title.search 精准模式。
+
+        触发条件：查询包含 AND/OR 连接的多词组合（LLM 生成的组合查询词），
+        或包含 3+ 个技术术语（niche 主题）。
+        """
+        has_boolean = " AND " in query or " OR " in query
+        # 清理布尔运算符后计算有效词数
+        clean = query.upper().replace(" AND ", " ").replace(" OR ", " ").replace(" NOT ", " ")
+        words = [w for w in clean.split() if len(w) >= 3]
+        return has_boolean or len(words) >= 4
+
+    async def _broad_search(
+        self, query, years_ago, limit, min_citations, venue,
+        year_start, year_end, sort, open_access_pdf
+    ) -> List[Dict]:
+        """兜底的宽泛搜索（使用 search 参数）"""
+        filter_parts = []
+        date_filter = self._build_date_filter(years_ago=years_ago, year_start=year_start, year_end=year_end)
+        if date_filter:
+            filter_parts.append(date_filter)
+        if min_citations > 0:
+            filter_parts.append(f"cited_by_count:>{min_citations}")
+        if venue:
+            filter_parts.append(f"primary_location.source.display_name.search:{venue}")
+        if open_access_pdf:
+            filter_parts.append("is_oa:true")
+
+        # broad search 时用 abstract.search 限制范围，比 search 更精准
+        clean_query = query.upper().replace(" AND ", " ").replace(" OR ", " ").strip()
+        filter_parts.append(f"abstract.search:{clean_query}")
+
+        params = {
+            "per_page": min(limit, 200),
+            "sort": "publication_date:desc",
+        }
+        if filter_parts:
+            params["filter"] = ",".join(filter_parts)
+
+        try:
+            response = await self.client.get(
+                f"{self.BASE_URL}/works",
+                params=params
+            )
+            response.raise_for_status()
+            data = response.json()
+            papers = []
+            for item in data.get("results", []):
+                paper = self._parse_work(item)
+                if paper["cited_by_count"] < min_citations:
+                    continue
+                papers.append(paper)
+            return papers
+        except Exception as e:
+            logger.debug(f"[OpenAlex] broad search 失败: {e}")
+            return []
 
     async def search_by_exact_title(self, title: str) -> Optional[Dict]:
         """精确标题搜索"""
