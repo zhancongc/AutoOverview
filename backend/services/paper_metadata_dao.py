@@ -94,14 +94,33 @@ class PaperMetadataDAO:
         Returns:
             新增的论文数量
         """
-        new_count = 0
+        # 过滤掉无效数据，收集有效 ID
+        valid_papers = []
         for paper in papers:
-            try:
-                paper_id = paper.get("id")
-                if not paper_id:
-                    continue
+            if paper.get("id"):
+                valid_papers.append(paper)
 
-                existing = self.session.query(PaperMetadata).filter_by(id=paper_id).first()
+        if not valid_papers:
+            return 0
+
+        # 批量查询已存在的记录
+        paper_ids = [p["id"] for p in valid_papers]
+        existing_map = {}
+        for i in range(0, len(paper_ids), 500):
+            batch_ids = paper_ids[i:i + 500]
+            existing = self.session.query(PaperMetadata).filter(
+                PaperMetadata.id.in_(batch_ids)
+            ).all()
+            for e in existing:
+                existing_map[e.id] = e
+
+        new_count = 0
+        new_sources = source if isinstance(source, list) else [source]
+
+        for paper in valid_papers:
+            try:
+                paper_id = paper["id"]
+                existing = existing_map.get(paper_id)
                 if existing:
                     # 更新现有记录
                     existing.title = paper.get("title", existing.title)
@@ -117,9 +136,7 @@ class PaperMetadataDAO:
                     existing.issue = paper.get("issue", existing.issue)
                     # 合并来源信息
                     existing_sources = existing.source if isinstance(existing.source, list) else [existing.source]
-                    new_sources = source if isinstance(source, list) else [source]
-                    merged_sources = list(set(existing_sources + new_sources))
-                    existing.source = merged_sources
+                    existing.source = list(set(existing_sources + new_sources))
                     existing.url = paper.get("url", existing.url)
                     existing.updated_at = datetime.now()
                 else:
@@ -137,7 +154,7 @@ class PaperMetadataDAO:
                         concepts=paper.get("concepts", []),
                         venue_name=paper.get("venue_name"),
                         issue=paper.get("issue"),
-                        source=source if isinstance(source, list) else [source],
+                        source=new_sources,
                         url=paper.get("url")
                     )
                     self.session.add(paper_metadata)
@@ -220,27 +237,31 @@ class PaperMetadataDAO:
 
     def get_statistics(self) -> Dict:
         """获取论文库统计信息"""
-        total = self.session.query(PaperMetadata).count()
-
-        english_count = self.session.query(PaperMetadata).filter(
-            PaperMetadata.is_english == True
-        ).count()
+        from sqlalchemy import func, case
 
         current_year = datetime.now().year
-        recent_count = self.session.query(PaperMetadata).filter(
-            PaperMetadata.year >= current_year - 5
-        ).count()
+
+        # 一条 SQL 完成所有 COUNT 统计
+        stats_row = self.session.query(
+            func.count(PaperMetadata.id).label('total'),
+            func.count(case((PaperMetadata.is_english == True, 1))).label('english_count'),
+            func.count(case((PaperMetadata.year >= current_year - 5, 1))).label('recent_count'),
+        ).first()
+
+        total = stats_row.total
+        english_count = stats_row.english_count
+        recent_count = stats_row.recent_count
 
         # 按数据源统计
         source_stats = self.session.query(
             PaperMetadata.source,
-            PaperMetadata.id
+            func.count(PaperMetadata.id)
         ).group_by(PaperMetadata.source).all()
 
         # 按年份统计
         year_stats = self.session.query(
             PaperMetadata.year,
-            PaperMetadata.id
+            func.count(PaperMetadata.id)
         ).group_by(PaperMetadata.year).order_by(PaperMetadata.year.desc()).limit(10).all()
 
         return {

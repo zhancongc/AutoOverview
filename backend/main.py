@@ -435,6 +435,7 @@ async def get_records(
         raise HTTPException(status_code=401, detail="未登录")
 
     from models import ReviewTask
+    from sqlalchemy import or_
 
     # 1. 获取 ReviewRecord 记录（综述）
     records = record_service.list_records(db_session, skip=0, limit=100, user_id=user_id)
@@ -447,27 +448,22 @@ async def get_records(
         d["task_id"] = None  # ReviewRecord 没有 task_id
         result.append(d)
 
-    # 2. 获取对比矩阵任务（ReviewTask 中 type == "comparison_matrix_only"）
-    # 查询所有用户的任务，然后在 Python 中过滤（更可靠）
-    all_user_tasks = (
+    # 2. 获取对比矩阵任务（ReviewTask 中 params.type == "comparison_matrix_only"）
+    # 用 JSON 查询过滤，避免加载所有任务到内存
+    matrix_tasks = (
         db_session.query(ReviewTask)
-        .filter(ReviewTask.user_id == user_id)
+        .filter(
+            ReviewTask.user_id == user_id,
+            ReviewTask.params["type"].astext == "comparison_matrix_only"
+        )
         .order_by(ReviewTask.created_at.desc())
-        .limit(200)
+        .limit(50)
         .all()
     )
-
-    # 在 Python 中过滤对比矩阵任务
-    matrix_tasks = []
-    for task in all_user_tasks:
-        params = task.params or {}
-        if params.get("type") == "comparison_matrix_only":
-            matrix_tasks.append(task)
 
     # 添加对比矩阵任务
     for task in matrix_tasks:
         params = task.params or {}
-        # 从 params 中获取数据
         comparison_matrix = params.get("comparison_matrix", "")
         statistics = params.get("statistics", {})
 
@@ -1062,25 +1058,40 @@ async def get_active_task(user_id: Optional[int] = Depends(get_current_user_id))
                 "progress": task.progress if hasattr(task, 'progress') else None
             }
 
-    # 再检查数据库
+    # 再检查数据库：一条 JOIN 查询解决
     from models import ReviewTask, ReviewRecord
+    from sqlalchemy import exists
     db_session = next(get_db())
     try:
-        # 通过 review_records 的 user_id 找到关联的进行中任务
-        pending_tasks = db_session.query(ReviewTask).filter(
+        # 方案1: ReviewTask 自身有 user_id
+        task = db_session.query(ReviewTask).filter(
+            ReviewTask.user_id == user_id,
             ReviewTask.status.in_(["pending", "processing"])
-        ).all()
-        for t in pending_tasks:
-            if t.review_record_id:
-                record = db_session.query(ReviewRecord).filter_by(id=t.review_record_id).first()
-                if record and record.user_id == user_id:
-                    return {
-                        "active": True,
-                        "task_id": t.id,
-                        "topic": t.topic,
-                        "status": t.status,
-                        "progress": None
-                    }
+        ).first()
+        if task:
+            return {
+                "active": True,
+                "task_id": task.id,
+                "topic": task.topic,
+                "status": task.status,
+                "progress": None
+            }
+
+        # 方案2: 通过 ReviewRecord 的 user_id 关联（ReviewTask 无 user_id 的旧数据）
+        task = db_session.query(ReviewTask).join(
+            ReviewRecord, ReviewTask.review_record_id == ReviewRecord.id
+        ).filter(
+            ReviewRecord.user_id == user_id,
+            ReviewTask.status.in_(["pending", "processing"])
+        ).first()
+        if task:
+            return {
+                "active": True,
+                "task_id": task.id,
+                "topic": task.topic,
+                "status": task.status,
+                "progress": None
+            }
     finally:
         db_session.close()
 
@@ -2143,173 +2154,6 @@ async def get_tasks_status():
         raise HTTPException(status_code=500, detail=str(e))
 
 
-# ==================== 查找文献历史记录接口 ====================
-
-@app.get("/api/search-history")
-async def get_search_history(
-    limit: int = 20,
-    offset: int = 0,
-    status: Optional[str] = None,
-    user_id: Optional[int] = Depends(get_current_user_id)
-):
-    """
-    获取查找文献历史记录
-
-    参数：
-    - limit: 返回数量限制（默认20）
-    - offset: 偏移量（默认0）
-    - status: 状态筛选（可选：completed/failed/processing）
-
-    返回：
-    - 任务列表，包含各个阶段的数据
-    """
-    if not user_id:
-        raise HTTPException(status_code=401, detail="请先登录")
-
-    try:
-        from models import ReviewTask
-        from models import OutlineGenerationStage, PaperSearchStage, PaperFilterStage
-        from database import db
-
-        session_gen = db.get_session()
-        session = next(session_gen)
-        try:
-            # 构建查询 - 只返回当前用户的任务
-            query = session.query(ReviewTask)
-
-            # 通过关联的 review_record 筛选当前用户的任务
-            from models import ReviewRecord
-            query = query.join(ReviewRecord, ReviewTask.review_record_id == ReviewRecord.id).filter(
-                ReviewRecord.user_id == user_id
-            )
-
-            if status:
-                query = query.filter(ReviewTask.status == status)
-
-            # 按创建时间倒序排列
-            query = query.order_by(ReviewTask.created_at.desc())
-
-            # 分页
-            total = query.count()
-            tasks = query.offset(offset).limit(limit).all()
-
-            # 构建结果
-            results = []
-            for task in tasks:
-                task_dict = task.to_dict()
-
-                # 获取各个阶段的数据
-                outline_stage = session.query(OutlineGenerationStage).filter_by(
-                    task_id=task.id
-                ).first()
-                search_stage = session.query(PaperSearchStage).filter_by(
-                    task_id=task.id
-                ).first()
-                filter_stage = session.query(PaperFilterStage).filter_by(
-                    task_id=task.id
-                ).first()
-
-                task_dict['stages'] = {
-                    'outline': outline_stage.to_dict() if outline_stage else None,
-                    'search': search_stage.to_dict() if search_stage else None,
-                    'filter': filter_stage.to_dict() if filter_stage else None
-                }
-
-                results.append(task_dict)
-
-            return {
-                "success": True,
-                "data": {
-                    "total": total,
-                    "offset": offset,
-                    "limit": limit,
-                    "tasks": results
-                }
-            }
-        finally:
-            session.close()
-
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@app.get("/api/search-history/{task_id}")
-async def get_search_history_detail(
-    task_id: str,
-    user_id: Optional[int] = Depends(get_current_user_id)
-):
-    """
-    获取单个查找文献任务的详细记录
-
-    参数：
-    - task_id: 任务ID
-
-    返回：
-    - 任务的完整信息，包括所有阶段的数据
-    """
-    if not user_id:
-        raise HTTPException(status_code=401, detail="请先登录")
-
-    try:
-        from models import ReviewTask
-        from models import OutlineGenerationStage, PaperSearchStage, PaperFilterStage
-        from database import db
-
-        session_gen = db.get_session()
-        session = next(session_gen)
-        try:
-            # 获取任务
-            task = session.query(ReviewTask).filter_by(id=task_id).first()
-            if not task:
-                raise HTTPException(status_code=404, detail=f"任务不存在: {task_id}")
-
-            # 验证所有权
-            if hasattr(task, 'user_id') and task.user_id and task.user_id != user_id:
-                raise HTTPException(status_code=403, detail="该任务不属于您，无法访问")
-
-            # 如果任务有关联的记录，也需要验证
-            if task.review_record_id:
-                from models import ReviewRecord
-                record = session.query(ReviewRecord).filter_by(id=task.review_record_id).first()
-                if record and record.user_id and record.user_id != user_id:
-                    raise HTTPException(status_code=403, detail="该任务不属于您，无法访问")
-
-            task_dict = task.to_dict()
-
-            # 获取各个阶段的数据
-            outline_stage = session.query(OutlineGenerationStage).filter_by(
-                task_id=task_id
-            ).first()
-            search_stage = session.query(PaperSearchStage).filter_by(
-                task_id=task_id
-            ).first()
-            filter_stage = session.query(PaperFilterStage).filter_by(
-                task_id=task_id
-            ).first()
-
-            task_dict['stages'] = {
-                'outline': outline_stage.to_dict() if outline_stage else None,
-                'search': search_stage.to_dict() if search_stage else None,
-                'filter': filter_stage.to_dict() if filter_stage else None
-            }
-
-            return {
-                "success": True,
-                "data": task_dict
-            }
-        finally:
-            session.close()
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=str(e))
-
-
 @app.get("/api/search-history/{task_id}/related-tasks")
 async def get_related_tasks(
     task_id: str,
@@ -2331,23 +2175,22 @@ async def get_related_tasks(
         session_gen = db.get_session()
         session = next(session_gen)
         try:
-            # 查询所有任务，过滤 params 中 reuse_task_id 匹配的
-            all_tasks = session.query(ReviewTask).order_by(
+            # 用 JSON 查询直接过滤，避免加载所有任务到内存
+            related_tasks = session.query(ReviewTask).filter(
+                ReviewTask.params["reuse_task_id"].as_string() == task_id
+            ).order_by(
                 ReviewTask.created_at.desc()
-            ).limit(200).all()
+            ).limit(50).all()
 
             related = []
             seen_ids = set()
 
-            for task in all_tasks:
-                params = task.params or {}
-                reuse_id = params.get("reuse_task_id", "")
-                if reuse_id != task_id:
-                    continue
+            for task in related_tasks:
                 if task.id in seen_ids:
                     continue
                 seen_ids.add(task.id)
 
+                params = task.params or {}
                 task_type = "comparison_matrix" if params.get("type") == "comparison_matrix_only" else "review"
                 related.append({
                     "task_id": task.id,
@@ -2389,52 +2232,6 @@ async def get_task_search_sources(
 ):
     """
     获取任务的搜索来源统计（关键词-文献对应关系）
-
-    参数：
-    - task_id: 任务ID
-
-    返回：
-    - 搜索来源统计信息
-    """
-    if not user_id:
-        raise HTTPException(status_code=401, detail="请先登录")
-
-    # 验证任务所有权
-    from models import ReviewTask, ReviewRecord
-    db_session = next(get_db())
-    try:
-        task = db_session.query(ReviewTask).filter_by(id=task_id).first()
-        if not task:
-            raise HTTPException(status_code=404, detail="任务不存在")
-
-        # 验证所有权
-        if task.review_record_id:
-            record = db_session.query(ReviewRecord).filter_by(id=task.review_record_id).first()
-            if record and record.user_id and record.user_id != user_id:
-                raise HTTPException(status_code=403, detail="该任务不属于您，无法访问")
-    finally:
-        db_session.close()
-
-    try:
-        from services.stage_recorder import stage_recorder
-        result = stage_recorder.get_paper_search_sources(task_id)
-        return {
-            "success": True,
-            "data": result
-        }
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@app.get("/api/search-history/{task_id}/search-sources")
-async def get_search_history_search_sources(
-    task_id: str,
-    user_id: Optional[int] = Depends(get_current_user_id)
-):
-    """
-    获取查找文献历史记录的搜索来源统计
 
     参数：
     - task_id: 任务ID

@@ -111,6 +111,11 @@ class ReviewRecord(Base):
     created_at = Column(DateTime, default=datetime.now, comment="创建时间")
     updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now, comment="更新时间")
 
+    # 索引
+    __table_args__ = (
+        Index('idx_review_records_user_id_created_at', 'user_id', 'created_at'),
+    )
+
     def to_dict(self):
         return {
             "id": self.id,
@@ -217,6 +222,8 @@ class ReviewTask(Base):
         Index('idx_review_tasks_status', 'status'),
         Index('idx_review_tasks_created_at', 'created_at'),
         Index('idx_review_tasks_user_id', 'user_id'),
+        Index('idx_review_tasks_user_id_created_at', 'user_id', 'created_at'),
+        Index('idx_review_tasks_user_id_status', 'user_id', 'status'),
     )
 
     def to_dict(self):
