@@ -431,8 +431,11 @@ class TaskManager:
                         if AuthSessionLocal:
                             auth_db = AuthSessionLocal()
                             try:
-                                refund_credit(user_id, auth_db)
-                                print(f"[TaskManager] 已退还用户 {user_id} 的额度")
+                                # 从 params 中获取实际扣除的 credit_cost
+                                params = data.get("params", {})
+                                credit_cost = params.get("credit_cost", 2)
+                                refund_credit(user_id, auth_db, cost=credit_cost)
+                                print(f"[TaskManager] 已退还用户 {user_id} 的 {credit_cost} 个额度")
                             finally:
                                 auth_db.close()
                     except Exception as e:
