@@ -14,6 +14,7 @@ from services.task_manager import TaskManager, TaskStatus, task_manager
 from services.paper_filter import PaperFilterService
 from services.smart_review_generator_final import SmartReviewGeneratorFinal
 from services.openalex_search import get_openalex_service
+from services.semantic_scholar_search import get_semantic_scholar_service
 from services.paper_search_agent import PaperSearchAgent
 from services.citation_validator_v2 import CitationValidatorV2
 from services.review_record_service import ReviewRecordService
@@ -98,6 +99,25 @@ class ReviewTaskExecutor:
                 search_years=params.get('search_years', 10),
                 target_count=params.get('target_count', 50)
             )
+
+            # Fallback: OA 结果不足时切到 Semantic Scholar
+            if len(all_papers) < 20:
+                logger.warning(f"[步骤1] OA 仅 {len(all_papers)} 篇，fallback 到 SS")
+                ss_service = get_semantic_scholar_service()
+                ss_agent = PaperSearchAgent(ss_service=ss_service)
+                ss_papers = await ss_agent.search(
+                    topic=topic,
+                    search_years=params.get('search_years', 10),
+                    target_count=params.get('target_count', 50)
+                )
+                # 合并去重
+                seen_ids = {p.get("id") or p.get("paperId") for p in all_papers}
+                for p in ss_papers:
+                    pid = p.get("id") or p.get("paperId")
+                    if pid and pid not in seen_ids:
+                        seen_ids.add(pid)
+                        all_papers.append(p)
+                logger.info(f"[步骤1] SS fallback 补充后共 {len(all_papers)} 篇")
 
             logger.debug(f"[步骤1] 搜索完成: 共 {len(all_papers)} 篇文献")
 
@@ -381,6 +401,25 @@ class ReviewTaskExecutor:
             search_years=params.get('search_years', 10),
             target_count=params.get('target_count', 50)
         )
+
+        # Fallback: OA 结果不足时切到 Semantic Scholar
+        if len(all_papers) < 20:
+            logger.warning(f"[search_papers_only] OA 仅 {len(all_papers)} 篇，fallback 到 SS")
+            from services.semantic_scholar_search import get_semantic_scholar_service as _get_ss
+            ss_service = _get_ss()
+            ss_agent = PaperSearchAgent(ss_service=ss_service)
+            ss_papers = await ss_agent.search(
+                topic=topic,
+                search_years=params.get('search_years', 10),
+                target_count=params.get('target_count', 50)
+            )
+            seen_ids = {p.get("id") or p.get("paperId") for p in all_papers}
+            for p in ss_papers:
+                pid = p.get("id") or p.get("paperId")
+                if pid and pid not in seen_ids:
+                    seen_ids.add(pid)
+                    all_papers.append(p)
+            logger.info(f"[search_papers_only] SS fallback 补充后共 {len(all_papers)} 篇")
 
         stats = self.filter_service.get_statistics(all_papers)
         logger.debug(f"[search_papers_only] 搜索完成: {len(all_papers)} 篇文献")
@@ -693,6 +732,21 @@ class ReviewTaskExecutor:
                     search_years=10,
                     target_count=50
                 )
+
+                # Fallback: OA 结果不足时切到 Semantic Scholar
+                if len(all_papers) < 20:
+                    logger.warning(f"[execute_comparison_matrix_only] OA 仅 {len(all_papers)} 篇，fallback 到 SS")
+                    from services.semantic_scholar_search import get_semantic_scholar_service as _get_ss
+                    ss_svc = _get_ss()
+                    ss_ag = PaperSearchAgent(ss_service=ss_svc)
+                    ss_pp = await ss_ag.search(topic=topic, search_years=10, target_count=50)
+                    seen_ids = {p.get("id") or p.get("paperId") for p in all_papers}
+                    for p in ss_pp:
+                        pid = p.get("id") or p.get("paperId")
+                        if pid and pid not in seen_ids:
+                            seen_ids.add(pid)
+                            all_papers.append(p)
+                    logger.info(f"[execute_comparison_matrix_only] SS fallback 补充后共 {len(all_papers)} 篇")
 
                 logger.debug(f"[execute_comparison_matrix_only] 搜索完成: {len(all_papers)} 篇文献")
 
