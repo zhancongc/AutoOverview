@@ -3,6 +3,8 @@ FastAPI 主应用
 """
 import os
 import logging
+import time
+from functools import lru_cache
 from dotenv import load_dotenv
 
 # 全局日志级别设为 INFO，过滤 DEBUG 输出
@@ -899,6 +901,9 @@ async def health_check():
     }
 
 
+_cases_cache = {}
+_cases_cache_ttl = 120  # 2 分钟
+
 @app.get("/api/cases")
 async def get_demo_cases(lang: str = ""):
     """
@@ -906,6 +911,10 @@ async def get_demo_cases(lang: str = ""):
 
     从 DEMO_TASK_IDS / DEMO_TASK_IDS_EN 配置中读取案例 ID，并返回完整的案例信息
     """
+    cache_key = lang or "zh"
+    now = time.time()
+    if cache_key in _cases_cache and now - _cases_cache[cache_key]["time"] < _cases_cache_ttl:
+        return _cases_cache[cache_key]["data"]
     from database import get_db
     from models import ReviewTask, ReviewRecord
 
@@ -921,18 +930,24 @@ async def get_demo_cases(lang: str = ""):
 
     db = next(get_db())
     try:
+        # 批量查询所有 task，避免 N+1
+        tasks = db.query(ReviewTask).filter(ReviewTask.id.in_(demo_task_ids)).all()
+        task_map = {t.id: t for t in tasks}
+
+        # 收集所有需要的 review_record_id，一次性批量查询
+        record_ids = [t.review_record_id for t in tasks if t.review_record_id]
+        record_map = {}
+        if record_ids:
+            records = db.query(ReviewRecord).filter(ReviewRecord.id.in_(record_ids)).all()
+            record_map = {r.id: r for r in records}
+
         for task_id in demo_task_ids:
-            # 从数据库获取任务信息
-            task = db.query(ReviewTask).filter(ReviewTask.id == task_id).first()
+            task = task_map.get(task_id)
             if not task:
                 continue
 
-            # 获取对应的综述记录
-            record = None
-            if task.review_record_id:
-                record = db.query(ReviewRecord).filter(ReviewRecord.id == task.review_record_id).first()
+            record = record_map.get(task.review_record_id) if task.review_record_id else None
 
-            # 确定案例信息（优先使用数据库中的数据，否则使用硬编码的默认值）
             case_info = {
                 "task_id": task_id,
                 "title": task.topic if task.topic else "AI 生成的学术综述",
@@ -941,10 +956,8 @@ async def get_demo_cases(lang: str = ""):
                 "icon": "📄"
             }
 
-            # 如果有综述记录，提取更详细的信息
             if record and record.review:
                 case_info["title"] = record.topic
-                # 尝试从统计信息中提取标签
                 if record.statistics:
                     stats = record.statistics if isinstance(record.statistics, dict) else {}
                     if stats.get("categories"):
@@ -952,7 +965,6 @@ async def get_demo_cases(lang: str = ""):
                     if stats.get("main_field"):
                         case_info["tags"] = [stats["main_field"]]
 
-            # 根据主题关键词设置图标
             topic_lower = case_info["title"].lower()
             if "计算机" in topic_lower or "algorithm" in topic_lower or "代数" in topic_lower or "algebra" in topic_lower or "算法" in topic_lower:
                 case_info["icon"] = "🧮"
@@ -968,12 +980,14 @@ async def get_demo_cases(lang: str = ""):
     finally:
         db.close()
 
-    return {
+    result = {
         "success": True,
         "data": {
             "cases": cases
         }
     }
+    _cases_cache[cache_key] = {"data": result, "time": now}
+    return result
 
 
 @app.get("/api/jade/access")

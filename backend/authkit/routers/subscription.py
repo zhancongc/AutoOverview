@@ -2,6 +2,7 @@
 订阅管理 API 路由
 """
 import logging
+import time
 import uuid
 from datetime import datetime, timedelta
 from typing import Optional
@@ -19,6 +20,9 @@ from ..services.payment_config import get_payment_service, get_payment_config
 from ..core.security import decode_access_token
 
 logger = logging.getLogger(__name__)
+
+_plans_cache = None
+_plans_cache_time = 0
 router = APIRouter(prefix="/api/subscription", tags=["订阅管理"])
 
 security = HTTPBearer()
@@ -82,7 +86,13 @@ def _add_credits(user_id: int, plan_type: str, db: Session):
 @router.get("/plans")
 def get_plans(db: Session = Depends(get_db)):
     """获取套餐列表"""
+    global _plans_cache, _plans_cache_time
+    now = time.time()
+    if _plans_cache is not None and now - _plans_cache_time < 120:
+        return {"plans": _plans_cache}
     plans = get_plans_from_db(db)
+    _plans_cache = plans
+    _plans_cache_time = now
     return {"plans": plans}
 
 

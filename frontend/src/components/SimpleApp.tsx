@@ -503,8 +503,6 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
               })}
             </div>
           )}
-          <p className="pricing-note">{t('pricing.note')}</p>
-
           <div className="testimonials">
             <div className="testimonial-card">
               <p className="testimonial-text">{t('home.testimonials.text1')}</p>
