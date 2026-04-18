@@ -372,6 +372,14 @@ export const api = {
     return response.data;
   },
 
+  async submitFeedback(data: { email: string; content: string }): Promise<{ success: boolean }> {
+    const token = localStorage.getItem('auth_token');
+    const headers: Record<string, string> = {};
+    if (token) headers.Authorization = `Bearer ${token}`;
+    const response = await axios.post(`${API_BASE}/feedback`, data, { headers });
+    return response.data;
+  },
+
   async checkJadeAccess(): Promise<{ allowed: boolean }> {
     const token = localStorage.getItem('auth_token');
     const headers: Record<string, string> = {};

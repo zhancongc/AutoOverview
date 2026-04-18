@@ -276,6 +276,15 @@
     "done": "Done",
     "payment_success": "Payment successful! Credits added to your account"
   },
+  "feedback": {
+    "button": "Feedback",
+    "title": "Send Feedback",
+    "email": "Email:",
+    "placeholder": "Tell us what you think... Suggestions, bugs, or feature requests are all welcome.",
+    "submit": "Submit",
+    "submitting": "Submitting...",
+    "submitted": "Thank you for your feedback!"
+  },
   "payment": {
     "buy": "Buy {{name}}",
     "credits_info": "{{credits}} review credits",

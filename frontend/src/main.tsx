@@ -19,6 +19,7 @@ import { RefundPolicyPageChinese } from './components/RefundPolicyPageChinese'
 import { ComparisonMatrixPage } from './components/ComparisonMatrixPage'
 import { GenerateReviewPage } from './components/GenerateReviewPage'
 import ErrorBoundary from './ErrorBoundary'
+import { FeedbackFloatingButton } from './components/FeedbackFloatingButton'
 import { api } from './api'
 import './i18n' // 导入 i18n 配置
 import './index.css'
@@ -85,6 +86,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         <Route path="/generate" element={<GenerateReviewPage />} />
       </Routes>
       <BackToTop />
+      <FeedbackFloatingButton />
     </BrowserRouter>
   </ErrorBoundary>,
 )

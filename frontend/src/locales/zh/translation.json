@@ -302,6 +302,15 @@
     "done": "完成",
     "payment_success": "支付成功！积分已充值到您的账户"
   },
+  "feedback": {
+    "button": "反馈",
+    "title": "发送反馈",
+    "email": "邮箱：",
+    "placeholder": "告诉我们您的想法... 欢迎提出建议、报告问题或功能需求。",
+    "submit": "提交",
+    "submitting": "提交中...",
+    "submitted": "感谢您的反馈！"
+  },
   "input": {
     "title": "一键生成论文综述",
     "subtitle": "输入研究主题，AI 为您生成专业文献综述",

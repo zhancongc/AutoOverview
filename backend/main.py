@@ -2565,3 +2565,68 @@ async def update_user_profile(
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Failed to update profile: {str(e)}")
 
+
+# ==================== 用户反馈接口 ====================
+
+@app.post("/api/feedback")
+async def submit_feedback(
+    request: dict,
+    user_id: Optional[int] = Depends(get_current_user_id),
+    auth_db: Session = Depends(auth_get_db)
+):
+    """提交用户反馈（每日最多5次）"""
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Please login first")
+
+    content = request.get("content", "").strip()
+    if not content:
+        raise HTTPException(status_code=400, detail="Feedback content is required")
+
+    email = request.get("email", "")
+
+    # 检查每日反馈次数限制
+    from authkit.models import User
+    from datetime import date
+    user = auth_db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    today = date.today().isoformat()
+    feedback_date = user.get_meta("feedback_date", "")
+    feedback_count = user.get_meta("feedback_count", 0)
+
+    if feedback_date != today:
+        # 新的一天，重置计数
+        feedback_count = 0
+        feedback_date = today
+
+    if feedback_count >= 5:
+        raise HTTPException(status_code=429, detail="Too many feedback submissions. Please try again tomorrow.")
+
+    # 增加计数
+    feedback_count += 1
+    user.set_meta("feedback_date", feedback_date)
+    user.set_meta("feedback_count", feedback_count)
+    auth_db.commit()
+
+    try:
+        from database import db as database
+        if database.engine is None:
+            database.connect()
+        with next(database.get_session()) as session:
+            from sqlalchemy import text
+            session.execute(
+                text("INSERT INTO user_feedback (user_id, email, content, created_at) VALUES (:uid, :email, :content, NOW())"),
+                {"uid": user_id, "email": email, "content": content[:1000]}
+            )
+            session.commit()
+        return {"success": True}
+    except Exception as e:
+        # 表可能不存在，用 meta_data 兜底
+        logger.warning(f"Feedback insert failed, falling back to meta_data: {e}")
+        feedbacks = user.get_meta("feedbacks", [])
+        feedbacks.append({"email": email, "content": content[:1000], "at": datetime.now().isoformat()})
+        user.set_meta("feedbacks", feedbacks)
+        auth_db.commit()
+        return {"success": True}
+
