@@ -5,6 +5,7 @@ import { api } from '../api'
 import { getLocalUserInfo, isLoggedIn } from '../authApi'
 import { PaymentModal } from './PaymentModal'
 import { ConfirmModal } from './ConfirmModal'
+import { ExportFormatModal, type ExportFormat } from './ExportFormatModal'
 import type { ReviewRecord } from '../types'
 import './SimpleApp.css'
 import './ProfilePage.css'
@@ -30,10 +31,18 @@ export function ProfilePage() {
   const [credits, setCredits] = useState<number>(0)
   const [showPayModal, setShowPayModal] = useState(false)
   const [pendingExportRecordId, setPendingExportRecordId] = useState<number | null>(null)
-  const [exportingId, setExportingId] = useState<number | null>(null)
   const [unlockMode, setUnlockMode] = useState(false)  // true=单次解锁, false=购买套餐
   const [showCreditConfirmModal, setShowCreditConfirmModal] = useState(false)
   const [confirmRecordId, setConfirmRecordId] = useState<number | null>(null)
+  const [exportModalSearch, setExportModalSearch] = useState<any | null>(null)
+  const [exportFormat, setExportFormat] = useState<ExportFormat>('bibtex')
+  const [exportingSearch, setExportingSearch] = useState(false)
+  const [exportModalMatrix, setExportModalMatrix] = useState<any | null>(null)
+  const [matrixExportFormat, setMatrixExportFormat] = useState<'markdown' | 'word'>('markdown')
+  const [exportingMatrix, setExportingMatrix] = useState(false)
+  const [exportModalReview, setExportModalReview] = useState<{ id: number; topic: string } | null>(null)
+  const [reviewExportFormat, setReviewExportFormat] = useState<'markdown' | 'word'>('word')
+  const [exportingReview, setExportingReview] = useState(false)
 
   useEffect(() => {
     if (!isLoggedIn()) {
@@ -90,6 +99,146 @@ export function ProfilePage() {
     }
   }
 
+  // 文献导出相关
+  const generateBibTeX = (paperList: any[]): string => {
+    return paperList.map((paper, i) => {
+      const key = (paper.authors?.[0]?.split(' ').pop()?.toLowerCase() || 'unknown')
+        + (paper.year || '') + '_' + (i + 1)
+      const authors = paper.authors?.map((a: string) => a).join(' and ') || 'Unknown'
+      let entry = `@article{${key},\n`
+      entry += `  title={${paper.title}},\n`
+      entry += `  author={${authors}},\n`
+      if (paper.year) entry += `  year={${paper.year}},\n`
+      if (paper.doi) entry += `  doi={${paper.doi}},\n`
+      if (paper.abstract) entry += `  abstract={${paper.abstract}},\n`
+      entry += `}`
+      return entry
+    }).join('\n\n')
+  }
+
+  const generateRIS = (paperList: any[]): string => {
+    return paperList.map(paper => {
+      let ris = `TY  - JOUR\n`
+      ris += `TI  - ${paper.title}\n`
+      if (paper.authors) {
+        paper.authors.forEach((a: string) => { ris += `AU  - ${a}\n` })
+      }
+      if (paper.year) ris += `PY  - ${paper.year}\n`
+      if (paper.doi) ris += `DO  - ${paper.doi}\n`
+      if (paper.abstract) ris += `AB  - ${paper.abstract}\n`
+      ris += `ER  - \n`
+      return ris
+    }).join('\n')
+  }
+
+  const handleExportSearch = async () => {
+    if (!exportModalSearch) return
+    setExportingSearch(true)
+    try {
+      const detailRes = await api.getSearchHistoryDetail(exportModalSearch.id)
+      const papers = detailRes.search?.papers_sample || []
+      if (papers.length === 0) return
+      const safeName = exportModalSearch.topic.replace(/[\/\\:]/g, '-').substring(0, 50)
+      const { saveAs } = await import('file-saver')
+
+      if (exportFormat === 'bibtex') {
+        const content = generateBibTeX(papers)
+        const blob = new Blob([content], { type: 'application/x-bibtex;charset=utf-8' })
+        saveAs(blob, `${safeName}.bib`)
+      } else if (exportFormat === 'ris') {
+        const content = generateRIS(papers)
+        const blob = new Blob([content], { type: 'application/x-research-info-systems;charset=utf-8' })
+        saveAs(blob, `${safeName}.ris`)
+      } else {
+        const { Document, Packer, Paragraph, TextRun, AlignmentType, HeadingLevel } = await import('docx')
+        const children: any[] = []
+        children.push(new Paragraph({ text: exportModalSearch.topic, heading: HeadingLevel.TITLE, alignment: AlignmentType.CENTER }))
+        children.push(new Paragraph({ children: [new TextRun({ text: `共 ${papers.length} 篇文献`, bold: true })], alignment: AlignmentType.CENTER, spacing: { after: 400 } }))
+        for (let i = 0; i < papers.length; i++) {
+          const paper = papers[i]
+          children.push(new Paragraph({ children: [new TextRun({ text: `[${i + 1}] ${paper.title}`, bold: true })], spacing: { before: 200 } }))
+          if (paper.authors?.length > 0) {
+            children.push(new Paragraph({ children: [new TextRun({ text: `    Authors: ${paper.authors.slice(0, 5).join(', ')}${paper.authors.length > 5 ? ' et al.' : ''}`, size: 20 })] }))
+          }
+          const meta: string[] = []
+          if (paper.year) meta.push(`Year: ${paper.year}`)
+          if (paper.doi) meta.push(`DOI: ${paper.doi}`)
+          if (meta.length > 0) children.push(new Paragraph({ children: [new TextRun({ text: `    ${meta.join(' | ')}`, size: 20 })] }))
+        }
+        const doc = new Document({ sections: [{ children }] })
+        const blob = await Packer.toBlob(doc)
+        saveAs(blob, `${safeName}.docx`)
+      }
+      setExportModalSearch(null)
+    } catch (err) {
+      console.error('Export failed:', err)
+    } finally {
+      setExportingSearch(false)
+    }
+  }
+
+  // 矩阵导出
+  const handleExportMatrix = async () => {
+    if (!exportModalMatrix) return
+    setExportingMatrix(true)
+    try {
+      const res = await api.getComparisonMatrix(exportModalMatrix.task_id)
+      const { topic, comparison_matrix } = res.data
+      if (!comparison_matrix) return
+      const safeName = topic.replace(/[\/\\:]/g, '-').substring(0, 50)
+
+      if (matrixExportFormat === 'markdown') {
+        const content = `# ${topic}\n\n${comparison_matrix}`
+        const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' })
+        const { saveAs } = await import('file-saver')
+        saveAs(blob, `${safeName}.md`)
+      } else {
+        const { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, Table, TableRow, TableCell, WidthType } = await import('docx')
+        const lines = comparison_matrix.split('\n')
+        const children: any[] = []
+        children.push(new Paragraph({ text: topic, heading: HeadingLevel.TITLE, alignment: AlignmentType.CENTER, spacing: { after: 400 } }))
+
+        for (const line of lines) {
+          const trimmed = line.trim()
+          if (!trimmed) { children.push(new Paragraph({})); continue }
+          if (trimmed.startsWith('### ')) {
+            children.push(new Paragraph({ text: trimmed.replace('### ', ''), heading: HeadingLevel.HEADING_3, spacing: { before: 300 } }))
+          } else if (trimmed.startsWith('## ')) {
+            children.push(new Paragraph({ text: trimmed.replace('## ', ''), heading: HeadingLevel.HEADING_2, spacing: { before: 300 } }))
+          } else if (trimmed.startsWith('# ')) {
+            children.push(new Paragraph({ text: trimmed.replace('# ', ''), heading: HeadingLevel.HEADING_1, spacing: { before: 300 } }))
+          } else if (trimmed.startsWith('|') && trimmed.endsWith('|')) {
+            // table row
+            const cells = trimmed.split('|').filter(c => c.trim()).map(c => c.trim())
+            if (cells.every(c => /^[-:\s]+$/.test(c))) continue // skip separator
+            children.push(new Table({
+              rows: [new TableRow({
+                children: cells.map(cell => new TableCell({
+                  children: [new Paragraph({ children: [new TextRun({ text: cell.replace(/\*\*/g, ''), bold: cell.includes('**') })] })],
+                  width: { size: Math.floor(100 / cells.length), type: WidthType.PERCENTAGE },
+                }))
+              })],
+              width: { size: 100, type: WidthType.PERCENTAGE },
+            }))
+          } else if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
+            children.push(new Paragraph({ children: [new TextRun({ text: trimmed.replace(/^[-*]\s*/, '') })], bullet: { level: 0 } }))
+          } else {
+            children.push(new Paragraph({ children: [new TextRun({ text: trimmed.replace(/\*\*/g, '') })] }))
+          }
+        }
+        const doc = new Document({ sections: [{ children }] })
+        const blob = await Packer.toBlob(doc)
+        const { saveAs } = await import('file-saver')
+        saveAs(blob, `${safeName}.docx`)
+      }
+      setExportModalMatrix(null)
+    } catch (err) {
+      console.error('Matrix export failed:', err)
+    } finally {
+      setExportingMatrix(false)
+    }
+  }
+
   const handleViewRecord = (record: ReviewRecord) => {
     if (record.status === 'processing' || record.status === 'failed') {
       // 生成中或失败的任务，引导重新生成
@@ -105,49 +254,71 @@ export function ProfilePage() {
     }
   }
 
-  const handleExportRecord = async (id: number, event: React.MouseEvent) => {
+  const handleExportRecord = (id: number, event: React.MouseEvent) => {
     event.stopPropagation()
     const record = records.find(r => r.id === id)
     if (!record) return
-
-    // 已付费生成的综述，直接导出
-    if (record.is_paid) {
-      await doExport(id, record)
-      return
-    }
-
-    // 免费生成的综述，检查是否有付费积分
-    if (credits > 0) {
-      // 有积分，弹出确认框
-      setConfirmRecordId(id)
-      setShowCreditConfirmModal(true)
-      return
-    }
-
-    // 没有积分，直接弹出支付弹窗
-    setUnlockMode(true)
-    setPendingExportRecordId(id)
-    setShowPayModal(true)
+    setExportModalReview({ id: record.id, topic: record.topic })
   }
 
-  const doExport = async (id: number, record: ReviewRecord) => {
-    setExportingId(id)
+  const doExportReview = async () => {
+    if (!exportModalReview) return
+    setExportingReview(true)
     try {
-      const blob = await api.exportReview(id)
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      const filename = record.topic.replace(/[\/\\:]/g, '-')
-      a.download = `${filename}.docx`
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
-      URL.revokeObjectURL(url)
+      const res = await api.getRecordReview(exportModalReview.id)
+      const { topic, review, papers } = res.data
+      const safeName = topic.replace(/[\/\\:]/g, '-').substring(0, 50)
+
+      if (reviewExportFormat === 'markdown') {
+        let content = `# ${topic}\n\n${review}\n\n## 参考文献\n\n`
+        ;(papers || []).forEach((p: any, i: number) => {
+          content += `[${i + 1}] ${p.authors?.join(', ') || ''}. (${p.year || ''}). ${p.title}.\n`
+        })
+        const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' })
+        const { saveAs } = await import('file-saver')
+        saveAs(blob, `${safeName}.md`)
+      } else {
+        const { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType } = await import('docx')
+        const lines = review.split('\n')
+        const children: any[] = []
+        children.push(new Paragraph({ text: topic, heading: HeadingLevel.TITLE, alignment: AlignmentType.CENTER, spacing: { after: 400 } }))
+        for (const line of lines) {
+          const trimmed = line.trim()
+          if (!trimmed) { children.push(new Paragraph({})); continue }
+          if (trimmed.startsWith('#### ')) {
+            children.push(new Paragraph({ text: trimmed.replace('#### ', ''), heading: HeadingLevel.HEADING_4, spacing: { before: 300 } }))
+          } else if (trimmed.startsWith('### ')) {
+            children.push(new Paragraph({ text: trimmed.replace('### ', ''), heading: HeadingLevel.HEADING_3, spacing: { before: 300 } }))
+          } else if (trimmed.startsWith('## ')) {
+            children.push(new Paragraph({ text: trimmed.replace('## ', ''), heading: HeadingLevel.HEADING_2, spacing: { before: 300 } }))
+          } else if (trimmed.startsWith('# ')) {
+            children.push(new Paragraph({ text: trimmed.replace('# ', ''), heading: HeadingLevel.HEADING_1, spacing: { before: 300 } }))
+          } else if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
+            children.push(new Paragraph({ children: [new TextRun({ text: trimmed.replace(/^[-*]\s*/, '') })], bullet: { level: 0 } }))
+          } else {
+            children.push(new Paragraph({ children: [new TextRun({ text: trimmed.replace(/\*\*/g, '') })] }))
+          }
+        }
+        // 添加参考文献
+        if (papers?.length > 0) {
+          children.push(new Paragraph({ text: '参考文献', heading: HeadingLevel.HEADING_2, spacing: { before: 400 } }))
+          papers.forEach((p: any, i: number) => {
+            children.push(new Paragraph({
+              children: [new TextRun({ text: `[${i + 1}] ${p.authors?.join(', ') || ''}. (${p.year || ''}). ${p.title}.` })],
+              spacing: { before: 100 },
+            }))
+          })
+        }
+        const doc = new Document({ sections: [{ children }] })
+        const blob = await Packer.toBlob(doc)
+        const { saveAs } = await import('file-saver')
+        saveAs(blob, `${safeName}.docx`)
+      }
+      setExportModalReview(null)
     } catch (err) {
-      console.error('导出失败:', err)
-      alert('导出失败，请稍后重试')
+      console.error('Export review failed:', err)
     } finally {
-      setExportingId(null)
+      setExportingReview(false)
     }
   }
 
@@ -157,18 +328,15 @@ export function ProfilePage() {
     if (!record) return
 
     setShowCreditConfirmModal(false)
-    setExportingId(confirmRecordId)
 
     try {
       const result = await api.unlockRecordWithCredit(confirmRecordId)
       if (result.success) {
-        // 刷新记录列表和积分
         await loadAllRecords()
         const creditsData = await api.getCredits()
         setCredits(creditsData.credits)
-
-        // 直接导出
-        await doExport(confirmRecordId, record)
+        // 弹出格式选择
+        setExportModalReview({ id: record.id, topic: record.topic })
       } else {
         alert(result.message || '解锁失败，请稍后重试')
       }
@@ -176,7 +344,6 @@ export function ProfilePage() {
       console.error('解锁失败:', err)
       alert('解锁失败，请稍后重试')
     } finally {
-      setExportingId(null)
       setConfirmRecordId(null)
     }
   }
@@ -345,13 +512,10 @@ export function ProfilePage() {
                           </div>
                           {record.status === 'success' && (
                             <button
-                              className={`export-button ${!record.is_paid ? 'export-word-premium' : ''}`}
+                              className="export-button"
                               onClick={(e) => handleExportRecord(record.id, e)}
-                              disabled={exportingId === record.id}
                             >
-                              {exportingId === record.id ? '导出中...' :
-                               record.is_paid ? '导出 Word' :
-                               '🔓 解锁导出'}
+                              导出综述
                             </button>
                           )}
                         </div>
@@ -404,8 +568,8 @@ export function ProfilePage() {
                             )}
                           </div>
                           {matrix.status === 'success' && (
-                            <button className="export-button">
-                              查看矩阵
+                            <button className="export-button" onClick={(e) => { e.stopPropagation(); setExportModalMatrix(matrix) }}>
+                              导出矩阵
                             </button>
                           )}
                         </div>
@@ -451,8 +615,8 @@ export function ProfilePage() {
                               <span className="record-stats-inline">📄 {search.papers_count} 篇文献</span>
                             )}
                           </div>
-                          <button className="export-button">
-                            查看结果
+                          <button className="export-button" onClick={(e) => { e.stopPropagation(); setExportModalSearch(search) }}>
+                            导出文献
                           </button>
                         </div>
                       </div>
@@ -475,6 +639,91 @@ export function ProfilePage() {
         </div>
       </footer>
 
+      {/* 文献导出弹窗 */}
+      {exportModalSearch && (
+        <ExportFormatModal
+          selectedFormat={exportFormat}
+          onSelectFormat={setExportFormat}
+          onConfirm={handleExportSearch}
+          onCancel={() => setExportModalSearch(null)}
+          loading={exportingSearch}
+        />
+      )}
+
+      {/* 综述导出弹窗 */}
+      {exportModalReview && (
+        <div className="confirm-modal-overlay" onClick={() => setExportModalReview(null)}>
+          <div className="confirm-modal" onClick={e => e.stopPropagation()}>
+            <button className="confirm-modal-close" onClick={() => setExportModalReview(null)}>&times;</button>
+            <div className="confirm-modal-header">
+              <span className="confirm-modal-icon">📄</span>
+              <h2 className="confirm-modal-title">导出综述</h2>
+            </div>
+            <div className="confirm-modal-body">
+              <div className="export-format-options">
+                {([
+                  { key: 'markdown' as const, icon: '📝', name: 'Markdown', desc: '导出为 .md 文件，保留原始格式' },
+                  { key: 'word' as const, icon: '📄', name: 'Word', desc: '导出为 .docx 文件，方便编辑分享' },
+                ]).map(fmt => (
+                  <label key={fmt.key} className={`export-format-option ${reviewExportFormat === fmt.key ? 'active' : ''}`}>
+                    <input type="radio" name="review-export-format" value={fmt.key} checked={reviewExportFormat === fmt.key} onChange={() => setReviewExportFormat(fmt.key)} />
+                    <span className="export-format-icon">{fmt.icon}</span>
+                    <span className="export-format-info">
+                      <span className="export-format-name">{fmt.name}</span>
+                      <span className="export-format-desc">{fmt.desc}</span>
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </div>
+            <div className="confirm-modal-footer">
+              <button className="confirm-modal-btn confirm-modal-btn-cancel" onClick={() => setExportModalReview(null)} disabled={exportingReview}>取消</button>
+              <button className="confirm-modal-btn confirm-modal-btn-primary" onClick={doExportReview} disabled={exportingReview}>
+                {exportingReview && <span className="confirm-modal-spinner" />}
+                {exportingReview ? '导出中...' : '确认导出'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 矩阵导出弹窗 */}
+      {exportModalMatrix && (
+        <div className="confirm-modal-overlay" onClick={() => setExportModalMatrix(null)}>
+          <div className="confirm-modal" onClick={e => e.stopPropagation()}>
+            <button className="confirm-modal-close" onClick={() => setExportModalMatrix(null)}>&times;</button>
+            <div className="confirm-modal-header">
+              <span className="confirm-modal-icon">📊</span>
+              <h2 className="confirm-modal-title">导出对比矩阵</h2>
+            </div>
+            <div className="confirm-modal-body">
+              <div className="export-format-options">
+                {([
+                  { key: 'markdown' as const, icon: '📝', name: 'Markdown', desc: '导出为 .md 文件，保留表格格式' },
+                  { key: 'word' as const, icon: '📄', name: 'Word', desc: '导出为 .docx 文件，方便编辑分享' },
+                ]).map(fmt => (
+                  <label key={fmt.key} className={`export-format-option ${matrixExportFormat === fmt.key ? 'active' : ''}`}>
+                    <input type="radio" name="matrix-export-format" value={fmt.key} checked={matrixExportFormat === fmt.key} onChange={() => setMatrixExportFormat(fmt.key)} />
+                    <span className="export-format-icon">{fmt.icon}</span>
+                    <span className="export-format-info">
+                      <span className="export-format-name">{fmt.name}</span>
+                      <span className="export-format-desc">{fmt.desc}</span>
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </div>
+            <div className="confirm-modal-footer">
+              <button className="confirm-modal-btn confirm-modal-btn-cancel" onClick={() => setExportModalMatrix(null)} disabled={exportingMatrix}>取消</button>
+              <button className="confirm-modal-btn confirm-modal-btn-primary" onClick={handleExportMatrix} disabled={exportingMatrix}>
+                {exportingMatrix && <span className="confirm-modal-spinner" />}
+                {exportingMatrix ? '导出中...' : '确认导出'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 支付弹窗 */}
       {showPayModal && unlockMode && pendingExportRecordId !== null && (
         <PaymentModal
@@ -486,11 +735,10 @@ export function ProfilePage() {
           onPaymentSuccess={async () => {
             setShowPayModal(false)
             setUnlockMode(false)
-            // 刷新记录列表
             await loadAllRecords()
-            // 继续导出
             if (pendingExportRecordId !== null) {
-              handleExportRecord(pendingExportRecordId, { stopPropagation: () => {} } as React.MouseEvent)
+              const record = records.find(r => r.id === pendingExportRecordId)
+              if (record) setExportModalReview({ id: record.id, topic: record.topic })
               setPendingExportRecordId(null)
             }
           }}
@@ -506,13 +754,12 @@ export function ProfilePage() {
           }}
           onPaymentSuccess={async () => {
             setShowPayModal(false)
-            // 刷新用户状态和记录列表
             const creditsData = await api.getCredits()
             setCredits(creditsData.credits)
             await loadAllRecords()
-            // 如果有待导出的记录，继续导出
             if (pendingExportRecordId !== null) {
-              handleExportRecord(pendingExportRecordId, { stopPropagation: () => {} } as React.MouseEvent)
+              const record = records.find(r => r.id === pendingExportRecordId)
+              if (record) setExportModalReview({ id: record.id, topic: record.topic })
               setPendingExportRecordId(null)
             }
           }}

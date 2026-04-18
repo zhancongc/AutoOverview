@@ -53,6 +53,9 @@ export function ReviewPage() {
   const [activeTab, setActiveTab] = useState<TabType>('content')
   const [showPayModal, setShowPayModal] = useState(false)
   const [exporting, setExporting] = useState(false)
+  const [showReviewExportModal, setShowReviewExportModal] = useState(false)
+  const [reviewExportFormat, setReviewExportFormat] = useState<'markdown' | 'word'>('word')
+  const [exportingReview, setExportingReview] = useState(false)
   const [unlockMode, setUnlockMode] = useState(false)
   const [language, setLanguage] = useState<'zh' | 'en'>('zh')
   const [showCreditConfirmModal, setShowCreditConfirmModal] = useState(false)
@@ -71,7 +74,6 @@ export function ReviewPage() {
   const isPublicDocument = taskData?.isPublic ?? false
   const isPaidDocument = taskData?.isPaid ?? state?.isPaid ?? false
   const shouldShowWatermark = !isPublicDocument && !isPaidDocument
-  const canExportDirectly = isPublicDocument || isPaidDocument
 
 
   // 判断是否可以使用引用格式切换（有 taskId 或 recordId）
@@ -513,6 +515,63 @@ export function ReviewPage() {
     }
   }
 
+  const doExportReviewFrontend = async () => {
+    if (!reviewData) return
+    setExportingReview(true)
+    try {
+      const safeName = reviewData.title.replace(/[\/\\:]/g, '-').substring(0, 50)
+      if (reviewExportFormat === 'markdown') {
+        let content = `# ${reviewData.title}\n\n${reviewData.content}\n\n## 参考文献\n\n`
+        ;(reviewData.papers || []).forEach((p: any, i: number) => {
+          content += `[${i + 1}] ${p.authors?.join(', ') || ''}. (${p.year || ''}). ${p.title}.\n`
+        })
+        const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' })
+        const { saveAs } = await import('file-saver')
+        saveAs(blob, `${safeName}.md`)
+      } else {
+        const { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType } = await import('docx')
+        const lines = reviewData.content.split('\n')
+        const children: any[] = []
+        children.push(new Paragraph({ text: reviewData.title, heading: HeadingLevel.TITLE, alignment: AlignmentType.CENTER, spacing: { after: 400 } }))
+        for (const line of lines) {
+          const trimmed = line.trim()
+          if (!trimmed) { children.push(new Paragraph({})); continue }
+          if (trimmed.startsWith('#### ')) {
+            children.push(new Paragraph({ text: trimmed.replace('#### ', ''), heading: HeadingLevel.HEADING_4, spacing: { before: 300 } }))
+          } else if (trimmed.startsWith('### ')) {
+            children.push(new Paragraph({ text: trimmed.replace('### ', ''), heading: HeadingLevel.HEADING_3, spacing: { before: 300 } }))
+          } else if (trimmed.startsWith('## ')) {
+            children.push(new Paragraph({ text: trimmed.replace('## ', ''), heading: HeadingLevel.HEADING_2, spacing: { before: 300 } }))
+          } else if (trimmed.startsWith('# ')) {
+            children.push(new Paragraph({ text: trimmed.replace('# ', ''), heading: HeadingLevel.HEADING_1, spacing: { before: 300 } }))
+          } else if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
+            children.push(new Paragraph({ children: [new TextRun({ text: trimmed.replace(/^[-*]\s*/, '') })], bullet: { level: 0 } }))
+          } else {
+            children.push(new Paragraph({ children: [new TextRun({ text: trimmed.replace(/\*\*/g, '') })] }))
+          }
+        }
+        if (reviewData.papers?.length > 0) {
+          children.push(new Paragraph({ text: '参考文献', heading: HeadingLevel.HEADING_2, spacing: { before: 400 } }))
+          reviewData.papers.forEach((p: any, i: number) => {
+            children.push(new Paragraph({
+              children: [new TextRun({ text: `[${i + 1}] ${p.authors?.join(', ') || ''}. (${p.year || ''}). ${p.title}.` })],
+              spacing: { before: 100 },
+            }))
+          })
+        }
+        const doc = new Document({ sections: [{ children }] })
+        const blob = await Packer.toBlob(doc)
+        const { saveAs } = await import('file-saver')
+        saveAs(blob, `${safeName}.docx`)
+      }
+      setShowReviewExportModal(false)
+    } catch (err) {
+      console.error('Export review failed:', err)
+    } finally {
+      setExportingReview(false)
+    }
+  }
+
   const handleConfirmUseCredit = async () => {
     if (!reviewData.recordId) return
 
@@ -556,23 +615,8 @@ export function ReviewPage() {
     }
   }
 
-  const handleExportWord = async () => {
-    // 公开文档或已付费文档，直接导出
-    if (canExportDirectly) {
-      await doExport()
-      return
-    }
-
-    // 免费生成的综述，检查是否有付费积分
-    if (credits > 0) {
-      // 有积分，弹出确认框
-      setShowCreditConfirmModal(true)
-      return
-    }
-
-    // 没有积分，弹出单次解锁支付弹窗
-    setUnlockMode(true)
-    setShowPayModal(true)
+  const handleExportWord = () => {
+    setShowReviewExportModal(true)
   }
 
   // 水印点击触发支付弹窗
@@ -647,10 +691,8 @@ export function ReviewPage() {
             {t('review.regenerate')}
           </button>
 
-          <button className={`export-button export-word-btn ${!canExportDirectly ? 'export-word-premium' : ''}`} onClick={handleExportWord} disabled={exporting}>
-            {exporting ? t('review.export.exporting') :
-             canExportDirectly ? t('review.export.export_word') :
-             '🔒 ' + t('review.export.unlock_export')}
+          <button className="export-button export-word-btn" onClick={handleExportWord} disabled={exporting}>
+            {t('review.export.export_review', '导出综述')}
           </button>
         </div>
         <button
@@ -861,6 +903,43 @@ export function ReviewPage() {
         />
       )}
 
+      {/* 综述导出格式选择弹窗 */}
+      {showReviewExportModal && (
+        <div className="confirm-modal-overlay" onClick={() => setShowReviewExportModal(false)}>
+          <div className="confirm-modal" onClick={e => e.stopPropagation()}>
+            <button className="confirm-modal-close" onClick={() => setShowReviewExportModal(false)}>&times;</button>
+            <div className="confirm-modal-header">
+              <span className="confirm-modal-icon">📄</span>
+              <h2 className="confirm-modal-title">{t('review.export.export_review', '导出综述')}</h2>
+            </div>
+            <div className="confirm-modal-body">
+              <div className="export-format-options">
+                {([
+                  { key: 'markdown' as const, icon: '📝', name: 'Markdown', desc: t('review.export.markdown_desc', '导出为 .md 文件，保留原始格式') },
+                  { key: 'word' as const, icon: '📄', name: 'Word', desc: t('review.export.word_desc', '导出为 .docx 文件，方便编辑分享') },
+                ]).map(fmt => (
+                  <label key={fmt.key} className={`export-format-option ${reviewExportFormat === fmt.key ? 'active' : ''}`}>
+                    <input type="radio" name="review-export-format" value={fmt.key} checked={reviewExportFormat === fmt.key} onChange={() => setReviewExportFormat(fmt.key)} />
+                    <span className="export-format-icon">{fmt.icon}</span>
+                    <span className="export-format-info">
+                      <span className="export-format-name">{fmt.name}</span>
+                      <span className="export-format-desc">{fmt.desc}</span>
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </div>
+            <div className="confirm-modal-footer">
+              <button className="confirm-modal-btn confirm-modal-btn-cancel" onClick={() => setShowReviewExportModal(false)} disabled={exportingReview}>{t('common.cancel')}</button>
+              <button className="confirm-modal-btn confirm-modal-btn-primary" onClick={doExportReviewFrontend} disabled={exportingReview}>
+                {exportingReview && <span className="confirm-modal-spinner" />}
+                {exportingReview ? t('review.export.exporting') : t('review.export.confirm', '确认导出')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 移动端侧边栏遮罩 */}
       {mobileMenuOpen && (
         <div className="mobile-sidebar-overlay" onClick={() => setMobileMenuOpen(false)} />
@@ -894,11 +973,10 @@ export function ReviewPage() {
             </div>
           </div>
           <button
-            className={`sidebar-action-btn ${!canExportDirectly ? 'sidebar-action-premium' : ''}`}
+            className="sidebar-action-btn"
             onClick={() => { setMobileMenuOpen(false); handleExportWord() }}
-            disabled={exporting}
           >
-            {exporting ? t('review.export.exporting') : canExportDirectly ? t('review.export.export_word') : '🔒 ' + t('review.export.unlock_export')}
+            {t('review.export.export_review', '导出综述')}
           </button>
           <button
             className="sidebar-action-btn sidebar-action-secondary"

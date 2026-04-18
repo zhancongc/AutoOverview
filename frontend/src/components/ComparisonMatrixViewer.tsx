@@ -39,6 +39,9 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
   const [exportFormat, setExportFormat] = useState<ExportFormat>('bibtex')
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [exportingRef, setExportingRef] = useState(false)
+  const [showMatrixExportModal, setShowMatrixExportModal] = useState(false)
+  const [matrixExportFormat, setMatrixExportFormat] = useState<'markdown' | 'word'>('markdown')
+  const [exportingMatrix, setExportingMatrix] = useState(false)
 
   useEffect(() => {
     loadMatrixData(taskId)
@@ -208,6 +211,59 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
     URL.revokeObjectURL(url)
   }
 
+  const handleMatrixExport = async () => {
+    if (!matrixData) return
+    setExportingMatrix(true)
+    try {
+      const safeName = (matrixData.topic || 'comparison-matrix').replace(/[\/\\:]/g, '-').substring(0, 50)
+      if (matrixExportFormat === 'markdown') {
+        handleExportMarkdown()
+      } else {
+        const { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, Table, TableRow, TableCell, WidthType } = await import('docx')
+        const lines = matrixData.comparison_matrix.split('\n')
+        const children: any[] = []
+        children.push(new Paragraph({ text: matrixData.topic, heading: HeadingLevel.TITLE, alignment: AlignmentType.CENTER, spacing: { after: 400 } }))
+
+        for (const line of lines) {
+          const trimmed = line.trim()
+          if (!trimmed) { children.push(new Paragraph({})); continue }
+          if (trimmed.startsWith('### ')) {
+            children.push(new Paragraph({ text: trimmed.replace('### ', ''), heading: HeadingLevel.HEADING_3, spacing: { before: 300 } }))
+          } else if (trimmed.startsWith('## ')) {
+            children.push(new Paragraph({ text: trimmed.replace('## ', ''), heading: HeadingLevel.HEADING_2, spacing: { before: 300 } }))
+          } else if (trimmed.startsWith('# ')) {
+            children.push(new Paragraph({ text: trimmed.replace('# ', ''), heading: HeadingLevel.HEADING_1, spacing: { before: 300 } }))
+          } else if (trimmed.startsWith('|') && trimmed.endsWith('|')) {
+            const cells = trimmed.split('|').filter((c: string) => c.trim()).map((c: string) => c.trim())
+            if (cells.every((c: string) => /^[-:\s]+$/.test(c))) continue
+            children.push(new Table({
+              rows: [new TableRow({
+                children: cells.map((cell: string) => new TableCell({
+                  children: [new Paragraph({ children: [new TextRun({ text: cell.replace(/\*\*/g, ''), bold: cell.includes('**') })] })],
+                  width: { size: Math.floor(100 / cells.length), type: WidthType.PERCENTAGE },
+                }))
+              })],
+              width: { size: 100, type: WidthType.PERCENTAGE },
+            }))
+          } else if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
+            children.push(new Paragraph({ children: [new TextRun({ text: trimmed.replace(/^[-*]\s*/, '') })], bullet: { level: 0 } }))
+          } else {
+            children.push(new Paragraph({ children: [new TextRun({ text: trimmed.replace(/\*\*/g, '') })] }))
+          }
+        }
+        const doc = new Document({ sections: [{ children }] })
+        const blob = await Packer.toBlob(doc)
+        const { saveAs } = await import('file-saver')
+        saveAs(blob, `${safeName}.docx`)
+      }
+      setShowMatrixExportModal(false)
+    } catch (err) {
+      console.error('Matrix export failed:', err)
+    } finally {
+      setExportingMatrix(false)
+    }
+  }
+
   const getPapersForExport = () => {
     return matrixData?.papers || pendingPapers || []
   }
@@ -314,8 +370,8 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
         >
           {isGeneratingReview ? t('comparison_matrix_page.generating') : t('comparison_matrix_page.generate_review')}
         </button>
-        <button className="stats-action-btn" onClick={handleExportMarkdown}>
-          {t('comparison_matrix_page.export_markdown')}
+        <button className="stats-action-btn" onClick={() => setShowMatrixExportModal(true)}>
+          {isChineseSite ? '导出' : 'Export'}
         </button>
         <button className="stats-action-btn" onClick={() => setShowExportModal(true)} disabled={getPapersForExport().length === 0}>
           {t('comparison_matrix_page.export_references')}
@@ -393,6 +449,41 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
           onCancel={() => setShowExportModal(false)}
           loading={exportingRef}
         />
+      )}
+      {showMatrixExportModal && (
+        <div className="confirm-modal-overlay" onClick={() => setShowMatrixExportModal(false)}>
+          <div className="confirm-modal" onClick={e => e.stopPropagation()}>
+            <button className="confirm-modal-close" onClick={() => setShowMatrixExportModal(false)}>&times;</button>
+            <div className="confirm-modal-header">
+              <span className="confirm-modal-icon">📊</span>
+              <h2 className="confirm-modal-title">{isChineseSite ? '导出对比矩阵' : 'Export Comparison Matrix'}</h2>
+            </div>
+            <div className="confirm-modal-body">
+              <div className="export-format-options">
+                {([
+                  { key: 'markdown' as const, icon: '📝', name: 'Markdown', desc: isChineseSite ? '导出为 .md 文件，保留表格格式' : 'Export as .md file with table format' },
+                  { key: 'word' as const, icon: '📄', name: 'Word', desc: isChineseSite ? '导出为 .docx 文件，方便编辑分享' : 'Export as .docx file for editing' },
+                ]).map(fmt => (
+                  <label key={fmt.key} className={`export-format-option ${matrixExportFormat === fmt.key ? 'active' : ''}`}>
+                    <input type="radio" name="matrix-export-format" value={fmt.key} checked={matrixExportFormat === fmt.key} onChange={() => setMatrixExportFormat(fmt.key)} />
+                    <span className="export-format-icon">{fmt.icon}</span>
+                    <span className="export-format-info">
+                      <span className="export-format-name">{fmt.name}</span>
+                      <span className="export-format-desc">{fmt.desc}</span>
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </div>
+            <div className="confirm-modal-footer">
+              <button className="confirm-modal-btn confirm-modal-btn-cancel" onClick={() => setShowMatrixExportModal(false)} disabled={exportingMatrix}>{isChineseSite ? '取消' : 'Cancel'}</button>
+              <button className="confirm-modal-btn confirm-modal-btn-primary" onClick={handleMatrixExport} disabled={exportingMatrix}>
+                {exportingMatrix && <span className="confirm-modal-spinner" />}
+                {exportingMatrix ? (isChineseSite ? '导出中...' : 'Exporting...') : (isChineseSite ? '确认导出' : 'Export')}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </>
   )
@@ -478,10 +569,10 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
               className="sidebar-action-btn sidebar-action-secondary"
               onClick={() => {
                 setMobileMenuOpen(false)
-                handleExportMarkdown()
+                setShowMatrixExportModal(true)
               }}
             >
-              {t('comparison_matrix_page.export_markdown')}
+              {isChineseSite ? '导出' : 'Export'}
             </button>
             <button
               className="sidebar-action-btn sidebar-action-secondary"
@@ -552,10 +643,10 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
               className="sidebar-action-btn sidebar-action-secondary"
               onClick={() => {
                 setMobileMenuOpen(false)
-                handleExportMarkdown()
+                setShowMatrixExportModal(true)
               }}
             >
-              {t('comparison_matrix_page.export_markdown')}
+              {isChineseSite ? '导出' : 'Export'}
             </button>
             <button
               className="sidebar-action-btn sidebar-action-secondary"
@@ -715,10 +806,10 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
               className="sidebar-action-btn sidebar-action-secondary"
               onClick={() => {
                 setMobileMenuOpen(false)
-                handleExportMarkdown()
+                setShowMatrixExportModal(true)
               }}
             >
-              {t('comparison_matrix_page.export_markdown')}
+              {isChineseSite ? '导出' : 'Export'}
             </button>
             <button
               className="sidebar-action-btn sidebar-action-secondary"
