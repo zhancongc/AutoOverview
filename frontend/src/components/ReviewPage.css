@@ -451,7 +451,8 @@
 .sidebar-action-secondary {
   background: var(--pure-white);
   color: var(--charcoal);
-  border: 1px solid var(--border-gray);
+  border: 2px solid var(--border-gray);
+  padding: calc(0.75rem - 2px) calc(1rem - 2px);
 }
 
 .sidebar-action-secondary:hover {

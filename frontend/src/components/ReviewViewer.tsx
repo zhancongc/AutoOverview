@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef, useCallback, Fragment } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { CitationMarker, CitationRangeMarker } from './CitationTooltip'
+import { CitationTooltip, CitationMarker, CitationRangeMarker } from './CitationTooltip'
 import { useTranslation } from 'react-i18next'
 import './ReviewViewer.css'
 
@@ -468,6 +468,78 @@ export function ReviewViewer({ content, papers = [], hasPurchased = false, onToc
     }
   }), [headingIdMap, makeId, renderTextWithCitations])
 
+  // 单条参考文献带弹窗的组件
+  const ReferenceListItem = ({ paper, index }: { paper: any; index: number }) => {
+    const [showTooltip, setShowTooltip] = useState(false)
+    const [isFixed, setIsFixed] = useState(false)
+    const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 })
+    const hoverTimerRef = useRef<NodeJS.Timeout | null>(null)
+
+    const getPosition = (el: HTMLElement) => {
+      const rect = el.getBoundingClientRect()
+      const isMobile = window.innerWidth < 768
+      if (isMobile) {
+        return { x: 16, y: rect.bottom + 8 }
+      }
+      return { x: rect.right, y: rect.top }
+    }
+
+    const handleMouseEnter = (e: React.MouseEvent) => {
+      if (isFixed) return
+      if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current)
+      hoverTimerRef.current = setTimeout(() => {
+        setTooltipPos(getPosition(e.currentTarget as HTMLElement))
+        setShowTooltip(true)
+      }, 200)
+    }
+
+    const handleMouseLeave = () => {
+      if (isFixed) return
+      if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current)
+      setShowTooltip(false)
+    }
+
+    const handleClick = (e: React.MouseEvent) => {
+      e.preventDefault()
+      setTooltipPos(getPosition(e.currentTarget as HTMLElement))
+      if (isFixed) {
+        setIsFixed(false)
+        setShowTooltip(false)
+      } else {
+        setIsFixed(true)
+        setShowTooltip(true)
+      }
+    }
+
+    const handleClose = () => {
+      setIsFixed(false)
+      setShowTooltip(false)
+    }
+
+    return (
+      <li style={{ marginBottom: '0.75rem', lineHeight: 1.6, color: '#2D3436' }}>
+        <span
+          className="reference-item-clickable"
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+          onClick={handleClick}
+          style={{ cursor: 'pointer', display: 'inline' }}
+        >
+          {paper.authors.join(', ')}. ({paper.year}). {paper.title}.
+        </span>
+        {showTooltip && (
+          <CitationTooltip
+            index={index + 1}
+            paper={paper}
+            targetPosition={tooltipPos}
+            isFixed={isFixed}
+            onClose={handleClose}
+          />
+        )}
+      </li>
+    )
+  }
+
   // 生成第三方平台验证链接
   const getVerificationLinks = (paper: any) => {
     const links = []
@@ -540,30 +612,9 @@ export function ReviewViewer({ content, papers = [], hasPurchased = false, onToc
                 {referencesInfo.level === 3 && <h3 id="references-section-title" onClick={() => setShowReferencesPopup(true)} style={{ cursor: 'pointer' }}>{referencesInfo.number}. 参考文献</h3>}
                 {referencesInfo.level === 4 && <h4 id="references-section-title" onClick={() => setShowReferencesPopup(true)} style={{ cursor: 'pointer' }}>{referencesInfo.number}. 参考文献</h4>}
                 <ol style={{ listStyle: 'decimal', paddingLeft: '1.75rem', margin: 0 }}>
-                  {papers.map((paper: any) => {
-                    const verificationLinks = getVerificationLinks(paper)
-                    return (
-                      <li key={paper.id} style={{ marginBottom: '0.75rem', lineHeight: 1.6, color: '#2D3436' }}>
-                        <a
-                          href={verificationLinks[0]?.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          title="点击在第三方平台查看"
-                          style={{ color: '#2D3436', textDecoration: 'none' }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.color = '#D63031'
-                            e.currentTarget.style.textDecoration = 'underline'
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.color = '#2D3436'
-                            e.currentTarget.style.textDecoration = 'none'
-                          }}
-                        >
-                          {paper.authors.join(', ')}. ({paper.year}). {paper.title}.
-                        </a>
-                      </li>
-                    )
-                  })}
+                  {papers.map((paper: any, index: number) => (
+                    <ReferenceListItem key={paper.id} paper={paper} index={index} />
+                  ))}
                 </ol>
               </>
             )}

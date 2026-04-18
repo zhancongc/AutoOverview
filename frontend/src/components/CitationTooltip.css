@@ -18,6 +18,18 @@
   box-shadow: 0 2px 4px rgba(214, 48, 49, 0.2);
 }
 
+/* 参考文献列表项可点击样式 */
+.reference-item-clickable {
+  border-radius: 3px;
+  padding: 1px 3px;
+  transition: all 0.2s;
+}
+
+.reference-item-clickable:hover {
+  color: #D63031 !important;
+  background: rgba(214, 48, 49, 0.08);
+}
+
 /* Tooltip 容器 */
 .citation-tooltip {
   position: fixed;
