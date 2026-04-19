@@ -22,12 +22,10 @@ interface ReviewViewerProps {
     doi?: string
     url?: string
   }>
-  hasPurchased?: boolean
   onTocUpdate?: (toc: TableOfContents[]) => void
-  onRequestUnlock?: () => void
 }
 
-export function ReviewViewerInternational({ content, papers = [], hasPurchased = false, onTocUpdate, onRequestUnlock }: ReviewViewerProps) {
+export function ReviewViewerInternational({ content, papers = [], onTocUpdate }: ReviewViewerProps) {
   const [toc, setToc] = useState<TableOfContents[]>([])
   const [activeId, setActiveId] = useState<string>('')
   useRef<HTMLElement>(null)
@@ -395,7 +393,7 @@ export function ReviewViewerInternational({ content, papers = [], hasPurchased =
   }), [headingIdMap, makeId, renderTextWithCitations])
 
   return (
-    <div className={`review-viewer ${!hasPurchased ? 'review-protected' : ''}`}>
+    <div className="review-viewer">
       <div className="review-content-wrapper">
         {/* 侧边栏目录 */}
         <aside className="review-sidebar">
@@ -406,17 +404,7 @@ export function ReviewViewerInternational({ content, papers = [], hasPurchased =
         </aside>
 
         {/* 正文内容 */}
-        <main className="review-main"
-          onContextMenu={(e) => !hasPurchased && e.preventDefault()}
-          onCopy={(e) => !hasPurchased && e.preventDefault()}
-          onCut={(e) => !hasPurchased && e.preventDefault()}
-        >
-          {!hasPurchased && (
-            <div className="review-watermark" onClick={onRequestUnlock} style={onRequestUnlock ? { cursor: 'pointer' } : undefined}>
-              <span className="watermark-text">AI-Assisted Draft — Review Required</span>
-              <span className="watermark-subtext">This content is AI-generated. Please review and add your own analysis.</span>
-            </div>
-          )}
+        <main className="review-main">
           <div className="review-body">
             <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>
               {processedContent}

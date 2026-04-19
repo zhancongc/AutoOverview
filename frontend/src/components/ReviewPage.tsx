@@ -2,9 +2,6 @@ import { useState, useEffect, useCallback } from 'react'
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { ReviewViewer } from './ReviewViewer'
-import { PaymentModal } from './PaymentModal'
-import { PayPalPaymentModal } from './PayPalPaymentModal'
-import { ConfirmModal } from './ConfirmModal'
 import { CitationFormatSelector } from './CitationFormatSelector'
 import { api } from '../api'
 import type { Paper } from '../types'
@@ -51,16 +48,9 @@ export function ReviewPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [activeTab, setActiveTab] = useState<TabType>('content')
-  const [showPayModal, setShowPayModal] = useState(false)
-  const [exporting, setExporting] = useState(false)
   const [showReviewExportModal, setShowReviewExportModal] = useState(false)
   const [reviewExportFormat, setReviewExportFormat] = useState<'markdown' | 'word'>('markdown')
   const [exportingReview, setExportingReview] = useState(false)
-  const [unlockMode, setUnlockMode] = useState(false)
-  const [language, setLanguage] = useState<'zh' | 'en'>('zh')
-  const [showCreditConfirmModal, setShowCreditConfirmModal] = useState(false)
-  const [credits, setCredits] = useState<number>(0)
-  const [, setFreeCredits] = useState<number>(0)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [tocItems, setTocItems] = useState<TocItem[]>([])
   const [citationFormat, setCitationFormat] = useState<CitationFormat>('ieee')
@@ -70,32 +60,8 @@ export function ReviewPage() {
     setTocItems(toc)
   }, [])
 
-  // 计算文档显示状态（优先使用 API 返回的 taskData，fallback 到 state）
-  const isPublicDocument = taskData?.isPublic ?? false
-  const isPaidDocument = taskData?.isPaid ?? state?.isPaid ?? false
-  const shouldShowWatermark = !isPublicDocument && !isPaidDocument
-
-
   // 判断是否可以使用引用格式切换（有 taskId 或 recordId）
   const canSwitchFormat = !!(taskId || state?.recordId || recordIdParam || taskData?.recordId)
-
-  // 加载用户积分和检测语言
-  useEffect(() => {
-    api.getCredits().then(data => {
-      setCredits(data.credits)
-      setFreeCredits(data.free_credits)
-    }).catch(err => console.error('获取积分失败:', err))
-
-    // Detect language from i18n or browser
-    const storedLang = localStorage.getItem('i18nextLng')
-    if (storedLang === 'en' || storedLang === 'zh') {
-      setLanguage(storedLang)
-    } else {
-      // Fallback to browser language
-      const browserLang = navigator.language.toLowerCase()
-      setLanguage(browserLang.startsWith('zh') ? 'zh' : 'en')
-    }
-  }, [])
 
   // 如果 URL 中有 taskId 或 recordId，从后端加载完整数据
   useEffect(() => {
@@ -481,40 +447,6 @@ export function ReviewPage() {
   }
 
 
-  const doExport = async () => {
-    if (!reviewData.recordId) {
-      alert(t('review.export.alert_not_supported'))
-      return
-    }
-    setExporting(true)
-    try {
-      const token = localStorage.getItem('auth_token')
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-      if (token) headers.Authorization = `Bearer ${token}`
-      const response = await fetch('/api/records/export', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({ record_id: reviewData.recordId })
-      })
-      if (!response.ok) throw new Error(t('review.export.alert_failed'))
-      const blob = await response.blob()
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      const filename = reviewData.title.replace(/[\/\\:]/g, '-')
-      a.download = `${filename}.docx`
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
-      URL.revokeObjectURL(url)
-    } catch (err) {
-      alert(t('review.export.alert_failed'))
-      console.error(err)
-    } finally {
-      setExporting(false)
-    }
-  }
-
   const doExportReviewFrontend = async () => {
     if (!reviewData) return
     setExportingReview(true)
@@ -572,57 +504,8 @@ export function ReviewPage() {
     }
   }
 
-  const handleConfirmUseCredit = async () => {
-    if (!reviewData.recordId) return
-
-    setShowCreditConfirmModal(false)
-    setExporting(true)
-
-    try {
-      const result = await api.unlockRecordWithCredit(reviewData.recordId)
-      if (result.success) {
-        // 刷新积分
-        const creditsData = await api.getCredits()
-        setCredits(creditsData.credits)
-        setFreeCredits(creditsData.free_credits)
-
-        // 刷新任务数据（is_paid 状态已更新）
-        if (taskId) {
-          api.getTaskReview(taskId).then(res => {
-            if (res.success && res.data) {
-              setTaskData({
-                title: res.data.topic,
-                content: res.data.review,
-                papers: res.data.papers || [],
-                recordId: res.data.record_id,
-                isPublic: res.data.is_public,
-                isPaid: res.data.is_paid,
-              })
-            }
-          }).catch(err => console.error('加载记录失败:', err))
-        }
-
-        // 直接导出
-        await doExport()
-      } else {
-        alert(result.message || t('review.export.unlock_failed'))
-      }
-    } catch (err) {
-      console.error('解锁失败:', err)
-      alert(t('review.export.unlock_failed'))
-    } finally {
-      setExporting(false)
-    }
-  }
-
   const handleExportWord = () => {
     setShowReviewExportModal(true)
-  }
-
-  // 水印点击触发支付弹窗
-  const handleRequestUnlock = () => {
-    setUnlockMode(true)
-    setShowPayModal(true)
   }
 
   // 格式切换处理
@@ -691,7 +574,7 @@ export function ReviewPage() {
             {t('review.regenerate')}
           </button>
 
-          <button className="export-button export-word-btn" onClick={handleExportWord} disabled={exporting}>
+          <button className="export-button export-word-btn" onClick={handleExportWord}>
             {t('review.export.export_review', '导出综述')}
           </button>
         </div>
@@ -723,9 +606,7 @@ export function ReviewPage() {
           title={reviewData.title}
           content={reviewData.content}
           papers={reviewData.papers}
-          hasPurchased={!shouldShowWatermark}
           onTocUpdate={handleTocUpdate}
-          onRequestUnlock={handleRequestUnlock}
         />
       ) : (
         reviewData.papers.length > 0 ? (
@@ -806,101 +687,6 @@ export function ReviewPage() {
             {t('review.error.no_references')}
           </div>
         )
-      )}
-      {showPayModal && unlockMode && (
-        <>
-          {language === 'en' ? (
-            <PayPalPaymentModal
-              onClose={() => {
-                setShowPayModal(false)
-                setUnlockMode(false)
-              }}
-              onPaymentSuccess={async () => {
-                setShowPayModal(false)
-                setUnlockMode(false)
-                // Refresh task data (is_paid status updated)
-                if (taskId) {
-                  api.getTaskReview(taskId).then(res => {
-                    if (res.success && res.data) {
-                      setTaskData({
-                        title: res.data.topic,
-                        content: res.data.review,
-                        papers: res.data.papers || [],
-                        recordId: res.data.record_id,
-                        isPublic: res.data.is_public,
-                        isPaid: res.data.is_paid,
-                      })
-                    }
-                  }).catch(err => console.error('Failed to refresh task status:', err))
-                }
-              }}
-              planType="unlock"
-              recordId={reviewData.recordId}
-            />
-          ) : (
-            <PaymentModal
-              onClose={() => {
-                setShowPayModal(false)
-                setUnlockMode(false)
-              }}
-              onPaymentSuccess={async () => {
-                setShowPayModal(false)
-                setUnlockMode(false)
-                // Refresh task data (is_paid status updated)
-                if (taskId) {
-                  api.getTaskReview(taskId).then(res => {
-                    if (res.success && res.data) {
-                      setTaskData({
-                        title: res.data.topic,
-                        content: res.data.review,
-                        papers: res.data.papers || [],
-                        recordId: res.data.record_id,
-                        isPublic: res.data.is_public,
-                        isPaid: res.data.is_paid,
-                      })
-                    }
-                  }).catch(err => console.error('Failed to refresh task status:', err))
-                }
-              }}
-              planType="unlock"
-              recordId={reviewData.recordId}
-            />
-          )}
-        </>
-      )}
-      {showPayModal && !unlockMode && (
-        <>
-          {language === 'en' ? (
-            <PayPalPaymentModal
-              onClose={() => setShowPayModal(false)}
-              onPaymentSuccess={async () => {
-                setShowPayModal(false)
-              }}
-              planType="single"
-            />
-          ) : (
-            <PaymentModal
-              onClose={() => setShowPayModal(false)}
-              onPaymentSuccess={async () => {
-                setShowPayModal(false)
-              }}
-              planType="single"
-            />
-          )}
-        </>
-      )}
-
-      {/* 使用积分确认弹窗 */}
-      {showCreditConfirmModal && (
-        <ConfirmModal
-          title={t('review.export.confirm_title')}
-          message={t('review.export.confirm_message', { credits })}
-          confirmText={t('review.export.confirm_button')}
-          cancelText={t('common.cancel')}
-          onConfirm={handleConfirmUseCredit}
-          onCancel={() => setShowCreditConfirmModal(false)}
-          type="warning"
-        />
       )}
 
       {/* 综述导出格式选择弹窗 */}

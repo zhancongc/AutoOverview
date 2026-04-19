@@ -23,12 +23,10 @@ interface ReviewViewerProps {
     doi?: string
     url?: string
   }>
-  hasPurchased?: boolean
   onTocUpdate?: (toc: TableOfContents[]) => void
-  onRequestUnlock?: () => void
 }
 
-export function ReviewViewer({ content, papers = [], hasPurchased = false, onTocUpdate, onRequestUnlock }: ReviewViewerProps) {
+export function ReviewViewer({ content, papers = [], onTocUpdate }: ReviewViewerProps) {
   const { t } = useTranslation()
   const [toc, setToc] = useState<TableOfContents[]>([])
   const [activeId, setActiveId] = useState<string>('')
@@ -577,7 +575,7 @@ export function ReviewViewer({ content, papers = [], hasPurchased = false, onToc
   }
 
   return (
-    <div className={`review-viewer ${!hasPurchased ? 'review-protected' : ''}`}>
+    <div className="review-viewer">
       <div className="review-content-wrapper">
         {/* 侧边栏目录 */}
         <aside className="review-sidebar">
@@ -588,17 +586,7 @@ export function ReviewViewer({ content, papers = [], hasPurchased = false, onToc
         </aside>
 
         {/* 正文内容 */}
-        <main className="review-main"
-          onContextMenu={(e) => !hasPurchased && e.preventDefault()}
-          onCopy={(e) => !hasPurchased && e.preventDefault()}
-          onCut={(e) => !hasPurchased && e.preventDefault()}
-        >
-          {!hasPurchased && (
-            <div className="review-watermark" onClick={onRequestUnlock} style={onRequestUnlock ? { cursor: 'pointer' } : undefined}>
-              <span className="watermark-text">澹墨学术 预览版</span>
-              <span className="watermark-subtext">购买后解锁无水印 Word 导出</span>
-            </div>
-          )}
+        <main className="review-main">
           <div className="review-body">
             <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>
               {processedContent}

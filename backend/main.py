@@ -1611,7 +1611,9 @@ async def get_task_status(
             if not user_id:
                 raise HTTPException(status_code=401, detail="请先登录")
             task_user_id = getattr(task, 'user_id', None)
-            if task_user_id and task_user_id != user_id:
+            if task_user_id is not None and task_user_id != user_id:
+                raise HTTPException(status_code=403, detail="该任务不属于您，无法访问")
+            if task_user_id is None:
                 raise HTTPException(status_code=403, detail="该任务不属于您，无法访问")
 
         response_data = task.to_dict()
@@ -1633,9 +1635,18 @@ async def get_task_status(
     if not is_public:
         if not user_id:
             raise HTTPException(status_code=401, detail="请先登录")
-        if review_task.review_record_id:
-            owner_record = db_session.query(ReviewRecord).filter_by(id=review_task.review_record_id).first()
-            if owner_record and owner_record.user_id != user_id:
+        # 优先通过 ReviewTask 自身的 user_id 校验
+        if review_task.user_id is not None:
+            if review_task.user_id != user_id:
+                raise HTTPException(status_code=403, detail="该任务不属于您，无法访问")
+        else:
+            # ReviewTask 无 user_id，通过关联的 ReviewRecord 校验
+            owner_record = db_session.query(ReviewRecord).filter_by(id=review_task.review_record_id).first() if review_task.review_record_id else None
+            if owner_record and owner_record.user_id is not None:
+                if owner_record.user_id != user_id:
+                    raise HTTPException(status_code=403, detail="该任务不属于您，无法访问")
+            else:
+                # ReviewTask 和 ReviewRecord 都无法确认所有权，拒绝访问
                 raise HTTPException(status_code=403, detail="该任务不属于您，无法访问")
 
     response_data = review_task.to_dict()

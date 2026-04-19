@@ -61,7 +61,8 @@ class ReviewTaskExecutor:
         topic = task.topic
 
         # 创建任务记录
-        stage_recorder.create_task(task_id, topic, params)
+        task_user_id = getattr(task, 'user_id', None)
+        stage_recorder.create_task(task_id, topic, params, user_id=task_user_id)
         task_manager.update_task_status(task_id, TaskStatus.PROCESSING)
 
         try:
@@ -73,7 +74,7 @@ class ReviewTaskExecutor:
                 recent_years_ratio=params.get('recent_years_ratio', 0.5),
                 english_ratio=params.get('english_ratio', 0.3),
                 is_paid=getattr(task, 'is_paid', False),
-                user_id=getattr(task, 'user_id', None)
+                user_id=task_user_id
             )
 
             # =====================================================

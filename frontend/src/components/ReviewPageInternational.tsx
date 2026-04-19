@@ -6,9 +6,6 @@ import { useState, useEffect, useCallback } from 'react'
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { ReviewViewerInternational } from './ReviewViewerInternational'
-
-import { PayPalPaymentModal } from './PayPalPaymentModal'
-import { ConfirmModalInternational } from './ConfirmModalInternational'
 import { CitationFormatSelector, type CitationFormat } from './CitationFormatSelector'
 import { api } from '../api'
 import type { Paper } from '../types'
@@ -53,13 +50,9 @@ export function ReviewPageInternational() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [activeTab, setActiveTab] = useState<TabType>('content')
-  const [showPayModal, setShowPayModal] = useState(false)
-  const [exporting, setExporting] = useState(false)
-  const [exportError, setExportError] = useState('')
-  const [unlockMode, setUnlockMode] = useState(false)
-  const [showCreditConfirmModal, setShowCreditConfirmModal] = useState(false)
-  const [credits, setCredits] = useState<number>(0)
-  const [, setFreeCredits] = useState<number>(0)
+  const [showReviewExportModal, setShowReviewExportModal] = useState(false)
+  const [reviewExportFormat, setReviewExportFormat] = useState<'markdown' | 'word'>('markdown')
+  const [exportingReview, setExportingReview] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [tocItems, setTocItems] = useState<TocItem[]>([])
   const [citationFormat, setCitationFormat] = useState<CitationFormat>('ieee')
@@ -69,18 +62,7 @@ export function ReviewPageInternational() {
     setTocItems(toc)
   }, [])
 
-  const isPublicDocument = taskData?.isPublic ?? false
-  const isPaidDocument = taskData?.isPaid ?? state?.isPaid ?? false
-  const shouldShowWatermark = !isPublicDocument && !isPaidDocument
-  const canExportDirectly = isPublicDocument || isPaidDocument
   const canSwitchFormat = !!(taskId || state?.recordId || recordIdParam || taskData?.recordId)
-
-  useEffect(() => {
-    api.getCredits().then(data => {
-      setCredits(data.credits)
-      setFreeCredits(data.free_credits)
-    }).catch(err => console.error('Failed to fetch credits:', err))
-  }, [])
 
   useEffect(() => {
     const effectiveRecordId = recordIdParam ? parseInt(recordIdParam) : (state?.recordId || taskData?.recordId)
@@ -234,100 +216,65 @@ export function ReviewPageInternational() {
     navigate('/')
   }
 
-  const doExport = async () => {
-    if (!reviewData.recordId) {
-      setExportError(t('review.export.alert_not_supported'))
-      return
-    }
-    setExporting(true)
-    setExportError('')
+  const doExportReviewFrontend = async () => {
+    if (!reviewData) return
+    setExportingReview(true)
     try {
-      const token = localStorage.getItem('auth_token')
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-      if (token) headers.Authorization = `Bearer ${token}`
-      const response = await fetch('/api/records/export', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({ record_id: reviewData.recordId })
-      })
-      if (!response.ok) throw new Error(t('review.export.alert_failed'))
-      const blob = await response.blob()
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      const filename = reviewData.title.replace(/[\/\\:]/g, '-')
-      a.download = `${filename}.docx`
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
-      URL.revokeObjectURL(url)
-    } catch (err) {
-      setExportError(t('review.export.alert_failed'))
-      console.error(err)
-    } finally {
-      setExporting(false)
-    }
-  }
-
-  const handleConfirmUseCredit = async () => {
-    if (!reviewData.recordId) return
-
-    setShowCreditConfirmModal(false)
-    setExporting(true)
-
-    try {
-      const result = await api.unlockRecordWithCredit(reviewData.recordId)
-      if (result.success) {
-        setExportError('')
-        const creditsData = await api.getCredits()
-        setCredits(creditsData.credits)
-        setFreeCredits(creditsData.free_credits)
-
-        if (taskId) {
-          api.getTaskReview(taskId).then(res => {
-            if (res.success && res.data) {
-              setTaskData({
-                title: res.data.topic,
-                content: res.data.review,
-                papers: res.data.papers || [],
-                recordId: res.data.record_id,
-                isPublic: res.data.is_public,
-                isPaid: res.data.is_paid,
-              })
-            }
-          }).catch(err => console.error('Failed to load record:', err))
-        }
-
-        await doExport()
+      const safeName = reviewData.title.replace(/[\/\\:]/g, '-').substring(0, 50)
+      if (reviewExportFormat === 'markdown') {
+        let content = `# ${reviewData.title}\n\n${reviewData.content}\n\n## References\n\n`
+        ;(reviewData.papers || []).forEach((p: any, i: number) => {
+          content += `[${i + 1}] ${p.authors?.join(', ') || ''}. (${p.year || ''}). ${p.title}.\n`
+        })
+        const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' })
+        const { saveAs } = await import('file-saver')
+        saveAs(blob, `${safeName}.md`)
       } else {
-        setExportError(result.message || t('review.export.unlock_failed'))
+        const { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType } = await import('docx')
+        const lines = reviewData.content.split('\n')
+        const children: any[] = []
+        children.push(new Paragraph({ text: reviewData.title, heading: HeadingLevel.TITLE, alignment: AlignmentType.CENTER, spacing: { after: 400 } }))
+        for (const line of lines) {
+          const trimmed = line.trim()
+          if (!trimmed) { children.push(new Paragraph({})); continue }
+          if (trimmed.startsWith('#### ')) {
+            children.push(new Paragraph({ text: trimmed.replace('#### ', ''), heading: HeadingLevel.HEADING_4, spacing: { before: 300 } }))
+          } else if (trimmed.startsWith('### ')) {
+            children.push(new Paragraph({ text: trimmed.replace('### ', ''), heading: HeadingLevel.HEADING_3, spacing: { before: 300 } }))
+          } else if (trimmed.startsWith('## ')) {
+            children.push(new Paragraph({ text: trimmed.replace('## ', ''), heading: HeadingLevel.HEADING_2, spacing: { before: 300 } }))
+          } else if (trimmed.startsWith('# ')) {
+            children.push(new Paragraph({ text: trimmed.replace('# ', ''), heading: HeadingLevel.HEADING_1, spacing: { before: 300 } }))
+          } else if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
+            children.push(new Paragraph({ children: [new TextRun({ text: trimmed.replace(/^[-*]\s*/, '') })], bullet: { level: 0 } }))
+          } else {
+            children.push(new Paragraph({ children: [new TextRun({ text: trimmed.replace(/\*\*/g, '') })] }))
+          }
+        }
+        if (reviewData.papers?.length > 0) {
+          children.push(new Paragraph({ text: 'References', heading: HeadingLevel.HEADING_2, spacing: { before: 400 } }))
+          reviewData.papers.forEach((p: any, i: number) => {
+            children.push(new Paragraph({
+              children: [new TextRun({ text: `[${i + 1}] ${p.authors?.join(', ') || ''}. (${p.year || ''}). ${p.title}.` })],
+              spacing: { before: 100 },
+            }))
+          })
+        }
+        const doc = new Document({ sections: [{ children }] })
+        const blob = await Packer.toBlob(doc)
+        const { saveAs } = await import('file-saver')
+        saveAs(blob, `${safeName}.docx`)
       }
+      setShowReviewExportModal(false)
     } catch (err) {
-      console.error('Unlock failed:', err)
-      setExportError(t('review.export.unlock_failed'))
+      console.error('Export review failed:', err)
     } finally {
-      setExporting(false)
+      setExportingReview(false)
     }
   }
 
-  const handleExportWord = async () => {
-    if (canExportDirectly) {
-      await doExport()
-      return
-    }
-
-    if (credits > 0) {
-      setShowCreditConfirmModal(true)
-      return
-    }
-
-    setUnlockMode(true)
-    setShowPayModal(true)
-  }
-
-  const handleRequestUnlock = () => {
-    setUnlockMode(true)
-    setShowPayModal(true)
+  const handleExportWord = () => {
+    setShowReviewExportModal(true)
   }
 
   const handleFormatChange = (format: CitationFormat) => {
@@ -392,17 +339,9 @@ export function ReviewPageInternational() {
             {t('review.regenerate')}
           </button>
 
-          <button className={`export-button export-word-btn ${!canExportDirectly ? 'export-word-premium' : ''}`} onClick={handleExportWord} disabled={exporting}>
-            {exporting ? t('review.export.exporting') :
-             canExportDirectly ? t('review.export.export_word') :
-             '🔒 ' + t('review.export.unlock_export')}
+          <button className="export-button export-word-btn" onClick={handleExportWord}>
+            {t('review.export.export_review', 'Export Review')}
           </button>
-          {exportError && (
-            <div className="export-error-inline">
-              <span>{exportError}</span>
-              <button className="export-retry-btn" onClick={() => { setExportError(''); handleExportWord(); }}>{t('payment.retry')}</button>
-            </div>
-          )}
         </div>
         <button
           className="mobile-menu-toggle review-mobile-toggle"
@@ -432,9 +371,7 @@ export function ReviewPageInternational() {
           title={reviewData.title}
           content={reviewData.content}
           papers={reviewData.papers}
-          hasPurchased={!shouldShowWatermark}
           onTocUpdate={handleTocUpdate}
-          onRequestUnlock={handleRequestUnlock}
         />
       ) : (
         reviewData.papers.length > 0 ? (
@@ -516,53 +453,42 @@ export function ReviewPageInternational() {
           </div>
         )
       )}
-      {showPayModal && unlockMode && (
-        <PayPalPaymentModal
-          onClose={() => {
-            setShowPayModal(false)
-            setUnlockMode(false)
-          }}
-          onPaymentSuccess={async () => {
-            setShowPayModal(false)
-            setUnlockMode(false)
-            if (taskId) {
-              api.getTaskReview(taskId).then(res => {
-                if (res.success && res.data) {
-                  setTaskData({
-                    title: res.data.topic,
-                    content: res.data.review,
-                    papers: res.data.papers || [],
-                    recordId: res.data.record_id,
-                    isPublic: res.data.is_public,
-                    isPaid: res.data.is_paid,
-                  })
-                }
-              }).catch(err => console.error('Failed to refresh task:', err))
-            }
-          }}
-          planType="unlock"
-          recordId={reviewData.recordId}
-        />
-      )}
-      {showPayModal && !unlockMode && (
-        <PayPalPaymentModal
-          onClose={() => setShowPayModal(false)}
-          onPaymentSuccess={async () => {
-            setShowPayModal(false)
-          }}
-          planType="single"
-        />
-      )}
 
-      {showCreditConfirmModal && (
-        <ConfirmModalInternational
-          message={t('review.export.confirm_message', { credits })}
-          confirmText={t('review.export.confirm_button')}
-          cancelText={t('common.cancel')}
-          onConfirm={handleConfirmUseCredit}
-          onCancel={() => setShowCreditConfirmModal(false)}
-          type="warning"
-        />
+      {/* Review export format modal */}
+      {showReviewExportModal && (
+        <div className="confirm-modal-overlay" onClick={() => setShowReviewExportModal(false)}>
+          <div className="confirm-modal" onClick={e => e.stopPropagation()}>
+            <button className="confirm-modal-close" onClick={() => setShowReviewExportModal(false)}>&times;</button>
+            <div className="confirm-modal-header">
+              <span className="confirm-modal-icon">📄</span>
+              <h2 className="confirm-modal-title">{t('review.export.export_review', 'Export Review')}</h2>
+            </div>
+            <div className="confirm-modal-body">
+              <div className="export-format-options">
+                {([
+                  { key: 'markdown' as const, icon: '📝', name: 'Markdown', desc: t('review.export.markdown_desc', 'Export as .md file') },
+                  { key: 'word' as const, icon: '📄', name: 'Word', desc: t('review.export.word_desc', 'Export as .docx file') },
+                ]).map(fmt => (
+                  <label key={fmt.key} className={`export-format-option ${reviewExportFormat === fmt.key ? 'active' : ''}`}>
+                    <input type="radio" name="review-export-format" value={fmt.key} checked={reviewExportFormat === fmt.key} onChange={() => setReviewExportFormat(fmt.key)} />
+                    <span className="export-format-icon">{fmt.icon}</span>
+                    <span className="export-format-info">
+                      <span className="export-format-name">{fmt.name}</span>
+                      <span className="export-format-desc">{fmt.desc}</span>
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </div>
+            <div className="confirm-modal-footer">
+              <button className="confirm-modal-btn confirm-modal-btn-cancel" onClick={() => setShowReviewExportModal(false)} disabled={exportingReview}>{t('common.cancel')}</button>
+              <button className="confirm-modal-btn confirm-modal-btn-primary" onClick={doExportReviewFrontend} disabled={exportingReview}>
+                {exportingReview && <span className="confirm-modal-spinner" />}
+                {exportingReview ? t('review.export.exporting') : t('review.export.confirm', 'Export')}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {mobileMenuOpen && (
@@ -593,18 +519,11 @@ export function ReviewPageInternational() {
             </div>
           </div>
           <button
-            className={`sidebar-action-btn ${!canExportDirectly ? 'sidebar-action-premium' : ''}`}
+            className="sidebar-action-btn"
             onClick={() => { setMobileMenuOpen(false); handleExportWord() }}
-            disabled={exporting}
           >
-            {exporting ? t('review.export.exporting') : canExportDirectly ? t('review.export.export_word') : '🔒 ' + t('review.export.unlock_export')}
+            {t('review.export.export_review', 'Export Review')}
           </button>
-          {exportError && (
-            <div className="export-error-inline">
-              <span>{exportError}</span>
-              <button className="export-retry-btn" onClick={() => { setExportError(''); handleExportWord(); }}>{t('payment.retry')}</button>
-            </div>
-          )}
           <button
             className="sidebar-action-btn sidebar-action-secondary"
             onClick={() => { setMobileMenuOpen(false); handleRegenerate() }}
