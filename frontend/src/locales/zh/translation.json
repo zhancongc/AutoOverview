@@ -3,14 +3,14 @@
   "home": {
     "hero": {
       "accent": "100% 真实引文 · 支持 DOI 验真 · 拒绝文献幻觉",
-      "title": "学术级 AI 文献助理<br>用真实文献生成结构化综述",
-      "subtitle": "专注科研工作流起步阶段。基于 Web of Science、IEEE、Crossref 等权威数据源构建逻辑骨架，为您提供合规、真实、可验证的文献综述。",
+      "title": "AI 文献助手<br>加快您的学术研究",
+      "subtitle": "专注科研工作流起步阶段。基于 Web of Science、IEEE、Crossref 等权威数据源，帮您高效发现相关文献、对比研究观点、整理参考文献。",
       "search_papers_cta": "搜索文献 — 免费",
       "cards": {
         "search": "搜索文献",
         "search_desc": "免费检索相关学术文献",
-        "generate": "生成综述",
-        "generate_desc": "AI 自动生成结构化综述",
+        "generate": "整理综述",
+        "generate_desc": "AI 辅助组织结构化文献综述",
         "matrix": "对比矩阵",
         "matrix_desc": "对比分析研究观点分歧"
       }

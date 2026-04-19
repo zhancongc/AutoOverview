@@ -257,7 +257,7 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
 
             {/* Three entry cards */}
             <div className="hero-entry-cards">
-              <div className="hero-entry-card" onClick={() => navigate('/search-papers')}>
+              <div className="hero-entry-card hero-entry-card-primary" onClick={() => navigate('/search-papers')}>
                 <span className="hero-entry-icon">🔍</span>
                 <h3>{t('home.hero.cards.search')}</h3>
                 <p>{t('home.hero.cards.search_desc')}</p>
@@ -267,7 +267,7 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
                 <h3>{t('home.hero.cards.matrix')}</h3>
                 <p>{t('home.hero.cards.matrix_desc')}</p>
               </div>
-              <div className="hero-entry-card hero-entry-card-primary" onClick={() => navigate('/generate')}>
+              <div className="hero-entry-card" onClick={() => navigate('/generate')}>
                 <span className="hero-entry-icon">📝</span>
                 <h3>{t('home.hero.cards.generate')}</h3>
                 <p>{t('home.hero.cards.generate_desc')}</p>
