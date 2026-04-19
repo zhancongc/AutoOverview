@@ -32,7 +32,8 @@ export function PaymentModal({ onClose, onPaymentSuccess, planType, recordId }: 
   }, [])
 
   // 所有套餐（含 unlock）从 API 获取
-  const plan = plans.find(p => p.type === planType) || { name: '加载中...', price: 0, credits: 0, features: [] }
+  const plan = plans.find(p => p.type === planType) || { name: '加载中...', price: 0, credits: 0, credits_cn: 0, features: [] }
+  const displayCredits = plan.credits_cn || plan.credits
 
   // Esc 关闭弹窗
   useEffect(() => {
@@ -53,7 +54,7 @@ export function PaymentModal({ onClose, onPaymentSuccess, planType, recordId }: 
         if (result.status === 'paid') {
           setPaymentStatus('paid')
           if (pollingRef.current) clearInterval(pollingRef.current)
-          onPaymentSuccess(plan.credits)
+          onPaymentSuccess(displayCredits)
         }
       } catch {
         // 忽略轮询错误，继续轮询
@@ -150,7 +151,7 @@ export function PaymentModal({ onClose, onPaymentSuccess, planType, recordId }: 
           <p className="payment-modal-price">
             <span className="amount">¥{plan.price}</span>
           </p>
-          <p className="payment-modal-credits">{plan.credits} 篇综述生成积分</p>
+          <p className="payment-modal-credits">{displayCredits} 积分</p>
           <ul className="payment-modal-features">
             {plan.features.map((f: string, i: number) => (
               <li key={i}>✓ {f}</li>
@@ -213,7 +214,7 @@ export function PaymentModal({ onClose, onPaymentSuccess, planType, recordId }: 
             <div className="payment-modal-success">
               <span className="payment-success-icon">✓</span>
               <h3>支付成功</h3>
-              <p>{plan.type === 'unlock' ? '已解锁该综述 Word 导出权限' : `已获得 ${plan.credits} 篇综述生成积分`}</p>
+              <p>{plan.type === 'unlock' ? '已解锁该综述 Word 导出权限' : `已获得 ${displayCredits} 积分`}</p>
               <button className="payment-modal-btn" onClick={handleClose}>完成</button>
             </div>
           )}

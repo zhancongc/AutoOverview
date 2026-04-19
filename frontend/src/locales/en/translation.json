@@ -2,9 +2,9 @@
   "_comment": "English translation for international academic market",
   "home": {
     "hero": {
-      "accent": "AI Research Assistant · Literature Review Copilot",
-      "title": "Accelerate Your <highlight>Literature Review</highlight> Research",
-      "subtitle": "AI-assisted literature analysis with verified citations. Extract key insights, build structured outlines, and draft review frameworks — all backed by real paper metadata.",
+      "accent": "AI Research Assistant · Literature Discovery Tool",
+      "title": "Accelerate Your <highlight>Literature Discovery</highlight> Research",
+      "subtitle": "AI-assisted literature discovery with verified citations. Find key papers, compare methodologies, and organize your research — all backed by real paper metadata.",
       "cta_button": "Start Your Research",
       "cta_hint": "Free to try • No credit card required",
       "search_papers_cta": "Search Papers — Free",
@@ -68,7 +68,7 @@
       },
       "autooverview": {
         "title": "AutoOverview",
-        "pro1": "✅ AI-assisted structured literature analysis",
+        "pro1": "✅ AI-assisted structured literature organization",
         "pro2": "✅ Built on real paper metadata, with DOI verification",
         "pro3": "✅ Academic-grade Outline: Background → Debates → Conclusions",
         "pro4": "✅ Research copilot that accelerates your workflow"
@@ -79,10 +79,10 @@
       "subtitle": "Three steps to accelerate your research",
       "step1_title": "Enter Research Topic",
       "step1_desc": "Enter your topic. AI analyzes and retrieves frontier research from the last 6 years.",
-      "step2_title": "AI Assists in Building Your Review",
+      "step2_title": "AI Organizes Your Literature",
       "step2_desc": "AI helps organize findings into a structured outline (Background → Debates → Conclusions), extracting key insights from verified papers.",
       "step3_title": "Review, Refine & Verify",
-      "step3_desc": "Download your draft framework + DOI verification report. Review and add your own analysis before finalizing."
+      "step3_desc": "Download your research outline + DOI verification report. Review and add your own analysis before finalizing."
     },
     "pricing": {
       "title": "Simple, Transparent Pricing",
@@ -113,7 +113,7 @@
     },
     "integrity": {
       "title": "Academic Integrity Commitment",
-      "description": "We are committed to academic integrity. All citations are designed to be real and verifiable. AI-generated content is intended as a research aid — users are responsible for reviewing, editing, and adding original analysis.",
+      "description": "We are committed to academic integrity. All citations are designed to be real and verifiable. AI-assisted content is intended as a research aid — users are responsible for reviewing, editing, and adding original analysis.",
       "link": "Learn about our citation verification process →"
     },
     "footer": {

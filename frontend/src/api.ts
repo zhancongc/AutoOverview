@@ -308,6 +308,7 @@ export const api = {
     original_price?: number;
     original_price_usd?: number;
     credits: number;
+    credits_cn?: number;
     recommended?: boolean;
     features: string[];
     features_en: string[];

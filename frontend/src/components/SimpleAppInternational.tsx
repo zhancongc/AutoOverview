@@ -374,8 +374,38 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
         </div>
 
 
-        {/* Comparison Section - Simplified */}
+        {/* Core Features */}
         <section id="features" className="landing-section">
+          <div className="section-inner">
+            <h2 className="section-title">{t('home.features.title')}</h2>
+            <div className="home-features">
+              <div className="feature-item">
+                <span className="feature-icon">🔍</span>
+                <div>
+                  <h3 className="feature-title">{t('home.features.papers')}</h3>
+                  <p className="feature-desc">{t('home.features.papers_desc')}</p>
+                </div>
+              </div>
+              <div className="feature-item">
+                <span className="feature-icon">⚡</span>
+                <div>
+                  <h3 className="feature-title">{t('home.features.time')}</h3>
+                  <p className="feature-desc">{t('home.features.time_desc')}</p>
+                </div>
+              </div>
+              <div className="feature-item">
+                <span className="feature-icon">📝</span>
+                <div>
+                  <h3 className="feature-title">{t('home.features.format')}</h3>
+                  <p className="feature-desc">{t('home.features.format_desc')}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Comparison Section */}
+        <section className="landing-section section-alt">
           <div className="section-inner">
             <h2 className="section-title">{t('home.comparison.title')}</h2>
             <p className="section-subtitle">{t('home.comparison.subtitle')}</p>
@@ -403,36 +433,6 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
                   <li className="comparison-item positive">{t('home.comparison.autooverview.pro3')}</li>
                   <li className="comparison-item positive">{t('home.comparison.autooverview.pro4')}</li>
                 </ul>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Core Features */}
-        <section className="landing-section section-alt">
-          <div className="section-inner">
-            <h2 className="section-title">{t('home.features.title')}</h2>
-            <div className="home-features">
-              <div className="feature-item">
-                <span className="feature-icon">🔍</span>
-                <div>
-                  <h3 className="feature-title">{t('home.features.papers')}</h3>
-                  <p className="feature-desc">{t('home.features.papers_desc')}</p>
-                </div>
-              </div>
-              <div className="feature-item">
-                <span className="feature-icon">⚡</span>
-                <div>
-                  <h3 className="feature-title">{t('home.features.time')}</h3>
-                  <p className="feature-desc">{t('home.features.time_desc')}</p>
-                </div>
-              </div>
-              <div className="feature-item">
-                <span className="feature-icon">📝</span>
-                <div>
-                  <h3 className="feature-title">{t('home.features.format')}</h3>
-                  <p className="feature-desc">{t('home.features.format_desc')}</p>
-                </div>
               </div>
             </div>
           </div>
@@ -530,45 +530,6 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
           </div>
         </section>
 
-        {/* Testimonials */}
-        <section className="landing-section">
-          <div className="section-inner">
-            <h2 className="section-title">{t('home.testimonials.title')}</h2>
-            <div className="testimonials testimonials-international">
-              <div className="testimonial-card">
-                <p className="testimonial-text">{t('home.testimonials.text1')}</p>
-                <div className="testimonial-author">
-                  <span className="testimonial-avatar">🎓</span>
-                  <div>
-                    <span className="testimonial-name">{t('home.testimonials.name1')}</span>
-                    <span className="testimonial-role">{t('home.testimonials.role1')}</span>
-                  </div>
-                </div>
-              </div>
-              <div className="testimonial-card">
-                <p className="testimonial-text">{t('home.testimonials.text2')}</p>
-                <div className="testimonial-author">
-                  <span className="testimonial-avatar">🔬</span>
-                  <div>
-                    <span className="testimonial-name">{t('home.testimonials.name2')}</span>
-                    <span className="testimonial-role">{t('home.testimonials.role2')}</span>
-                  </div>
-                </div>
-              </div>
-              <div className="testimonial-card">
-                <p className="testimonial-text">{t('home.testimonials.text3')}</p>
-                <div className="testimonial-author">
-                  <span className="testimonial-avatar">📚</span>
-                  <div>
-                    <span className="testimonial-name">{t('home.testimonials.name3')}</span>
-                    <span className="testimonial-role">{t('home.testimonials.role3')}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
         {/* Pricing */}
         <section id="pricing" className="landing-section section-alt">
           <div className="section-inner">
@@ -643,6 +604,8 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
               <a href="/privacy-policy" className="footer-link">{t('home.footer.privacy')}</a>
               <span className="footer-separator">•</span>
               <a href="/refund-policy" className="footer-link">{t('home.footer.refund')}</a>
+              <span className="footer-separator">•</span>
+              <a href="/academic-integrity" className="footer-link">Academic Integrity</a>
             </div>
             <p className="footer-databases">{t('home.footer.databases')}</p>
           </div>
