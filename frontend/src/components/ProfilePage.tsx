@@ -18,9 +18,10 @@ export function ProfilePage() {
   const location = useLocation()
   const [searchParams] = useSearchParams()
   const tabParam = searchParams.get('tab') as ProfileTab | null
-  const [activeTab, setActiveTab] = useState<ProfileTab>(
-    tabParam && ['searches', 'matrices', 'reviews'].includes(tabParam) ? tabParam : 'searches'
-  )
+  const activeTab: ProfileTab = tabParam && ['searches', 'matrices', 'reviews'].includes(tabParam) ? tabParam : 'searches'
+  const setActiveTab = (tab: ProfileTab) => {
+    navigate(`/profile?tab=${tab}`, { replace: true })
+  }
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const [records, setRecords] = useState<ReviewRecord[]>([])
@@ -448,19 +449,19 @@ export function ProfilePage() {
         <div className="profile-tabs">
           <button
             className={`profile-tab ${activeTab === 'searches' ? 'active' : ''}`}
-            onClick={() => { setActiveTab('searches'); navigate('/profile?tab=searches', { replace: true }) }}
+            onClick={() => setActiveTab('searches')}
           >
             🔍 文献查询
           </button>
           <button
             className={`profile-tab ${activeTab === 'matrices' ? 'active' : ''}`}
-            onClick={() => { setActiveTab('matrices'); navigate('/profile?tab=matrices', { replace: true }) }}
+            onClick={() => setActiveTab('matrices')}
           >
             📊 对比矩阵
           </button>
           <button
             className={`profile-tab ${activeTab === 'reviews' ? 'active' : ''}`}
-            onClick={() => { setActiveTab('reviews'); navigate('/profile?tab=reviews', { replace: true }) }}
+            onClick={() => setActiveTab('reviews')}
           >
             📖 我的综述
           </button>
@@ -543,9 +544,9 @@ export function ProfilePage() {
                 </div>
               ) : (
                 <div className="records-list">
-                  {matrices.map((matrix) => (
+                  {matrices.map((matrix, idx) => (
                     <div
-                      key={matrix.id}
+                      key={matrix.task_id || `matrix-${idx}`}
                       className={`record-item ${matrix.status === 'processing' || matrix.status === 'failed' ? 'record-item-disabled' : ''}`}
                       onClick={() => handleViewMatrix(matrix)}
                     >

@@ -23,9 +23,10 @@ export function ProfilePageInternational() {
   const location = useLocation()
   const [searchParams] = useSearchParams()
   const tabParam = searchParams.get('tab') as ProfileTab | null
-  const [activeTab, setActiveTab] = useState<ProfileTab>(
-    tabParam && ['searches', 'matrices', 'reviews'].includes(tabParam) ? tabParam : 'searches'
-  )
+  const activeTab: ProfileTab = tabParam && ['searches', 'matrices', 'reviews'].includes(tabParam) ? tabParam : 'searches'
+  const setActiveTab = (tab: ProfileTab) => {
+    navigate(`/profile?tab=${tab}`, { replace: true })
+  }
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [records, setRecords] = useState<ReviewRecord[]>([])
   const [searches, setSearches] = useState<any[]>([])
@@ -517,19 +518,19 @@ export function ProfilePageInternational() {
         <div className="profile-tabs">
           <button
             className={`profile-tab ${activeTab === 'searches' ? 'active' : ''}`}
-            onClick={() => { setActiveTab('searches'); navigate('/profile?tab=searches', { replace: true }) }}
+            onClick={() => setActiveTab('searches')}
           >
             🔍 My Searches
           </button>
           <button
             className={`profile-tab ${activeTab === 'matrices' ? 'active' : ''}`}
-            onClick={() => { setActiveTab('matrices'); navigate('/profile?tab=matrices', { replace: true }) }}
+            onClick={() => setActiveTab('matrices')}
           >
             📊 Comparison Matrices
           </button>
           <button
             className={`profile-tab ${activeTab === 'reviews' ? 'active' : ''}`}
-            onClick={() => { setActiveTab('reviews'); navigate('/profile?tab=reviews', { replace: true }) }}
+            onClick={() => setActiveTab('reviews')}
           >
             📖 My Reviews
           </button>
@@ -662,9 +663,9 @@ export function ProfilePageInternational() {
                 </div>
               ) : (
                 <div className="records-list">
-                  {matrices.map((matrix) => (
+                  {matrices.map((matrix, idx) => (
                     <div
-                      key={matrix.id}
+                      key={matrix.task_id || `matrix-${idx}`}
                       className="record-item"
                       onClick={() => handleViewMatrix(matrix)}
                     >
