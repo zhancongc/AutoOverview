@@ -1,7 +1,7 @@
 /**
  * PayPal Payment Modal for International Markets (Default)
  * Supports USD payments via PayPal JavaScript SDK
- * Falls back to Paddle if needed
+ * Supports USD payments via PayPal JavaScript SDK
  */
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -76,12 +76,12 @@ export function PayPalPaymentModal({
           setPaypalSdkLoaded(true)
         }
         script.onerror = () => {
-          setError('Failed to load PayPal. Please try again or use Paddle.')
+          setError('Failed to load PayPal. Please try again.')
         }
         document.body.appendChild(script)
       } catch (err) {
         console.error('Failed to get PayPal config:', err)
-        setError('Failed to initialize payment. Please try again or use Paddle.')
+        setError('Failed to initialize payment. Please try again.')
       }
     }
 
@@ -119,11 +119,11 @@ export function PayPalPaymentModal({
         },
         onError: (err: any) => {
           console.error('PayPal error:', err)
-          setError('PayPal payment failed. Please try again or use Paddle.')
+          setError('PayPal payment failed. Please try again.')
           setPaymentStatus('failed')
         },
         onCancel: () => {
-          setError('Payment cancelled. You can try again or use Paddle.')
+          setError('Payment cancelled. You can try again.')
           setPaymentStatus('failed')
         }
       }).render(paypalButtonContainerRef.current)

@@ -102,8 +102,9 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
 
   // Handle hash scroll when navigating from other pages
   useEffect(() => {
-    if (location.hash) {
-      const id = location.hash.replace('#', '')
+    const hash = window.location.hash || location.hash
+    if (hash) {
+      const id = hash.replace('#', '')
       const timer = setTimeout(() => {
         const el = document.getElementById(id)
         if (el) {
@@ -165,7 +166,6 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
           <a href="/#pricing" onClick={(e) => {
             e.preventDefault()
             if (location.pathname === '/') {
-              window.location.hash = 'pricing'
               const el = document.getElementById('pricing')
               if (el) {
                 const navHeight = 60
@@ -173,7 +173,7 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
                 window.scrollTo({ top: elPosition - navHeight, behavior: 'smooth' })
               }
             } else {
-              navigate('/#pricing')
+              window.location.href = '/#pricing'
             }
           }}>{t('home.nav.pricing')}</a>
         </div>
@@ -255,7 +255,7 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
             onClick={(e) => {
               e.preventDefault()
               setMobileMenuOpen(false)
-              navigate('/#pricing')
+              window.location.href = '/#pricing'
             }}
           >{t('home.nav.pricing')}</a>
         </nav>

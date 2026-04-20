@@ -309,7 +309,7 @@ class DevPayPalService:
         return True
 
 
-# Pricing in USD for international market (same as Paddle)
+# Pricing in USD for international market
 PAYPAL_PRICING = {
     "single": {
         "name": "Starter",
