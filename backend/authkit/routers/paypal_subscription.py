@@ -314,6 +314,12 @@ def _activate_subscription(subscription, paypal_order_id: str, db: Session):
     logger.info(f"[PayPal] Activated subscription {subscription.order_no} (trade_no={paypal_order_id})")
 
 
+@router.get("/webhook")
+def paypal_webhook_health():
+    """PayPal webhook URL 验证端点"""
+    return {"status": "ok"}
+
+
 @router.post("/webhook")
 async def paypal_webhook(request: Request, db: Session = Depends(get_db)):
     """
