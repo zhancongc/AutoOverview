@@ -2,6 +2,7 @@
 邮件服务 - 使用通用模板系统
 """
 import logging
+import os
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -11,10 +12,11 @@ from ..core.config import config
 from ..templates.base_emails import (
     get_verification_code_email,
     get_welcome_email,
-    get_password_reset_email
 )
 
 logger = logging.getLogger(__name__)
+
+PAYMENT_NOTIFY_EMAIL = os.getenv("PAYMENT_NOTIFY_EMAIL", "")
 
 
 class EmailService:
@@ -180,49 +182,47 @@ If you have any questions, feel free to contact us.
 
         return self.send_email(to_email, subject, html_content, text_content)
 
-    def send_password_reset_email(self, to_email: str, code: str, language: str = "zh") -> bool:
-        """
-        发送密码重置邮件（使用通用模板）
 
-        Args:
-            to_email: 收件人邮箱
-            code: 验证码
-            language: 语言 (zh/en)
+def send_payment_notification(subscription, user_email: str = "", user_nickname: str = ""):
+    """支付成功后发送通知邮件给管理员"""
+    if not PAYMENT_NOTIFY_EMAIL:
+        return
 
-        Returns:
-            bool: 是否发送成功
-        """
-        if language == "en":
-            subject = "Reset Your Password"
-            text_content = f"""
-Hello!
+    currency = getattr(subscription, 'currency', 'CNY') or 'CNY'
+    currency_label = "USD" if currency == "USD" else "CNY"
+    currency_symbol = "$" if currency == "USD" else "¥"
 
-We received a password reset request. Your verification code is: {code}
+    subject = f"[{currency_label} 订单] {subscription.order_no} - {currency_symbol}{subscription.amount}"
 
-This code expires in {config.VERIFICATION_CODE_EXPIRE_MINUTES} minutes.
+    plan_names = {
+        "single": "体验包 / Starter",
+        "semester": "标准包 / Semester Pro",
+        "yearly": "进阶包 / Annual Premium",
+        "unlock": "单次解锁 / Unlock",
+    }
+    plan_name = plan_names.get(subscription.plan_type, subscription.plan_type)
+    payment_time = subscription.payment_time.strftime("%Y-%m-%d %H:%M:%S") if subscription.payment_time else "N/A"
 
-If you did not request this, please ignore this email.
-"""
-        else:
-            subject = "重置密码"
-            text_content = f"""
-您好！
+    html = f"""
+    <div style="font-family: -apple-system, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h2 style="color: #333;">💰 收到新订单</h2>
+        <table style="border-collapse: collapse; width: 100%; font-size: 14px;">
+            <tr><td style="padding: 8px; border-bottom: 1px solid #eee; color: #666; width: 120px;">订单号</td><td style="padding: 8px; border-bottom: 1px solid #eee;">{subscription.order_no}</td></tr>
+            <tr><td style="padding: 8px; border-bottom: 1px solid #eee; color: #666;">套餐</td><td style="padding: 8px; border-bottom: 1px solid #eee;">{plan_name}</td></tr>
+            <tr><td style="padding: 8px; border-bottom: 1px solid #eee; color: #666;">金额</td><td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>{currency_symbol}{subscription.amount} {currency_label}</strong></td></tr>
+            <tr><td style="padding: 8px; border-bottom: 1px solid #eee; color: #666;">支付方式</td><td style="padding: 8px; border-bottom: 1px solid #eee;">{subscription.payment_method or 'N/A'}</td></tr>
+            <tr><td style="padding: 8px; border-bottom: 1px solid #eee; color: #666;">支付时间</td><td style="padding: 8px; border-bottom: 1px solid #eee;">{payment_time}</td></tr>
+            <tr><td style="padding: 8px; border-bottom: 1px solid #eee; color: #666;">用户邮箱</td><td style="padding: 8px; border-bottom: 1px solid #eee;">{user_email or 'N/A'}</td></tr>
+            <tr><td style="padding: 8px; color: #666;">用户昵称</td><td style="padding: 8px;">{user_nickname or 'N/A'}</td></tr>
+        </table>
+    </div>
+    """
 
-我们收到了您的密码重置请求，验证码如下：{code}
-
-验证码有效期为 {config.VERIFICATION_CODE_EXPIRE_MINUTES} 分钟。
-
-如果这不是您的操作，请忽略此邮件。
-"""
-
-        # 使用通用模板
-        html_content = get_password_reset_email(
-            code=code,
-            expire_minutes=config.VERIFICATION_CODE_EXPIRE_MINUTES,
-            language=language
-        )
-
-        return self.send_email(to_email, subject, html_content, text_content)
+    try:
+        email_service.send_email(PAYMENT_NOTIFY_EMAIL, subject, html)
+        logger.info(f"[Notify] Payment notification sent: {subscription.order_no}")
+    except Exception as e:
+        logger.error(f"[Notify] Failed to send payment notification: {e}")
 
 
 # 全局邮件服务实例

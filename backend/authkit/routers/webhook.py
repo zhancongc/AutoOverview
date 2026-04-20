@@ -130,6 +130,12 @@ def process_payment(params: dict, db: Session) -> str:
 
         db.commit()
 
+        # 发送订单通知邮件
+        from ..services.email_service import send_payment_notification
+        user_email = user.email if user else ""
+        user_nickname = user.get_meta("nickname", "") if user else ""
+        send_payment_notification(sub, user_email, user_nickname)
+
         log = PaymentLog(
             subscription_id=sub.id, user_id=sub.user_id,
             action="notify_success",

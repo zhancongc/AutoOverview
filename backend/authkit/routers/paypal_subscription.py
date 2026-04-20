@@ -313,6 +313,12 @@ def _activate_subscription(subscription, paypal_order_id: str, db: Session):
     db.commit()
     logger.info(f"[PayPal] Activated subscription {subscription.order_no} (trade_no={paypal_order_id})")
 
+    # 发送订单通知邮件
+    from ..services.email_service import send_payment_notification
+    user_email = user.email if user else ""
+    user_nickname = user.get_meta("nickname", "") if user else ""
+    send_payment_notification(subscription, user_email, user_nickname)
+
 
 @router.get("/webhook")
 def paypal_webhook_health():

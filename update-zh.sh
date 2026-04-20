@@ -9,9 +9,11 @@ set -e
 
 APP_DIR="/app/AutoOverview"
 BACKEND_PORT=8006
+START_TIME=$(date +%s)
 
 echo "=========================================="
 echo " AutoOverview 中文版 - 更新"
+echo " 开始时间: $(date '+%Y-%m-%d %H:%M:%S')"
 echo "=========================================="
 
 # ---------- 1. 拉取代码 ----------
@@ -62,7 +64,12 @@ echo "✓ 后端已重启"
 
 sleep 2
 API_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:$BACKEND_PORT/api/health)
+END_TIME=$(date +%s)
+ELAPSED=$((END_TIME - START_TIME))
+MINUTES=$((ELAPSED / 60))
+SECONDS=$((ELAPSED % 60))
 echo ""
 echo "=========================================="
 echo " 更新完成 (API: $API_CODE)"
+echo " 耗时: ${MINUTES}分${SECONDS}秒"
 echo "=========================================="

@@ -230,6 +230,11 @@ def query_subscription(
 
             db.commit()
 
+            # 发送订单通知邮件
+            from ..services.email_service import send_payment_notification
+            user_nickname = current_user.nickname or ""
+            send_payment_notification(subscription, current_user.email, user_nickname)
+
             return {
                 "status": "paid",
                 "payment_time": subscription.payment_time.isoformat() if subscription.payment_time else None,

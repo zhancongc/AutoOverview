@@ -64,10 +64,14 @@ def _activate_subscription(subscription: Subscription, trade_no: str, db: Sessio
         logger.info(f"✅ 用户 {user.id} 获得 {credits_to_add} 篇付费额度，当前付费 {current_credits + credits_to_add}")
 
     db.commit()
+
+    # 发送订单通知邮件
+    from ..services.email_service import send_payment_notification
+    user_email = user.email if user else ""
+    user_nickname = user.get_meta("nickname", "") if user else ""
+    send_payment_notification(subscription, user_email, user_nickname)
+
     return True
-
-
-@router.get("/return")
 async def payment_return(request: Request, db: Session = Depends(get_db)):
     """处理支付宝同步跳转"""
     try:

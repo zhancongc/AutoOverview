@@ -260,6 +260,12 @@ async def paddle_webhook(request: Request, db: Session = Depends(get_db)):
 
                 db.commit()
 
+                # 发送订单通知邮件
+                from ..services.email_service import send_payment_notification
+                user_email = user.email if user else ""
+                user_nickname = user.get_meta("nickname", "") if user else ""
+                send_payment_notification(sub, user_email, user_nickname)
+
                 logger.info(f"[Paddle] Activated subscription {order_no}")
 
         return {"status": "success"}
