@@ -154,8 +154,8 @@ def create_paypal_subscription(
             currency=plan["currency"],
             description=f"Danmo Scholar {plan['name']}",
             custom_id=order_no,
-            return_url=f"{frontend_url}/?payment_success=1&order_no={order_no}",
-            cancel_url=f"{frontend_url}/?payment_cancelled=1",
+            return_url=f"{frontend_url}/payment/success",
+            cancel_url=f"{frontend_url}/payment/cancel",
         )
 
         # Store PayPal order ID in subscription metadata
@@ -476,8 +476,8 @@ def create_paypal_unlock(
             currency=plan["currency"],
             description=f"Danmo Scholar {plan['name']}",
             custom_id=order_no,
-            return_url=f"{frontend_url}/?payment_success=1&order_no={order_no}",
-            cancel_url=f"{frontend_url}/?payment_cancelled=1",
+            return_url=f"{frontend_url}/payment/success",
+            cancel_url=f"{frontend_url}/payment/cancel",
         )
 
         # Store PayPal order ID in subscription metadata

@@ -89,6 +89,8 @@ function AppContent() {
         <Route path="/academic-integrity" element={<AcademicIntegrityPage />} />
         <Route path="/comparison-matrix" element={<ComparisonMatrixPage />} />
         <Route path="/generate" element={<GenerateReviewPage />} />
+        <Route path="/payment/success" element={<PaymentRedirect />} />
+        <Route path="/payment/cancel" element={<PaymentRedirect />} />
       </Routes>
       <BackToTop />
       {showFeedback && <FeedbackFloatingButton />}
@@ -165,6 +167,34 @@ function JadeRoute({ children }: { children: React.ReactElement }) {
   if (checking) return null
   if (!allowed) return <Navigate to="/" replace />
   return children
+}
+
+// 支付回调跳转页（PayPal return URL 兜底）
+function PaymentRedirect() {
+  const location = useLocation()
+  const isSuccess = location.pathname === '/payment/success'
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      window.location.href = '/'
+    }, 3000)
+    return () => clearTimeout(timer)
+  }, [])
+
+  return (
+    <div style={{
+      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+      height: '100vh', fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif', color: '#333',
+    }}>
+      <span style={{ fontSize: 48, marginBottom: 16 }}>{isSuccess ? '✓' : '✕'}</span>
+      <h2 style={{ margin: '0 0 8px' }}>
+        {isSuccess ? 'Payment Successful!' : 'Payment Cancelled'}
+      </h2>
+      <p style={{ color: '#666', margin: 0 }}>
+        Redirecting to homepage...
+      </p>
+    </div>
+  )
 }
 
 // David 路由守卫（只有白名单用户才能访问）
