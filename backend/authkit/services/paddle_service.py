@@ -51,7 +51,7 @@ class PaddleService:
             "product_id": os.getenv("PADDLE_PRODUCT_ID", "PROD_123456"),
             "amount": amount_cents,
             "currency": currency,
-            "description": f"AutoOverview Review Credits - {amount} USD",
+            "description": f"Danmo Scholar Review Credits - {amount} USD",
         }
 
         try:

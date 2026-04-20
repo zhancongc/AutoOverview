@@ -12,7 +12,7 @@ class EmailTemplateConfig:
 
     def __init__(self):
         # 从环境变量读取配置
-        self.app_name = os.getenv("AUTH_EMAIL_APP_NAME", "AutoOverview")
+        self.app_name = os.getenv("AUTH_EMAIL_APP_NAME", "Danmo Scholar")
         self.app_url = os.getenv("AUTH_EMAIL_APP_URL", "#")
         self.logo_emoji = os.getenv("AUTH_EMAIL_LOGO_EMOJI", "📚")
         self.contact_email = os.getenv("AUTH_EMAIL_CONTACT_EMAIL", "support@example.com")

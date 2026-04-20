@@ -153,7 +153,7 @@ If you did not request this code, please ignore this email.
             bool: 是否发送成功
         """
         if language == "en":
-            subject = "Welcome to AutoOverview!"
+            subject = "Welcome to Danmo Scholar!"
             text_content = f"""
 {'Dear ' + (nickname or 'User') + ',' if nickname else 'Hello!'}
 

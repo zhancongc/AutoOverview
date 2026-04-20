@@ -140,7 +140,7 @@ def create_subscription(
     try:
         config = get_payment_config()
         alipay = get_payment_service()
-        subject = f"AutoOverview-{plan['name']}"
+        subject = f"Danmo Scholar-{plan['name']}"
 
         return_url = f"{config['frontend_url']}/profile"
         notify_url = f"{config['backend_url']}/api/payment/webhook/notify"

@@ -107,7 +107,7 @@ class PayPalService:
             "application_context": {
                 "return_url": return_url,
                 "cancel_url": cancel_url,
-                "brand_name": "AutoOverview",
+                "brand_name": "Danmo Scholar",
                 "landing_page": "BILLING",
                 "user_action": "PAY_NOW",
             }
