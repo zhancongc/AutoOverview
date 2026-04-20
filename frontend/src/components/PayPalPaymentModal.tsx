@@ -218,7 +218,8 @@ export function PayPalPaymentModal({
       <div className="payment-modal" onClick={e => e.stopPropagation()}>
         <button className="payment-modal-close" onClick={handleClose} aria-label="Close">&times;</button>
 
-        {/* Header: Plan Information */}
+        {/* Header: Plan Information — hide during loading to avoid $0 flash */}
+        {plans.length > 0 && (
         <div className="payment-modal-header">
           <span className="payment-modal-icon">💳</span>
           <h2 className="payment-modal-title">{t('payment.buy', { name: plan.name_en || plan.name })}</h2>
@@ -235,6 +236,7 @@ export function PayPalPaymentModal({
             ))}
           </ul>
         </div>
+        )}
 
         {/* Payment Area */}
         <div className="payment-modal-body">
