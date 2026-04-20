@@ -183,46 +183,62 @@ If you have any questions, feel free to contact us.
         return self.send_email(to_email, subject, html_content, text_content)
 
 
-def send_payment_notification(subscription, user_email: str = "", user_nickname: str = ""):
-    """支付成功后发送通知邮件给管理员"""
+def send_payment_notification(subscription=None, user_email: str = "", user_nickname: str = "",
+                             refund_credits: int = 0, refund_user_id: int = 0):
+    """支付成功或退款时发送通知邮件给管理员"""
     if not PAYMENT_NOTIFY_EMAIL:
         return
 
-    currency = getattr(subscription, 'currency', 'CNY') or 'CNY'
-    currency_label = "USD" if currency == "USD" else "CNY"
-    currency_symbol = "$" if currency == "USD" else "¥"
-
-    subject = f"[{currency_label} 订单] {subscription.order_no} - {currency_symbol}{subscription.amount}"
-
-    plan_names = {
-        "single": "体验包 / Starter",
-        "semester": "标准包 / Semester Pro",
-        "yearly": "进阶包 / Annual Premium",
-        "unlock": "单次解锁 / Unlock",
-    }
-    plan_name = plan_names.get(subscription.plan_type, subscription.plan_type)
-    payment_time = subscription.payment_time.strftime("%Y-%m-%d %H:%M:%S") if subscription.payment_time else "N/A"
-
-    html = f"""
-    <div style="font-family: -apple-system, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-        <h2 style="color: #333;">💰 收到新订单</h2>
-        <table style="border-collapse: collapse; width: 100%; font-size: 14px;">
-            <tr><td style="padding: 8px; border-bottom: 1px solid #eee; color: #666; width: 120px;">订单号</td><td style="padding: 8px; border-bottom: 1px solid #eee;">{subscription.order_no}</td></tr>
-            <tr><td style="padding: 8px; border-bottom: 1px solid #eee; color: #666;">套餐</td><td style="padding: 8px; border-bottom: 1px solid #eee;">{plan_name}</td></tr>
-            <tr><td style="padding: 8px; border-bottom: 1px solid #eee; color: #666;">金额</td><td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>{currency_symbol}{subscription.amount} {currency_label}</strong></td></tr>
-            <tr><td style="padding: 8px; border-bottom: 1px solid #eee; color: #666;">支付方式</td><td style="padding: 8px; border-bottom: 1px solid #eee;">{subscription.payment_method or 'N/A'}</td></tr>
-            <tr><td style="padding: 8px; border-bottom: 1px solid #eee; color: #666;">支付时间</td><td style="padding: 8px; border-bottom: 1px solid #eee;">{payment_time}</td></tr>
-            <tr><td style="padding: 8px; border-bottom: 1px solid #eee; color: #666;">用户邮箱</td><td style="padding: 8px; border-bottom: 1px solid #eee;">{user_email or 'N/A'}</td></tr>
-            <tr><td style="padding: 8px; color: #666;">用户昵称</td><td style="padding: 8px;">{user_nickname or 'N/A'}</td></tr>
-        </table>
-    </div>
-    """
-
     try:
-        email_service.send_email(PAYMENT_NOTIFY_EMAIL, subject, html)
-        logger.info(f"[Notify] Payment notification sent: {subscription.order_no}")
+        if refund_credits > 0:
+            subject = f"[额度退还] 用户 {refund_user_id} 退还 {refund_credits} 积分"
+            html = f"""
+            <div style="font-family: -apple-system, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                <h2 style="color: #e74c3c;">🔙 额度退还</h2>
+                <table style="border-collapse: collapse; width: 100%; font-size: 14px;">
+                    <tr><td style="padding: 8px; border-bottom: 1px solid #eee; color: #666; width: 120px;">退还积分</td><td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>{refund_credits}</strong></td></tr>
+                    <tr><td style="padding: 8px; border-bottom: 1px solid #eee; color: #666;">用户ID</td><td style="padding: 8px; border-bottom: 1px solid #eee;">{refund_user_id}</td></tr>
+                    <tr><td style="padding: 8px; border-bottom: 1px solid #eee; color: #666;">用户邮箱</td><td style="padding: 8px; border-bottom: 1px solid #eee;">{user_email or 'N/A'}</td></tr>
+                    <tr><td style="padding: 8px; color: #666;">用户昵称</td><td style="padding: 8px;">{user_nickname or 'N/A'}</td></tr>
+                </table>
+            </div>
+            """
+            email_service.send_email(PAYMENT_NOTIFY_EMAIL, subject, html)
+            logger.info(f"[Notify] Refund notification sent: user {refund_user_id}, {refund_credits} credits")
+        elif subscription:
+            currency = getattr(subscription, 'currency', 'CNY') or 'CNY'
+            currency_label = "USD" if currency == "USD" else "CNY"
+            currency_symbol = "$" if currency == "USD" else "¥"
+
+            subject = f"[{currency_label} 订单] {subscription.order_no} - {currency_symbol}{subscription.amount}"
+
+            plan_names = {
+                "single": "体验包 / Starter",
+                "semester": "标准包 / Semester Pro",
+                "yearly": "进阶包 / Annual Premium",
+                "unlock": "单次解锁 / Unlock",
+            }
+            plan_name = plan_names.get(subscription.plan_type, subscription.plan_type)
+            payment_time = subscription.payment_time.strftime("%Y-%m-%d %H:%M:%S") if subscription.payment_time else "N/A"
+
+            html = f"""
+            <div style="font-family: -apple-system, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                <h2 style="color: #333;">💰 收到新订单</h2>
+                <table style="border-collapse: collapse; width: 100%; font-size: 14px;">
+                    <tr><td style="padding: 8px; border-bottom: 1px solid #eee; color: #666; width: 120px;">订单号</td><td style="padding: 8px; border-bottom: 1px solid #eee;">{subscription.order_no}</td></tr>
+                    <tr><td style="padding: 8px; border-bottom: 1px solid #eee; color: #666;">套餐</td><td style="padding: 8px; border-bottom: 1px solid #eee;">{plan_name}</td></tr>
+                    <tr><td style="padding: 8px; border-bottom: 1px solid #eee; color: #666;">金额</td><td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>{currency_symbol}{subscription.amount} {currency_label}</strong></td></tr>
+                    <tr><td style="padding: 8px; border-bottom: 1px solid #eee; color: #666;">支付方式</td><td style="padding: 8px; border-bottom: 1px solid #eee;">{subscription.payment_method or 'N/A'}</td></tr>
+                    <tr><td style="padding: 8px; border-bottom: 1px solid #eee; color: #666;">支付时间</td><td style="padding: 8px; border-bottom: 1px solid #eee;">{payment_time}</td></tr>
+                    <tr><td style="padding: 8px; border-bottom: 1px solid #eee; color: #666;">用户邮箱</td><td style="padding: 8px; border-bottom: 1px solid #eee;">{user_email or 'N/A'}</td></tr>
+                    <tr><td style="padding: 8px; color: #666;">用户昵称</td><td style="padding: 8px;">{user_nickname or 'N/A'}</td></tr>
+                </table>
+            </div>
+            """
+            email_service.send_email(PAYMENT_NOTIFY_EMAIL, subject, html)
+            logger.info(f"[Notify] Payment notification sent: {subscription.order_no}")
     except Exception as e:
-        logger.error(f"[Notify] Failed to send payment notification: {e}")
+        logger.error(f"[Notify] Failed to send notification: {e}")
 
 
 # 全局邮件服务实例
