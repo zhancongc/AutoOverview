@@ -14,9 +14,10 @@ class EmailTemplateConfig:
         # 从环境变量读取配置
         self.app_name = os.getenv("AUTH_EMAIL_APP_NAME", "Danmo Scholar")
         self.app_url = os.getenv("AUTH_EMAIL_APP_URL", "#")
+        self.app_url_en = os.getenv("AUTH_EMAIL_APP_URL_EN", "#")
         self.logo_emoji = os.getenv("AUTH_EMAIL_LOGO_EMOJI", "📚")
-        self.contact_email = os.getenv("AUTH_EMAIL_CONTACT_EMAIL", "support@example.com")
-        self.contact_email_en = os.getenv("AUTH_EMAIL_CONTACT_EMAIL_EN", "service@plainkit.top")
+        self.contact_email = os.getenv("AUTH_EMAIL_CONTACT_EMAIL", "service@danmo.tech")
+        self.contact_email_en = os.getenv("AUTH_EMAIL_CONTACT_EMAIL_EN", "service@danmo.tech")
         self.primary_color = os.getenv("AUTH_EMAIL_PRIMARY_COLOR", "#C0392B")
         self.secondary_color = os.getenv("AUTH_EMAIL_SECONDARY_COLOR", "#8E1A1A")
 
@@ -209,6 +210,13 @@ def _get_contact_email(language: str = "zh") -> str:
     return email_config.contact_email
 
 
+def _get_app_url(language: str = "zh") -> str:
+    """根据语言返回站点链接"""
+    if language == "en":
+        return email_config.app_url_en or email_config.app_url
+    return email_config.app_url
+
+
 def get_verification_code_email(code: str, purpose: str = "登录", expire_minutes: int = 10, language: str = "zh") -> str:
     """获取验证码邮件 HTML"""
     return VERIFICATION_CODE_TEMPLATE.render(
@@ -218,7 +226,7 @@ def get_verification_code_email(code: str, purpose: str = "登录", expire_minut
         language=language,
         contact_email=_get_contact_email(language),
         app_name=email_config.app_name,
-        app_url=email_config.app_url,
+        app_url=_get_app_url(language),
         logo_emoji=email_config.logo_emoji,
         primary_color=email_config.primary_color,
     )
@@ -231,7 +239,7 @@ def get_welcome_email(nickname: Optional[str] = None, language: str = "zh") -> s
         language=language,
         contact_email=_get_contact_email(language),
         app_name=email_config.app_name,
-        app_url=email_config.app_url,
+        app_url=_get_app_url(language),
         logo_emoji=email_config.logo_emoji,
         primary_color=email_config.primary_color,
         gradient=email_config.gradient,
