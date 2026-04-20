@@ -282,8 +282,10 @@
     "agreement_label": "我已阅读并同意",
     "agreement_and": "和",
     "other_methods": "其他登录方式",
-    "wechat_coming": "微信登录即将上线",
-    "alipay_coming": "支付宝登录即将上线"
+    "wechat_coming": "暂时不支持微信登录",
+    "alipay_coming": "暂时不支持支付宝登录",
+    "google_coming": "暂时不支持Google登录",
+    "apple_coming": "暂时不支持Apple登录"
   },
   "common": {
     "loading": "加载中...",

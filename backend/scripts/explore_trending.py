@@ -1,24 +1,63 @@
 #!/usr/bin/env python3
 """
-探索 OpenAlex 最新论文数据质量（v2: 使用 topic_id 精确过滤）
+OpenAlex 研究热点探索工具（v4: 支持自定义天数、领域、数量）
+
+用法:
+  python3 scripts/explore_trending.py                        # 所有领域，默认 7 天
+  python3 scripts/explore_trending.py --field llm --days 14  # LLM 领域最近 14 天
+  python3 scripts/explore_trending.py --field crispr --days 30 --max 10
+  python3 scripts/explore_trending.py --list                 # 列出可用领域
+  python3 scripts/explore_trending.py --field llm --days 7 --json  # 输出 JSON
 """
 import subprocess
 import json
+import argparse
+import sys
 from datetime import datetime, timedelta
 from urllib.parse import urlencode
 
 BASE_URL = "https://api.openalex.org"
 
-# 先手动查好 topic_id，避免每次都要查
-# 通过 GET /topics?search=xxx 获取
-FIELDS = [
-    {"name": "大语言模型", "topic_search": "large language model", "topic_id": None},
-    {"name": "AI Agent", "topic_search": "AI agent", "topic_id": None},
-    {"name": "具身智能", "topic_search": "embodied intelligence", "topic_id": None},
-    {"name": "mRNA 疫苗", "topic_search": "mRNA vaccine", "topic_id": None},
-    {"name": "CRISPR 基因编辑", "topic_search": "CRISPR gene editing", "topic_id": None},
-    {"name": "量子计算", "topic_search": "quantum computing", "topic_id": None},
+PREPRINT_SOURCES = [
+    "zenodo", "figshare", "arxiv", "biorxiv", "medrxiv",
+    "chemrxiv", "preprints.org", "ssrn", "researchgate",
+    "academia.edu", "coursera", "slideplayer",
 ]
+
+# 领域配置：key 用于 --field 参数
+FIELDS = {
+    "llm": {
+        "name": "大语言模型 / NLP",
+        "topic_id": "T10181",
+        "topic_name": "Natural Language Processing Techniques",
+        "title_search": "large language model",
+    },
+    "agent": {
+        "name": "AI Agent / 多智能体",
+        "topic_id": "T10456",
+        "topic_name": "Multi-Agent Systems and Negotiation",
+    },
+    "robot": {
+        "name": "具身智能 / 机器人",
+        "topic_id": "T10653",
+        "topic_name": "Robot Manipulation and Learning",
+    },
+    "mrna": {
+        "name": "mRNA / 疫苗",
+        "topic_id": "T10118",
+        "topic_name": "SARS-CoV-2 and COVID-19 Research",
+    },
+    "crispr": {
+        "name": "CRISPR 基因编辑",
+        "topic_id": "T10878",
+        "topic_name": "CRISPR and Genetic Engineering",
+    },
+    "quantum": {
+        "name": "量子计算",
+        "topic_id": "T10682",
+        "topic_name": "Quantum Computing Algorithms and Architecture",
+    },
+}
 
 
 def api_get(endpoint: str, params: dict = None):
@@ -30,23 +69,18 @@ def api_get(endpoint: str, params: dict = None):
     return json.loads(r.stdout)
 
 
-def find_topic_id(search: str):
-    """搜索 topic，返回最佳匹配的 topic id 和名称"""
-    data = api_get("topics", {"search": search, "per_page": 5})
-    if not data or not data.get("results"):
-        return None, None
-    # 取第一个结果
-    top = data["results"][0]
-    topic_id = top.get("id", "").replace("https://openalex.org/", "")
-    name = top.get("display_name", "")
-    return topic_id, name
-
-
 def get_works(params: dict):
     data = api_get("works", params)
     if not data:
         return []
     return data.get("results", [])
+
+
+def is_preprint(w: dict) -> bool:
+    loc = w.get("primary_location") or {}
+    src = loc.get("source") or {}
+    venue = src.get("display_name", "").lower()
+    return any(p in venue for p in PREPRINT_SOURCES)
 
 
 def parse_work(w: dict) -> dict:
@@ -79,7 +113,6 @@ def parse_work(w: dict) -> dict:
 
     topics = [t.get("display_name", "") for t in (w.get("topics") or [])[:3]]
 
-    # 过滤未来日期
     is_future = False
     if pub_date:
         try:
@@ -102,16 +135,21 @@ def parse_work(w: dict) -> dict:
         "has_venue": bool(venue),
         "topics": topics,
         "is_future": is_future,
+        "is_preprint": is_preprint(w),
     }
 
 
+def get_valid(papers: list) -> list:
+    """过滤掉预印本和未来日期"""
+    return [p for p in papers if not p["is_future"] and not p["is_preprint"]]
+
+
 def print_papers(papers: list, label: str, max_show: int = 5):
-    # 过滤掉未来日期的论文
-    valid = [p for p in papers if not p["is_future"]]
-    future_count = len(papers) - len(valid)
+    valid = get_valid(papers)
+    filtered = len(papers) - len(valid)
 
     print(f"\n{'='*80}")
-    print(f"  {label}  —  共 {len(papers)} 篇" + (f"（含 {future_count} 篇未来日期已过滤）" if future_count else ""))
+    print(f"  {label}  —  共 {len(papers)} 篇" + (f"（过滤 {filtered} 篇预印本/未来日期）" if filtered else ""))
     print(f"  展示前 {min(max_show, len(valid))} 篇有效论文")
     print(f"{'='*80}")
     for i, p in enumerate(valid[:max_show], 1):
@@ -124,76 +162,145 @@ def print_papers(papers: list, label: str, max_show: int = 5):
             print(f"      摘要: {p['abstract']}")
 
 
-def explore_field(field: dict):
+def build_works_params(field: dict, date_from: str, per_page: int = 20,
+                       sort: str = "publication_date:desc",
+                       extra_filter: str = "") -> dict:
+    """构建查询参数"""
+    f = f"topics.id:{field['topic_id']},from_publication_date:{date_from},type:article"
+    if extra_filter:
+        f += f",{extra_filter}"
+    title_search = field.get("title_search")
+    if title_search:
+        f += f",title.search:{title_search}"
+    return {"filter": f, "sort": sort, "per_page": per_page}
+
+
+def explore_field(field: dict, days: int = 7, max_show: int = 5, per_page: int = 20):
     name = field["name"]
+    topic_id = field["topic_id"]
+    topic_name = field.get("topic_name", "")
+    title_search = field.get("title_search")
     today = datetime.now().date()
+    date_from = (today - timedelta(days=days)).isoformat()
 
     print(f"\n\n{'#'*80}")
     print(f"## {name}")
-    print(f"## 今日: {today}")
+    print(f"## Topic: {topic_name} ({topic_id})" + (f" + title.search: '{title_search}'" if title_search else ""))
+    print(f"## 时间范围: {date_from} ~ {today.isoformat()}（{days} 天）")
     print(f"{'#'*80}")
 
-    # 查找 topic_id
-    topic_id, topic_name = find_topic_id(field["topic_search"])
-    if not topic_id:
-        print(f"  ❌ 未找到 topic，跳过")
-        return
-
-    print(f"\n  Topic: {topic_name} ({topic_id})")
-
-    # 1. 最近 7 天最新发表
-    week_ago = (today - timedelta(days=7)).isoformat()
-    papers_week = get_works({
-        "filter": f"topics.id:{topic_id},from_publication_date:{week_ago},type:article",
-        "sort": "publication_date:desc",
-        "per_page": 15,
-    })
-    parsed_week = [parse_work(w) for w in papers_week]
-    print_papers(parsed_week, f"最近 7 天最新发表")
-
-    # 2. 最近 30 天高被引
-    month_ago = (today - timedelta(days=30)).isoformat()
-    papers_month = get_works({
-        "filter": f"topics.id:{topic_id},from_publication_date:{month_ago},cited_by_count:>2,type:article",
-        "sort": "cited_by_count:desc",
-        "per_page": 15,
-    })
-    parsed_month = [parse_work(w) for w in papers_month]
-    print_papers(parsed_month, f"最近 30 天高被引 (>2次)")
-
-    # 3. 最近 90 天热门
-    three_months_ago = (today - timedelta(days=90)).isoformat()
-    papers_3m = get_works({
-        "filter": f"topics.id:{topic_id},from_publication_date:{three_months_ago},cited_by_count:>10,type:article",
-        "sort": "cited_by_count:desc",
-        "per_page": 10,
-    })
-    parsed_3m = [parse_work(w) for w in papers_3m]
-    print_papers(parsed_3m, f"最近 90 天热门 (>10次引用)")
+    # 最新发表
+    params = build_works_params(field, date_from, per_page=per_page)
+    papers = get_works(params)
+    parsed = [parse_work(w) for w in papers]
+    print_papers(parsed, f"最近 {days} 天最新发表", max_show=max_show)
 
     # 数据质量
-    valid_week = [p for p in parsed_week if not p["is_future"]]
-    n = len(valid_week)
-    print(f"\n  --- 数据质量（最近7天，过滤未来日期后）---")
-    print(f"  有效论文: {n}")
+    valid = get_valid(parsed)
+    n = len(valid)
+    preprints = sum(p["is_preprint"] for p in parsed)
+    future = sum(p["is_future"] for p in parsed)
+    print(f"\n  --- 数据质量 ---")
+    print(f"  原始: {len(parsed)} 篇")
+    print(f"  预印本: {preprints} 篇  |  未来日期: {future} 篇")
+    print(f"  有效: {n} 篇")
     if n > 0:
-        ha = sum(p['has_abstract'] for p in valid_week)
-        hd = sum(p['has_doi'] for p in valid_week)
-        hv = sum(p['has_venue'] for p in valid_week)
+        ha = sum(p['has_abstract'] for p in valid)
+        hd = sum(p['has_doi'] for p in valid)
+        hv = sum(p['has_venue'] for p in valid)
         print(f"  有摘要: {ha}/{n} ({ha/n*100:.0f}%)")
         print(f"  有 DOI: {hd}/{n} ({hd/n*100:.0f}%)")
         print(f"  有期刊: {hv}/{n} ({hv/n*100:.0f}%)")
 
+    return valid
+
+
+def explore_field_json(field: dict, days: int = 7, per_page: int = 20) -> list:
+    """返回 JSON 格式的有效论文列表"""
+    today = datetime.now().date()
+    date_from = (today - timedelta(days=days)).isoformat()
+
+    params = build_works_params(field, date_from, per_page=per_page)
+    papers = get_works(params)
+    parsed = [parse_work(w) for w in papers]
+    valid = get_valid(parsed)
+
+    # 输出时去掉内部标记
+    output = []
+    for p in valid:
+        output.append({
+            "title": p["title"],
+            "doi": p["doi"],
+            "pub_date": p["pub_date"],
+            "cited": p["cited"],
+            "venue": p["venue"],
+            "authors": p["authors"],
+            "abstract": p["abstract"],
+            "topics": p["topics"],
+        })
+    return output
+
+
+def list_fields():
+    print("可用领域 (--field KEY):")
+    print(f"{'KEY':<12} {'名称':<20} {'Topic ID':<10} {'Topic Name'}")
+    print("-" * 80)
+    for key, f in FIELDS.items():
+        print(f"{key:<12} {f['name']:<20} {f['topic_id']:<10} {f['topic_name']}")
+
 
 def main():
-    for field in FIELDS:
-        explore_field(field)
+    parser = argparse.ArgumentParser(
+        description="OpenAlex 研究热点探索工具",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+示例:
+  %(prog)s                                  所有领域，默认 7 天
+  %(prog)s --field llm --days 14            LLM 领域最近 14 天
+  %(prog)s --field crispr --days 30 --max 10
+  %(prog)s --field llm --days 7 --json      输出 JSON 格式
+  %(prog)s --list                           列出可用领域
+        """,
+    )
+    parser.add_argument("--field", "-f", help="领域 key（如 llm, agent, crispr）")
+    parser.add_argument("--days", "-d", type=int, default=7, help="时间范围（天），默认 7")
+    parser.add_argument("--max", "-m", type=int, default=5, help="每个领域展示最大论文数，默认 5")
+    parser.add_argument("--per-page", "-p", type=int, default=20, help="API 每页请求数，默认 20")
+    parser.add_argument("--list", "-l", action="store_true", help="列出可用领域")
+    parser.add_argument("--json", "-j", action="store_true", help="以 JSON 格式输出")
+    args = parser.parse_args()
 
-    print(f"\n\n{'#'*80}")
-    print("## v2 总结（topic_id 精确过滤 + type:article + 过滤未来日期）")
-    print(f"{'#'*80}")
-    print("  对比 v1 的全文 search，topic_id 方案应该精度更高。")
-    print("  关注：论文是否都和领域相关、摘要质量是否够写科普。")
+    if args.list:
+        list_fields()
+        return
+
+    if args.field:
+        key = args.field.lower()
+        if key not in FIELDS:
+            print(f"未知领域: {key}")
+            print(f"可用领域: {', '.join(FIELDS.keys())}")
+            print(f"用 --list 查看详情")
+            sys.exit(1)
+
+    fields_to_run = (
+        [(args.field, FIELDS[args.field])] if args.field
+        else list(FIELDS.items())
+    )
+
+    if args.json:
+        all_results = {}
+        for key, field in fields_to_run:
+            all_results[key] = explore_field_json(field, days=args.days, per_page=args.per_page)
+        print(json.dumps(all_results, ensure_ascii=False, indent=2))
+    else:
+        for key, field in fields_to_run:
+            explore_field(field, days=args.days, max_show=args.max, per_page=args.per_page)
+
+        print(f"\n\n{'#'*80}")
+        print("## 完成")
+        print(f"{'#'*80}")
+        print(f"  领域: {', '.join(k for k, _ in fields_to_run)}")
+        print(f"  天数: {args.days}")
 
 
 if __name__ == "__main__":

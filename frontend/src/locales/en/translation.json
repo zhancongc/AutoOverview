@@ -257,7 +257,9 @@
     "agreement_and": "and",
     "other_methods": "Other login methods",
     "wechat_coming": "WeChat login coming soon",
-    "alipay_coming": "Alipay login coming soon"
+    "alipay_coming": "Alipay login coming soon",
+    "google_coming": "Google login is not yet available",
+    "apple_coming": "Apple login is not yet available"
   },
   "common": {
     "loading": "Loading...",
