@@ -433,7 +433,7 @@
 }
 
 .oauth-btn:disabled {
-  opacity: 0.4;
+  opacity: 0.55;
   cursor: not-allowed;
 }
 

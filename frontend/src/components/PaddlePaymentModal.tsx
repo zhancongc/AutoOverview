@@ -188,22 +188,26 @@ export function PaddlePaymentModal({ onClose, onPaymentSuccess, planType, record
       <div className="payment-modal" onClick={e => e.stopPropagation()}>
         <button className="payment-modal-close" onClick={handleClose} aria-label="Close">&times;</button>
 
-        {/* Header: Plan Information */}
+        {/* Header: Plan Information — hide price during creating to avoid $0 flash */}
         <div className="payment-modal-header">
           <span className="payment-modal-icon">💳</span>
           <h2 className="payment-modal-title">{t('payment.buy', { name: plan.name })}</h2>
-          <p className="payment-modal-price">
-            <span className="amount">${plan.price}</span>
-            <span className="currency"> {plan.currency}</span>
-          </p>
-          {plan.credits > 0 && (
-            <p className="payment-modal-credits">{t('payment.credits_info', { credits: plan.credits })}</p>
+          {paymentStatus !== 'creating' && (
+            <>
+              <p className="payment-modal-price">
+                <span className="amount">${plan.price}</span>
+                <span className="currency"> {plan.currency}</span>
+              </p>
+              {plan.credits > 0 && (
+                <p className="payment-modal-credits">{t('payment.credits_info', { credits: plan.credits })}</p>
+              )}
+              <ul className="payment-modal-features">
+                {plan.features.map((f: string, i: number) => (
+                  <li key={i}>✓ {f}</li>
+                ))}
+              </ul>
+            </>
           )}
-          <ul className="payment-modal-features">
-            {plan.features.map((f: string, i: number) => (
-              <li key={i}>✓ {f}</li>
-            ))}
-          </ul>
         </div>
 
         {/* Payment Area */}
