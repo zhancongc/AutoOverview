@@ -139,16 +139,6 @@ def refund_credit(user_id: int, db_session: Session, cost: int = 2) -> None:
     user.set_meta("review_credits", new_paid)
     db_session.commit()
 
-    # 发送退款通知邮件
-    from authkit.services.email_service import send_payment_notification
-    send_payment_notification(
-        subscription=None,
-        user_email=user.email or "",
-        user_nickname=user.get_meta("nickname", "") or "",
-        refund_credits=cost,
-        refund_user_id=user_id,
-    )
-
 
 def check_daily_search_limit(user_id: int, db_session: Session) -> tuple[bool, int, int, int]:
     """

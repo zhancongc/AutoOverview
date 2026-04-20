@@ -184,27 +184,27 @@ If you have any questions, feel free to contact us.
 
 
 def send_payment_notification(subscription=None, user_email: str = "", user_nickname: str = "",
-                             refund_credits: int = 0, refund_user_id: int = 0):
+                             refund_amount: str = "", refund_currency: str = "", refund_order_no: str = ""):
     """支付成功或退款时发送通知邮件给管理员"""
     if not PAYMENT_NOTIFY_EMAIL:
         return
 
     try:
-        if refund_credits > 0:
-            subject = f"[额度退还] 用户 {refund_user_id} 退还 {refund_credits} 积分"
+        if refund_amount:
+            subject = f"[退款] {refund_order_no} - {refund_currency} {refund_amount}"
             html = f"""
             <div style="font-family: -apple-system, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-                <h2 style="color: #e74c3c;">🔙 额度退还</h2>
+                <h2 style="color: #e74c3c;">🔙 用户退款</h2>
                 <table style="border-collapse: collapse; width: 100%; font-size: 14px;">
-                    <tr><td style="padding: 8px; border-bottom: 1px solid #eee; color: #666; width: 120px;">退还积分</td><td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>{refund_credits}</strong></td></tr>
-                    <tr><td style="padding: 8px; border-bottom: 1px solid #eee; color: #666;">用户ID</td><td style="padding: 8px; border-bottom: 1px solid #eee;">{refund_user_id}</td></tr>
+                    <tr><td style="padding: 8px; border-bottom: 1px solid #eee; color: #666; width: 120px;">订单号</td><td style="padding: 8px; border-bottom: 1px solid #eee;">{refund_order_no}</td></tr>
+                    <tr><td style="padding: 8px; border-bottom: 1px solid #eee; color: #666;">退款金额</td><td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>{refund_currency} {refund_amount}</strong></td></tr>
                     <tr><td style="padding: 8px; border-bottom: 1px solid #eee; color: #666;">用户邮箱</td><td style="padding: 8px; border-bottom: 1px solid #eee;">{user_email or 'N/A'}</td></tr>
                     <tr><td style="padding: 8px; color: #666;">用户昵称</td><td style="padding: 8px;">{user_nickname or 'N/A'}</td></tr>
                 </table>
             </div>
             """
             email_service.send_email(PAYMENT_NOTIFY_EMAIL, subject, html)
-            logger.info(f"[Notify] Refund notification sent: user {refund_user_id}, {refund_credits} credits")
+            logger.info(f"[Notify] Refund notification sent: {refund_order_no}")
         elif subscription:
             currency = getattr(subscription, 'currency', 'CNY') or 'CNY'
             currency_label = "USD" if currency == "USD" else "CNY"

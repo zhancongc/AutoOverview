@@ -375,6 +375,42 @@ async def paypal_webhook(request: Request, db: Session = Depends(get_db)):
             else:
                 logger.warning(f"[PayPal] Subscription not found for order: {paypal_order_id}")
 
+        elif event_type == "PAYMENT.CAPTURE.REFUNDED":
+            # PayPal 退款通知
+            capture_id = resource.get("id", "")
+            amount = resource.get("amount", {})
+            refund_amount = amount.get("value", "N/A")
+            refund_currency = amount.get("currency_code", "USD")
+
+            # 从 capture 的 links 中提取 order ID
+            paypal_order_id = None
+            for link in resource.get("links", []):
+                if link.get("rel") == "up" and "/checkout/orders/" in link.get("href", ""):
+                    paypal_order_id = link["href"].rstrip("/").split("/")[-1]
+                    break
+
+            user_email = ""
+            user_nickname = ""
+            if paypal_order_id:
+                subscription = _find_subscription_by_paypal_order(db, paypal_order_id)
+                if subscription:
+                    from ..models import User
+                    user = db.query(User).filter(User.id == subscription.user_id).first()
+                    if user:
+                        user_email = user.email or ""
+                        user_nickname = user.get_meta("nickname", "") or ""
+
+            from ..services.email_service import send_payment_notification
+            send_payment_notification(
+                refund_amount=refund_amount,
+                refund_currency=refund_currency,
+                refund_order_no=paypal_order_id or capture_id,
+                user_email=user_email,
+                user_nickname=user_nickname,
+            )
+
+            logger.info(f"[PayPal] Refund processed: order={paypal_order_id}, amount={refund_amount} {refund_currency}")
+
         return {"status": "success"}
 
     except HTTPException:
