@@ -25,7 +25,8 @@
 
 ### 技术架构
 - [async_api.md](async_api.md) - 异步综述生成 API 设计与前端对接
-- [review_generation_flow.md](review_generation_flow.md) - 综述生成全流程（6 个阶段详解）
+- [review_generation_flow.md](review_generation_flow.md) - 综述生成全流程（3 阶段 8 步详解）
+- [slides_generation.md](slides_generation.md) - 幻灯片生成（Markdown → HTML，3 种框架）
 
 ### 开发指南
 - [../CLAUDE.md](../CLAUDE.md) - Claude Code 项目指引（关键约定）

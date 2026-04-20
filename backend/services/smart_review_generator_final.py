@@ -135,7 +135,7 @@ class SmartReviewGeneratorFinal:
                     "target_count": 目标文献数量（默认50篇）,
                     "recent_years_ratio": 近5年文献占比要求（默认0.5）,
                     "english_ratio": 英文文献占比要求（默认0.3）,
-                    "search_platform": 搜索平台（默认"Semantic Scholar"）,
+                    "search_platform": 搜索平台（默认"Danmo Scholar"）,
                     "sort_by": 排序方式（默认"citationCount:desc"）
                 }
         """
@@ -145,6 +145,9 @@ class SmartReviewGeneratorFinal:
         logger.debug("=" * 80)
 
         start_time = time.time()
+
+        # 记录原始搜索数量（预处理前）
+        original_search_count = len(papers)
 
         # === 步骤 1: 预处理论文 ===
         logger.debug("\n[步骤 1] 预处理论文...")
@@ -167,7 +170,7 @@ class SmartReviewGeneratorFinal:
             papers=papers,
             model=model,
             search_params=search_params,
-            total_papers_count=len(papers),
+            total_papers_count=original_search_count,
             language=language
         )
 
@@ -181,7 +184,8 @@ class SmartReviewGeneratorFinal:
         final_content, final_references = self._apply_citation_rules(
             content=raw_content,
             cited_sequence=cited_sequence,
-            all_papers=papers
+            all_papers=papers,
+            original_search_count=original_search_count
         )
 
         # === 步骤 6: 格式化参考文献 (IEEE) ===
@@ -278,9 +282,10 @@ class SmartReviewGeneratorFinal:
             logger.debug(f"[对比矩阵] 论文数量不足 ({len(papers)} 篇)，跳过生成")
             return ""
 
-        # 选择被引次数最高的前 10 篇论文进行对比
+        # 选择被引次数最高的论文进行对比（取前 20 篇，上限 25 篇）
         papers_sorted = sorted(papers, key=lambda p: p.get("cited_by_count", 0), reverse=True)
-        selected_papers = papers_sorted[:10]
+        comparison_count = min(max(20, int(len(papers) * 0.4)), 25)
+        selected_papers = papers_sorted[:comparison_count]
 
         # 构建论文信息
         papers_info = []
@@ -469,7 +474,8 @@ Output only the comparison matrix content in Markdown format."""
         self,
         content: str,
         cited_sequence: List[int],
-        all_papers: List[Dict]
+        all_papers: List[Dict],
+        original_search_count: int = 0
     ) -> Tuple[str, List[Dict]]:
         """
         应用 5 条引用规范
@@ -543,22 +549,38 @@ Output only the comparison matrix content in Markdown format."""
         logger.debug(f"[规范] 引用次数统计: {dict(global_counts)}")
 
         # === 规则 6: 修正正文中声称的论文数量 ===
-        content = self._fix_paper_count_claims(content, len(final_references))
+        content = self._fix_paper_count_claims(content, len(final_references), original_search_count)
 
         return content, final_references
 
-    def _fix_paper_count_claims(self, content: str, actual_count: int) -> str:
+    def _fix_paper_count_claims(self, content: str, final_cited_count: int, total_searched_count: int = 0) -> str:
         """
-        修正正文中声称的论文数量，使其与最终实际引用数量一致。
-        解决"精选出40篇"但实际只有27篇参考文献的不一致问题。
+        修正正文中声称的论文数量，使其与实际一致。
+        解决"搜索到72篇精选了41篇"但正文说反了的问题。
         """
 
+        # 修正"检索到/搜索到/检索获得 X 篇" → 原始搜索数量
+        if total_searched_count > 0:
+            def replace_searched(match):
+                prefix = match.group(1)
+                old_num = int(match.group(2))
+                if old_num != total_searched_count:
+                    logger.debug(f"[数字校正] '{prefix}{old_num}篇' -> '{prefix}{total_searched_count}篇' (原始搜索数)")
+                return f'{prefix}{total_searched_count}篇'
+
+            content = re.sub(
+                r'(检索到|搜索到|检索获得|搜索获得|检索了|找到了|共检索到|共搜索到)\s*(?:约\s*)?(\d+)\s*篇',
+                replace_searched,
+                content
+            )
+
+        # 修正"精选出 X 篇"等 → 最终引用数量
         def replace_count(match):
             prefix = match.group(1)  # "精选" "筛选" 等前缀词
             old_num = int(match.group(2))
-            if old_num != actual_count:
-                logger.debug(f"[数字校正] '{prefix}{old_num}篇' -> '{prefix}{actual_count}篇' (实际引用数)")
-            return f'{prefix}{actual_count}篇'
+            if old_num != final_cited_count:
+                logger.debug(f"[数字校正] '{prefix}{old_num}篇' -> '{prefix}{final_cited_count}篇' (最终引用数)")
+            return f'{prefix}{final_cited_count}篇'
 
         # 匹配 "精选出 X 篇" "筛选出了 X 篇" 等
         content = re.sub(
@@ -571,9 +593,9 @@ Output only the comparison matrix content in Markdown format."""
         def replace_x_documents(match):
             old_num = int(match.group(1))
             suffix = match.group(2)
-            if old_num != actual_count:
-                logger.debug(f"[数字校正] '{old_num}篇{suffix}' -> '{actual_count}篇{suffix}'")
-            return f'{actual_count}篇{suffix}'
+            if old_num != final_cited_count:
+                logger.debug(f"[数字校正] '{old_num}篇{suffix}' -> '{final_cited_count}篇{suffix}'")
+            return f'{final_cited_count}篇{suffix}'
 
         content = re.sub(
             r'(\d+)\s*篇(核心|相关|重要|关键)文献',
@@ -1187,7 +1209,7 @@ Now please start writing. First design the review structure (outline), then writ
         search_years = search_params.get("search_years", 10)
         target_count = search_params.get("target_count", 50)
         recent_years_ratio = search_params.get("recent_years_ratio", 0.5)
-        search_platform = search_params.get("search_platform", "Semantic Scholar")
+        search_platform = search_params.get("search_platform", "Danmo Scholar")
         sort_by = search_params.get("sort_by", "被引量降序" if language == "zh" else "citation count descending")
 
         # 构建描述

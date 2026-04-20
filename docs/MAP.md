@@ -1,6 +1,6 @@
 # 项目文件目录
 
-> 最后更新: 2026-04-18
+> 最后更新: 2026-04-20
 >
 > 本文档展示项目整体结构和文档目录。
 > 如需文档导航，请查看 [INDEX.md](INDEX.md)。
@@ -37,6 +37,7 @@ docs/
 ├── 📄 STATS.md                      # 统计功能文档
 ├── 📄 async_api.md                  # 异步 API 设计
 ├── 📄 review_generation_flow.md     # 综述生成流程
+├── 📄 slides_generation.md          # 幻灯片生成（3种框架）
 ├── 📄 smart_review_generator.md     # 综述生成器文档
 ├── 📄 function_calling_unified.md   # Function Calling 实现
 ├── 📄 advanced_features.md          # 高级功能说明

@@ -14,9 +14,11 @@ AutoOverview 是一个 AI 驱动的文献综述生成平台，支持中英文双
 
 ## 核心流程
 
-1. **阶段1**: PaperSearchAgent - LLM + Function Calling 驱动的文献检索（OpenAlex）
-2. **阶段2**: SmartReviewGeneratorFinal - 生成综述（预处理 → 初始生成 → 5条引用规范应用 → IEEE 格式）
-3. **阶段3**: CitationValidatorV2 - 额外引用校验和修复
+1. **阶段1**: PaperSearchAgent - LLM + Function Calling 驱动的文献检索（OpenAlex 优先 + Semantic Scholar 兜底）
+2. **阶段2**: SmartReviewGeneratorFinal - 生成综述（8步：预处理 → 对比矩阵 → 初始生成 → 引用提取 → 6条引用规范 → IEEE 格式 → 合并 → 验证）
+3. **阶段3**: CitationValidatorV2 - 额外引用校验和修复（arXiv 处理、Unicode 修复等）
+
+> 详细流程参见 [docs/review_generation_flow.md](docs/review_generation_flow.md)
 
 ## 关键约定
 

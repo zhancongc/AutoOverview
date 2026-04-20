@@ -2,15 +2,16 @@
 
 ## 概述
 
-本文档描述了论文综述生成器的**当前**完整生成流程（2026-04-07 更新）。该流程采用 **3 阶段架构**：
-- **阶段1**: PaperSearchAgent - LLM 驱动的智能文献检索
-- **阶段2**: SmartReviewGeneratorFinal - 符合 5 条引用规范的综述生成
-- **阶段3**: CitationValidatorV2 - 额外引用校验和修复
+本文档描述了论文综述生成器的**当前**完整生成流程（2026-04-20 更新）。该流程采用 **3 阶段架构**：
+- **阶段1**: PaperSearchAgent - LLM 驱动的智能文献检索（OpenAlex 优先 + Semantic Scholar 兜底，对外展示为 Danmo Scholar）
+- **阶段2**: SmartReviewGeneratorFinal - 符合 6 条引用规范的综述生成（含对比矩阵）
+- **阶段3**: CitationValidatorV2 - 额外引用校验和修复（arXiv 处理、Unicode 修复等）
 
 ## 版本信息
 
 | 版本 | 日期 | 主要更新 |
 |------|------|----------|
+| 6.1 | 2026-04-20 | 数据源改为 Danmo Scholar、修复论文数量颠倒 bug、对比矩阵扩至前 20 篇 |
 | 6.0 | 2026-04-07 | **3 阶段简化架构**、PaperSearchAgent、SmartReviewGeneratorFinal、CitationValidatorV2 |
 | 5.1 | 2026-04-03 | 阶段记录追踪、代码复用重构、Temperature优化 |
 | 5.0 | 2026-04-03 | Function Calling 统一版本、增强相关性评分 |
@@ -23,9 +24,10 @@
 |-----------|------|------|
 | `ReviewTaskExecutor` | `services/review_task_executor.py` | **主流程协调器** |
 | `PaperSearchAgent` | `services/paper_search_agent.py` | **阶段1**: LLM + Function Calling 文献检索 |
-| `SmartReviewGeneratorFinal` | `services/smart_review_generator_final.py` | **阶段2**: 综述生成（含 5 条引用规范） |
+| `SmartReviewGeneratorFinal` | `services/smart_review_generator_final.py` | **阶段2**: 综述生成（含 6 条引用规范） |
 | `CitationValidatorV2` | `services/citation_validator_v2.py` | **阶段3**: 引用校验和修复 |
-| `SemanticScholarService` | `services/semantic_scholar_search.py` | Semantic Scholar API 封装 |
+| `OpenAlexService` | `services/openalex_search.py` | OpenAlex API 封装（**主数据源**，免费无需 Key） |
+| `SemanticScholarService` | `services/semantic_scholar_search.py` | Semantic Scholar API 封装（备用数据源） |
 | `StageRecorder` | `services/stage_recorder.py` | 阶段记录服务（数据库追踪） |
 
 ## 完整流程（当前）
@@ -39,7 +41,7 @@
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                      ReviewTaskExecutor.execute_task()                        │
 │                                                                             │
-│  1. 创建任务记录、获取执行槽位（最多3个并发）                                  │
+│  1. 创建任务记录、获取执行槽位（最多20个并发，30分钟超时）                   │
 │  2. 执行阶段1 ─────────────────────────────────────────────────────────┐  │
 │  3. 执行阶段2                                                         │  │
 │  4. 执行阶段3                                                         │  │
@@ -53,9 +55,16 @@
 │  ║                                                                         ║ │  │
 │  ║  输入: topic                                                           ║ │  │
 │  ║  模型: deepseek-reasoner                                               ║ │  │
-│  ║  工具: Function Calling (search_papers, get_paper_details)           ║ │  │
-│  ║  数据源: Semantic Scholar                                              ║ │  │
+│  ║  工具: Function Calling (search_papers, search_by_exact_title)       ║ │  │
+│  ║  数据源: OpenAlex（主）→ Semantic Scholar（兜底，<20篇时触发）        ║ │  │
 │  ║  输出: all_papers (List[Dict])                                        ║ │  │
+│  ║                                                                         ║ │  │
+│  ║  搜索策略:                                                             ║ │  │
+│  ║  1. LLM 识别核心 3-5 篇论文 → search_by_exact_title                  ║ │  │
+│  ║  2. LLM 为每个子方向生成英文检索词 → search_papers                    ║ │  │
+│  ║  3. 所有工具调用并发执行（2轮机会）                                    ║ │  │
+│  ║  4. 兜底: 无结果时用主题直接搜索，中文无结果时翻译成英文再搜索        ║ │  │
+│  ║  5. 结果按引用量降序排序、去重合并                                      ║ │  │
 │  ╚═══════════════════════════════════════════════════════════════════════╝ │  │
 └───────────────────────────────┬─────────────────────────────────────────┘  │
                                 │                                            │
@@ -64,20 +73,22 @@
 │  ╔═══════════════════════════════════════════════════════════════════════╗ │  │
 │  ║ 【阶段2】SmartReviewGeneratorFinal - 综述生成                           ║ │  │
 │  ║                                                                         ║ │  │
-│  ║  步骤 1: 预处理论文（清洗、去重）                                        ║ │  │
-│  ║  步骤 2: 生成初始综述（Function Calling 渐进式信息披露）                  ║ │  │
-│  ║  步骤 3: 提取引用序列                                                   ║ │  │
-│  ║  步骤 4: 应用 5 条引用规范 ════════════════════════════════════════╗ ║ │  │
+│  ║  步骤 1: 预处理论文（清洗、去重、补充缺失字段、按被引量排序）          ║ │  │
+│  ║  步骤 2: 生成对比矩阵（取被引最高前20篇，上限25篇，观点对比+分歧分析）║ │  │
+│  ║  步骤 3: 生成初始综述（Function Calling 渐进式信息披露）              ║ │  │
+│  ║  步骤 4: 提取引用序列（按出现顺序记录 [1],[2,3] 等）                  ║ │  │
+│  ║  步骤 5: 应用 6 条引用规范 ════════════════════════════════════════╗ ║ │  │
 │  ║          1. 参考文献列表中没有的文献，正文中禁止引用                  ║ ║ │  │
 │  ║          2. 正文引用的文献，参考文献列表中的文献应该是对应的          ║ ║ │  │
 │  ║          3. 正文中引用编号顺序必须是从1开始，依次递增的               ║ ║ │  │
 │  ║          4. 同一个文献禁止引用超过2次                                  ║ ║ │  │
 │  ║          5. 正文中没有引用的文献，参考文献列表禁止列出                ║ ║ │  │
-│  ║  步骤 5: 格式化参考文献（IEEE 格式）                                    ║ ║ │  │
-│  ║  步骤 6: 合并最终内容（正文 + 参考文献）                                ║ ║ │  │
-│  ║  步骤 7: 最终验证                                                       ║ ║ │  │
-│  ║                                                                         ║ ║ │  │
-│  ║  输出: {review, cited_papers, validation}                             ║ ║ │  │
+│  ║          6. 修正正文中声称的论文数量（检索数+精选数分别修正）        ║ ║ │  │
+│  ║  步骤 6: 格式化参考文献（IEEE 格式，DOI验证，可信出版商过滤）        ║ │  │
+│  ║  步骤 7: 合并最终内容（正文 + 参考文献，中英文标题）                  ║ │  │
+│  ║  步骤 8: 最终验证（检查 6 条规范是否全部满足）                        ║ │  │
+│  ║                                                                         ║ │  │
+│  ║  输出: {review, cited_papers, validation}                             ║ │  │
 │  ╚═══════════════════════════════════════════════════════════════════════╝ ║ │  │
 └───────────────────────────────┬─────────────────────────────────────────┘  │
                                 │                                            │
@@ -86,13 +97,19 @@
 │  ╔═══════════════════════════════════════════════════════════════════════╗ │  │
 │  ║ 【阶段3】CitationValidatorV2 - 额外引用校验                             ║ │  │
 │  ║                                                                         ║ │  │
-│  ║  - 检查引用编号连续性                                                   ║ │  │
-│  ║  - 检查引用与参考文献匹配                                               ║ │  │
-│  ║  - 自动修复发现的问题                                                   ║ │  │
+│  ║  - 检查引用编号连续性，确保编号从 1 开始无跳跃                        ║ │  │
+│  ║  - 检查引用与参考文献匹配，自动映射编号                                ║ │  │
+│  ║  - 限制每篇文献最多 2 次引用                                          ║ │  │
+│  ║  - arXiv 预印本处理（从 DOI/摘要/paper ID 提取 arXiv ID）            ║ │  │
+│  ║  - Unicode 作者名修复（如 K¨okçü → Kökçü）                           ║ │  │
+│  ║  - 过滤"佚名"、"Anonymous"等无效作者                                  ║ │  │
+│  ║  - DOI 验证（只保留可信出版商：IEEE、ACM、Nature 等）                 ║ │  │
+│  ║  - 当年会议论文降级处理（可能未正式出版）                              ║ │  │
+│  ║  - 自动修复发现的所有问题                                              ║ │  │
 │  ║                                                                         ║ │  │
 │  ║  输出: {valid, fixed_content, fixed_references, issues}               ║ │  │
 │  ╚═══════════════════════════════════════════════════════════════════════╝ │  │
-└───────────────────────────────┬─────────────────────────────────────────┘
+└───────────────────────────────┬─────────────────────────────────────────┘  │
                                 │
                                 ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -101,7 +118,7 @@
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-## 5 条引用规范（SmartReviewGeneratorFinal 内置）
+## 6 条引用规范（SmartReviewGeneratorFinal 内置）
 
 ```python
 1. ✅ 参考文献列表中没有的文献，正文中禁止引用
@@ -109,6 +126,7 @@
 3. ✅ 正文中引用编号顺序必须是从1开始，依次递增的
 4. ✅ 同一个文献禁止引用超过2次
 5. ✅ 正文中没有引用的文献，参考文献列表禁止列出
+6. ✅ 修正正文中声称的论文数量（检索数+精选数分别修正，防止数量颠倒）
 ```
 
 ## Function Calling 渐进式信息披露（阶段2）
@@ -169,7 +187,8 @@
 | 阶段1: 文献检索 | `backend/services/paper_search_agent.py` |
 | 阶段2: 综述生成 | `backend/services/smart_review_generator_final.py` |
 | 阶段3: 引用校验 | `backend/services/citation_validator_v2.py` |
-| Semantic Scholar | `backend/services/semantic_scholar_search.py` |
+| OpenAlex（主数据源） | `backend/services/openalex_search.py` |
+| Semantic Scholar（备用） | `backend/services/semantic_scholar_search.py` |
 | 阶段记录 | `backend/services/stage_recorder.py` |
 
 ---
@@ -192,4 +211,3 @@
 - `paper_field_classifier.py`
 - `scholarflux_wrapper.py`
 - 等等...
-

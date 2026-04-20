@@ -93,6 +93,7 @@ class ReviewTaskExecutor:
 
 
             # 使用 OpenAlex 检索（精度与 SS 同级，无需 API Key，速率更高）
+            # 方法论描述中使用 "Danmo Scholar" 作为对外展示的数据源名称
             search_service = get_openalex_service()
             search_agent = PaperSearchAgent(ss_service=search_service)
             all_papers = await search_agent.search(
