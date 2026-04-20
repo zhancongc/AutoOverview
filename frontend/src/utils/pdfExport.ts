@@ -36,7 +36,7 @@ export async function exportToPdf(
         ctx.save()
         ctx.translate(x, y)
         ctx.rotate(-35 * Math.PI / 180)
-        ctx.fillText('AutoOverview', 0, 0)
+        ctx.fillText('Danmo Scholar', 0, 0)
         ctx.restore()
       }
     }

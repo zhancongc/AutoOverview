@@ -379,7 +379,7 @@ export function ProfilePageInternational() {
       }
     } catch (err) {
       console.error('Close account error:', err)
-      alert('Failed to close account. Please contact support@snappicker.com')
+      alert('Failed to close account. Please contact scholar@danmo.tech')
     }
   }
 
@@ -438,7 +438,7 @@ export function ProfilePageInternational() {
       <nav className="home-nav">
         <div className="nav-logo" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
           <span className="logo-icon">📚</span>
-          <span className="logo-text">AutoOverview</span>
+          <span className="logo-text">Danmo Scholar</span>
         </div>
         <div className="nav-links">
           <a href="/" className={location.pathname === '/' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigate('/') }}>Home</a>
@@ -461,7 +461,7 @@ export function ProfilePageInternational() {
       <aside className={`mobile-sidebar ${mobileMenuOpen ? 'sidebar-open' : ''}`}>
         <div className="sidebar-header">
           <span className="logo-icon">📚</span>
-          <span className="logo-text">AutoOverview</span>
+          <span className="logo-text">Danmo Scholar</span>
           <button className="sidebar-close" onClick={() => setMobileMenuOpen(false)}>&times;</button>
         </div>
         <nav className="sidebar-links">
@@ -708,7 +708,7 @@ export function ProfilePageInternational() {
       {/* Footer */}
       <footer className="profile-footer">
         <div className="footer-content">
-          <p className="footer-copyright">© 2026 AutoOverview. All rights reserved.</p>
+          <p className="footer-copyright">© 2026 Danmo Scholar. All rights reserved.</p>
           <div className="footer-links">
             <a href="/terms-and-conditions" className="footer-link">Terms & Conditions</a>
             <span className="footer-separator">•</span>

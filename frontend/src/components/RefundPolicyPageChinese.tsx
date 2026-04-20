@@ -154,8 +154,8 @@ export function RefundPolicyPageChinese() {
           <p>
             要请求退款或报告技术问题，请联系我们：
             <br />
-            <a href="mailto:service@snappicker.com" className="legal-link">
-              service@snappicker.com
+            <a href="mailto:scholar@danmo.tech" className="legal-link">
+              scholar@danmo.tech
             </a>
           </p>
 
@@ -239,12 +239,12 @@ export function RefundPolicyPageChinese() {
           <p>
             有关本退款政策或退款请求的问题：
             <br />
-            <a href="mailto:service@snappicker.com" className="legal-link">
-              service@snappicker.com
+            <a href="mailto:scholar@danmo.tech" className="legal-link">
+              scholar@danmo.tech
             </a>
             <br />
-            <a href="mailto:support@snappicker.com" className="legal-link">
-              support@snappicker.com
+            <a href="mailto:scholar@danmo.tech" className="legal-link">
+              scholar@danmo.tech
             </a>
           </p>
         </section>

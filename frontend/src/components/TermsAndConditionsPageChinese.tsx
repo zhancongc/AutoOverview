@@ -182,8 +182,8 @@ export function TermsAndConditionsPageChinese() {
           <p>
             有关这些用户协议的问题，请联系我们：
             <br />
-            <a href="mailto:support@snappicker.com" className="legal-link">
-              support@snappicker.com
+            <a href="mailto:scholar@danmo.tech" className="legal-link">
+              scholar@danmo.tech
             </a>
           </p>
         </section>

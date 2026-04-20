@@ -195,25 +195,25 @@ export function PrivacyPolicyPageChinese() {
           <h3>8.2 数据删除</h3>
           <p>
             要在 30 天保留期之前请求删除您的个人数据，或者如果您已经
-            关闭了账户，请联系我们 privacy@autooverview.snappicker.com。我们将
+            关闭了账户，请联系我们 scholar@danmo.tech。我们将
             在 30 天内处理您的请求，但法律保留要求除外。
           </p>
 
           <h3>8.3 数据访问与可移植性</h3>
           <p>
-            您可以通过联系我们 privacy@autooverview.snappicker.com 请求您的个人数据副本。
+            您可以通过联系我们 scholar@danmo.tech 请求您的个人数据副本。
             我们将在 30 天内以结构化格式提供您的数据。
           </p>
 
           <h3>8.4 数据更正</h3>
           <p>
-            要更新或更正不准确的信息，请联系我们 support@snappicker.com，
+            要更新或更正不准确的信息，请联系我们 scholar@danmo.tech，
             提供您希望更改的信息的详细信息。
           </p>
 
           <h3>8.5 反对与选择退出</h3>
           <p>
-            您可以通过联系我们 privacy@autooverview.snappicker.com 反对某些数据处理活动
+            您可以通过联系我们 scholar@danmo.tech 反对某些数据处理活动
             或选择退出营销通信。
           </p>
         </section>
@@ -241,8 +241,8 @@ export function PrivacyPolicyPageChinese() {
           <p>
             有关本隐私政策或您的个人数据的问题，请联系我们：
             <br />
-            <a href="mailto:privacy@autooverview.snappicker.com" className="legal-link">
-              privacy@autooverview.snappicker.com
+            <a href="mailto:scholar@danmo.tech" className="legal-link">
+              scholar@danmo.tech
             </a>
           </p>
         </section>

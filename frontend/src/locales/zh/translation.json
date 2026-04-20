@@ -41,10 +41,10 @@
       "verify_citations_link": "免费验证其引文真实性"
     },
     "social_proof": {
-      "text": "已有 <strong>250+</strong> 位同学通过 AutoOverview 累计节省了 <strong>10,000+</strong> 小时"
+      "text": "已有 <strong>250+</strong> 位同学通过澹墨学术累计节省了 <strong>10,000+</strong> 小时"
     },
     "features": {
-      "title": "为什么选择 AutoOverview？",
+      "title": "为什么选择澹墨学术？",
       "papers": "基于真实论文元数据，LLM 仅填充内容",
       "papers_desc": "综述骨架由确定存在的论文构建，附 Anti-Hallucination Report（DOI 验证列表）",
       "time": "聚焦近 6 年前沿研究，精准时效",
@@ -53,7 +53,7 @@
       "format_desc": "背景、现状、争论点、结论、未来方向 — 学术级 Outline 逻辑"
     },
     "comparison": {
-      "title": "AutoOverview vs 传统方式",
+      "title": "澹墨学术 vs 传统方式",
       "traditional_label": "传统方式",
       "traditional_step1": "Step 1",
       "traditional_step1_desc": "手动检索数据库",
@@ -65,7 +65,7 @@
       "traditional_step4_desc": "反复修改引用格式",
       "traditional_result_time": "耗时：2-4 周",
       "traditional_result_mood": "疲惫不堪 😫",
-      "auto_label": "AutoOverview",
+      "auto_label": "澹墨学术",
       "auto_step1": "Step 1",
       "auto_step1_desc": "输入研究主题",
       "auto_step2": "Step 2",
@@ -87,7 +87,7 @@
         "con3": "❌ 缺乏学术级 Outline 逻辑"
       },
       "autooverview": {
-        "title": "AutoOverview",
+        "title": "澹墨学术",
         "pro1": "✅ 交付可直接投稿的结构化初稿",
         "pro2": "✅ 基于真实论文元数据，附 DOI 验证",
         "pro3": "✅ 学术级 Outline：背景→争论点→结论"
@@ -245,7 +245,7 @@
     }
   },
   "nav": {
-    "logo": "AutoOverview",
+    "logo": "澹墨学术",
     "home": "首页",
     "pricing": "定价",
     "profile": "个人中心",
@@ -266,7 +266,7 @@
     "register_desc": "请输入邮箱获取验证码",
     "logining": "登录中...",
     "registering": "注册中...",
-    "welcome": "欢迎使用 AutoOverview",
+    "welcome": "欢迎使用澹墨学术",
     "email_placeholder": "请输入邮箱",
     "code_placeholder": "请输入6位验证码",
     "login_button": "登录",
@@ -333,7 +333,7 @@
   },
   "search_papers": {
     "meta": {
-      "title": "搜索相关学术文献 - 免费工具 | AutoOverview",
+      "title": "搜索相关学术文献 - 免费工具 | 澹墨学术",
       "description": "免费搜索相关学术文献。输入论文标题，从2亿+论文中发现相关文献。"
     },
     "nav": {
@@ -398,7 +398,7 @@
     },
     "cta": {
       "title": "需要一篇完整的文献综述？",
-      "description": "AutoOverview 生成可直接投稿的结构化综述，含 DOI 可验证引用。从研究背景到学术争议到结论。",
+      "description": "澹墨学术生成可直接投稿的结构化综述，含 DOI 可验证引用。从研究背景到学术争议到结论。",
       "button": "生成完整文献综述",
       "view_result": "查看综述",
       "badge": "免费工具 by"

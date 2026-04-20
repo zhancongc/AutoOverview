@@ -143,7 +143,7 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
       <nav className="home-nav">
         <div className="nav-logo" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
           <span className="logo-icon">📚</span>
-          <span className="logo-text">AutoOverview</span>
+          <span className="logo-text">Danmo Scholar</span>
         </div>
         <div className="nav-links">
           <a href="/" className={location.pathname === '/' ? 'active' : ''} onClick={(e) => {
@@ -210,7 +210,7 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
       <aside className={`mobile-sidebar ${mobileMenuOpen ? 'sidebar-open' : ''}`}>
         <div className="sidebar-header">
           <span className="logo-icon">📚</span>
-          <span className="logo-text">AutoOverview</span>
+          <span className="logo-text">Danmo Scholar</span>
           <button className="sidebar-close" onClick={() => setMobileMenuOpen(false)} aria-label="Close menu">&times;</button>
         </div>
         <nav className="sidebar-links">

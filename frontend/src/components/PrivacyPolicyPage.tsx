@@ -1,6 +1,6 @@
 /**
  * Privacy Policy Page - International Version
- * Privacy practices for AutoOverview SaaS service
+ * Privacy practices for Danmo Scholar SaaS service
  */
 import { Link } from 'react-router-dom'
 import './LegalPages.css'
@@ -17,7 +17,7 @@ export function PrivacyPolicyPage() {
         <section className="legal-section">
           <h2>1. Introduction</h2>
           <p>
-            AutoOverview ("we," "our," or "us") respects your privacy and is committed to protecting your
+            Danmo Scholar ("we," "our," or "us") respects your privacy and is committed to protecting your
             personal data. This privacy policy explains how we collect, use, disclose, and safeguard your
             information when you use our AI-assisted literature review tool.
           </p>
@@ -209,7 +209,7 @@ export function PrivacyPolicyPage() {
           <h3>8.2 Data Deletion</h3>
           <p>
             You may request deletion of your personal data at any time by contacting us at
-            privacy@autooverview.snappicker.com. We will process your request within 30 days, subject to
+            scholar@danmo.tech. We will process your request within 30 days, subject to
             legal retention requirements. Upon request, we will delete:
           </p>
           <ul>
@@ -221,20 +221,20 @@ export function PrivacyPolicyPage() {
 
           <h3>8.3 Data Access & Portability</h3>
           <p>
-            You can request a copy of your personal data by contacting us at privacy@autooverview.snappicker.com.
+            You can request a copy of your personal data by contacting us at scholar@danmo.tech.
             We will provide your data in a structured format within 30 days.
           </p>
 
           <h3>8.4 Data Correction</h3>
           <p>
-            To update or correct inaccurate information, please contact us at support@snappicker.com with
+            To update or correct inaccurate information, please contact us at scholar@danmo.tech with
             the details of the information you wish to change.
           </p>
 
           <h3>8.5 Objection & Opt-Out</h3>
           <p>
             You can object to certain data processing activities or opt-out of marketing communications
-            by contacting us at privacy@autooverview.snappicker.com.
+            by contacting us at scholar@danmo.tech.
           </p>
         </section>
 
@@ -266,7 +266,7 @@ export function PrivacyPolicyPage() {
             <li>Right to equal service and price</li>
           </ul>
           <p>
-            To exercise these rights, please contact us at privacy@autooverview.snappicker.com
+            To exercise these rights, please contact us at scholar@danmo.tech
           </p>
         </section>
 
@@ -302,14 +302,14 @@ export function PrivacyPolicyPage() {
           <p>
             For questions about this Privacy Policy or your personal data, please contact us at:
             <br />
-            <a href="mailto:privacy@autooverview.snappicker.com" className="legal-link">
-              privacy@autooverview.snappicker.com
+            <a href="mailto:scholar@danmo.tech" className="legal-link">
+              scholar@danmo.tech
             </a>
           </p>
         </section>
 
         <footer className="legal-footer">
-          <p>© 2026 AutoOverview. All rights reserved.</p>
+          <p>© 2026 Danmo Scholar. All rights reserved.</p>
         </footer>
       </div>
     </div>

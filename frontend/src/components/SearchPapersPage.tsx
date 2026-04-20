@@ -565,7 +565,7 @@ export function SearchPapersPage() {
       <nav className="home-nav">
         <div className="nav-logo" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
           <span className="logo-icon">📚</span>
-          <span className="logo-text">{isChineseSite ? '澹墨学术' : 'AutoOverview'}</span>
+          <span className="logo-text">{isChineseSite ? '澹墨学术' : 'Danmo Scholar'}</span>
         </div>
         <div className="nav-links">
           <a href="/" className={location.pathname === '/' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigate('/') }}>{t('nav.home')}</a>
@@ -604,7 +604,7 @@ export function SearchPapersPage() {
       <aside className={`mobile-sidebar ${mobileMenuOpen ? 'sidebar-open' : ''}`}>
         <div className="sidebar-header">
           <span className="logo-icon">📚</span>
-          <span className="logo-text">{isChineseSite ? '澹墨学术' : 'AutoOverview'}</span>
+          <span className="logo-text">{isChineseSite ? '澹墨学术' : 'Danmo Scholar'}</span>
           <button className="sidebar-close" onClick={() => setMobileMenuOpen(false)}>&times;</button>
         </div>
         <nav className="sidebar-links">
@@ -915,7 +915,7 @@ export function SearchPapersPage() {
               )
             })()}
             <p className="sp-cta-badge">
-              {t('search_papers.cta.badge')} <a href="/">{isChineseSite ? '澹墨学术' : 'AutoOverview'}</a>
+              {t('search_papers.cta.badge')} <a href="/">{isChineseSite ? '澹墨学术' : 'Danmo Scholar'}</a>
             </p>
           </div>
         </div>

@@ -1,6 +1,6 @@
 /**
  * Refund Policy Page - International Version
- * Refund terms for AutoOverview SaaS service
+ * Refund terms for Danmo Scholar SaaS service
  */
 import { Link } from 'react-router-dom'
 import './LegalPages.css'
@@ -17,12 +17,12 @@ export function RefundPolicyPage() {
         <section className="legal-section">
           <h2>1. Overview</h2>
           <p>
-            At AutoOverview, we strive to provide a high-quality AI-assisted literature review tool.
+            At Danmo Scholar, we strive to provide a high-quality AI-assisted literature review tool.
             This Refund Policy outlines the circumstances under which refunds may be issued.
             Please read this policy carefully before making a purchase.
           </p>
           <p className="policy-highlight">
-            <strong>Important:</strong> AutoOverview is a low-frequency, essential academic SaaS tool.
+            <strong>Important:</strong> Danmo Scholar is a low-frequency, essential academic SaaS tool.
             Due to the nature of AI-assisted content and immediate service delivery, refunds are handled
             differently than traditional products.
           </p>
@@ -176,8 +176,8 @@ export function RefundPolicyPage() {
           <p>
             To request a refund or report a technical issue, contact us at:
             <br />
-            <a href="mailto:service@snappicker.com" className="legal-link">
-              service@snappicker.com
+            <a href="mailto:scholar@danmo.tech" className="legal-link">
+              scholar@danmo.tech
             </a>
           </p>
 
@@ -261,7 +261,7 @@ export function RefundPolicyPage() {
 
           <h3>11.1 Low-Frequency, Essential Service</h3>
           <p>
-            AutoOverview is designed as a low-frequency but essential AI-assisted tool for academic work. Unlike
+            Danmo Scholar is designed as a low-frequency but essential AI-assisted tool for academic work. Unlike
             subscription services with recurring monthly charges, our credit-based model allows you to pay
             for what you need, when you need it.
           </p>
@@ -289,18 +289,18 @@ export function RefundPolicyPage() {
           <p>
             For questions about this Refund Policy or refund requests:
             <br />
-            <a href="mailto:service@snappicker.com" className="legal-link">
-              service@snappicker.com
+            <a href="mailto:scholar@danmo.tech" className="legal-link">
+              scholar@danmo.tech
             </a>
             <br />
-            <a href="mailto:support@snappicker.com" className="legal-link">
-              support@snappicker.com
+            <a href="mailto:scholar@danmo.tech" className="legal-link">
+              scholar@danmo.tech
             </a>
           </p>
         </section>
 
         <footer className="legal-footer">
-          <p>© 2026 AutoOverview. All rights reserved.</p>
+          <p>© 2026 Danmo Scholar. All rights reserved.</p>
         </footer>
       </div>
     </div>

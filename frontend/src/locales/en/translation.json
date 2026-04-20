@@ -48,7 +48,7 @@
       "text": "Trusted by <strong>10,000+</strong> researchers worldwide"
     },
     "features": {
-      "title": "Why Choose AutoOverview?",
+      "title": "Why Choose Danmo Scholar?",
       "papers": "Real Paper Metadata, AI-Assisted Analysis",
       "papers_desc": "Literature review framework built on verified papers. AI assists in extracting key insights and structuring your analysis.",
       "time": "Focus on Last 6 Years - Frontier Research Only",
@@ -57,8 +57,8 @@
       "format_desc": "Background → Current Status → Debates → Conclusions → Future Directions. A structured framework for you to build upon."
     },
     "comparison": {
-      "title": "AutoOverview vs Elicit",
-      "subtitle": "Why researchers choose AutoOverview",
+      "title": "Danmo Scholar vs Elicit",
+      "subtitle": "Why researchers choose Danmo Scholar",
       "free_ai": {
         "title": "Elicit / Scite / Paperpal",
         "con1": "❌ Fragmented summary aggregation, not structured drafts",
@@ -67,7 +67,7 @@
         "con4": "❌ Just a search assistant, not a research copilot"
       },
       "autooverview": {
-        "title": "AutoOverview",
+        "title": "Danmo Scholar",
         "pro1": "✅ AI-assisted structured literature organization",
         "pro2": "✅ Built on real paper metadata, with DOI verification",
         "pro3": "✅ Academic-grade Outline: Background → Debates → Conclusions",
@@ -219,7 +219,7 @@
     }
   },
   "nav": {
-    "logo": "AutoOverview",
+    "logo": "Danmo Scholar",
     "home": "Home",
     "pricing": "Pricing",
     "profile": "My Account",
@@ -240,7 +240,7 @@
     "register_desc": "Enter your email to receive a verification code",
     "logining": "Logging in...",
     "registering": "Registering...",
-    "welcome": "Welcome to AutoOverview",
+    "welcome": "Welcome to Danmo Scholar",
     "email_placeholder": "Enter your email",
     "code_placeholder": "Enter 6-digit code",
     "login_button": "Login",
@@ -321,7 +321,7 @@
   },
   "search_papers": {
     "meta": {
-      "title": "Search Related Academic Papers - Free Tool | AutoOverview",
+      "title": "Search Related Academic Papers - Free Tool | Danmo Scholar",
       "description": "Find related academic papers for free. Search by title and discover literature from 200M+ papers across Web of Science, IEEE, CrossRef, and Semantic Scholar."
     },
     "nav": {
@@ -386,7 +386,7 @@
     },
     "cta": {
       "title": "Ready to Accelerate Your Literature Review?",
-      "description": "AutoOverview helps you analyze literature faster with AI-assisted structuring and verified DOI citations.",
+      "description": "Danmo Scholar helps you analyze literature faster with AI-assisted structuring and verified DOI citations.",
       "button": "Start Literature Analysis",
       "view_result": "View Review",
       "badge": "Free tool by"

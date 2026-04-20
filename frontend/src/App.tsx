@@ -364,7 +364,7 @@ function App() {
     <div className="app">
       <header className="app-header">
         <div className="header-title">
-          <h1>📚 AutoOverview</h1>
+          <h1>📚 Danmo Scholar</h1>
           <p className="subtitle">让综述编写简单到只需一句话</p>
         </div>
         <button className="settings-btn" onClick={() => setSettingsOpen(true)}>
@@ -440,7 +440,7 @@ function App() {
       </main>
 
       <footer className="app-footer">
-        <p>© 2026 AutoOverview | 基于 FastAPI + React 构建</p>
+        <p>© 2026 Danmo Scholar | 基于 FastAPI + React 构建</p>
       </footer>
 
       <SettingsModal
