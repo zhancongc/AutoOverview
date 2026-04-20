@@ -47,6 +47,7 @@ VERIFICATION_CODE_TEMPLATE = Template("""
         .code { font-size: 36px; font-weight: 700; color: {{ primary_color }} !important; letter-spacing: 8px; font-family: 'Courier New', monospace; }
         .expire-notice { color: #666; font-size: 14px; text-align: center; }
         .warning { background: #fff3cd; color: #856404; padding: 15px; border-radius: 6px; font-size: 14px; margin-top: 20px; border-left: 4px solid #ffc107; }
+        .code-preview { font-size: 24px; color: {{ primary_color }} !important; letter-spacing: 4px; font-family: 'Courier New', monospace; }
         .footer { text-align: center; margin-top: 30px; color: #999; font-size: 12px; }
         .footer a { color: {{ primary_color }}; text-decoration: none; }
         @media (prefers-color-scheme: dark) {
@@ -70,10 +71,12 @@ VERIFICATION_CODE_TEMPLATE = Template("""
         <div class="content">
             {% if language == 'en' %}
             <p class="greeting">Hello!</p>
-            <p>You are verifying your identity for <strong>{{ purpose }}</strong>. Here is your verification code:</p>
+            <p>Your verification code is: <strong class="code-preview">{{ code }}</strong> (valid for {{ expire_minutes }} minutes)</p>
+            <p>You are verifying your identity for <strong>{{ purpose }}</strong>.</p>
             {% else %}
             <p class="greeting">您好！</p>
-            <p>您正在进行 <strong>{{ purpose }}</strong> 操作，验证码如下：</p>
+            <p>您的验证码是: <strong class="code-preview">{{ code }}</strong>（有效期 {{ expire_minutes }} 分钟）</p>
+            <p>您正在进行 <strong>{{ purpose }}</strong> 操作。</p>
             {% endif %}
             <div class="code-box">
                 <div class="code">{{ code }}</div>
