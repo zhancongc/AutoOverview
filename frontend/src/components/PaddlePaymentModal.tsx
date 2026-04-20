@@ -192,7 +192,7 @@ export function PaddlePaymentModal({ onClose, onPaymentSuccess, planType, record
         <div className="payment-modal-header">
           <span className="payment-modal-icon">💳</span>
           <h2 className="payment-modal-title">{t('payment.buy', { name: plan.name })}</h2>
-          {paymentStatus !== 'creating' && (
+          {paymentStatus !== 'creating' && paymentStatus !== 'idle' && (
             <>
               <p className="payment-modal-price">
                 <span className="amount">${plan.price}</span>
