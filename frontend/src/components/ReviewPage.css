@@ -106,74 +106,54 @@
   margin-right: auto;
 }
 
-.export-button {
-  padding: 0.625rem 1.5rem;
-  background: linear-gradient(135deg, var(--academic-red) 0%, var(--academic-red-dark) 100%);
-  color: white;
-  border: none;
-  border-radius: 10px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  font-weight: 700;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  font-family: 'Source Sans Pro', sans-serif;
-  box-shadow: 0 4px 12px rgba(214, 48, 49, 0.25);
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
 .header-actions {
   display: flex;
   align-items: center;
   gap: 0.5rem;
 }
 
-.regenerate-button {
-  padding: 0.625rem 1.5rem;
-  background: var(--cream-white);
-  color: var(--charcoal);
-  border: 2px solid var(--border-gray);
-  border-radius: 10px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  font-weight: 600;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  font-family: 'Source Sans Pro', sans-serif;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.regenerate-button:hover {
+.stats-action-btn {
   background: white;
-  border-color: var(--academic-red);
-  color: var(--academic-red);
+  color: var(--academic-blue, #1a365d);
+  border: 2px solid var(--academic-blue, #1a365d);
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
 }
 
-.export-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(214, 48, 49, 0.35);
+.stats-action-btn:hover {
+  background: #ebf8ff;
 }
 
-.export-button:active {
-  transform: translateY(0);
-}
-
-.export-button:disabled {
-  opacity: 0.6;
+.stats-action-btn:disabled {
+  opacity: 0.5;
   cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
 }
 
-.export-pdf-btn {
-  background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
-  box-shadow: 0 4px 12px rgba(108, 117, 125, 0.25);
+.stats-action-btn-primary {
+  background: var(--academic-blue, #1a365d);
+  color: white;
+  border: 2px solid var(--academic-blue, #1a365d);
 }
 
-.export-pdf-btn:hover {
-  box-shadow: 0 8px 20px rgba(108, 117, 125, 0.35);
+.stats-action-btn-primary:hover {
+  background: var(--academic-blue-dark, #2c5282);
+  border-color: var(--academic-blue-dark, #2c5282);
+}
+
+.stats-action-btn-share {
+  background: var(--academic-blue, #1a365d);
+  color: white;
+  border: 2px solid var(--academic-blue, #1a365d);
+}
+
+.stats-action-btn-share:hover {
+  background: var(--academic-blue-dark, #2c5282);
+  border-color: var(--academic-blue-dark, #2c5282);
 }
 
 .export-word-premium {

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { ReviewViewer } from './ReviewViewer'
@@ -55,6 +55,7 @@ export function ReviewPage() {
   const [tocItems, setTocItems] = useState<TocItem[]>([])
   const [citationFormat, setCitationFormat] = useState<CitationFormat>('ieee')
   const [formatLoading, setFormatLoading] = useState(false)
+  const [shareCopied, setShareCopied] = useState(false)
 
   const handleTocUpdate = useCallback((toc: TocItem[]) => {
     setTocItems(toc)
@@ -519,6 +520,19 @@ export function ReviewPage() {
     }
   }
 
+  const handleShare = async () => {
+    if (!taskId) return
+    try {
+      await api.shareSearchResult(taskId)
+      const url = `${window.location.origin}/review?task_id=${taskId}`
+      await navigator.clipboard.writeText(url)
+      setShareCopied(true)
+      setTimeout(() => setShareCopied(false), 2000)
+    } catch (err) {
+      console.error('Share failed:', err)
+    }
+  }
+
   // 侧边栏目录点击
   const handleSidebarTocClick = (id: string) => {
     setMobileMenuOpen(false)
@@ -570,11 +584,17 @@ export function ReviewPage() {
             onFormatChange={handleFormatChange}
             disabled={!canSwitchFormat || formatLoading || loading}
           />
-          <button className="regenerate-button" onClick={handleRegenerate}>
+          <button className="stats-action-btn" onClick={handleRegenerate}>
             {t('review.regenerate')}
           </button>
 
-          <button className="export-button export-word-btn" onClick={handleExportWord}>
+          {taskId && (
+            <button className="stats-action-btn stats-action-btn-share" onClick={handleShare}>
+              {shareCopied ? t('review.share_copied', '已复制') : t('review.share', '分享')}
+            </button>
+          )}
+
+          <button className="stats-action-btn stats-action-btn-primary" onClick={handleExportWord}>
             {t('review.export.export_review', '导出综述')}
           </button>
         </div>

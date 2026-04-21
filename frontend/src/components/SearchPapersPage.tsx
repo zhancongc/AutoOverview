@@ -3,7 +3,7 @@
  * English-only, no login required
  */
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { api } from '../api'
 import { isLoggedIn as checkLoggedIn } from '../authApi'
@@ -42,6 +42,7 @@ export function SearchPapersPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const location = useLocation()
+  const [searchParams] = useSearchParams()
   const [topic, setTopic] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [papers, setPapers] = useState<Paper[]>([])
@@ -72,6 +73,8 @@ export function SearchPapersPage() {
   const [dailyLimit, setDailyLimit] = useState<{ limit: number; used: number; remaining: number; bonus: number; next_reset_at: number | null } | null>(null)
   const [showExportModal, setShowExportModal] = useState(false)
   const [exportFormat, setExportFormat] = useState<ExportFormat>('bibtex')
+  const [shareCopied, setShareCopied] = useState(false)
+  const [isSharedView, setIsSharedView] = useState(false)
   const statusIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const formatResetTime = (resetAt: number): string => {
@@ -157,6 +160,29 @@ export function SearchPapersPage() {
   useEffect(() => {
     restoreSearchState()
   }, [restoreSearchState])
+
+  // 从 URL 参数加载分享的文献结果
+  useEffect(() => {
+    const sharedTaskId = searchParams.get('task_id')
+    if (sharedTaskId && !searchTaskId) {
+      setIsSharedView(true)
+      setIsLoading(true)
+      api.getSharedPapers(sharedTaskId).then(res => {
+        if (res.success && res.data) {
+          setTopic(res.data.topic || '')
+          setPapers(res.data.papers || [])
+          setStatistics(res.data.statistics || null)
+          setSearchTaskId(res.data.task_id)
+          setHasSearched(true)
+        }
+      }).catch(err => {
+        console.error('Failed to load shared papers:', err)
+        setError(t('search_papers.error.generic'))
+      }).finally(() => {
+        setIsLoading(false)
+      })
+    }
+  }, [searchParams])
 
   // 监听路由变化，回到搜索页面时恢复状态（如果有的话）
   useEffect(() => {
@@ -364,6 +390,19 @@ export function SearchPapersPage() {
       ris += `ER  - \n`
       return ris
     }).join('\n')
+  }
+
+  const handleShare = async () => {
+    if (!searchTaskId) return
+    try {
+      await api.shareSearchResult(searchTaskId)
+      const url = `${window.location.origin}/search-papers?task_id=${searchTaskId}`
+      await navigator.clipboard.writeText(url)
+      setShareCopied(true)
+      setTimeout(() => setShareCopied(false), 2000)
+    } catch (err) {
+      console.error('Share failed:', err)
+    }
   }
 
   const handleGenerateFromSearch = async () => {
@@ -723,7 +762,7 @@ export function SearchPapersPage() {
       )}
 
       {/* Comparison Matrix CTA */}
-      {!isLoading && papers.length > 0 && (
+      {!isLoading && papers.length > 0 && !isSharedView && (
         <div className="sp-comparison-cta">
           <div className="sp-comparison-cta-card">
             <div className="sp-comparison-icon">📊</div>
@@ -798,7 +837,7 @@ export function SearchPapersPage() {
               ))}
             </div>
             <div className="sp-action-buttons">
-              {(() => {
+              {!isSharedView && (() => {
                 const existingReview = relatedTasks.find(r => r.type === 'review' && r.status === 'completed')
                 if (existingReview) {
                   return (
@@ -827,6 +866,15 @@ export function SearchPapersPage() {
               >
                 {isExporting ? t('search_papers.results.exporting') : t('search_papers.results.export')}
               </button>
+              {!isSharedView && searchTaskId && checkLoggedIn() && (
+                <button
+                  className="sp-btn-share"
+                  onClick={handleShare}
+                  title={shareCopied ? t('search_papers.results.share_copied') : t('search_papers.results.share')}
+                >
+                  {shareCopied ? t('search_papers.results.share_copied') : t('search_papers.results.share')}
+                </button>
+              )}
             </div>
           </div>
 

@@ -377,8 +377,10 @@
       "sort_default": "相关性",
       "sort_year": "年份",
       "sort_citations": "引用数",
-      "export": "导出参考文献清单",
-      "exporting": "导出中..."
+      "export": "导出文献",
+      "exporting": "导出中...",
+      "share": "分享",
+      "share_copied": "已复制链接到剪贴板"
     },
     "export": {
       "title": "选择导出格式",
@@ -399,7 +401,7 @@
     "cta": {
       "title": "需要一篇完整的文献综述？",
       "description": "澹墨学术生成可直接投稿的结构化综述，含 DOI 可验证引用。从研究背景到学术争议到结论。",
-      "button": "生成完整文献综述",
+      "button": "生成综述",
       "view_result": "查看综述",
       "badge": "免费工具 by"
     },

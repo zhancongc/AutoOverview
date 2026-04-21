@@ -1602,6 +1602,12 @@ async def get_task_status(
     DEMO_TASK_IDS = _cn_ids | _en_ids
     is_public = task_id in DEMO_TASK_IDS
 
+    # 补充检查数据库中的 is_public 标记
+    if not is_public:
+        review_task_quick = db_session.query(ReviewTask).filter_by(id=task_id).first()
+        if review_task_quick and review_task_quick.is_public:
+            is_public = True
+
     # 首先尝试从内存中获取任务
     task = task_manager.get_task(task_id)
 
@@ -1630,6 +1636,9 @@ async def get_task_status(
 
     if not review_task:
         raise HTTPException(status_code=404, detail="任务不存在")
+
+    # 合并数据库中的 is_public 标记
+    is_public = is_public or (review_task.is_public or False)
 
     # 非公开任务需要验证所有者
     if not is_public:
@@ -2274,6 +2283,63 @@ async def get_related_tasks(
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/tasks/{task_id}/share")
+async def share_task(
+    task_id: str,
+    user_id: Optional[int] = Depends(get_current_user_id),
+    db_session: Session = Depends(get_db)
+):
+    """将搜索任务标记为公开分享，返回分享链接"""
+    if not user_id:
+        raise HTTPException(status_code=401, detail="请先登录")
+
+    from models import ReviewTask
+    task = db_session.query(ReviewTask).filter_by(id=task_id).first()
+    if not task:
+        raise HTTPException(status_code=404, detail="任务不存在")
+
+    # 验证所有权
+    if task.user_id is not None and task.user_id != user_id:
+        raise HTTPException(status_code=403, detail="该任务不属于您")
+
+    task.is_public = True
+    db_session.commit()
+
+    return {"success": True, "data": {"task_id": task_id, "is_public": True}}
+
+
+@app.get("/api/tasks/{task_id}/shared-papers")
+async def get_shared_papers(
+    task_id: str,
+    db_session: Session = Depends(get_db)
+):
+    """获取公开分享的文献列表（无需登录）"""
+    from models import ReviewTask
+    from models import PaperSearchStage
+
+    task = db_session.query(ReviewTask).filter_by(id=task_id).first()
+    if not task:
+        raise HTTPException(status_code=404, detail="任务不存在")
+
+    if not task.is_public:
+        raise HTTPException(status_code=403, detail="该任务未公开分享")
+
+    # 从 PaperSearchStage 获取文献
+    stage = db_session.query(PaperSearchStage).filter_by(task_id=task_id).first()
+    papers = stage.papers_sample if stage and stage.papers_sample else []
+    statistics = stage.papers_summary if stage else {}
+
+    return {
+        "success": True,
+        "data": {
+            "task_id": task_id,
+            "topic": task.topic,
+            "papers": papers,
+            "statistics": statistics
+        }
+    }
 
 
 @app.get("/api/tasks/{task_id}/search-sources")

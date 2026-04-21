@@ -42,6 +42,7 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
   const [showMatrixExportModal, setShowMatrixExportModal] = useState(false)
   const [matrixExportFormat, setMatrixExportFormat] = useState<'markdown' | 'word'>('markdown')
   const [exportingMatrix, setExportingMatrix] = useState(false)
+  const [shareCopied, setShareCopied] = useState(false)
 
   useEffect(() => {
     loadMatrixData(taskId)
@@ -137,6 +138,19 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
     } catch (err: any) {
       setMatrixError(err.message || t('comparison_matrix_page.error'))
       setMatrixLoading(false)
+    }
+  }
+
+  const handleShare = async () => {
+    if (!taskId) return
+    try {
+      await api.shareSearchResult(taskId)
+      const url = `${window.location.origin}/comparison-matrix?task_id=${taskId}`
+      await navigator.clipboard.writeText(url)
+      setShareCopied(true)
+      setTimeout(() => setShareCopied(false), 2000)
+    } catch (err) {
+      console.error('Share failed:', err)
     }
   }
 
@@ -375,6 +389,9 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
         </button>
         <button className="stats-action-btn" onClick={() => setShowExportModal(true)} disabled={getPapersForExport().length === 0}>
           {t('comparison_matrix_page.export_references')}
+        </button>
+        <button className="stats-action-btn stats-action-btn-share" onClick={handleShare}>
+          {shareCopied ? (isChineseSite ? '已复制' : 'Copied') : (isChineseSite ? '分享' : 'Share')}
         </button>
       </div>
       <button

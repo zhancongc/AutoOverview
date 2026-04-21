@@ -366,7 +366,9 @@
       "sort_year": "Year",
       "sort_citations": "Citations",
       "export": "Export References",
-      "exporting": "Exporting..."
+      "exporting": "Exporting...",
+      "share": "Share",
+      "share_copied": "Link copied to clipboard"
     },
     "export": {
       "title": "Select Export Format",

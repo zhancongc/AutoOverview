@@ -2,7 +2,7 @@
  * Review Page Component - International Version
  * Displays generated literature reviews with export and payment options
  */
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { ReviewViewerInternational } from './ReviewViewerInternational'
@@ -57,6 +57,7 @@ export function ReviewPageInternational() {
   const [tocItems, setTocItems] = useState<TocItem[]>([])
   const [citationFormat, setCitationFormat] = useState<CitationFormat>('ieee')
   const [formatLoading, setFormatLoading] = useState(false)
+  const [shareCopied, setShareCopied] = useState(false)
 
   const handleTocUpdate = useCallback((toc: TocItem[]) => {
     setTocItems(toc)
@@ -286,6 +287,19 @@ export function ReviewPageInternational() {
     }
   }
 
+  const handleShare = async () => {
+    if (!taskId) return
+    try {
+      await api.shareSearchResult(taskId)
+      const url = `${window.location.origin}/review?task_id=${taskId}`
+      await navigator.clipboard.writeText(url)
+      setShareCopied(true)
+      setTimeout(() => setShareCopied(false), 2000)
+    } catch (err) {
+      console.error('Share failed:', err)
+    }
+  }
+
   const handleSidebarTocClick = (id: string) => {
     setMobileMenuOpen(false)
     setTimeout(() => {
@@ -335,11 +349,17 @@ export function ReviewPageInternational() {
             onFormatChange={handleFormatChange}
             disabled={!canSwitchFormat || formatLoading || loading}
           />
-          <button className="regenerate-button" onClick={handleRegenerate}>
+          <button className="stats-action-btn" onClick={handleRegenerate}>
             {t('review.regenerate')}
           </button>
 
-          <button className="export-button export-word-btn" onClick={handleExportWord}>
+          {taskId && (
+            <button className="stats-action-btn stats-action-btn-share" onClick={handleShare}>
+              {shareCopied ? t('review.share_copied', 'Copied') : t('review.share', 'Share')}
+            </button>
+          )}
+
+          <button className="stats-action-btn stats-action-btn-primary" onClick={handleExportWord}>
             {t('review.export.export_review', 'Export Review')}
           </button>
         </div>

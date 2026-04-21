@@ -707,6 +707,22 @@ html.intl .search-papers-page .sp-review-cta-btn:hover {
   cursor: not-allowed;
 }
 
+.search-papers-page .sp-btn-share {
+  background: var(--accent-blue);
+  color: #fff;
+  border: 1px solid var(--accent-blue);
+  padding: 0.4rem 1rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  white-space: nowrap;
+}
+
+.search-papers-page .sp-btn-share:hover {
+  opacity: 0.85;
+}
+
 /* Papers section (generate page preview) */
 .search-papers-page .sp-papers-section {
   max-width: 720px;

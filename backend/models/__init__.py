@@ -212,6 +212,9 @@ class ReviewTask(Base):
     # 关联的综述记录ID（生成完成后填充）
     review_record_id = Column(Integer, nullable=True, comment="关联的综述记录ID")
 
+    # 分享
+    is_public = Column(Boolean, default=False, comment="是否公开分享")
+
     # 时间戳
     created_at = Column(DateTime, default=datetime.now, comment="创建时间")
     started_at = Column(DateTime, nullable=True, comment="开始时间")
@@ -238,7 +241,8 @@ class ReviewTask(Base):
             "review_record_id": self.review_record_id,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "started_at": self.started_at.isoformat() if self.started_at else None,
-            "completed_at": self.completed_at.isoformat() if self.completed_at else None
+            "completed_at": self.completed_at.isoformat() if self.completed_at else None,
+            "is_public": self.is_public or False
         }
 
 

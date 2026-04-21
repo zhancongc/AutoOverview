@@ -617,4 +617,17 @@ export const api = {
     const response = await axios.get(`${API_BASE}/search-history/${taskId}/related-tasks`, { headers });
     return response.data;
   },
+
+  async shareSearchResult(taskId: string): Promise<{ success: boolean; data: { task_id: string; is_public: boolean } }> {
+    const token = localStorage.getItem('auth_token');
+    const response = await axios.post(`${API_BASE}/tasks/${taskId}/share`, {}, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
+  },
+
+  async getSharedPapers(taskId: string): Promise<{ success: boolean; data: { task_id: string; topic: string; papers: any[]; statistics: any } }> {
+    const response = await axios.get(`${API_BASE}/tasks/${taskId}/shared-papers`);
+    return response.data;
+  },
 };

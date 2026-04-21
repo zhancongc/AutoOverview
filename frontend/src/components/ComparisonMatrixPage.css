@@ -550,11 +550,11 @@ html.intl .comparison-matrix-page {
 
 .stats-action-btn {
   background: white;
-  color: var(--cm-primary);
-  border: 2px solid var(--cm-primary);
-  padding: 8px 16px;
+  color: var(--academic-blue, #1a365d);
+  border: 2px solid var(--academic-blue, #1a365d);
+  padding: 0.5rem 1rem;
   border-radius: 8px;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
@@ -562,18 +562,34 @@ html.intl .comparison-matrix-page {
 }
 
 .stats-action-btn:hover {
-  background: var(--cm-primary-light);
+  background: #ebf8ff;
+}
+
+.stats-action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .stats-action-btn-primary {
-  background: var(--cm-primary);
+  background: var(--academic-blue, #1a365d);
   color: white;
-  border: 2px solid var(--cm-primary);
+  border: 2px solid var(--academic-blue, #1a365d);
 }
 
 .stats-action-btn-primary:hover {
-  background: var(--cm-primary-dark);
-  border-color: var(--cm-primary-dark);
+  background: var(--academic-blue-dark, #2c5282);
+  border-color: var(--academic-blue-dark, #2c5282);
+}
+
+.stats-action-btn-share {
+  background: var(--academic-blue, #1a365d);
+  color: white;
+  border: 2px solid var(--academic-blue, #1a365d);
+}
+
+.stats-action-btn-share:hover {
+  background: var(--academic-blue-dark, #2c5282);
+  border-color: var(--academic-blue-dark, #2c5282);
 }
 
 .matrix-content {

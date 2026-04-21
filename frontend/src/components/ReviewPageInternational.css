@@ -105,62 +105,54 @@ html.intl {
     margin-right: auto;
   }
 
-  .export-button {
-    padding: 0.625rem 1.5rem;
-    background: linear-gradient(135deg, var(--academic-blue) 0%, var(--academic-blue-dark) 100%);
-    color: white;
-    border: none;
-    border-radius: 10px;
-    cursor: pointer;
-    font-size: 0.9rem;
-    font-weight: 700;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    font-family: 'Source Sans Pro', sans-serif;
-    box-shadow: 0 4px 12px rgba(9, 136, 227, 0.25);
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-
   .header-actions {
     display: flex;
     align-items: center;
     gap: 0.5rem;
   }
 
-  .regenerate-button {
-    padding: 0.625rem 1.25rem;
-    background: var(--cream-white);
-    color: var(--charcoal);
-    border: 2px solid var(--border-gray);
-    border-radius: 10px;
-    cursor: pointer;
-    font-size: 0.9rem;
-    font-weight: 600;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    font-family: 'Source Sans Pro', sans-serif;
-  }
-
-  .regenerate-button:hover {
+  .stats-action-btn {
     background: white;
-    border-color: var(--academic-blue);
     color: var(--academic-blue);
+    border: 2px solid var(--academic-blue);
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
   }
 
-  .export-button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(9, 136, 227, 0.35);
+  .stats-action-btn:hover {
+    background: #ebf8ff;
   }
 
-  .export-button:active {
-    transform: translateY(0);
-  }
-
-  .export-button:disabled {
-    opacity: 0.6;
+  .stats-action-btn:disabled {
+    opacity: 0.5;
     cursor: not-allowed;
-    transform: none;
-    box-shadow: none;
+  }
+
+  .stats-action-btn-primary {
+    background: var(--academic-blue);
+    color: white;
+    border: 2px solid var(--academic-blue);
+  }
+
+  .stats-action-btn-primary:hover {
+    background: var(--academic-blue-dark, #2c5282);
+    border-color: var(--academic-blue-dark, #2c5282);
+  }
+
+  .stats-action-btn-share {
+    background: var(--academic-blue);
+    color: white;
+    border: 2px solid var(--academic-blue);
+  }
+
+  .stats-action-btn-share:hover {
+    background: var(--academic-blue-dark, #2c5282);
+    border-color: var(--academic-blue-dark, #2c5282);
   }
 
   /* Export error with retry */
