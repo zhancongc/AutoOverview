@@ -556,6 +556,9 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
                       )}
                       <h3 className="pricing-name">{plan.name_en || plan.name}</h3>
                       <div className="pricing-price">
+                        {plan.original_price_usd > 0 && (
+                          <span className="pricing-original">${plan.original_price_usd}</span>
+                        )}
                         <span className="currency">$</span>
                         <span className="amount">{plan.price_usd || plan.price}</span>
                       </div>

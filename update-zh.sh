@@ -62,14 +62,33 @@ echo "[5/5] 重启后端..."
 systemctl restart autooverview
 echo "✓ 后端已重启"
 
-sleep 2
-API_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:$BACKEND_PORT/api/health)
+# 等待服务启动，最多重试 5 次
+echo ""
+echo "验证后端健康..."
+OK=0
+for i in 1 2 3 4 5; do
+    sleep 2
+    API_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 5 http://127.0.0.1:$BACKEND_PORT/api/health 2>/dev/null || echo "000")
+    if [ "$API_CODE" = "200" ]; then
+        OK=1
+        echo "✓ 后端健康检查通过 (HTTP $API_CODE)"
+        break
+    fi
+    echo "  第 $i 次检查: HTTP $API_CODE，等待重试..."
+done
+
 END_TIME=$(date +%s)
 ELAPSED=$((END_TIME - START_TIME))
 MINUTES=$((ELAPSED / 60))
 SECONDS=$((ELAPSED % 60))
 echo ""
 echo "=========================================="
-echo " 更新完成 (API: $API_CODE)"
+if [ "$OK" = "1" ]; then
+    echo " 更新完成"
+else
+    echo " ⚠ 后端健康检查失败！服务可能未正常启动"
+    echo "  排查: systemctl status autooverview"
+    echo "  日志: journalctl -u autooverview -n 50"
+fi
 echo " 耗时: ${MINUTES}分${SECONDS}秒"
 echo "=========================================="
