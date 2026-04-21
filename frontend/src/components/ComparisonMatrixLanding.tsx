@@ -11,6 +11,7 @@ import { isLoggedIn as checkLoggedIn } from '../authApi'
 import { LoginModal } from './LoginModal'
 import { LoginModalInternational } from './LoginModalInternational'
 import { PayPalPaymentModal } from './PayPalPaymentModal'
+import { PaymentModal } from './PaymentModal'
 import { ConfirmModalInternational } from './ConfirmModalInternational'
 import { ConfirmModal } from './ConfirmModal'
 import { useMatrixAuth, Paper, Statistics, SortMode, CombinedPhase } from './ComparisonMatrixShared'
@@ -664,7 +665,14 @@ export function ComparisonMatrixLanding() {
         <LoginModalComponent onClose={() => setShowLoginModal(false)} onLoginSuccess={handleLoginSuccess} />
       )}
 
-      {showPaymentModal && (
+      {showPaymentModal && isChineseSite && (
+        <PaymentModal
+          onClose={() => setShowPaymentModal(false)}
+          onPaymentSuccess={handlePaymentSuccess}
+          planType={showPaymentModal}
+        />
+      )}
+      {showPaymentModal && !isChineseSite && (
         <PayPalPaymentModal
           onClose={() => setShowPaymentModal(false)}
           onPaymentSuccess={handlePaymentSuccess}

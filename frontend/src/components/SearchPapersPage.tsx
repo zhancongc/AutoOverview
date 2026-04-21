@@ -9,6 +9,7 @@ import { api } from '../api'
 import { isLoggedIn as checkLoggedIn } from '../authApi'
 import { LoginModal } from './LoginModal'
 import { PayPalPaymentModal } from './PayPalPaymentModal'
+import { PaymentModal } from './PaymentModal'
 import { ConfirmModalInternational } from './ConfirmModalInternational'
 import { ConfirmModal } from './ConfirmModal'
 import { ExportFormatModal, ExportFormat } from './ExportFormatModal'
@@ -1069,6 +1070,16 @@ export function SearchPapersPage() {
       })()}
 
       {/* Payment Modal */}
+      {showPaymentModal && isChineseSite && (
+        <PaymentModal
+          onClose={() => setShowPaymentModal(false)}
+          onPaymentSuccess={() => {
+            setShowPaymentModal(false)
+            api.getCredits().then(data => setCredits(data.credits)).catch(() => {})
+          }}
+          planType={showPaymentModal}
+        />
+      )}
       {showPaymentModal && !isChineseSite && (
         <PayPalPaymentModal
           onClose={() => setShowPaymentModal(false)}

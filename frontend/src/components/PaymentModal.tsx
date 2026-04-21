@@ -85,6 +85,7 @@ export function PaymentModal({ onClose, onPaymentSuccess, planType, recordId }: 
 
   // 创建订单
   const createPayment = useCallback(async () => {
+    if (planType !== 'unlock' && plans.length === 0) return
     setLoading(true)
     setError('')
     setPaymentStatus('creating')

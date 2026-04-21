@@ -13,6 +13,7 @@ import { isLoggedIn as checkLoggedIn } from '../authApi'
 import { LoginModal } from './LoginModal'
 import { LoginModalInternational } from './LoginModalInternational'
 import { PayPalPaymentModal } from './PayPalPaymentModal'
+import { PaymentModal } from './PaymentModal'
 import { ConfirmModalInternational } from './ConfirmModalInternational'
 import { ConfirmModal } from './ConfirmModal'
 import { useMatrixAuth, ComparisonMatrixData, TabType } from './ComparisonMatrixShared'
@@ -43,6 +44,7 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
   const [matrixExportFormat, setMatrixExportFormat] = useState<'markdown' | 'word'>('markdown')
   const [exportingMatrix, setExportingMatrix] = useState(false)
   const [shareCopied, setShareCopied] = useState(false)
+  const [showToast, setShowToast] = useState(false)
 
   useEffect(() => {
     loadMatrixData(taskId)
@@ -148,7 +150,11 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
       const url = `${window.location.origin}/comparison-matrix?task_id=${taskId}`
       await navigator.clipboard.writeText(url)
       setShareCopied(true)
-      setTimeout(() => setShareCopied(false), 2000)
+      setShowToast(true)
+      setTimeout(() => {
+        setShareCopied(false)
+        setShowToast(false)
+      }, 3000)
     } catch (err) {
       console.error('Share failed:', err)
     }
@@ -444,6 +450,13 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
           />
         )
       })()}
+      {showPaymentModal && isChineseSite && (
+        <PaymentModal
+          onClose={() => setShowPaymentModal(false)}
+          onPaymentSuccess={handlePaymentSuccess}
+          planType={showPaymentModal}
+        />
+      )}
       {showPaymentModal && !isChineseSite && (
         <PayPalPaymentModal
           onClose={() => setShowPaymentModal(false)}
@@ -608,6 +621,20 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
             </button>
           </div>
         </aside>
+
+        {/* Toast notification */}
+        {showToast && (
+          <div className="comparison-matrix-toast">
+            <div className="comparison-matrix-toast-content">
+              <span className="toast-icon">✓</span>
+              <span className="toast-message">
+                {isChineseSite
+                  ? '已复制分享链接到剪切板，可以复制到其它平台'
+                  : 'Share link copied to clipboard, you can paste it on other platforms'}
+              </span>
+            </div>
+          </div>
+        )}
       </div>
     )
   }
@@ -682,6 +709,20 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
             </button>
           </div>
         </aside>
+
+        {/* Toast notification */}
+        {showToast && (
+          <div className="comparison-matrix-toast">
+            <div className="comparison-matrix-toast-content">
+              <span className="toast-icon">✓</span>
+              <span className="toast-message">
+                {isChineseSite
+                  ? '已复制分享链接到剪切板，可以复制到其它平台'
+                  : 'Share link copied to clipboard, you can paste it on other platforms'}
+              </span>
+            </div>
+          </div>
+        )}
       </div>
     )
   }
@@ -850,6 +891,20 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
             </button>
           </div>
         </aside>
+
+        {/* Toast notification */}
+        {showToast && (
+          <div className="comparison-matrix-toast">
+            <div className="comparison-matrix-toast-content">
+              <span className="toast-icon">✓</span>
+              <span className="toast-message">
+                {isChineseSite
+                  ? '已复制分享链接到剪切板，可以复制到其它平台'
+                  : 'Share link copied to clipboard, you can paste it on other platforms'}
+              </span>
+            </div>
+          </div>
+        )}
       </div>
     )
   }

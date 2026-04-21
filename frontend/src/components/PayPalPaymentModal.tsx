@@ -141,6 +141,7 @@ export function PayPalPaymentModal({
 
   // Create PayPal payment session
   const createPayment = useCallback(async () => {
+    if (!isUnlockMode && plans.length === 0) return
     setLoading(true)
     setError('')
     setPaymentStatus('creating')
