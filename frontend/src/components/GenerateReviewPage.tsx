@@ -102,6 +102,9 @@ export function GenerateReviewPage() {
       sessionStorage.setItem('reuse_task_id', reuseTaskId)
       sessionStorage.setItem('pending_topic', reuseTopic)
       window.history.replaceState({}, '', '/generate')
+    } else if (reuseTopic) {
+      setTopic(reuseTopic)
+      window.history.replaceState({}, '', '/generate')
     }
   }, [searchParams])
 

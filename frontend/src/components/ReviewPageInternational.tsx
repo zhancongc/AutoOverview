@@ -46,6 +46,8 @@ export function ReviewPageInternational() {
     recordId?: number
     isPublic: boolean
     isPaid: boolean
+    statistics?: any
+    createdAt?: string
   } | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -80,6 +82,8 @@ export function ReviewPageInternational() {
               recordId: res.data.record_id,
               isPublic: res.data.is_public,
               isPaid: res.data.is_paid,
+              statistics: res.data.statistics,
+              createdAt: res.data.created_at,
             })
           } else {
             setError('Review not found or not yet completed')
@@ -209,12 +213,11 @@ export function ReviewPageInternational() {
   }
 
   const handleBack = () => {
-    navigate(-1)
+    navigate('/profile')
   }
 
   const handleRegenerate = () => {
-    sessionStorage.setItem('pending_topic', reviewData.title)
-    navigate('/')
+    navigate(`/generate?topic=${encodeURIComponent(reviewData.title)}`)
   }
 
   const doExportReviewFrontend = async () => {

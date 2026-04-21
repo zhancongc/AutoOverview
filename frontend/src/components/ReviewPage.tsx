@@ -439,12 +439,11 @@ export function ReviewPage() {
   }
 
   const handleBack = () => {
-    navigate(-1)
+    navigate('/profile')
   }
 
   const handleRegenerate = () => {
-    sessionStorage.setItem('pending_topic', reviewData.title)
-    navigate('/')
+    navigate(`/generate?topic=${encodeURIComponent(reviewData.title)}`)
   }
 
 
