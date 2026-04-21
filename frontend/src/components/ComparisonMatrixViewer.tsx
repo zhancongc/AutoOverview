@@ -15,6 +15,7 @@ import { LoginModalInternational } from './LoginModalInternational'
 import { PayPalPaymentModal } from './PayPalPaymentModal'
 import { PaymentModal } from './PaymentModal'
 import { ConfirmModalInternational } from './ConfirmModalInternational'
+import { ConfirmModal } from './ConfirmModal'
 import { useMatrixAuth, ComparisonMatrixData, TabType } from './ComparisonMatrixShared'
 import { ExportFormatModal, ExportFormat } from './ExportFormatModal'
 import './ComparisonMatrixPage.css'
@@ -427,18 +428,21 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
       {showLoginModal && <LoginModalComponent onClose={() => setShowLoginModal(false)} onLoginSuccess={handleLoginSuccess} />}
       {showCreditConfirm && (() => {
         const hasCredits = credits >= 1
-        const msg = isChineseSite
-          ? hasCredits
-            ? `您有 ${credits} 个积分。\n生成文献综述将消耗 1 个积分，是否继续？`
-            : `您有 ${credits} 个积分，不足以生成文献综述（需 1 个积分）。`
-          : hasCredits
-            ? `You have ${credits} credits.\nGenerate a Literature Review will use 1 credit. Continue?`
-            : `You have ${credits} credits, which is not enough to generate a review (1 credit required).`
+        const ConfirmComponent = isChineseSite ? ConfirmModal : ConfirmModalInternational
+        const msg = hasCredits
+          ? t('comparison_matrix_page.credit_confirm.has_credits', { credits })
+          : t('comparison_matrix_page.credit_confirm.insufficient', { credits })
+        const confirmLabel = hasCredits
+          ? t('comparison_matrix_page.credit_confirm.confirm_text')
+          : t('comparison_matrix_page.credit_confirm.go_buy_credits')
+        const cancelLabel = t('comparison_matrix_page.credit_confirm.cancel_text')
+        const title = t('comparison_matrix_page.credit_confirm.title')
         return (
-          <ConfirmModalInternational
+          <ConfirmComponent
+            title={title}
             message={msg}
-            confirmText={hasCredits ? (isChineseSite ? '生成' : 'Generate') : (isChineseSite ? '去购买积分' : 'Buy Credits')}
-            cancelText={isChineseSite ? '取消' : 'Cancel'}
+            confirmText={confirmLabel}
+            cancelText={cancelLabel}
             onConfirm={() => {
               setShowCreditConfirm(false)
               if (hasCredits) doGenerateReview()

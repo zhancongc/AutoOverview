@@ -596,6 +596,60 @@ html.intl .comparison-matrix-page {
   border-color: var(--academic-blue-dark, #2c5282);
 }
 
+/* ==================== 中文站对比矩阵页面红色风格按钮 ==================== */
+html:not(.intl) .review-page-header .stats-action-btn {
+  background: white;
+  color: #D63031;
+  border: 2px solid #D63031;
+}
+
+html:not(.intl) .review-page-header .stats-action-btn:hover {
+  background: #fff5f5;
+}
+
+html:not(.intl) .review-page-header .stats-action-btn-primary {
+  background: #D63031;
+  color: white;
+  border: 2px solid #D63031;
+}
+
+html:not(.intl) .review-page-header .stats-action-btn-primary:hover {
+  background: #B71C1C;
+  border-color: #B71C1C;
+}
+
+html:not(.intl) .comparison-matrix-page .stats-action-btn {
+  background: white;
+  color: #D63031;
+  border: 2px solid #D63031;
+}
+
+html:not(.intl) .comparison-matrix-page .stats-action-btn:hover {
+  background: #fff5f5;
+}
+
+html:not(.intl) .comparison-matrix-page .stats-action-btn-primary {
+  background: #D63031;
+  color: white;
+  border: 2px solid #D63031;
+}
+
+html:not(.intl) .comparison-matrix-page .stats-action-btn-primary:hover {
+  background: #B71C1C;
+  border-color: #B71C1C;
+}
+
+html:not(.intl) .comparison-matrix-page .stats-action-btn-share {
+  background: #D63031;
+  color: white;
+  border: 2px solid #D63031;
+}
+
+html:not(.intl) .comparison-matrix-page .stats-action-btn-share:hover {
+  background: #B71C1C;
+  border-color: #B71C1C;
+}
+
 .matrix-content {
   background: white;
   border-radius: 16px;
@@ -1246,5 +1300,58 @@ html.intl .comparison-matrix-page {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
+  }
+}
+
+/* ==================== Toast notification ==================== */
+.comparison-matrix-toast {
+  position: fixed;
+  top: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  animation: toastSlideIn 0.3s ease-out;
+}
+
+.comparison-matrix-toast-content {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: white;
+  padding: 1rem 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  border: 2px solid #D63031;
+}
+
+html.intl .comparison-matrix-toast-content {
+  border-color: #0988E3;
+}
+
+.comparison-matrix-toast .toast-icon {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #D63031;
+}
+
+html.intl .comparison-matrix-toast .toast-icon {
+  color: #0988E3;
+}
+
+.comparison-matrix-toast .toast-message {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #1A1A1A;
+  white-space: nowrap;
+}
+
+@keyframes toastSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
   }
 }
