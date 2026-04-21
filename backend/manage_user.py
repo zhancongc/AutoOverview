@@ -6,6 +6,7 @@
 1. 设置综述状态（免费生成待解锁 / 付费生成已解锁）
 2. 增加/减少免费额度 (free_credits)
 3. 增加/减少付费额度 (review_credits)
+4. 增加/减少搜索次数 (search_bonus) / 清除今日搜索记录
 
 使用示例：
     # 设置综述为免费生成待解锁状态
@@ -25,6 +26,12 @@
 
     # 设置付费额度
     python manage_user.py update-credits --email user@example.com --paid-credits 5
+
+    # 增加 5 次额外搜索次数
+    python manage_user.py update-search --email user@example.com --bonus +5
+
+    # 清除今日搜索记录（重置为 0/5）
+    python manage_user.py update-search --email user@example.com --reset
 
     # 查看用户信息
     python manage_user.py show-user --email user@example.com
@@ -86,6 +93,16 @@ def show_user(email):
             print(f"  免费额度 (free_credits): {meta_data.get('free_credits', 0)}")
             print(f"  付费额度 (review_credits): {meta_data.get('review_credits', 0)}")
             print(f"  已购买 (has_purchased): {meta_data.get('has_purchased', False)}")
+
+            # 搜索次数信息
+            import time
+            timestamps = meta_data.get('search_timestamps', [])
+            cutoff = time.time() - 86400
+            recent_count = len([ts for ts in timestamps if ts > cutoff])
+            print(f"\n搜索次数:")
+            print(f"  今日已用: {recent_count}")
+            print(f"  每日上限: {os.getenv('DAILY_SEARCH_LIMIT', '5')}")
+            print(f"  额外搜索次数 (search_bonus): {meta_data.get('search_bonus', 0)}")
 
         # 获取综述记录
         cur.execute("""
@@ -243,6 +260,73 @@ def update_credits(email, free_credits=None, paid_credits=None):
         conn.close()
 
 
+def update_search(email, bonus=None, reset=False):
+    """更新用户搜索次数"""
+    import time
+    import json
+
+    conn = get_connection()
+    cur = conn.cursor()
+
+    try:
+        user = get_user_by_email(cur, email)
+        if not user:
+            print(f"❌ 用户不存在: {email}")
+            return False
+
+        user_id, _ = user
+
+        # 获取当前元数据
+        cur.execute("SELECT meta_data FROM users WHERE id = %s", (user_id,))
+        row = cur.fetchone()
+        if not row or not row[0]:
+            meta_data = {}
+        else:
+            meta_data = json.loads(row[0])
+
+        current_bonus = meta_data.get('search_bonus', 0)
+        timestamps = meta_data.get('search_timestamps', [])
+        cutoff = time.time() - 86400
+        recent_count = len([ts for ts in timestamps if ts > cutoff])
+
+        if reset:
+            # 清除 24h 内的搜索时间戳
+            meta_data['search_timestamps'] = [ts for ts in timestamps if ts <= cutoff]
+            print(f"今日搜索记录已清除: {recent_count} -> 0")
+
+        if bonus is not None:
+            if isinstance(bonus, str) and bonus.startswith(('+', '-')):
+                delta = int(bonus)
+                new_bonus = current_bonus + delta
+                print(f"额外搜索次数: {current_bonus} {bonus} = {new_bonus}")
+            else:
+                new_bonus = int(bonus)
+                print(f"额外搜索次数: {current_bonus} -> {new_bonus}")
+            meta_data['search_bonus'] = new_bonus
+
+        # 更新数据库
+        cur.execute("""
+            UPDATE users
+            SET meta_data = %s
+            WHERE id = %s
+        """, (json.dumps(meta_data), user_id))
+
+        conn.commit()
+
+        # 显示更新后的状态
+        updated_timestamps = meta_data.get('search_timestamps', [])
+        updated_recent = len([ts for ts in updated_timestamps if ts > time.time() - 86400])
+        print(f"\n✅ 搜索次数更新成功")
+        print(f"  用户: {email}")
+        print(f"  今日已用: {updated_recent}")
+        print(f"  额外搜索次数: {meta_data.get('search_bonus', 0)}")
+        return True
+
+    finally:
+        cur.close()
+        conn.close()
+
+
 def main():
     parser = argparse.ArgumentParser(description='用户管理工具', formatter_class=argparse.RawDescriptionHelpFormatter)
     subparsers = parser.add_subparsers(dest='command', help='可用命令')
@@ -264,6 +348,12 @@ def main():
     credits_parser.add_argument('--email', required=True, help='用户邮箱')
     credits_parser.add_argument('--free-credits', help='免费额度 (+1/-1/数字)')
     credits_parser.add_argument('--paid-credits', help='付费额度 (+1/-1/数字)')
+
+    # update-search 命令
+    search_parser = subparsers.add_parser('update-search', help='更新搜索次数')
+    search_parser.add_argument('--email', required=True, help='用户邮箱')
+    search_parser.add_argument('--bonus', help='额外搜索次数 (+5/-1/数字)')
+    search_parser.add_argument('--reset', action='store_true', help='清除今日搜索记录')
 
     args = parser.parse_args()
 
@@ -295,6 +385,13 @@ def main():
             return
 
         update_credits(args.email, args.free_credits, args.paid_credits)
+
+    elif args.command == 'update-search':
+        if not args.bonus and not args.reset:
+            print("❌ 请指定 --bonus 或 --reset")
+            return
+
+        update_search(args.email, args.bonus, args.reset)
 
 
 if __name__ == '__main__':

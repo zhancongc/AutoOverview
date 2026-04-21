@@ -46,6 +46,9 @@ export function GenerateReviewPage() {
   )
   const [isGenerating, setIsGenerating] = useState(false)
   const [progress, setProgress] = useState<TaskProgress | null>(null)
+  const [progressPercent, setProgressPercent] = useState(0)
+  const progressStartRef = useRef(0)
+  const progressTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const [error, setError] = useState('')
   const [showLoginModal, setShowLoginModal] = useState(false)
   const [showPaymentModal, setShowPaymentModal] = useState<string | false>(false)
@@ -57,6 +60,11 @@ export function GenerateReviewPage() {
   const [toastMessage, setToastMessage] = useState('')
   const [foundPapers, setFoundPapers] = useState<Paper[]>([])
   const isPollingRef = useRef(false)
+  const isMountedRef = useRef(true)
+
+  useEffect(() => {
+    return () => { isMountedRef.current = false }
+  }, [])
 
   useEffect(() => {
     setIsChineseSite(!document.documentElement.classList.contains('intl'))
@@ -70,6 +78,7 @@ export function GenerateReviewPage() {
       // 检查是否有进行中的任务
       api.getActiveTask().then(data => {
         if (data.active && data.task_id) {
+          if (isPollingRef.current) return
           isPollingRef.current = true
           setTopic(data.topic || '')
           setIsGenerating(true)
@@ -126,8 +135,10 @@ export function GenerateReviewPage() {
   const pollTask = (taskId: string) => {
     const startTime = Date.now()
     const doPoll = async () => {
+      if (!isMountedRef.current) return
       try {
         const statusResponse = await api.getTaskStatus(taskId)
+        if (!isMountedRef.current) return
         if (!statusResponse.success) {
           sessionStorage.removeItem('active_task_id')
           sessionStorage.removeItem('active_task_topic')
@@ -170,13 +181,14 @@ export function GenerateReviewPage() {
         }
         setTimeout(doPoll, nextInterval)
       } catch {
+        if (!isMountedRef.current) return
         sessionStorage.removeItem('active_task_id')
         sessionStorage.removeItem('active_task_topic')
         setIsGenerating(false)
         isPollingRef.current = false
       }
     }
-    setTimeout(doPoll, 5000)
+    setTimeout(doPoll, 3000)
   }
 
   const handleGenerate = async () => {
@@ -323,23 +335,77 @@ export function GenerateReviewPage() {
     } catch {}
   }
 
-  const getProgressPercentage = () => {
-    if (!progress) return 0
-    switch (progress.step) {
-      case 'init': return 5
-      case 'waiting': return 5
-      case 'generating_outline': return 15
-      case 'analyzing': return 20
-      case 'optimizing_keywords': return 25
-      case 'searching': return 40
-      case 'filtering': return 60
-      case 'topic_relevance_check': return 65
-      case 'generating': return 80
-      case 'validating': return 90
-      case 'completed': return 100
-      default: return 5
+  // 阶段对应的进度区间：[start, end]
+  const STAGE_RANGES: Record<string, [number, number]> = {
+    init: [0, 5],
+    waiting: [0, 5],
+    generating_outline: [5, 15],
+    analyzing: [15, 20],
+    optimizing_keywords: [20, 25],
+    searching: [25, 45],
+    papers_found: [45, 50],
+    filtering: [50, 60],
+    topic_relevance_check: [60, 65],
+    generating: [65, 90],
+    validating: [90, 95],
+    generating_matrix: [65, 90],
+    completed: [100, 100],
+  }
+
+  // 每个阶段预计耗时（秒），用于计算阶段内平滑进度
+  const STAGE_DURATION: Record<string, number> = {
+    init: 3,
+    waiting: 3,
+    generating_outline: 20,
+    analyzing: 15,
+    optimizing_keywords: 10,
+    searching: 40,
+    papers_found: 2,
+    filtering: 20,
+    topic_relevance_check: 15,
+    generating: 60,
+    validating: 30,
+    generating_matrix: 45,
+    completed: 0,
+  }
+
+  const startProgressTimer = () => {
+    if (progressTimerRef.current) clearInterval(progressTimerRef.current)
+    progressTimerRef.current = setInterval(() => {
+      if (!progress || !isMountedRef.current) return
+      const range = STAGE_RANGES[progress.step] || [0, 5]
+      const duration = STAGE_DURATION[progress.step] || 30
+      const elapsed = (Date.now() - progressStartRef.current) / 1000
+      // 阶段内进度：用 ease-out 曲线，不超过 95%
+      const stageProgress = Math.min(elapsed / duration, 0.95)
+      const percent = range[0] + (range[1] - range[0]) * stageProgress
+      setProgressPercent(Math.min(percent, range[1]))
+    }, 500)
+  }
+
+  const stopProgressTimer = () => {
+    if (progressTimerRef.current) {
+      clearInterval(progressTimerRef.current)
+      progressTimerRef.current = null
     }
   }
+
+  // 进度阶段变化时重置计时器
+  useEffect(() => {
+    if (isGenerating && progress) {
+      progressStartRef.current = Date.now()
+      if (progress.step === 'completed') {
+        setProgressPercent(100)
+        stopProgressTimer()
+      } else {
+        // 立即设置阶段起始值
+        const range = STAGE_RANGES[progress.step] || [0, 5]
+        setProgressPercent(range[0])
+        startProgressTimer()
+      }
+    }
+    return () => stopProgressTimer()
+  }, [isGenerating, progress?.step])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !isGenerating && topic.trim()) {
@@ -524,7 +590,7 @@ export function GenerateReviewPage() {
               <div
                 className="progress-fill"
                 style={{
-                  width: `${getProgressPercentage()}%`,
+                  width: `${progressPercent}%`,
                   height: '100%',
                   background: isChineseSite
                     ? 'linear-gradient(90deg, #D63031, #B71C1C)'
