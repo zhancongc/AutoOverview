@@ -1007,7 +1007,7 @@ export function SearchPapersPage() {
             ? `您有 ${credits} 个积分。\n${showCreditConfirm === 'review' ? '生成文献综述将消耗 2 个积分' : '生成对比矩阵将消耗 1 个积分'}，是否继续？`
             : `您有 ${credits} 个积分，不足以${showCreditConfirm === 'review' ? '生成文献综述（需 2 个积分）' : '生成对比矩阵（需 1 个积分）'}。`
           : hasCredits
-            ? `You have ${credits} credits.\n${showCreditConfirm === 'review' ? 'Generate a Literature Summary will use 2 credits' : 'Generate a Comparison Matrix will use 1 credit'}. Continue?`
+            ? `You have ${credits} credits.\n${showCreditConfirm === 'review' ? 'Generate a Literature Review will use 2 credits' : 'Generate a Comparison Matrix will use 1 credit'}. Continue?`
             : `You have ${credits} credits, which is not enough (${required} required).`
         return (
           <ConfirmModalInternational

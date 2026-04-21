@@ -13,7 +13,7 @@
         "search_desc": "Free academic paper search",
         "matrix": "Comparison Matrix",
         "matrix_desc": "Compare research perspectives",
-        "generate": "Literature Summary",
+        "generate": "Literature Review",
         "generate_desc": "AI-assisted structured literature summary"
       }
     },
@@ -124,7 +124,7 @@
       "databases": "Supported: Web of Science, IEEE, CrossRef, Semantic Scholar"
     },
     "nav": {
-      "generate": "Literature Summary",
+      "generate": "Literature Review",
       "features": "Features",
       "process": "How It Works",
       "cases": "Samples",
@@ -193,7 +193,7 @@
       "title": "Table of Contents",
       "actions": "Actions & TOC",
       "format": "Citation Format",
-      "generate": "Literature Summary",
+      "generate": "Literature Review",
       "toc": "Table of Contents"
     },
     "error": {
@@ -326,7 +326,7 @@
     },
     "nav": {
       "search": "Search Papers",
-      "generate": "Literature Summary",
+      "generate": "Literature Review",
       "comparison_matrix": "Comparison Matrix",
       "pricing": "Pricing"
     },
@@ -455,13 +455,13 @@
     "estimate": "Estimated 2-3 minutes",
     "no_results": "No papers found. Try different keywords.",
     "history": "📋 View Matrix History",
-    "review_cta_title": "Need a Full Literature Summary?",
+    "review_cta_title": "Need a Full Literature Review?",
     "review_cta_desc": "After generating the comparison matrix, continue to create a comprehensive, structured literature summary with proper citations.",
-    "review_cta_button": "Get Literature Summary"
+    "review_cta_button": "Get Literature Review"
   },
   "generate_page": {
-    "hero_badge": "Literature Summary Tool",
-    "title": "Literature Summary",
+    "hero_badge": "Literature Review Tool",
+    "title": "Literature Review",
     "subtitle": "Enter your research topic, AI will search papers and create a structured literature summary",
     "placeholder": "Enter your research topic, e.g., Deep Learning in Image Recognition",
     "button": "Create Summary",

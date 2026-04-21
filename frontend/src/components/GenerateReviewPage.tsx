@@ -620,7 +620,7 @@ export function GenerateReviewPage() {
             ? `您有 ${credits} 个积分。\n生成文献综述将消耗 2 个积分，是否继续？`
             : `您有 ${credits} 个积分，不足以生成文献综述（需 2 个积分）。`
           : hasCredits
-            ? `You have ${credits} credits.\nGenerate a Literature Summary will use 2 credits. Continue?`
+            ? `You have ${credits} credits.\nGenerate a Literature Review will use 2 credits. Continue?`
             : `You have ${credits} credits, which is not enough (2 required).`
         return (
           <ConfirmModalInternational

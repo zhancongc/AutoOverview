@@ -416,7 +416,7 @@ export function ComparisonMatrixLanding() {
 
   const creditConfirmMessage = isChineseSite
     ? `您有 ${credits} 个积分。\n生成文献综述将消耗 1 个积分，是否继续？`
-    : `You have ${credits} credits.\nGenerate a Literature Summary will use 1 credit. Continue?`
+    : `You have ${credits} credits.\nGenerate a Literature Review will use 1 credit. Continue?`
   const creditConfirmBtn = isChineseSite ? '生成' : 'Generate'
   const creditCancelBtn = isChineseSite ? '取消' : 'Cancel'
 
@@ -541,7 +541,7 @@ export function ComparisonMatrixLanding() {
         </div>
       )}
 
-      {/* Literature Summary CTA */}
+      {/* Literature Review CTA */}
       {hasSearched && !isLoading && papers.length > 0 && (
         <div className="sp-review-cta">
           <div className="sp-review-cta-card">

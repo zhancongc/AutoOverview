@@ -425,7 +425,7 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
             ? `您有 ${credits} 个积分。\n生成文献综述将消耗 1 个积分，是否继续？`
             : `您有 ${credits} 个积分，不足以生成文献综述（需 1 个积分）。`
           : hasCredits
-            ? `You have ${credits} credits.\nGenerate a Literature Summary will use 1 credit. Continue?`
+            ? `You have ${credits} credits.\nGenerate a Literature Review will use 1 credit. Continue?`
             : `You have ${credits} credits, which is not enough to generate a review (1 credit required).`
         return (
           <ConfirmModalInternational
