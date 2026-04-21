@@ -136,7 +136,7 @@ export function SearchPapersPage() {
     const savedShouldScroll = localStorage.getItem('search_papers_scroll_to_results')
 
     if (savedTopic) setTopic(savedTopic)
-    if (savedTaskId) {
+    if (savedTaskId && savedTaskId.trim() !== '') {
       setSearchTaskId(savedTaskId)
       // 恢复后也加载关联任务
       api.getRelatedTasks(savedTaskId).then(res => {
@@ -257,7 +257,11 @@ export function SearchPapersPage() {
         // 保存搜索结果到 localStorage
         localStorage.setItem('search_papers_papers', JSON.stringify(papers))
         localStorage.setItem('search_papers_statistics', JSON.stringify(stats))
-        localStorage.setItem('search_papers_task_id', taskId || '')
+        if (taskId) {
+          localStorage.setItem('search_papers_task_id', taskId)
+        } else {
+          localStorage.removeItem('search_papers_task_id')
+        }
         localStorage.setItem('search_papers_has_searched', 'true')
         // 设置滚动标记，搜索完成后滚动到结果区域
         setShouldScrollToResults(true)
@@ -409,7 +413,8 @@ export function SearchPapersPage() {
     if (!searchTaskId || !topic.trim()) return
 
     if (!checkLoggedIn()) {
-      navigate(`/?reuse_task_id=${searchTaskId}&topic=${encodeURIComponent(topic)}#generate`)
+      setPendingSearchTopic(topic)
+      setShowLoginModal(true)
       return
     }
 
@@ -894,6 +899,16 @@ export function SearchPapersPage() {
                 {paper.is_english && (
                   <span className="sp-paper-tag sp-tag-lang">EN</span>
                 )}
+                {paper.doi && (
+                  <a
+                    href={`https://doi.org/${paper.doi}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="sp-paper-tag sp-tag-doi"
+                  >
+                    DOI
+                  </a>
+                )}
               </div>
               {paper.abstract && (
                 <p className="sp-paper-abstract">
@@ -1009,24 +1024,48 @@ export function SearchPapersPage() {
           : hasCredits
             ? `You have ${credits} credits.\n${showCreditConfirm === 'review' ? 'Generate a Literature Review will use 2 credits' : 'Generate a Comparison Matrix will use 1 credit'}. Continue?`
             : `You have ${credits} credits, which is not enough (${required} required).`
-        return (
-          <ConfirmModalInternational
-            message={msg}
-            confirmText={hasCredits ? label : (isChineseSite ? '去购买积分' : 'Buy Credits')}
-            cancelText={isChineseSite ? '取消' : 'Cancel'}
-            onConfirm={() => {
-              setShowCreditConfirm(false)
-              if (hasCredits) {
-                if (showCreditConfirm === 'review') doGenerateFromSearch()
-                else doGenerateComparisonMatrix()
-              } else {
-                navigate('/#pricing')
-              }
-            }}
-            onCancel={() => setShowCreditConfirm(false)}
-            type={hasCredits ? 'info' : 'warning'}
-          />
-        )
+        const title = isChineseSite ? '确认操作' : 'Confirm'
+
+        if (isChineseSite) {
+          return (
+            <ConfirmModal
+              title={title}
+              message={msg}
+              confirmText={hasCredits ? label : '去购买积分'}
+              cancelText="取消"
+              onConfirm={() => {
+                setShowCreditConfirm(false)
+                if (hasCredits) {
+                  if (showCreditConfirm === 'review') doGenerateFromSearch()
+                  else doGenerateComparisonMatrix()
+                } else {
+                  navigate('/#pricing')
+                }
+              }}
+              onCancel={() => setShowCreditConfirm(false)}
+              type={hasCredits ? 'info' : 'warning'}
+            />
+          )
+        } else {
+          return (
+            <ConfirmModalInternational
+              message={msg}
+              confirmText={hasCredits ? label : 'Buy Credits'}
+              cancelText="Cancel"
+              onConfirm={() => {
+                setShowCreditConfirm(false)
+                if (hasCredits) {
+                  if (showCreditConfirm === 'review') doGenerateFromSearch()
+                  else doGenerateComparisonMatrix()
+                } else {
+                  navigate('/#pricing')
+                }
+              }}
+              onCancel={() => setShowCreditConfirm(false)}
+              type={hasCredits ? 'info' : 'warning'}
+            />
+          )
+        }
       })()}
 
       {/* Payment Modal */}

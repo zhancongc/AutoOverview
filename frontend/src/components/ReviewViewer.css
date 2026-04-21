@@ -9,7 +9,7 @@
   display: flex;
   max-width: 1600px;
   margin: 0 auto;
-  padding: 80px 2rem 2rem;
+  padding: 12px 2rem 2rem;
   gap: 2.5rem;
   align-items: flex-start;
   overflow: visible;
@@ -24,8 +24,8 @@
   padding: 1.5rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   position: sticky;
-  top: 80px;
-  max-height: calc(100vh - 96px);
+  top: 88px;
+  max-height: calc(100vh - 104px);
   overflow-y: auto;
 }
 

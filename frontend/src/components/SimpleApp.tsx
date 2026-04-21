@@ -568,6 +568,20 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
         </div>
       </section>
 
+      {/* 学术诚信 */}
+      <section className="landing-section academic-integrity-section">
+        <div className="section-inner">
+          <div className="integrity-notice">
+            <span className="integrity-icon">🎓</span>
+            <div className="integrity-content">
+              <h3 className="integrity-title">{t('home.integrity.title')}</h3>
+              <p className="integrity-description">{t('home.integrity.description')}</p>
+              <a href="/academic-integrity" className="integrity-link">{t('home.integrity.link')}</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <footer className="home-footer">
         <div className="footer-content">
           <div className="footer-links">

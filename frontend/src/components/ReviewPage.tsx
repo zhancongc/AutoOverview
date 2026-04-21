@@ -3,6 +3,7 @@ import { useNavigate, useLocation, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { ReviewViewer } from './ReviewViewer'
 import { CitationFormatSelector } from './CitationFormatSelector'
+import { ExportFormatModal, ExportFormat } from './ExportFormatModal'
 import { api } from '../api'
 import type { Paper } from '../types'
 import './ReviewPage.css'
@@ -44,6 +45,8 @@ export function ReviewPage() {
     recordId?: number
     isPublic: boolean
     isPaid: boolean
+    statistics?: any
+    createdAt?: string
   } | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -51,6 +54,9 @@ export function ReviewPage() {
   const [showReviewExportModal, setShowReviewExportModal] = useState(false)
   const [reviewExportFormat, setReviewExportFormat] = useState<'markdown' | 'word'>('markdown')
   const [exportingReview, setExportingReview] = useState(false)
+  const [showExportRefModal, setShowExportRefModal] = useState(false)
+  const [exportRefFormat, setExportRefFormat] = useState<ExportFormat>('bibtex')
+  const [exportingRef, setExportingRef] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [tocItems, setTocItems] = useState<TocItem[]>([])
   const [citationFormat, setCitationFormat] = useState<CitationFormat>('ieee')
@@ -81,6 +87,8 @@ export function ReviewPage() {
               recordId: res.data.record_id,
               isPublic: res.data.is_public,
               isPaid: res.data.is_paid,
+              statistics: res.data.statistics,
+              createdAt: res.data.created_at,
             })
           } else {
             setError('综述不存在或尚未完成')
@@ -106,6 +114,8 @@ export function ReviewPage() {
               recordId: res.data.record_id,
               isPublic: res.data.is_public,
               isPaid: res.data.is_paid,
+              statistics: res.data.statistics,
+              createdAt: res.data.created_at,
             })
 
             // 如果返回了 task_id 且 URL 中没有，更新 URL（只执行一次）
@@ -137,27 +147,24 @@ export function ReviewPage() {
     return (
       <div className="review-page">
         <div className="review-page-header">
-          <button className="back-button" onClick={() => navigate(-1)}>←</button>
+          <div className="header-left-buttons">
+            <button className="back-button" onClick={() => navigate(-1)}>←</button>
+          </div>
         </div>
         <div className="error-fallback-container">
-          <div className="error-icon">⚠️</div>
-          <h2 className="error-title">{t('review.error.loading_failed')}</h2>
+          <div className="error-icon">🔒</div>
+          <h2 className="error-title">{t('review.error.access_denied', '访问受限')}</h2>
           <p className="error-message">{error}</p>
 
           <div className="error-options">
-            <button className="error-option-btn primary" onClick={() => window.location.reload()}>
-              <span className="btn-icon">🔄</span>
-              <span className="btn-text">{t('review.error.reload')}</span>
-            </button>
-
             <button className="error-option-btn" onClick={() => navigate('/')}>
               <span className="btn-icon">🏠</span>
               <span className="btn-text">{t('review.error.go_home')}</span>
             </button>
-          </div>
-
-          <div className="error-hint">
-            {t('review.error.hint')}
+            <button className="error-option-btn primary" onClick={() => navigate('/profile?tab=reviews')}>
+              <span className="btn-icon">👤</span>
+              <span className="btn-text">{t('review.error.my_profile', '我的综述')}</span>
+            </button>
           </div>
         </div>
 
@@ -165,35 +172,40 @@ export function ReviewPage() {
           .error-fallback-container {
             max-width: 600px;
             margin: 100px auto;
-            padding: 2rem;
+            padding: 3rem 2rem;
             text-align: center;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
           }
 
           .error-icon {
             font-size: 4rem;
-            margin-bottom: 1rem;
+            margin-bottom: 1.5rem;
           }
 
           .error-title {
-            font-size: 1.5rem;
-            font-weight: 600;
+            font-size: 1.75rem;
+            font-weight: 700;
             color: var(--ink-black, #1A1A1A);
-            margin-bottom: 1rem;
+            margin-bottom: 0.75rem;
+            font-family: 'Playfair Display', Georgia, serif;
           }
 
           .error-message {
             color: var(--text-gray, #636E72);
-            margin-bottom: 2rem;
-            line-height: 1.6;
+            margin-bottom: 2.5rem;
+            line-height: 1.7;
+            font-size: 1.05rem;
           }
 
           .error-options {
             display: flex;
             flex-direction: column;
             gap: 1rem;
-            max-width: 320px;
+            max-width: 360px;
             margin: 0 auto;
-            align-items: center;
+            align-items: stretch;
           }
 
           .error-option-btn {
@@ -207,7 +219,7 @@ export function ReviewPage() {
             border-radius: 12px;
             cursor: pointer;
             font-size: 1rem;
-            font-weight: 500;
+            font-weight: 600;
             transition: all 0.2s;
             color: var(--charcoal, #2D3436);
           }
@@ -231,7 +243,7 @@ export function ReviewPage() {
           }
 
           .btn-icon {
-            font-size: 1.25rem;
+            font-size: 1.3rem;
           }
 
           .btn-text {
@@ -250,12 +262,12 @@ export function ReviewPage() {
           @media (min-width: 768px) {
             .error-options {
               flex-direction: row;
-              max-width: 420px;
+              max-width: 480px;
               justify-content: center;
             }
 
             .error-option-btn {
-              min-width: 160px;
+              min-width: 180px;
               flex: 0 1 auto;
             }
           }
@@ -268,7 +280,9 @@ export function ReviewPage() {
     return (
       <div className="review-page">
         <div className="review-page-header">
-          <button className="back-button" onClick={() => navigate(-1)}>←</button>
+          <div className="header-left-buttons">
+            <button className="back-button" onClick={() => navigate(-1)}>←</button>
+          </div>
         </div>
         <div style={{ textAlign: 'center', padding: '4rem', color: '#666' }}>{t('common.loading')}</div>
       </div>
@@ -282,7 +296,9 @@ export function ReviewPage() {
         return (
           <div className="review-page">
             <div className="review-page-header">
-              <button className="back-button" onClick={() => navigate(-1)}>←</button>
+              <div className="header-left-buttons">
+                <button className="back-button" onClick={() => navigate(-1)}>←</button>
+              </div>
             </div>
             <div style={{ textAlign: 'center', padding: '4rem', color: '#666' }}>{t('common.loading')}</div>
           </div>
@@ -293,7 +309,9 @@ export function ReviewPage() {
       return (
         <div className="review-page">
           <div className="review-page-header">
-            <button className="back-button" onClick={() => navigate(-1)}>←</button>
+            <div className="header-left-buttons">
+              <button className="back-button" onClick={() => navigate(-1)}>←</button>
+            </div>
           </div>
           <div className="error-fallback-container">
             <div className="error-icon">📭</div>
@@ -504,6 +522,80 @@ export function ReviewPage() {
     }
   }
 
+  const generateBibTeX = (papers: any[]): string => {
+    return papers.map((paper, i) => {
+      const key = (paper.authors?.[0]?.split(' ').pop()?.toLowerCase() || 'unknown')
+        + (paper.year || '') + '_' + (i + 1)
+      const authors = paper.authors?.join(' and ') || 'Unknown'
+      let entry = `@article{${key},\n`
+      entry += `  title = {${paper.title}},\n`
+      entry += `  author = {${authors}},\n`
+      if (paper.year) entry += `  year = {${paper.year}},\n`
+      if (paper.doi) entry += `  doi = {${paper.doi}},\n`
+      if (paper.journal) entry += `  journal = {${paper.journal}},\n`
+      entry += `}`
+      return entry
+    }).join('\n\n')
+  }
+
+  const generateRIS = (papers: any[]): string => {
+    return papers.map(paper => {
+      let ris = `TY  - JOUR\n`
+      ris += `TI  - ${paper.title}\n`
+      if (paper.authors) {
+        paper.authors.forEach((a: string) => { ris += `AU  - ${a}\n` })
+      }
+      if (paper.year) ris += `PY  - ${paper.year}\n`
+      if (paper.doi) ris += `DO  - ${paper.doi}\n`
+      if (paper.journal) ris += `JO  - ${paper.journal}\n`
+      ris += `ER  - \n`
+      return ris
+    }).join('\n')
+  }
+
+  const handleExportReferences = async () => {
+    const papers = reviewData?.papers || []
+    if (papers.length === 0) return
+
+    setExportingRef(true)
+    try {
+      const safeName = (reviewData?.title || 'references').replace(/[\/\\:]/g, '-').substring(0, 50)
+      const { saveAs } = await import('file-saver')
+
+      if (exportRefFormat === 'bibtex') {
+        const content = generateBibTeX(papers)
+        const blob = new Blob([content], { type: 'application/x-bibtex;charset=utf-8' })
+        saveAs(blob, `${safeName}.bib`)
+      } else if (exportRefFormat === 'ris') {
+        const content = generateRIS(papers)
+        const blob = new Blob([content], { type: 'application/x-research-info-systems;charset=utf-8' })
+        saveAs(blob, `${safeName}.ris`)
+      } else {
+        const { Document, Packer, Paragraph, TextRun } = await import('docx')
+        const children: any[] = [
+          new Paragraph({ text: reviewData?.title || 'References', heading: 'Heading1' as any }),
+          new Paragraph({ text: '' }),
+        ]
+        papers.forEach((paper: any, i: number) => {
+          const authors = paper.authors?.slice(0, 3).join(', ') + (paper.authors?.length > 3 ? ' et al.' : '')
+          children.push(new Paragraph({
+            children: [
+              new TextRun({ text: `[${i + 1}] `, bold: true }),
+              new TextRun({ text: `${paper.title}. ${authors}. ${paper.year || ''} ${paper.doi ? `DOI: ${paper.doi}` : ''}` }),
+            ],
+            spacing: { after: 200 },
+          }))
+        })
+        const doc = new Document({ sections: [{ children }] })
+        const blob = await Packer.toBlob(doc)
+        saveAs(blob, `${safeName}.docx`)
+      }
+    } finally {
+      setExportingRef(false)
+      setShowExportRefModal(false)
+    }
+  }
+
   const handleExportWord = () => {
     setShowReviewExportModal(true)
   }
@@ -560,9 +652,16 @@ export function ReviewPage() {
   return (
     <div className="review-page">
       <div className="review-page-header">
-        <button className="back-button" onClick={handleBack}>
-          ←
-        </button>
+        <div className="header-left-buttons">
+          <button className="back-button" onClick={handleBack}>
+            ←
+          </button>
+          {taskId && (
+            <button className="stats-action-btn stats-action-btn-share" onClick={handleShare}>
+              {shareCopied ? t('review.share_copied', '已复制') : t('review.share', '分享')}
+            </button>
+          )}
+        </div>
         <div className="review-segmented-tabs">
           <button
             className={`segmented-tab ${activeTab === 'content' ? 'active' : ''}`}
@@ -620,6 +719,55 @@ export function ReviewPage() {
           ☰
         </button>
       </div>
+      <div className="review-stats-container">
+        <div className="review-stats">
+          <div className="review-stats-header">
+            <p className="review-topic" style={{ fontSize: '1.05rem', color: '#1f2937', fontWeight: 600, margin: 0, lineHeight: 1.4 }}>
+              {reviewData.title}
+            </p>
+            <button className="stats-action-btn" onClick={() => setShowExportRefModal(true)} disabled={!reviewData.papers || reviewData.papers.length === 0}>
+              {t('comparison_matrix_page.export_references', '导出参考文献')}
+            </button>
+          </div>
+          <div className="stats-left">
+            {reviewData.papers && reviewData.papers.length > 0 && (
+              <div className="stat-item">
+                <span className="stat-label">{t('comparison_matrix_page.papers_used')}</span>
+                <span className="stat-value">{reviewData.papers.length} {t('comparison_matrix_page.papers_unit')}</span>
+              </div>
+            )}
+            {(taskData?.statistics?.total_time_seconds || (state as any)?.statistics?.total_time_seconds) && (() => {
+              const secs = taskData?.statistics?.total_time_seconds || (state as any)?.statistics?.total_time_seconds
+              const display = secs >= 60 ? `${Math.floor(secs / 60)}m${Math.round(secs % 60)}s` : `${secs}s`
+              return (
+                <div className="stat-item">
+                  <span className="stat-label">{t('comparison_matrix_page.time_used')}</span>
+                  <span className="stat-value">{display}</span>
+                </div>
+              )
+            })()}
+            {(taskData?.createdAt || (state as any)?.createdAt) && (
+              <div className="stat-item">
+                <span className="stat-label">{t('comparison_matrix_page.generated_at')}</span>
+                <span className="stat-value">
+                  {new Date(taskData?.createdAt || (state as any)?.createdAt).toLocaleString()}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {showExportRefModal && (
+        <ExportFormatModal
+          selectedFormat={exportRefFormat}
+          onSelectFormat={setExportRefFormat}
+          onConfirm={handleExportReferences}
+          onCancel={() => setShowExportRefModal(false)}
+          loading={exportingRef}
+        />
+      )}
+
       {activeTab === 'content' ? (
         <ReviewViewer
           title={reviewData.title}

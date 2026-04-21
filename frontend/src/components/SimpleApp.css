@@ -1777,6 +1777,55 @@ html.intl .nav-btn-logout:hover {
   color: var(--text-gray);
 }
 
+/* ==================== 学术诚信 ==================== */
+
+.academic-integrity-section {
+  background: linear-gradient(135deg, #e8f0fe 0%, #f0f4ff 100%);
+  padding: 3rem 2rem;
+  width: 100%;
+}
+
+.integrity-notice {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 1.5rem;
+  background: #fff;
+  border: 1px solid #c5d8f0;
+  border-radius: 12px;
+}
+
+.integrity-icon {
+  font-size: 2.5rem;
+  flex-shrink: 0;
+}
+
+.integrity-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #2c5aa0;
+  margin-bottom: 0.5rem;
+}
+
+.integrity-description {
+  color: #555;
+  margin-bottom: 0.75rem;
+  line-height: 1.6;
+}
+
+.integrity-link {
+  color: #2c5aa0;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.integrity-link:hover {
+  text-decoration: underline;
+}
+
 /* ==================== 页脚 ==================== */
 
 .home-footer {

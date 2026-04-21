@@ -355,9 +355,11 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
 
   const renderCompactHeader = () => (
     <div className="review-page-header" style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100, background: '#fff', borderBottom: '1px solid #e5e7eb' }}>
-      <button className="back-button" onClick={() => navigate('/profile')}>
-        ←
-      </button>
+      <div className="header-left-buttons">
+        <button className="back-button" onClick={() => navigate('/profile?tab=matrices')}>
+          ←
+        </button>
+      </div>
       <div className="review-segmented-tabs">
         <button
           className={`segmented-tab ${activeTab === 'matrix' ? 'active' : ''}`}

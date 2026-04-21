@@ -45,6 +45,12 @@ html.intl {
     touch-action: none;
   }
 
+  .header-left-buttons {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
   /* 移动端菜单按钮靠右 */
   .mobile-menu-toggle.review-mobile-toggle {
     z-index: 9999 !important;
@@ -54,6 +60,53 @@ html.intl {
     position: fixed !important;
     right: 0.75rem;
     top: 4px;
+  }
+
+  /* ==================== Stats Card ==================== */
+  .review-stats-container {
+    max-width: 1400px;
+    margin: 72px auto 0;
+    padding: 0 2rem;
+  }
+
+  .review-page-international .review-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background: white;
+    border-radius: 12px;
+    padding: 16px 24px;
+    margin-bottom: 0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  }
+
+  .review-page-international .review-stats-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .review-page-international .stats-left {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+
+  .review-page-international .stat-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .review-page-international .stat-label {
+    font-size: 0.8rem;
+    color: #999;
+  }
+
+  .review-page-international .stat-value {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #333;
   }
 
   .back-button {
@@ -222,7 +275,7 @@ html.intl {
   @media (max-width: 900px) {
     .review-inline-title {
       font-size: 1.15rem;
-      margin-top: 65px;
+      margin-top: 60px;
       padding: 1rem 1.5rem 0.25rem;
     }
   }
@@ -243,9 +296,17 @@ html.intl {
       right: 3rem;
     }
 
-    .back-button {
+    .header-left-buttons {
       position: absolute;
       left: 2rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .back-button {
+      position: relative;
+      left: auto;
       padding: 0.625rem 1.25rem;
       background: var(--cream-white);
       border: 2px solid var(--border-gray);

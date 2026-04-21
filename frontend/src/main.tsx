@@ -17,6 +17,7 @@ import { TermsAndConditionsPageChinese } from './components/TermsAndConditionsPa
 import { PrivacyPolicyPageChinese } from './components/PrivacyPolicyPageChinese'
 import { RefundPolicyPageChinese } from './components/RefundPolicyPageChinese'
 import { AcademicIntegrityPage } from './components/AcademicIntegrityPage'
+import { AcademicIntegrityPageChinese } from './components/AcademicIntegrityPageChinese'
 import { ComparisonMatrixPage } from './components/ComparisonMatrixPage'
 import { GenerateReviewPage } from './components/GenerateReviewPage'
 import ErrorBoundary from './ErrorBoundary'
@@ -86,7 +87,7 @@ function AppContent() {
         <Route path="/terms-and-conditions" element={isEnglishVersion ? <TermsAndConditionsPage /> : <TermsAndConditionsPageChinese />} />
         <Route path="/privacy-policy" element={isEnglishVersion ? <PrivacyPolicyPage /> : <PrivacyPolicyPageChinese />} />
         <Route path="/refund-policy" element={isEnglishVersion ? <RefundPolicyPage /> : <RefundPolicyPageChinese />} />
-        <Route path="/academic-integrity" element={<AcademicIntegrityPage />} />
+        <Route path="/academic-integrity" element={isEnglishVersion ? <AcademicIntegrityPage /> : <AcademicIntegrityPageChinese />} />
         <Route path="/comparison-matrix" element={<ComparisonMatrixPage />} />
         <Route path="/generate" element={<GenerateReviewPage />} />
         <Route path="/payment/success" element={<PaymentRedirect />} />

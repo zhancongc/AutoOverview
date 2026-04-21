@@ -143,6 +143,11 @@
       "name3": "博士后研究员",
       "role3": "高校教师"
     },
+    "integrity": {
+      "title": "学术诚信承诺",
+      "description": "我们承诺维护学术诚信。所有引用均基于真实论文、可溯源验证。AI 辅助内容仅作为研究参考，用户需自行审阅、修改并补充原创分析。",
+      "link": "了解我们的引用验证机制 →"
+    },
     "footer": {
       "copyright": "© 2026 Danmo Scholar. All rights reserved.",
       "terms": "用户协议",

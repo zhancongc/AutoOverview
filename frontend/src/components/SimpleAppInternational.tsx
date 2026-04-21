@@ -591,7 +591,7 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
               <div className="integrity-content">
                 <h3 className="integrity-title">{t('home.integrity.title')}</h3>
                 <p className="integrity-description">{t('home.integrity.description')}</p>
-                <a href="/integrity" className="integrity-link">{t('home.integrity.link')}</a>
+                <a href="/academic-integrity" className="integrity-link">{t('home.integrity.link')}</a>
               </div>
             </div>
           </div>

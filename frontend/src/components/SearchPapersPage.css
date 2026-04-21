@@ -454,7 +454,7 @@ html.intl .search-papers-page .nav-links a.active {
 .search-papers-page .sp-comparison-btn {
   background: #D63031;
   color: white;
-  border: none;
+  border: 1px solid #D63031;
   padding: 0.875rem 1.75rem;
   border-radius: 10px;
   font-size: 1rem;
@@ -488,6 +488,8 @@ html.intl .search-papers-page .sp-comparison-content p {
 
 html.intl .search-papers-page .sp-comparison-btn {
   background: #3182ce;
+  color: white;
+  border: none;
   box-shadow: 0 4px 12px rgba(49, 130, 206, 0.3);
 }
 
@@ -666,19 +668,19 @@ html.intl .search-papers-page .sp-review-cta-btn:hover {
 }
 
 .search-papers-page .sp-btn-generate {
-  background: var(--accent-blue);
-  color: #fff;
-  border: 1px solid var(--accent-blue);
+  background: #fff;
+  color: #D63031;
+  border: 1px solid #D63031;
   padding: 0.4rem 1rem;
   border-radius: 6px;
   font-size: 0.8rem;
   cursor: pointer;
-  transition: opacity 0.2s;
+  transition: all 0.2s;
   white-space: nowrap;
 }
 
 .search-papers-page .sp-btn-generate:hover {
-  opacity: 0.85;
+  background: #fff5f5;
 }
 
 .search-papers-page .sp-btn-generate:disabled {
@@ -688,18 +690,18 @@ html.intl .search-papers-page .sp-review-cta-btn:hover {
 
 .search-papers-page .sp-btn-export {
   background: #fff;
-  color: var(--accent-blue);
-  border: 1px solid var(--accent-blue);
+  color: #D63031;
+  border: 1px solid #D63031;
   padding: 0.4rem 1rem;
   border-radius: 6px;
   font-size: 0.8rem;
   cursor: pointer;
-  transition: opacity 0.2s;
+  transition: all 0.2s;
   white-space: nowrap;
 }
 
 .search-papers-page .sp-btn-export:hover {
-  background: var(--academic-blue-light);
+  background: #fff5f5;
 }
 
 .search-papers-page .sp-btn-export:disabled {
@@ -708,19 +710,19 @@ html.intl .search-papers-page .sp-review-cta-btn:hover {
 }
 
 .search-papers-page .sp-btn-share {
-  background: var(--accent-blue);
-  color: #fff;
-  border: 1px solid var(--accent-blue);
+  background: #fff;
+  color: #D63031;
+  border: 1px solid #D63031;
   padding: 0.4rem 1rem;
   border-radius: 6px;
   font-size: 0.8rem;
   cursor: pointer;
-  transition: opacity 0.2s;
+  transition: all 0.2s;
   white-space: nowrap;
 }
 
 .search-papers-page .sp-btn-share:hover {
-  opacity: 0.85;
+  background: #fff5f5;
 }
 
 /* Papers section (generate page preview) */
@@ -830,6 +832,18 @@ html.intl .search-papers-page .sp-review-cta-btn:hover {
   color: var(--academic-blue-secondary);
 }
 
+.search-papers-page .sp-tag-doi {
+  background: #e0e7ff;
+  color: #4338ca;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.search-papers-page .sp-tag-doi:hover {
+  background: #c7d2fe;
+  transform: translateY(-1px);
+}
+
 .search-papers-page .sp-paper-abstract {
   padding-left: 2.75rem;
   margin-top: 0.5rem;
@@ -876,22 +890,21 @@ html.intl .search-papers-page .sp-review-cta-btn:hover {
 
 .search-papers-page .sp-cta-btn {
   display: inline-block;
-  background: var(--cream-white);
-  color: var(--academic-blue-primary);
-  border: none;
+  background: #fff;
+  color: #D63031;
+  border: 1px solid #D63031;
   padding: 0.875rem 2.25rem;
   border-radius: 10px;
   font-size: 1rem;
   font-weight: 700;
   cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  transition: all 0.2s;
   text-decoration: none;
 }
 
 .search-papers-page .sp-cta-btn:hover {
+  background: #fff5f5;
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
 }
 
 .search-papers-page .sp-cta-badge {
