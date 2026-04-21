@@ -11,6 +11,7 @@ import { LoginModal } from './LoginModal'
 import { PaymentModal } from './PaymentModal'
 import { PayPalPaymentModal } from './PayPalPaymentModal'
 import { ConfirmModalInternational } from './ConfirmModalInternational'
+import { ConfirmModal } from './ConfirmModal'
 import './SimpleApp.css'
 import './SearchPapersPage.css'
 
@@ -614,18 +615,21 @@ export function GenerateReviewPage() {
       {showLoginModal && <LoginModal onClose={() => setShowLoginModal(false)} onLoginSuccess={handleLoginSuccess} />}
       {showCreditConfirm && (() => {
         const hasCredits = credits >= 2
-        const msg = isChineseSite
-          ? hasCredits
-            ? `您有 ${credits} 个积分。\n生成文献综述将消耗 2 个积分，是否继续？`
-            : `您有 ${credits} 个积分，不足以生成文献综述（需 2 个积分）。`
-          : hasCredits
-            ? `You have ${credits} credits.\nGenerate a Literature Review will use 2 credits. Continue?`
-            : `You have ${credits} credits, which is not enough (2 required).`
+        const ConfirmComponent = isChineseSite ? ConfirmModal : ConfirmModalInternational
+        const msg = hasCredits
+          ? t('generate_page.credit_confirm.has_credits', { credits })
+          : t('generate_page.credit_confirm.insufficient', { credits })
+        const confirmLabel = hasCredits
+          ? t('generate_page.credit_confirm.confirm_text')
+          : t('generate_page.credit_confirm.go_buy_credits')
+        const cancelLabel = t('generate_page.credit_confirm.cancel_text')
+        const title = t('generate_page.credit_confirm.title')
         return (
-          <ConfirmModalInternational
+          <ConfirmComponent
+            title={title}
             message={msg}
-            confirmText={hasCredits ? (isChineseSite ? '生成综述' : 'Generate') : (isChineseSite ? '去购买积分' : 'Buy Credits')}
-            cancelText={isChineseSite ? '取消' : 'Cancel'}
+            confirmText={confirmLabel}
+            cancelText={cancelLabel}
             onConfirm={() => {
               setShowCreditConfirm(false)
               if (hasCredits) doGenerate()

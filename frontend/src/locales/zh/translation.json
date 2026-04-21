@@ -510,6 +510,14 @@
     "minutes": "分钟",
     "completed": "生成完成，即将跳转...",
     "estimate": "综述生成通常需要 3-5 分钟，您可以关闭此页面，稍后在「个人中心」中查看结果",
-    "papers_found": "已找到 {{count}} 篇相关文献"
+    "papers_found": "已找到 {{count}} 篇相关文献",
+    "credit_confirm": {
+      "title": "确认扣除积分",
+      "confirm_text": "生成综述",
+      "cancel_text": "取消",
+      "go_buy_credits": "去购买积分",
+      "has_credits": "您有 {{credits}} 个积分。\n生成文献综述将消耗 2 个积分，是否继续？",
+      "insufficient": "您有 {{credits}} 个积分，不足以生成文献综述（需 2 个积分）。"
+    }
   }
 }

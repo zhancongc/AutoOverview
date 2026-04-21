@@ -496,6 +496,14 @@
     "minutes": "minutes",
     "completed": "Summary completed, redirecting...",
     "estimate": "Summary generation usually takes 3-5 minutes. You can close this page and check the result later in \"My Account\".",
-    "papers_found": "Found {{count}} related papers"
+    "papers_found": "Found {{count}} related papers",
+    "credit_confirm": {
+      "title": "Confirm",
+      "confirm_text": "Generate",
+      "cancel_text": "Cancel",
+      "go_buy_credits": "Buy Credits",
+      "has_credits": "You have {{credits}} credits.\nGenerate a Literature Review will use 2 credits. Continue?",
+      "insufficient": "You have {{credits}} credits, which is not enough (2 required)."
+    }
   }
 }

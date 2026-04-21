@@ -26,7 +26,7 @@ export function ComparisonMatrixLanding() {
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [showPaymentModal, setShowPaymentModal] = useState<string | false>(false)
-  const [showCreditConfirm, setShowCreditConfirm] = useState(false)
+  const [showCreditConfirm, setShowCreditConfirm] = useState<'matrix' | 'review' | false>(false)
 
   // Search state
   const [topic, setTopic] = useState('')
@@ -111,6 +111,16 @@ export function ComparisonMatrixLanding() {
       setShowLoginModal(true)
       return
     }
+
+    try {
+      const creditsData = await api.getCredits()
+      setCredits(creditsData.credits)
+    } catch { /* proceed */ }
+    setShowCreditConfirm('matrix')
+  }, [topic])
+
+  const doGenerateAll = useCallback(async () => {
+    if (!topic.trim()) return
 
     setSearchError('')
     setPapers([])
@@ -199,7 +209,7 @@ export function ComparisonMatrixLanding() {
         setSearchError('')
         setCombinedPhase('idle')
         localStorage.removeItem('cm_matrix_task_id')
-        setShowPaymentModal('starter')
+        setShowPaymentModal('single')
       } else {
         setSearchError(errorMsg)
         setCombinedPhase('idle')
@@ -233,7 +243,7 @@ export function ComparisonMatrixLanding() {
       const creditsData = await api.getCredits()
       setCredits(creditsData.credits)
     } catch { /* proceed */ }
-    setShowCreditConfirm(true)
+    setShowCreditConfirm('review')
   }
 
   const doGenerateReview = async () => {
@@ -261,7 +271,7 @@ export function ComparisonMatrixLanding() {
       } else {
         const msg = response.message || ''
         if (msg.includes('credits') || msg.includes('积分')) {
-          setShowPaymentModal('starter')
+          setShowPaymentModal('single')
         } else {
           setSearchError(msg || 'Something went wrong')
         }
@@ -519,7 +529,7 @@ export function ComparisonMatrixLanding() {
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
               <button
                 className="sp-error-retry"
-                onClick={() => setShowPaymentModal('starter')}
+                onClick={() => setShowPaymentModal('single')}
               >
                 {isChineseSite ? '购买积分' : 'Purchase Credits'}
               </button>
@@ -688,9 +698,11 @@ export function ComparisonMatrixLanding() {
           confirmText={creditConfirmBtn}
           cancelText={creditCancelBtn}
           onConfirm={() => {
+            const action = showCreditConfirm
             setShowCreditConfirm(false)
             if (hasEnoughCredits) {
-              doGenerateReview()
+              if (action === 'matrix') doGenerateAll()
+              else doGenerateReview()
             } else {
               navigate('/#pricing')
             }
@@ -705,9 +717,11 @@ export function ComparisonMatrixLanding() {
           confirmText={creditConfirmBtn}
           cancelText={creditCancelBtn}
           onConfirm={() => {
+            const action = showCreditConfirm
             setShowCreditConfirm(false)
             if (hasEnoughCredits) {
-              doGenerateReview()
+              if (action === 'matrix') doGenerateAll()
+              else doGenerateReview()
             } else {
               navigate('/#pricing')
             }
