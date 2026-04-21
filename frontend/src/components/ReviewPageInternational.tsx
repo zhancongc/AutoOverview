@@ -17,8 +17,11 @@ interface ReviewState {
   content: string
   papers: Paper[]
   recordId?: number
+  taskId?: string
   isPublic?: boolean
   isPaid?: boolean
+  statistics?: any
+  createdAt?: string
 }
 
 type TabType = 'content' | 'references'
@@ -45,6 +48,7 @@ export function ReviewPageInternational() {
     content: string
     papers: Paper[]
     recordId?: number
+    taskId?: string
     isPublic: boolean
     isPaid: boolean
     statistics?: any

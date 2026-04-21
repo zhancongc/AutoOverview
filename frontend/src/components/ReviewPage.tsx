@@ -13,8 +13,11 @@ interface ReviewState {
   content: string
   papers: Paper[]
   recordId?: number
+  taskId?: string
   isPublic?: boolean
   isPaid?: boolean
+  statistics?: any
+  createdAt?: string
 }
 
 type TabType = 'content' | 'references'
@@ -115,7 +118,7 @@ export function ReviewPage() {
               content: res.data.review,
               papers: res.data.papers || [],
               recordId: res.data.record_id,
-              taskId: res.data.task_id,
+              taskId: res.data.task_id ?? undefined,
               isPublic: res.data.is_public,
               isPaid: res.data.is_paid,
               statistics: res.data.statistics,
