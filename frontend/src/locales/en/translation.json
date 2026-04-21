@@ -368,7 +368,7 @@
       "export": "Export References",
       "exporting": "Exporting...",
       "share": "Share",
-      "share_copied": "Link copied to clipboard"
+      "share_copied": "Share link copied to clipboard, you can paste it on other platforms"
     },
     "export": {
       "title": "Select Export Format",

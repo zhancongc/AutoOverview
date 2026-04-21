@@ -385,7 +385,7 @@
       "export": "导出文献",
       "exporting": "导出中...",
       "share": "分享",
-      "share_copied": "已复制链接到剪贴板"
+      "share_copied": "已复制分享链接到剪切板，可以复制到其它平台"
     },
     "export": {
       "title": "选择导出格式",
@@ -462,7 +462,7 @@
     "back": "返回",
     "papers_used": "使用论文",
     "papers_unit": "篇",
-    "time_used": "Generation time",
+    "time_used": "生成耗时",
     "time_unit": "秒",
     "generated_at": "生成时间",
     "export_markdown": "导出 Markdown",
