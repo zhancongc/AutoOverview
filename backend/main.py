@@ -993,15 +993,23 @@ async def get_demo_cases(lang: str = ""):
 
     db = next(get_db())
     try:
-        # 批量查询所有 task，避免 N+1
-        tasks = db.query(ReviewTask).filter(ReviewTask.id.in_(demo_task_ids)).all()
+        # 批量查询所有 task，只取需要的列（避免加载 params 大字段）
+        tasks = db.query(
+            ReviewTask.id,
+            ReviewTask.topic,
+            ReviewTask.review_record_id,
+        ).filter(ReviewTask.id.in_(demo_task_ids)).all()
         task_map = {t.id: t for t in tasks}
 
-        # 收集所有需要的 review_record_id，一次性批量查询
+        # 收集所有需要的 review_record_id，一次性批量查询（只取 topic + statistics）
         record_ids = [t.review_record_id for t in tasks if t.review_record_id]
         record_map = {}
         if record_ids:
-            records = db.query(ReviewRecord).filter(ReviewRecord.id.in_(record_ids)).all()
+            records = db.query(
+                ReviewRecord.id,
+                ReviewRecord.topic,
+                ReviewRecord.statistics,
+            ).filter(ReviewRecord.id.in_(record_ids)).all()
             record_map = {r.id: r for r in records}
 
         for task_id in demo_task_ids:
@@ -1019,7 +1027,7 @@ async def get_demo_cases(lang: str = ""):
                 "icon": "📄"
             }
 
-            if record and record.review:
+            if record and record.topic:
                 case_info["title"] = record.topic
                 if record.statistics:
                     stats = record.statistics if isinstance(record.statistics, dict) else {}
@@ -1131,7 +1139,11 @@ async def get_active_task(user_id: Optional[int] = Depends(get_current_user_id))
     db_session = next(get_db())
     try:
         # 方案1: ReviewTask 自身有 user_id
-        task = db_session.query(ReviewTask).filter(
+        task = db_session.query(
+            ReviewTask.id,
+            ReviewTask.topic,
+            ReviewTask.status,
+        ).filter(
             ReviewTask.user_id == user_id,
             ReviewTask.status.in_(["pending", "processing"])
         ).first()
@@ -1145,7 +1157,11 @@ async def get_active_task(user_id: Optional[int] = Depends(get_current_user_id))
             }
 
         # 方案2: 通过 ReviewRecord 的 user_id 关联（ReviewTask 无 user_id 的旧数据）
-        task = db_session.query(ReviewTask).join(
+        task = db_session.query(
+            ReviewTask.id,
+            ReviewTask.topic,
+            ReviewTask.status,
+        ).join(
             ReviewRecord, ReviewTask.review_record_id == ReviewRecord.id
         ).filter(
             ReviewRecord.user_id == user_id,
@@ -2278,8 +2294,14 @@ async def get_related_tasks(
         session_gen = db.get_session()
         session = next(session_gen)
         try:
-            # 用 JSON 查询直接过滤，避免加载所有任务到内存
-            related_tasks = session.query(ReviewTask).filter(
+            # 用 JSON 查询直接过滤，只取需要的列
+            related_tasks = session.query(
+                ReviewTask.id,
+                ReviewTask.topic,
+                ReviewTask.status,
+                ReviewTask.created_at,
+                ReviewTask.params.op('->>')('type').label('task_type'),
+            ).filter(
                 ReviewTask.params.op('->>')('reuse_task_id') == task_id
             ).order_by(
                 ReviewTask.created_at.desc()
@@ -2293,8 +2315,7 @@ async def get_related_tasks(
                     continue
                 seen_ids.add(task.id)
 
-                params = task.params or {}
-                task_type = "comparison_matrix" if params.get("type") == "comparison_matrix_only" else "review"
+                task_type = "comparison_matrix" if task.task_type == "comparison_matrix_only" else "review"
                 related.append({
                     "task_id": task.id,
                     "topic": task.topic,
