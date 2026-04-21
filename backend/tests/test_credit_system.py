@@ -182,20 +182,24 @@ def test_refund_to_free_first():
 
 
 def test_add_credits_after_payment():
-    """测试支付成功后增加积分"""
+    """测试支付成功后增加积分（使用实际套餐 credits 值）"""
     print("\n[测试] 支付成功后增加积分...")
 
+    from authkit.models.payment import DEFAULT_PLANS
+    semester_plan = next(p for p in DEFAULT_PLANS if p["type"] == "semester")
+    credits_to_add = semester_plan["credits"]  # 18
+
     user = MockUser(meta_data={"review_credits": 2, "free_credits": 0})
-    credits_to_add = 18  # semester plan
 
     current = user.get_meta("review_credits", 0)
     user.set_meta("review_credits", current + credits_to_add)
     user.set_meta("has_purchased", True)
 
-    assert user.get_meta("review_credits") == 22, f"应为 22，实际 {user.get_meta('review_credits')}"
+    expected = 2 + credits_to_add
+    assert user.get_meta("review_credits") == expected, f"应为 {expected}，实际 {user.get_meta('review_credits')}"
     assert user.get_meta("has_purchased") is True
 
-    print(f"  ✓ 增加积分：2 + 20 = 22, has_purchased=True")
+    print(f"  ✓ 增加积分：2 + {credits_to_add} = {expected}, has_purchased=True")
     return True
 
 

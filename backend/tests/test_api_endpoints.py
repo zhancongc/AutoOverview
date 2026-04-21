@@ -222,3 +222,24 @@ class TestPublicEndpoints:
         for plan in data["plans"]:
             assert isinstance(plan["features"], list)
             assert isinstance(plan["features_en"], list)
+
+    def test_plan_type_matches_frontend(self, client):
+        """前端使用的 planType 应与后端套餐 type 一致（single/semester/yearly）"""
+        resp = client.get("/api/subscription/plans")
+        data = resp.json()
+        plan_types = {p["type"] for p in data["plans"]}
+
+        # 前端传的 planType 值
+        frontend_plan_types = {"single", "semester", "yearly"}
+        for pt in frontend_plan_types:
+            assert pt in plan_types, f"前端 planType '{pt}' 在后端套餐中不存在"
+
+    def test_plans_have_nonzero_price(self, client):
+        """所有非 unlock 套餐价格应大于 0，防止 0 元支付"""
+        resp = client.get("/api/subscription/plans")
+        data = resp.json()
+        for plan in data["plans"]:
+            if plan["type"] == "unlock":
+                continue
+            assert plan["price"] > 0, f"{plan['type']}: price={plan['price']} 不应 <= 0"
+            assert plan["price_usd"] > 0, f"{plan['type']}: price_usd={plan['price_usd']} 不应 <= 0"
