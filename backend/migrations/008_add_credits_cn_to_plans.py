@@ -22,7 +22,7 @@ class AddCreditsCnToPlansMigration(Migration):
     """为 plans 表添加 credits_cn 字段（中文站积分额度）"""
 
     def __init__(self):
-        super().__init__("006", "add credits_cn to plans")
+        super().__init__("008", "add credits_cn to plans")
 
     def up(self):
         print("  执行迁移：为 plans 表添加 credits_cn 字段...")

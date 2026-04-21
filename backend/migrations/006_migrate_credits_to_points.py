@@ -16,7 +16,7 @@ class CreditToPointsMigration(Migration):
     """迁移模板类"""
 
     def __init__(self):
-        super().__init__("005", "migrate_credits_to_points")
+        super().__init__("006", "migrate_credits_to_points")
 
     def up(self):
         """执行迁移"""

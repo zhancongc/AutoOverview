@@ -13,7 +13,7 @@ class AddReviewTaskIsPublicMigration(Migration):
     """为 review_tasks 表添加 is_public 字段"""
 
     def __init__(self):
-        super().__init__("005", "add is_public to review_tasks")
+        super().__init__("007", "add is_public to review_tasks")
 
     def up(self):
         """执行迁移"""

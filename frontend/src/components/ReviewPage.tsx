@@ -675,11 +675,6 @@ export function ReviewPage() {
           <button className="back-button" onClick={handleBack}>
             ←
           </button>
-          {taskId && (
-            <button className="stats-action-btn stats-action-btn-share" onClick={handleShare}>
-              {shareCopied ? t('review.share_copied', '已复制') : t('review.share', '分享')}
-            </button>
-          )}
         </div>
         <div className="review-segmented-tabs">
           <button
@@ -701,16 +696,16 @@ export function ReviewPage() {
             onFormatChange={handleFormatChange}
             disabled={!canSwitchFormat || formatLoading || loading}
           />
-          <button className="stats-action-btn" onClick={handleRegenerate}>
+          <button className="stats-action-btn review-action-btn" onClick={handleRegenerate}>
             {t('review.regenerate')}
           </button>
 
-          <button className="stats-action-btn" onClick={handleExportWord}>
+          <button className="stats-action-btn review-action-btn" onClick={handleExportWord}>
             {t('review.export.export_word', '导出')}
           </button>
 
           {reviewData && (
-            <button className="stats-action-btn" onClick={handleShare}>
+            <button className="stats-action-btn review-action-btn" onClick={handleShare}>
               {shareCopied ? t('review.share_copied', '已复制') : t('review.share', '分享')}
             </button>
           )}
@@ -972,7 +967,7 @@ export function ReviewPage() {
         <div className="review-toast">
           <div className="review-toast-content">
             <span className="toast-icon">✓</span>
-            <span className="toast-message">已复制分享链接到剪切板，可以复制到其它平台</span>
+            <span className="toast-message">{t('review.share_toast', '已复制分享链接到剪切板，可以复制到其它平台')}</span>
           </div>
         </div>
       )}
