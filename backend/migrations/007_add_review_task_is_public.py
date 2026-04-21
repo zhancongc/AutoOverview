@@ -40,3 +40,6 @@ class AddReviewTaskIsPublicMigration(Migration):
             session.commit()
 
         print("  ✓ is_public 字段已移除")
+
+
+migration = AddReviewTaskIsPublicMigration()

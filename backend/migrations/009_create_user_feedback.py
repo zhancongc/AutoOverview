@@ -1,31 +1,36 @@
 """
 Migration: 创建 user_feedback 表
 """
-
-def upgrade(session):
-    from sqlalchemy import text
-    session.execute(text("""
-        CREATE TABLE IF NOT EXISTS user_feedback (
-            id SERIAL PRIMARY KEY,
-            user_id INTEGER NOT NULL,
-            email VARCHAR(255) DEFAULT '',
-            content TEXT NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    """))
-    session.commit()
-    print("✅ Created user_feedback table")
+from base import Migration
+from database import db
+from sqlalchemy import text
 
 
-def downgrade(session):
-    from sqlalchemy import text
-    session.execute(text("DROP TABLE IF EXISTS user_feedback"))
-    session.commit()
-    print("✅ Dropped user_feedback table")
+class CreateUserFeedbackMigration(Migration):
+    """创建 user_feedback 表"""
+
+    def __init__(self):
+        super().__init__("009", "create user_feedback table")
+
+    def up(self):
+        with next(db.get_session()) as session:
+            session.execute(text("""
+                CREATE TABLE IF NOT EXISTS user_feedback (
+                    id SERIAL PRIMARY KEY,
+                    user_id INTEGER NOT NULL,
+                    email VARCHAR(255) DEFAULT '',
+                    content TEXT NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """))
+            session.commit()
+        print("  ✓ user_feedback 表创建完成")
+
+    def down(self):
+        with next(db.get_session()) as session:
+            session.execute(text("DROP TABLE IF EXISTS user_feedback"))
+            session.commit()
+        print("  ✓ user_feedback 表已移除")
 
 
-if __name__ == "__main__":
-    from database import db
-    db.connect()
-    with next(db.get_session()) as session:
-        upgrade(session)
+migration = CreateUserFeedbackMigration()
