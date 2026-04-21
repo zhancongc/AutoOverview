@@ -338,10 +338,14 @@ export function ReviewPageInternational() {
     try {
       const safeName = reviewData.title.replace(/[\/\\:]/g, '-').substring(0, 50)
       if (reviewExportFormat === 'markdown') {
-        let content = `# ${reviewData.title}\n\n${reviewData.content}\n\n## References\n\n`
-        ;(reviewData.papers || []).forEach((p: any, i: number) => {
-          content += `[${i + 1}] ${p.authors?.join(', ') || ''}. (${p.year || ''}). ${p.title}.\n`
-        })
+        const hasReferences = /##\s*(References|参考文献)/i.test(reviewData.content)
+        let content = `# ${reviewData.title}\n\n${reviewData.content}`
+        if (!hasReferences && reviewData.papers?.length > 0) {
+          content += `\n\n## References\n\n`
+          ;(reviewData.papers || []).forEach((p: any, i: number) => {
+            content += `[${i + 1}] ${p.authors?.join(', ') || ''}. (${p.year || ''}). ${p.title}.\n`
+          })
+        }
         const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' })
         const { saveAs } = await import('file-saver')
         saveAs(blob, `${safeName}.md`)
@@ -367,7 +371,7 @@ export function ReviewPageInternational() {
             children.push(new Paragraph({ children: [new TextRun({ text: trimmed.replace(/\*\*/g, '') })] }))
           }
         }
-        if (reviewData.papers?.length > 0) {
+        if (reviewData.papers?.length > 0 && !/##\s*(References|参考文献)/i.test(reviewData.content)) {
           children.push(new Paragraph({ text: 'References', heading: HeadingLevel.HEADING_2, spacing: { before: 400 } }))
           reviewData.papers.forEach((p: any, i: number) => {
             children.push(new Paragraph({

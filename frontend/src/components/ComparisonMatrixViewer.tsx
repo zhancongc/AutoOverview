@@ -214,9 +214,22 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
     api.getCredits().then(data => setCredits(data.credits)).catch(() => {})
   }
 
+  const buildMatrixExportContent = () => {
+    if (!matrixData) return ''
+    const refLabel = isChineseSite ? '参考文献' : 'References'
+    let content = `# ${matrixData.topic}\n\n${matrixData.comparison_matrix}`
+    if (matrixData.papers?.length > 0) {
+      content += `\n\n## ${refLabel}\n\n`
+      matrixData.papers.forEach((p: any, i: number) => {
+        content += `[${i + 1}] ${p.authors?.join(', ') || ''}. (${p.year || ''}). ${p.title}.\n`
+      })
+    }
+    return content
+  }
+
   const handleExportMarkdown = () => {
     if (!matrixData) return
-    const content = `# ${matrixData.topic}\n\n${matrixData.comparison_matrix}`
+    const content = buildMatrixExportContent()
     const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -267,6 +280,16 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
           } else {
             children.push(new Paragraph({ children: [new TextRun({ text: trimmed.replace(/\*\*/g, '') })] }))
           }
+        }
+        if (matrixData.papers?.length > 0) {
+          const refLabel = isChineseSite ? '参考文献' : 'References'
+          children.push(new Paragraph({ text: refLabel, heading: HeadingLevel.HEADING_2, spacing: { before: 400 } }))
+          matrixData.papers.forEach((p: any, i: number) => {
+            children.push(new Paragraph({
+              children: [new TextRun({ text: `[${i + 1}] ${p.authors?.join(', ') || ''}. (${p.year || ''}). ${p.title}.` })],
+              spacing: { before: 100 },
+            }))
+          })
         }
         const doc = new Document({ sections: [{ children }] })
         const blob = await Packer.toBlob(doc)
