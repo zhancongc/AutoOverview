@@ -469,7 +469,15 @@
     "history": "📋 View Matrix History",
     "review_cta_title": "Need a Full Literature Review?",
     "review_cta_desc": "After generating the comparison matrix, continue to create a comprehensive, structured literature summary with proper citations.",
-    "review_cta_button": "Get Literature Review"
+    "review_cta_button": "Get Literature Review",
+    "credit_confirm": {
+      "title": "Confirm",
+      "confirm_text": "Generate",
+      "cancel_text": "Cancel",
+      "go_buy_credits": "Buy Credits",
+      "has_credits": "You have {{credits}} credits.\nGenerate a Literature Review will use 1 credit. Continue?",
+      "insufficient": "You have {{credits}} credits, which is not enough (1 required)."
+    }
   },
   "generate_page": {
     "hero_badge": "Literature Review Tool",

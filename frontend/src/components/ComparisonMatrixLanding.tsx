@@ -228,14 +228,9 @@ export function ComparisonMatrixLanding() {
       return
     }
 
-    // Check credits and confirm
     try {
       const creditsData = await api.getCredits()
       setCredits(creditsData.credits)
-      if (creditsData.credits < 1) {
-        setShowPaymentModal('starter')
-        return
-      }
     } catch { /* proceed */ }
     setShowCreditConfirm(true)
   }
@@ -414,11 +409,14 @@ export function ComparisonMatrixLanding() {
 
   const LoginModalComponent = isChineseSite ? LoginModal : LoginModalInternational
 
-  const creditConfirmMessage = isChineseSite
-    ? `您有 ${credits} 个积分。\n生成文献综述将消耗 1 个积分，是否继续？`
-    : `You have ${credits} credits.\nGenerate a Literature Review will use 1 credit. Continue?`
-  const creditConfirmBtn = isChineseSite ? '生成' : 'Generate'
-  const creditCancelBtn = isChineseSite ? '取消' : 'Cancel'
+  const hasEnoughCredits = credits >= 1
+  const creditConfirmMessage = hasEnoughCredits
+    ? t('comparison_matrix_page.credit_confirm.has_credits', { credits })
+    : t('comparison_matrix_page.credit_confirm.insufficient', { credits })
+  const creditConfirmBtn = hasEnoughCredits
+    ? t('comparison_matrix_page.credit_confirm.confirm_text')
+    : t('comparison_matrix_page.credit_confirm.go_buy_credits')
+  const creditCancelBtn = t('comparison_matrix_page.credit_confirm.cancel_text')
 
   return (
     <div className="search-papers-page">
@@ -677,13 +675,20 @@ export function ComparisonMatrixLanding() {
       {/* Credit Confirm Modal */}
       {showCreditConfirm && isChineseSite && (
         <ConfirmModal
-          title="确认扣除积分"
+          title={t('comparison_matrix_page.credit_confirm.title')}
           message={creditConfirmMessage}
           confirmText={creditConfirmBtn}
           cancelText={creditCancelBtn}
-          onConfirm={() => { setShowCreditConfirm(false); doGenerateReview() }}
+          onConfirm={() => {
+            setShowCreditConfirm(false)
+            if (hasEnoughCredits) {
+              doGenerateReview()
+            } else {
+              navigate('/#pricing')
+            }
+          }}
           onCancel={() => setShowCreditConfirm(false)}
-          type="warning"
+          type={hasEnoughCredits ? 'warning' : 'info'}
         />
       )}
       {showCreditConfirm && !isChineseSite && (
@@ -691,9 +696,16 @@ export function ComparisonMatrixLanding() {
           message={creditConfirmMessage}
           confirmText={creditConfirmBtn}
           cancelText={creditCancelBtn}
-          onConfirm={() => { setShowCreditConfirm(false); doGenerateReview() }}
+          onConfirm={() => {
+            setShowCreditConfirm(false)
+            if (hasEnoughCredits) {
+              doGenerateReview()
+            } else {
+              navigate('/#pricing')
+            }
+          }}
           onCancel={() => setShowCreditConfirm(false)}
-          type="warning"
+          type={hasEnoughCredits ? 'warning' : 'info'}
         />
       )}
     </div>

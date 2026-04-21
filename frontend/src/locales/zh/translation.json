@@ -485,7 +485,15 @@
     "history": "📋 查看矩阵历史",
     "review_cta_title": "需要生成完整文献综述？",
     "review_cta_desc": "生成对比矩阵后，可以继续生成包含规范引用的结构化文献综述。",
-    "review_cta_button": "前往生成文献综述"
+    "review_cta_button": "前往生成文献综述",
+    "credit_confirm": {
+      "title": "确认扣除积分",
+      "confirm_text": "生成",
+      "cancel_text": "取消",
+      "go_buy_credits": "去购买积分",
+      "has_credits": "您有 {{credits}} 个积分。\n生成文献综述将消耗 1 个积分，是否继续？",
+      "insufficient": "您有 {{credits}} 个积分，不足以生成文献综述（需 1 个积分）。"
+    }
   },
   "generate_page": {
     "hero_badge": "文献综述生成",
