@@ -353,15 +353,15 @@ export function ReviewPageInternational() {
             {t('review.regenerate')}
           </button>
 
+          <button className="stats-action-btn stats-action-btn-primary" onClick={handleExportWord}>
+            {t('review.export.export_word', 'Export')}
+          </button>
+
           {taskId && (
             <button className="stats-action-btn stats-action-btn-share" onClick={handleShare}>
               {shareCopied ? t('review.share_copied', 'Copied') : t('review.share', 'Share')}
             </button>
           )}
-
-          <button className="stats-action-btn stats-action-btn-primary" onClick={handleExportWord}>
-            {t('review.export.export_review', 'Export Review')}
-          </button>
         </div>
         <button
           className="mobile-menu-toggle review-mobile-toggle"

@@ -588,15 +588,15 @@ export function ReviewPage() {
             {t('review.regenerate')}
           </button>
 
+          <button className="stats-action-btn stats-action-btn-primary" onClick={handleExportWord}>
+            {t('review.export.export_word', '导出')}
+          </button>
+
           {taskId && (
             <button className="stats-action-btn stats-action-btn-share" onClick={handleShare}>
               {shareCopied ? t('review.share_copied', '已复制') : t('review.share', '分享')}
             </button>
           )}
-
-          <button className="stats-action-btn stats-action-btn-primary" onClick={handleExportWord}>
-            {t('review.export.export_review', '导出综述')}
-          </button>
         </div>
         <button
           className="mobile-menu-toggle review-mobile-toggle"
