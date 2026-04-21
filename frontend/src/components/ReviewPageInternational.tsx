@@ -2,7 +2,7 @@
  * Review Page Component - International Version
  * Displays generated literature reviews with export and payment options
  */
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { ReviewViewerInternational } from './ReviewViewerInternational'
@@ -64,6 +64,7 @@ export function ReviewPageInternational() {
   const [citationFormat, setCitationFormat] = useState<CitationFormat>('ieee')
   const [formatLoading, setFormatLoading] = useState(false)
   const [shareCopied, setShareCopied] = useState(false)
+  const [showToast, setShowToast] = useState(false)
 
   const handleTocUpdate = useCallback((toc: TocItem[]) => {
     setTocItems(toc)
@@ -316,7 +317,7 @@ export function ReviewPageInternational() {
   }
 
   const handleBack = () => {
-    navigate('/profile')
+    navigate('/profile?tab=reviews')
   }
 
   const handleRegenerate = () => {
@@ -468,13 +469,25 @@ export function ReviewPageInternational() {
   }
 
   const handleShare = async () => {
-    if (!taskId) return
+    const shareTaskId = taskId || taskData?.taskId
     try {
-      await api.shareSearchResult(taskId)
-      const url = `${window.location.origin}/review?task_id=${taskId}`
+      // 如果有 taskId，先调用分享 API
+      if (shareTaskId) {
+        try {
+          await api.shareSearchResult(shareTaskId)
+        } catch {
+          // 忽略分享 API 的错误，继续复制链接
+        }
+      }
+      // 复制当前 URL 到剪贴板
+      const url = window.location.href
       await navigator.clipboard.writeText(url)
       setShareCopied(true)
-      setTimeout(() => setShareCopied(false), 2000)
+      setShowToast(true)
+      setTimeout(() => {
+        setShareCopied(false)
+        setShowToast(false)
+      }, 3000)
     } catch (err) {
       console.error('Share failed:', err)
     }
@@ -510,11 +523,6 @@ export function ReviewPageInternational() {
           <button className="back-button" onClick={handleBack}>
             ←
           </button>
-          {taskId && (
-            <button className="stats-action-btn stats-action-btn-share" onClick={handleShare}>
-              {shareCopied ? t('review.share_copied', 'Copied') : t('review.share', 'Share')}
-            </button>
-          )}
         </div>
         <div className="review-segmented-tabs">
           <button
@@ -544,7 +552,7 @@ export function ReviewPageInternational() {
             {t('review.export.export_word', 'Export')}
           </button>
 
-          {taskId && (
+          {reviewData && (
             <button className="stats-action-btn" onClick={handleShare}>
               {shareCopied ? t('review.share_copied', 'Copied') : t('review.share', 'Share')}
             </button>
@@ -796,6 +804,16 @@ export function ReviewPageInternational() {
           </div>
         )}
       </aside>
+
+      {/* Toast notification */}
+      {showToast && (
+        <div className="review-toast">
+          <div className="review-toast-content">
+            <span className="toast-icon">✓</span>
+            <span className="toast-message">Share link copied to clipboard, you can paste it on other platforms</span>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

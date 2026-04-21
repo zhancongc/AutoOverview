@@ -15,7 +15,6 @@ import { LoginModalInternational } from './LoginModalInternational'
 import { PayPalPaymentModal } from './PayPalPaymentModal'
 import { PaymentModal } from './PaymentModal'
 import { ConfirmModalInternational } from './ConfirmModalInternational'
-import { ConfirmModal } from './ConfirmModal'
 import { useMatrixAuth, ComparisonMatrixData, TabType } from './ComparisonMatrixShared'
 import { ExportFormatModal, ExportFormat } from './ExportFormatModal'
 import './ComparisonMatrixPage.css'
@@ -197,7 +196,7 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
       } else {
         const msg = response.message || ''
         if (msg.includes('credits') || msg.includes('积分')) {
-          setShowPaymentModal('starter')
+          setShowPaymentModal('single')
         } else {
           alert(msg || t('comparison_matrix_page.error'))
         }

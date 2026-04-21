@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { ReviewViewer } from './ReviewViewer'
@@ -43,6 +43,7 @@ export function ReviewPage() {
     content: string
     papers: Paper[]
     recordId?: number
+    taskId?: string
     isPublic: boolean
     isPaid: boolean
     statistics?: any
@@ -62,6 +63,7 @@ export function ReviewPage() {
   const [citationFormat, setCitationFormat] = useState<CitationFormat>('ieee')
   const [formatLoading, setFormatLoading] = useState(false)
   const [shareCopied, setShareCopied] = useState(false)
+  const [showToast, setShowToast] = useState(false)
 
   const handleTocUpdate = useCallback((toc: TocItem[]) => {
     setTocItems(toc)
@@ -85,6 +87,7 @@ export function ReviewPage() {
               content: res.data.review,
               papers: res.data.papers || [],
               recordId: res.data.record_id,
+              taskId: res.data.task_id || taskId,
               isPublic: res.data.is_public,
               isPaid: res.data.is_paid,
               statistics: res.data.statistics,
@@ -112,6 +115,7 @@ export function ReviewPage() {
               content: res.data.review,
               papers: res.data.papers || [],
               recordId: res.data.record_id,
+              taskId: res.data.task_id,
               isPublic: res.data.is_public,
               isPaid: res.data.is_paid,
               statistics: res.data.statistics,
@@ -457,7 +461,7 @@ export function ReviewPage() {
   }
 
   const handleBack = () => {
-    navigate('/profile')
+    navigate('/profile?tab=reviews')
   }
 
   const handleRegenerate = () => {
@@ -612,13 +616,25 @@ export function ReviewPage() {
   }
 
   const handleShare = async () => {
-    if (!taskId) return
+    const shareTaskId = taskId || taskData?.taskId
     try {
-      await api.shareSearchResult(taskId)
-      const url = `${window.location.origin}/review?task_id=${taskId}`
+      // 如果有 taskId，先调用分享 API
+      if (shareTaskId) {
+        try {
+          await api.shareSearchResult(shareTaskId)
+        } catch {
+          // 忽略分享 API 的错误，继续复制链接
+        }
+      }
+      // 复制当前 URL 到剪贴板
+      const url = window.location.href
       await navigator.clipboard.writeText(url)
       setShareCopied(true)
-      setTimeout(() => setShareCopied(false), 2000)
+      setShowToast(true)
+      setTimeout(() => {
+        setShareCopied(false)
+        setShowToast(false)
+      }, 3000)
     } catch (err) {
       console.error('Share failed:', err)
     }
@@ -690,7 +706,7 @@ export function ReviewPage() {
             {t('review.export.export_word', '导出')}
           </button>
 
-          {taskId && (
+          {reviewData && (
             <button className="stats-action-btn" onClick={handleShare}>
               {shareCopied ? t('review.share_copied', '已复制') : t('review.share', '分享')}
             </button>
@@ -947,6 +963,16 @@ export function ReviewPage() {
           </div>
         )}
       </aside>
+
+      {/* Toast 提示 */}
+      {showToast && (
+        <div className="review-toast">
+          <div className="review-toast-content">
+            <span className="toast-icon">✓</span>
+            <span className="toast-message">已复制分享链接到剪切板，可以复制到其它平台</span>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
