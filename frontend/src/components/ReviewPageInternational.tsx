@@ -22,6 +22,7 @@ interface ReviewState {
   isPaid?: boolean
   statistics?: any
   createdAt?: string
+  durationSeconds?: number
 }
 
 type TabType = 'content' | 'references'
@@ -53,6 +54,7 @@ export function ReviewPageInternational() {
     isPaid: boolean
     statistics?: any
     createdAt?: string
+    durationSeconds?: number
   } | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -93,6 +95,7 @@ export function ReviewPageInternational() {
               isPaid: res.data.is_paid,
               statistics: res.data.statistics,
               createdAt: res.data.created_at,
+              durationSeconds: res.data.duration_seconds,
             })
           } else {
             setError('Review not found or not yet completed')
@@ -119,6 +122,7 @@ export function ReviewPageInternational() {
               isPaid: res.data.is_paid,
               statistics: res.data.statistics,
               createdAt: res.data.created_at,
+              durationSeconds: res.data.duration_seconds,
             })
 
             if (res.data.task_id && !taskId && !hasUpdatedUrl) {
@@ -620,6 +624,16 @@ export function ReviewPageInternational() {
                 </span>
               </div>
             )}
+            {(taskData?.durationSeconds ?? (state as any)?.durationSeconds) && (() => {
+              const secs = taskData?.durationSeconds ?? (state as any)?.durationSeconds
+              const display = secs >= 60 ? `${Math.floor(secs / 60)}m${Math.round(secs % 60)}s` : `${secs}s`
+              return (
+                <div className="stat-item">
+                  <span className="stat-label">{t('review_page.duration')}</span>
+                  <span className="stat-value">{display}</span>
+                </div>
+              )
+            })()}
           </div>
         </div>
       </div>

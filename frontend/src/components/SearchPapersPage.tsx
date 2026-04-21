@@ -457,7 +457,7 @@ export function SearchPapersPage() {
       } else {
         const msg = response.message || ''
         if (msg.includes('credits') || msg.includes('积分')) {
-          setShowPaymentModal('starter')
+          setShowPaymentModal('single')
         } else {
           setError(msg || t('search_papers.error.generic'))
         }
@@ -510,7 +510,7 @@ export function SearchPapersPage() {
     } catch (err: any) {
       const detail = err.response?.data?.detail || ''
       if (detail.toLowerCase().includes('credit') || detail.toLowerCase().includes('积分')) {
-        setShowPaymentModal('starter')
+        setShowPaymentModal('single')
       } else {
         setError(detail || t('search_papers.error.generic'))
       }

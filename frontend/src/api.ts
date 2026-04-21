@@ -162,6 +162,7 @@ export const api = {
     record_id?: number;
     is_public: boolean;
     is_paid: boolean;
+    duration_seconds?: number;
   } }> {
     const token = localStorage.getItem('auth_token');
     const headers: Record<string, string> = {};
@@ -185,6 +186,7 @@ export const api = {
     record_id: number;
     is_public: boolean;
     is_paid: boolean;
+    duration_seconds?: number;
   } }> {
     const token = localStorage.getItem('auth_token');
     const headers: Record<string, string> = {};

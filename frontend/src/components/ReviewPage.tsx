@@ -18,6 +18,7 @@ interface ReviewState {
   isPaid?: boolean
   statistics?: any
   createdAt?: string
+  durationSeconds?: number
 }
 
 type TabType = 'content' | 'references'
@@ -51,6 +52,7 @@ export function ReviewPage() {
     isPaid: boolean
     statistics?: any
     createdAt?: string
+    durationSeconds?: number
   } | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -95,6 +97,7 @@ export function ReviewPage() {
               isPaid: res.data.is_paid,
               statistics: res.data.statistics,
               createdAt: res.data.created_at,
+              durationSeconds: res.data.duration_seconds,
             })
           } else {
             setError('综述不存在或尚未完成')
@@ -123,6 +126,7 @@ export function ReviewPage() {
               isPaid: res.data.is_paid,
               statistics: res.data.statistics,
               createdAt: res.data.created_at,
+              durationSeconds: res.data.duration_seconds,
             })
 
             // 如果返回了 task_id 且 URL 中没有，更新 URL（只执行一次）
@@ -768,6 +772,16 @@ export function ReviewPage() {
                 </span>
               </div>
             )}
+            {(taskData?.durationSeconds ?? (state as any)?.durationSeconds) && (() => {
+              const secs = taskData?.durationSeconds ?? (state as any)?.durationSeconds
+              const display = secs >= 60 ? `${Math.floor(secs / 60)}m${Math.round(secs % 60)}s` : `${secs}s`
+              return (
+                <div className="stat-item">
+                  <span className="stat-label">{t('review_page.duration')}</span>
+                  <span className="stat-value">{display}</span>
+                </div>
+              )
+            })()}
           </div>
         </div>
       </div>

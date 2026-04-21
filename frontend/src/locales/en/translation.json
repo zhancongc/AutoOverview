@@ -425,6 +425,9 @@
       "insufficient_matrix": "You have {{credits}} credits, which is not enough (1 required)."
     }
   },
+  "review_page": {
+    "duration": "Generation Time"
+  },
   "comparison_matrix_page": {
     "title": "Literature Comparison Matrix",
     "hero_badge": "AI Comparison Tool",

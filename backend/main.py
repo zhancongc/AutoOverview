@@ -551,9 +551,21 @@ async def get_search_history(
 
     from models import ReviewTask, PaperSearchStage
 
-    # 查询所有任务（它们都有搜索阶段）
+    # 只查询需要的列，避免加载 params 等大字段
     tasks = (
-        db_session.query(ReviewTask)
+        db_session.query(
+            ReviewTask.id,
+            ReviewTask.topic,
+            ReviewTask.user_id,
+            ReviewTask.status,
+            ReviewTask.current_stage,
+            ReviewTask.error_message,
+            ReviewTask.review_record_id,
+            ReviewTask.created_at,
+            ReviewTask.started_at,
+            ReviewTask.completed_at,
+            ReviewTask.is_public,
+        )
         .filter(ReviewTask.user_id == user_id)
         .order_by(ReviewTask.created_at.desc())
         .offset(skip)
@@ -561,22 +573,39 @@ async def get_search_history(
         .all()
     )
 
-    # 获取关联的 PaperSearchStage 数据
+    # 获取关联的 PaperSearchStage 数据（只取需要的列）
     task_ids = [t.id for t in tasks]
     search_stages = {}
     if task_ids:
         stages = (
-            db_session.query(PaperSearchStage)
+            db_session.query(
+                PaperSearchStage.task_id,
+                PaperSearchStage.papers_summary,
+                PaperSearchStage.papers_count,
+                PaperSearchStage.papers_sample,
+            )
             .filter(PaperSearchStage.task_id.in_(task_ids))
             .all()
         )
         for stage in stages:
             search_stages[stage.task_id] = stage
 
-    # 构建返回结果
+    # 构建返回结果（不包含 params 大字段）
     results = []
     for task in tasks:
-        task_dict = task.to_dict()
+        task_dict = {
+            "id": task.id,
+            "topic": task.topic,
+            "user_id": task.user_id,
+            "status": task.status,
+            "current_stage": task.current_stage,
+            "error_message": task.error_message,
+            "review_record_id": task.review_record_id,
+            "created_at": task.created_at.isoformat() if task.created_at else None,
+            "started_at": task.started_at.isoformat() if task.started_at else None,
+            "completed_at": task.completed_at.isoformat() if task.completed_at else None,
+            "is_public": task.is_public or False,
+        }
         stage = search_stages.get(task.id)
         if stage:
             task_dict['papers_summary'] = stage.papers_summary
@@ -1740,6 +1769,11 @@ async def get_record_review(
             new_references = format_references(papers, format)
             review_content = content_part + "## References\n\n" + new_references
 
+    # 计算生成时长
+    duration_seconds = None
+    if review_task and review_task.started_at and review_task.completed_at:
+        duration_seconds = int((review_task.completed_at - review_task.started_at).total_seconds())
+
     return {
         "success": True,
         "data": {
@@ -1752,7 +1786,8 @@ async def get_record_review(
             "statistics": review_record.statistics if isinstance(review_record.statistics, dict) else {},
             "record_id": review_record.id,
             "is_public": False,
-            "is_paid": getattr(review_record, 'is_paid', False)
+            "is_paid": getattr(review_record, 'is_paid', False),
+            "duration_seconds": duration_seconds
         }
     }
 
@@ -1793,6 +1828,11 @@ async def get_task_review(
                 raise HTTPException(status_code=403, detail="该综述不属于您，无法访问")
 
         # 内存中有完整的任务数据
+        # 计算生成时长
+        _started = getattr(task, 'started_at', None)
+        _completed = getattr(task, 'completed_at', None)
+        _duration = int((_completed - _started).total_seconds()) if _started and _completed else None
+
         result_data = {
             "task_id": task_id,
             "topic": task.topic,
@@ -1803,7 +1843,8 @@ async def get_task_review(
             "statistics": task.result.get("statistics", {}),
             "record_id": task.result.get("id"),
             "is_public": is_public,
-            "is_paid": getattr(task, 'is_paid', False)
+            "is_paid": getattr(task, 'is_paid', False),
+            "duration_seconds": _duration
         }
 
         # 如果指定了非 IEEE 格式，重新格式化参考文献
@@ -1845,6 +1886,8 @@ async def get_task_review(
             raise HTTPException(status_code=403, detail="该综述不属于您，无法访问")
 
     # 返回与内存任务相同格式的数据
+    _duration = int((review_task.completed_at - review_task.started_at).total_seconds()) if review_task.started_at and review_task.completed_at else None
+
     result_data = {
         "task_id": task_id,
         "topic": review_record.topic,
@@ -1855,7 +1898,8 @@ async def get_task_review(
         "statistics": review_record.statistics if isinstance(review_record.statistics, dict) else {},
         "record_id": review_record.id,
         "is_public": is_public,
-        "is_paid": getattr(review_record, 'is_paid', False)
+        "is_paid": getattr(review_record, 'is_paid', False),
+        "duration_seconds": _duration
     }
 
     # 如果指定了非 IEEE 格式，重新格式化参考文献

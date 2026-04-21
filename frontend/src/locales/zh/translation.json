@@ -440,6 +440,9 @@
       "insufficient_matrix": "您有 {{credits}} 个积分，不足以生成对比矩阵（需 1 个积分）。"
     }
   },
+  "review_page": {
+    "duration": "生成时长"
+  },
   "comparison_matrix_page": {
     "title": "文献对比矩阵",
     "hero_badge": "AI 文献对比工具",
