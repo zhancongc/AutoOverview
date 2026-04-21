@@ -210,9 +210,9 @@
     },
     "references": {
       "title": "References",
-      "total": "{count} papers total",
-      "recent_5_years": "Recent 5 years: {percent}%",
-      "english": "English: {percent}%",
+      "total": "{{count}} papers total",
+      "recent_5_years": "Recent 5 years: {{percent}}%",
+      "english": "English: {{percent}}%",
       "verify_notice": "Click paper title or platform icon to verify on third-party databases",
       "verify_on": "Verify on {platform}",
       "view_on": "View on {platform}"
