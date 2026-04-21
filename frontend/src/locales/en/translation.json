@@ -446,7 +446,7 @@
     "cancel": "Cancel",
     "generate_now": "Generate Now",
     "generating": "Generating...",
-    "generate_review": "Literature Summary",
+    "generate_review": "Generate Review",
     "generate_review_disabled_hint": "This matrix was generated independently, papers cannot be reused",
     "status_1": "Searching academic databases...",
     "status_2": "Analyzing paper metadata...",

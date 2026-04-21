@@ -508,15 +508,19 @@ html.intl .comparison-matrix-page {
 
 .matrix-stats {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
+  flex-direction: column;
+  gap: 12px;
   background: white;
   border-radius: 12px;
   padding: 16px 24px;
   margin-bottom: 20px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-  flex-wrap: wrap;
+}
+
+.matrix-stats-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .stats-left {

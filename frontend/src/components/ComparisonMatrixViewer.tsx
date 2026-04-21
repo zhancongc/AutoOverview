@@ -387,10 +387,7 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
         <button className="stats-action-btn" onClick={() => setShowMatrixExportModal(true)}>
           {isChineseSite ? '导出矩阵' : 'Export Matrix'}
         </button>
-        <button className="stats-action-btn" onClick={() => setShowExportModal(true)} disabled={getPapersForExport().length === 0}>
-          {t('comparison_matrix_page.export_references')}
-        </button>
-        <button className="stats-action-btn stats-action-btn-share" onClick={handleShare}>
+        <button className="stats-action-btn" onClick={handleShare}>
           {shareCopied ? (isChineseSite ? '已复制' : 'Copied') : (isChineseSite ? '分享' : 'Share')}
         </button>
       </div>
@@ -701,9 +698,14 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
 
         <div className="matrix-container" style={{ marginTop: 60 }}>
           <div className="matrix-stats">
-            <p className="matrix-topic" style={{ fontSize: '1.05rem', color: '#1f2937', fontWeight: 600, margin: '0 0 0.75rem', lineHeight: 1.4 }}>
-              {matrixData.topic}
-            </p>
+            <div className="matrix-stats-header">
+              <p className="matrix-topic" style={{ fontSize: '1.05rem', color: '#1f2937', fontWeight: 600, margin: 0, lineHeight: 1.4 }}>
+                {matrixData.topic}
+              </p>
+              <button className="stats-action-btn" onClick={() => setShowExportModal(true)} disabled={getPapersForExport().length === 0}>
+                {t('comparison_matrix_page.export_references')}
+              </button>
+            </div>
             <div className="stats-left">
               <div className="stat-item">
                 <span className="stat-label">{t('comparison_matrix_page.papers_used')}</span>
