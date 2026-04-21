@@ -10,6 +10,8 @@ import { isLoggedIn as checkLoggedIn } from '../authApi'
 import { LoginModal } from './LoginModal'
 import { PaymentModal } from './PaymentModal'
 import { PayPalPaymentModal } from './PayPalPaymentModal'
+import { ConfirmModal } from './ConfirmModal'
+import { ConfirmModalInternational } from './ConfirmModalInternational'
 import './SimpleApp.css'
 import './SearchPapersPage.css'
 
@@ -47,6 +49,7 @@ export function GenerateReviewPage() {
   const [error, setError] = useState('')
   const [showLoginModal, setShowLoginModal] = useState(false)
   const [showPaymentModal, setShowPaymentModal] = useState<string | false>(false)
+  const [showCreditConfirm, setShowCreditConfirm] = useState(false)
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [credits, setCredits] = useState<number>(0)
@@ -176,6 +179,22 @@ export function GenerateReviewPage() {
       setShowLoginModal(true)
       return
     }
+
+    // Check credits and confirm
+    try {
+      const creditsData = await api.getCredits()
+      setCredits(creditsData.credits)
+      if (creditsData.credits < 2) {
+        setShowPaymentModal('single')
+        return
+      }
+    } catch { /* proceed */ }
+
+    setShowCreditConfirm(true)
+  }
+
+  const doGenerate = async () => {
+    if (!topic.trim()) return
 
     setIsGenerating(true)
     setProgress({ step: 'init', message: t('generate_page.submitting') })
@@ -595,6 +614,27 @@ export function GenerateReviewPage() {
 
       {/* Modals */}
       {showLoginModal && <LoginModal onClose={() => setShowLoginModal(false)} onLoginSuccess={handleLoginSuccess} />}
+      {showCreditConfirm && isChineseSite && (
+        <ConfirmModal
+          title="确认扣除积分"
+          message={`您有 ${credits} 个积分。\n生成文献综述将消耗 2 个积分，是否继续？`}
+          confirmText="生成综述"
+          cancelText="取消"
+          onConfirm={() => { setShowCreditConfirm(false); doGenerate() }}
+          onCancel={() => setShowCreditConfirm(false)}
+          type="warning"
+        />
+      )}
+      {showCreditConfirm && !isChineseSite && (
+        <ConfirmModalInternational
+          message={`You have ${credits} credits.\nGenerate a Literature Summary will use 2 credits. Continue?`}
+          confirmText="Generate"
+          cancelText="Cancel"
+          onConfirm={() => { setShowCreditConfirm(false); doGenerate() }}
+          onCancel={() => setShowCreditConfirm(false)}
+          type="warning"
+        />
+      )}
       {showPaymentModal && !isChineseSite && (
         <PayPalPaymentModal
           onClose={() => setShowPaymentModal(false)}
