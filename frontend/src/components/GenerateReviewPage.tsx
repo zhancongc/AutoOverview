@@ -86,7 +86,14 @@ export function GenerateReviewPage() {
   useEffect(() => {
     const taskIdParam = searchParams.get('task_id')
     if (taskIdParam) {
+      // 如果已经在轮询（getActiveTask 触发的），跳过
+      if (isPollingRef.current) {
+        window.history.replaceState({}, '', '/generate')
+        return
+      }
       isPollingRef.current = true
+      const topicParam = searchParams.get('topic')
+      if (topicParam) setTopic(topicParam)
       setIsGenerating(true)
       setProgress({ step: 'processing', message: t('home.progress.processing') })
       sessionStorage.setItem('active_task_id', taskIdParam)

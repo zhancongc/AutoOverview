@@ -193,7 +193,7 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
         reuseTaskId: matrixSearchTaskId,
       })
       if (response.success && response.data?.task_id) {
-        navigate(`/generate?task_id=${response.data.task_id}`)
+        navigate(`/generate?task_id=${response.data.task_id}&topic=${encodeURIComponent(matrixData.topic)}`)
       } else {
         const msg = response.message || ''
         if (msg.includes('credits') || msg.includes('积分')) {

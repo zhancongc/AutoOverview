@@ -267,7 +267,7 @@ export function ComparisonMatrixLanding() {
       })
 
       if (response.success && response.data?.task_id) {
-        navigate(`/generate?task_id=${response.data.task_id}`)
+        navigate(`/generate?task_id=${response.data.task_id}&topic=${encodeURIComponent(topic)}`)
       } else {
         const msg = response.message || ''
         if (msg.includes('credits') || msg.includes('积分')) {
