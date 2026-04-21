@@ -413,14 +413,9 @@ export function SearchPapersPage() {
       return
     }
 
-    // Check credits and confirm
     try {
       const creditsData = await api.getCredits()
       setCredits(creditsData.credits)
-      if (creditsData.credits < 2) {
-        setShowPaymentModal('starter')
-        return
-      }
     } catch { /* proceed */ }
     setShowCreditConfirm('review')
   }
@@ -472,14 +467,9 @@ export function SearchPapersPage() {
       return
     }
 
-    // Check credits and confirm
     try {
       const creditsData = await api.getCredits()
       setCredits(creditsData.credits)
-      if (creditsData.credits < 1) {
-        setShowPaymentModal('starter')
-        return
-      }
     } catch { /* proceed */ }
     setShowCreditConfirm('matrix')
   }
@@ -1006,41 +996,38 @@ export function SearchPapersPage() {
       )}
 
       {/* Credit Confirm Modal */}
-      {showCreditConfirm && isChineseSite && (
-        <ConfirmModal
-          title="确认扣除积分"
-          message={showCreditConfirm === 'review'
-            ? `您有 ${credits} 个积分。\n生成文献综述将消耗 2 个积分，是否继续？`
-            : `您有 ${credits} 个积分。\n生成对比矩阵将消耗 1 个积分，是否继续？`}
-          confirmText={showCreditConfirm === 'review' ? '生成综述' : '生成矩阵'}
-          cancelText="取消"
-          onConfirm={() => {
-            const action = showCreditConfirm
-            setShowCreditConfirm(false)
-            if (action === 'review') doGenerateFromSearch()
-            else doGenerateComparisonMatrix()
-          }}
-          onCancel={() => setShowCreditConfirm(false)}
-          type="warning"
-        />
-      )}
-      {showCreditConfirm && !isChineseSite && (
-        <ConfirmModalInternational
-          message={showCreditConfirm === 'review'
-            ? `You have ${credits} credits.\nGenerate a Literature Summary will use 2 credits. Continue?`
-            : `You have ${credits} credits.\nGenerate a Comparison Matrix will use 1 credit. Continue?`}
-          confirmText={showCreditConfirm === 'review' ? 'Generate Summary' : 'Generate Matrix'}
-          cancelText="Cancel"
-          onConfirm={() => {
-            const action = showCreditConfirm
-            setShowCreditConfirm(false)
-            if (action === 'review') doGenerateFromSearch()
-            else doGenerateComparisonMatrix()
-          }}
-          onCancel={() => setShowCreditConfirm(false)}
-          type="warning"
-        />
-      )}
+      {showCreditConfirm && (() => {
+        const required = showCreditConfirm === 'review' ? 2 : 1
+        const hasCredits = credits >= required
+        const label = showCreditConfirm === 'review'
+          ? (isChineseSite ? '生成综述' : 'Generate Summary')
+          : (isChineseSite ? '生成矩阵' : 'Generate Matrix')
+        const msg = isChineseSite
+          ? hasCredits
+            ? `您有 ${credits} 个积分。\n${showCreditConfirm === 'review' ? '生成文献综述将消耗 2 个积分' : '生成对比矩阵将消耗 1 个积分'}，是否继续？`
+            : `您有 ${credits} 个积分，不足以${showCreditConfirm === 'review' ? '生成文献综述（需 2 个积分）' : '生成对比矩阵（需 1 个积分）'}。`
+          : hasCredits
+            ? `You have ${credits} credits.\n${showCreditConfirm === 'review' ? 'Generate a Literature Summary will use 2 credits' : 'Generate a Comparison Matrix will use 1 credit'}. Continue?`
+            : `You have ${credits} credits, which is not enough (${required} required).`
+        return (
+          <ConfirmModalInternational
+            message={msg}
+            confirmText={hasCredits ? label : (isChineseSite ? '去购买积分' : 'Buy Credits')}
+            cancelText={isChineseSite ? '取消' : 'Cancel'}
+            onConfirm={() => {
+              setShowCreditConfirm(false)
+              if (hasCredits) {
+                if (showCreditConfirm === 'review') doGenerateFromSearch()
+                else doGenerateComparisonMatrix()
+              } else {
+                navigate('/#pricing')
+              }
+            }}
+            onCancel={() => setShowCreditConfirm(false)}
+            type={hasCredits ? 'info' : 'danger'}
+          />
+        )
+      })()}
 
       {/* Payment Modal */}
       {showPaymentModal && !isChineseSite && (

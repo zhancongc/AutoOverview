@@ -435,10 +435,10 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
             onConfirm={() => {
               setShowCreditConfirm(false)
               if (hasCredits) doGenerateReview()
-              else navigate('/')
+              else navigate('/#pricing')
             }}
             onCancel={() => setShowCreditConfirm(false)}
-            type={hasCredits ? 'warning' : 'danger'}
+            type={hasCredits ? 'info' : 'danger'}
           />
         )
       })()}

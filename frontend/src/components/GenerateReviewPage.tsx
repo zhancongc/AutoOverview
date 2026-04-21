@@ -184,10 +184,6 @@ export function GenerateReviewPage() {
     try {
       const creditsData = await api.getCredits()
       setCredits(creditsData.credits)
-      if (creditsData.credits < 2) {
-        setShowPaymentModal('single')
-        return
-      }
     } catch { /* proceed */ }
 
     setShowCreditConfirm(true)
@@ -614,27 +610,30 @@ export function GenerateReviewPage() {
 
       {/* Modals */}
       {showLoginModal && <LoginModal onClose={() => setShowLoginModal(false)} onLoginSuccess={handleLoginSuccess} />}
-      {showCreditConfirm && isChineseSite && (
-        <ConfirmModal
-          title="确认扣除积分"
-          message={`您有 ${credits} 个积分。\n生成文献综述将消耗 2 个积分，是否继续？`}
-          confirmText="生成综述"
-          cancelText="取消"
-          onConfirm={() => { setShowCreditConfirm(false); doGenerate() }}
-          onCancel={() => setShowCreditConfirm(false)}
-          type="warning"
-        />
-      )}
-      {showCreditConfirm && !isChineseSite && (
-        <ConfirmModalInternational
-          message={`You have ${credits} credits.\nGenerate a Literature Summary will use 2 credits. Continue?`}
-          confirmText="Generate"
-          cancelText="Cancel"
-          onConfirm={() => { setShowCreditConfirm(false); doGenerate() }}
-          onCancel={() => setShowCreditConfirm(false)}
-          type="warning"
-        />
-      )}
+      {showCreditConfirm && (() => {
+        const hasCredits = credits >= 2
+        const msg = isChineseSite
+          ? hasCredits
+            ? `您有 ${credits} 个积分。\n生成文献综述将消耗 2 个积分，是否继续？`
+            : `您有 ${credits} 个积分，不足以生成文献综述（需 2 个积分）。`
+          : hasCredits
+            ? `You have ${credits} credits.\nGenerate a Literature Summary will use 2 credits. Continue?`
+            : `You have ${credits} credits, which is not enough (2 required).`
+        return (
+          <ConfirmModalInternational
+            message={msg}
+            confirmText={hasCredits ? (isChineseSite ? '生成综述' : 'Generate') : (isChineseSite ? '去购买积分' : 'Buy Credits')}
+            cancelText={isChineseSite ? '取消' : 'Cancel'}
+            onConfirm={() => {
+              setShowCreditConfirm(false)
+              if (hasCredits) doGenerate()
+              else navigate('/#pricing')
+            }}
+            onCancel={() => setShowCreditConfirm(false)}
+            type={hasCredits ? 'info' : 'danger'}
+          />
+        )
+      })()}
       {showPaymentModal && !isChineseSite && (
         <PayPalPaymentModal
           onClose={() => setShowPaymentModal(false)}
