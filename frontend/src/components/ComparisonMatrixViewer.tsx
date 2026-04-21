@@ -160,15 +160,12 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
       return
     }
 
-    // Show confirm modal immediately, check credits in background
+    // Check credits first
+    try {
+      const creditsData = await api.getCredits()
+      setCredits(creditsData.credits)
+    } catch { /* proceed */ }
     setShowCreditConfirm(true)
-    api.getCredits().then(data => {
-      setCredits(data.credits)
-      if (data.credits < 1) {
-        setShowCreditConfirm(false)
-        setShowPaymentModal('starter')
-      }
-    }).catch(() => {})
   }
 
   const doGenerateReview = async () => {
@@ -385,7 +382,7 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
           {isGeneratingReview ? t('comparison_matrix_page.generating') : t('comparison_matrix_page.generate_review')}
         </button>
         <button className="stats-action-btn" onClick={() => setShowMatrixExportModal(true)}>
-          {isChineseSite ? '导出矩阵' : 'Export Matrix'}
+          {isChineseSite ? '导出矩阵' : 'Export'}
         </button>
         <button className="stats-action-btn" onClick={handleShare}>
           {shareCopied ? (isChineseSite ? '已复制' : 'Copied') : (isChineseSite ? '分享' : 'Share')}
@@ -418,36 +415,33 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
 
   const LoginModalComponent = isChineseSite ? LoginModal : LoginModalInternational
 
-  const creditConfirmMessage = isChineseSite
-    ? `您有 ${credits} 个积分。\n生成文献综述将消耗 1 个积分，是否继续？`
-    : `You have ${credits} credits.\nGenerate a Literature Summary will use 1 credit. Continue?`
-  const creditConfirmBtn = isChineseSite ? '生成' : 'Generate'
-  const creditCancelBtn = isChineseSite ? '取消' : 'Cancel'
-
   const renderModals = () => (
     <>
       {showLoginModal && <LoginModalComponent onClose={() => setShowLoginModal(false)} onLoginSuccess={handleLoginSuccess} />}
-      {showCreditConfirm && isChineseSite && (
-        <ConfirmModal
-          title="确认扣除积分"
-          message={creditConfirmMessage}
-          confirmText={creditConfirmBtn}
-          cancelText={creditCancelBtn}
-          onConfirm={() => { setShowCreditConfirm(false); doGenerateReview() }}
-          onCancel={() => setShowCreditConfirm(false)}
-          type="warning"
-        />
-      )}
-      {showCreditConfirm && !isChineseSite && (
-        <ConfirmModalInternational
-          message={creditConfirmMessage}
-          confirmText={creditConfirmBtn}
-          cancelText={creditCancelBtn}
-          onConfirm={() => { setShowCreditConfirm(false); doGenerateReview() }}
-          onCancel={() => setShowCreditConfirm(false)}
-          type="warning"
-        />
-      )}
+      {showCreditConfirm && (() => {
+        const hasCredits = credits >= 1
+        const msg = isChineseSite
+          ? hasCredits
+            ? `您有 ${credits} 个积分。\n生成文献综述将消耗 1 个积分，是否继续？`
+            : `您有 ${credits} 个积分，不足以生成文献综述（需 1 个积分）。`
+          : hasCredits
+            ? `You have ${credits} credits.\nGenerate a Literature Summary will use 1 credit. Continue?`
+            : `You have ${credits} credits, which is not enough to generate a review (1 credit required).`
+        return (
+          <ConfirmModalInternational
+            message={msg}
+            confirmText={hasCredits ? (isChineseSite ? '生成' : 'Generate') : (isChineseSite ? '去购买积分' : 'Buy Credits')}
+            cancelText={isChineseSite ? '取消' : 'Cancel'}
+            onConfirm={() => {
+              setShowCreditConfirm(false)
+              if (hasCredits) doGenerateReview()
+              else navigate('/')
+            }}
+            onCancel={() => setShowCreditConfirm(false)}
+            type={hasCredits ? 'warning' : 'danger'}
+          />
+        )
+      })()}
       {showPaymentModal && !isChineseSite && (
         <PayPalPaymentModal
           onClose={() => setShowPaymentModal(false)}
@@ -586,7 +580,7 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
                 setShowMatrixExportModal(true)
               }}
             >
-              {isChineseSite ? '导出矩阵' : 'Export Matrix'}
+              {isChineseSite ? '导出矩阵' : 'Export'}
             </button>
             <button
               className="sidebar-action-btn sidebar-action-secondary"
@@ -660,7 +654,7 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
                 setShowMatrixExportModal(true)
               }}
             >
-              {isChineseSite ? '导出矩阵' : 'Export Matrix'}
+              {isChineseSite ? '导出矩阵' : 'Export'}
             </button>
             <button
               className="sidebar-action-btn sidebar-action-secondary"
@@ -828,7 +822,7 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
                 setShowMatrixExportModal(true)
               }}
             >
-              {isChineseSite ? '导出矩阵' : 'Export Matrix'}
+              {isChineseSite ? '导出矩阵' : 'Export'}
             </button>
             <button
               className="sidebar-action-btn sidebar-action-secondary"
