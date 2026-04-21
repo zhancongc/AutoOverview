@@ -5,8 +5,6 @@
       "accent": "AI Research Assistant · Literature Discovery Tool",
       "title": "Accelerate Your <highlight>Literature Discovery</highlight> Research",
       "subtitle": "AI-assisted literature discovery with verified citations. Find key papers, compare methodologies, and organize your research — all backed by real paper metadata.",
-      "cta_button": "Start Your Research",
-      "cta_hint": "Free to try • No credit card required",
       "search_papers_cta": "Search Papers — Free",
       "cards": {
         "search": "Search Papers",
@@ -39,8 +37,6 @@
       "button_generating": "Analyzing...",
       "credits_remaining": "{{count}} credits remaining",
       "retry": "Retry",
-      "how_it_works": "How It Works",
-      "alert_empty_topic": "Please enter a research topic",
       "search_papers_hint": "Just want to find related papers?",
       "search_papers_link": "Try our free search tool"
     },
@@ -318,6 +314,10 @@
     "button_generating": "Generating...",
     "credits_remaining": "{{count}} credits remaining",
     "retry": "Retry"
+  },
+  "pricing": {
+    "title": "Simple, Transparent Pricing",
+    "note": "Credits never expire. Get 2 free credits on registration."
   },
   "search_papers": {
     "meta": {
