@@ -551,11 +551,10 @@ async def get_search_history(
 
     from models import ReviewTask, PaperSearchStage
 
-    # 查询所有有搜索阶段的任务（排除 comparison_matrix_only，它没有搜索步骤）
+    # 查询所有任务（它们都有搜索阶段）
     tasks = (
         db_session.query(ReviewTask)
         .filter(ReviewTask.user_id == user_id)
-        .filter(ReviewTask.params.op('->>')('type') != 'comparison_matrix_only')
         .order_by(ReviewTask.created_at.desc())
         .offset(skip)
         .limit(limit)
