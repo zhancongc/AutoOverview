@@ -545,17 +545,17 @@ async def get_search_history(
     user_id: Optional[int] = Depends(get_current_user_id),
     db_session: Session = Depends(get_db)
 ):
-    """获取当前用户的搜索历史（search_only 任务）"""
+    """获取当前用户的搜索历史（包括独立搜索和综述任务的搜索）"""
     if not user_id:
         raise HTTPException(status_code=401, detail="未登录")
 
     from models import ReviewTask, PaperSearchStage
 
-    # 查询 search_only 类型的任务
+    # 查询所有有搜索阶段的任务（排除 comparison_matrix_only，它没有搜索步骤）
     tasks = (
         db_session.query(ReviewTask)
         .filter(ReviewTask.user_id == user_id)
-        .filter(ReviewTask.params.op('->>')('type') == 'search_only')
+        .filter(ReviewTask.params.op('->>')('type') != 'comparison_matrix_only')
         .order_by(ReviewTask.created_at.desc())
         .offset(skip)
         .limit(limit)

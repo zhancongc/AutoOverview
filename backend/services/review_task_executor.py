@@ -296,6 +296,29 @@ class ReviewTaskExecutor:
                 statistics=stats
             )
 
+            # 保存对比矩阵为独立任务记录（便于 Profile 页面展示）
+            comparison_matrix = result.get("comparison_matrix")
+            if comparison_matrix:
+                import uuid as _uuid
+                from models import ReviewTask as _RT
+                matrix_task_id = str(_uuid.uuid4())[:8]
+                matrix_task = _RT(
+                    id=matrix_task_id,
+                    topic=topic,
+                    user_id=task_user_id,
+                    status="completed",
+                    params={
+                        "type": "comparison_matrix_only",
+                        "comparison_matrix": comparison_matrix,
+                        "statistics": stats,
+                        "papers": papers_summary,
+                        "source_task_id": task_id,
+                    }
+                )
+                db_session.add(matrix_task)
+                db_session.commit()
+                logger.debug(f"对比矩阵已保存为独立任务: {matrix_task_id}")
+
             # 任务完成
             task_manager.update_task_status(
                 task_id,

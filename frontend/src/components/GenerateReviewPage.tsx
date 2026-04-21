@@ -39,7 +39,9 @@ export function GenerateReviewPage() {
 
   const [isChineseSite, setIsChineseSite] = useState(false)
   const [topic, setTopic] = useState('')
-  const [language, setLanguage] = useState<'zh' | 'en'>('zh')
+  const [language, setLanguage] = useState<'zh' | 'en'>(() =>
+    document.documentElement.classList.contains('intl') ? 'en' : 'zh'
+  )
   const [isGenerating, setIsGenerating] = useState(false)
   const [progress, setProgress] = useState<TaskProgress | null>(null)
   const [error, setError] = useState('')
