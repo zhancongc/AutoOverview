@@ -210,7 +210,7 @@
       "word": "导出 Word",
       "pdf": "导出 PDF",
       "exporting": "导出中...",
-      "export_word": "导出 Word",
+      "export_word": "导出",
       "unlock_export": "解锁导出（¥39.8）",
       "alert_not_supported": "该综述不支持导出",
       "alert_failed": "导出失败，请稍后重试",
@@ -428,6 +428,18 @@
       "description": "仅需 1 积分，即可获取观点对比、分歧原因分析和对比表格",
       "button": "立即生成 (1 积分)",
       "view_result": "查看对比矩阵"
+    },
+    "brand_name": "澹墨学术",
+    "credit_confirm": {
+      "title": "确认操作",
+      "generate_review": "生成综述",
+      "generate_matrix": "生成矩阵",
+      "go_buy_credits": "去购买积分",
+      "cancel": "取消",
+      "has_credits_review": "您有 {{credits}} 个积分。\n生成文献综述将消耗 2 个积分，是否继续？",
+      "has_credits_matrix": "您有 {{credits}} 个积分。\n生成对比矩阵将消耗 1 个积分，是否继续？",
+      "insufficient_review": "您有 {{credits}} 个积分，不足以生成文献综述（需 2 个积分）。",
+      "insufficient_matrix": "您有 {{credits}} 个积分，不足以生成对比矩阵（需 1 个积分）。"
     }
   },
   "comparison_matrix_page": {
@@ -450,7 +462,7 @@
     "back": "返回",
     "papers_used": "使用论文",
     "papers_unit": "篇",
-    "time_used": "生成耗时",
+    "time_used": "Generation time",
     "time_unit": "秒",
     "generated_at": "生成时间",
     "export_markdown": "导出 Markdown",

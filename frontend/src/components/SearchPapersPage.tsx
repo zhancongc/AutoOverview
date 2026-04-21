@@ -74,6 +74,7 @@ export function SearchPapersPage() {
   const [showExportModal, setShowExportModal] = useState(false)
   const [exportFormat, setExportFormat] = useState<ExportFormat>('bibtex')
   const [shareCopied, setShareCopied] = useState(false)
+  const [showToast, setShowToast] = useState(false)
   const [isSharedView, setIsSharedView] = useState(false)
   const statusIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
@@ -403,7 +404,11 @@ export function SearchPapersPage() {
       const url = `${window.location.origin}/search-papers?task_id=${searchTaskId}`
       await navigator.clipboard.writeText(url)
       setShareCopied(true)
-      setTimeout(() => setShareCopied(false), 2000)
+      setShowToast(true)
+      setTimeout(() => {
+        setShareCopied(false)
+        setShowToast(false)
+      }, 3000)
     } catch (err) {
       console.error('Share failed:', err)
     }
@@ -599,7 +604,7 @@ export function SearchPapersPage() {
       <nav className="home-nav">
         <div className="nav-logo" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
           <span className="logo-icon">📚</span>
-          <span className="logo-text">{isChineseSite ? '澹墨学术' : 'Danmo Scholar'}</span>
+          <span className="logo-text">{t('search_papers.brand_name')}</span>
         </div>
         <div className="nav-links">
           <a href="/" className={location.pathname === '/' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigate('/') }}>{t('nav.home')}</a>
@@ -638,7 +643,7 @@ export function SearchPapersPage() {
       <aside className={`mobile-sidebar ${mobileMenuOpen ? 'sidebar-open' : ''}`}>
         <div className="sidebar-header">
           <span className="logo-icon">📚</span>
-          <span className="logo-text">{isChineseSite ? '澹墨学术' : 'Danmo Scholar'}</span>
+          <span className="logo-text">{t('search_papers.brand_name')}</span>
           <button className="sidebar-close" onClick={() => setMobileMenuOpen(false)}>&times;</button>
         </div>
         <nav className="sidebar-links">
@@ -968,7 +973,7 @@ export function SearchPapersPage() {
               )
             })()}
             <p className="sp-cta-badge">
-              {t('search_papers.cta.badge')} <a href="/">{isChineseSite ? '澹墨学术' : 'Danmo Scholar'}</a>
+              {t('search_papers.cta.badge')} <a href="/">{t('search_papers.brand_name')}</a>
             </p>
           </div>
         </div>
@@ -1014,25 +1019,20 @@ export function SearchPapersPage() {
       {showCreditConfirm && (() => {
         const required = showCreditConfirm === 'review' ? 2 : 1
         const hasCredits = credits >= required
-        const label = showCreditConfirm === 'review'
-          ? (isChineseSite ? '生成综述' : 'Generate Summary')
-          : (isChineseSite ? '生成矩阵' : 'Generate Matrix')
-        const msg = isChineseSite
-          ? hasCredits
-            ? `您有 ${credits} 个积分。\n${showCreditConfirm === 'review' ? '生成文献综述将消耗 2 个积分' : '生成对比矩阵将消耗 1 个积分'}，是否继续？`
-            : `您有 ${credits} 个积分，不足以${showCreditConfirm === 'review' ? '生成文献综述（需 2 个积分）' : '生成对比矩阵（需 1 个积分）'}。`
-          : hasCredits
-            ? `You have ${credits} credits.\n${showCreditConfirm === 'review' ? 'Generate a Literature Review will use 2 credits' : 'Generate a Comparison Matrix will use 1 credit'}. Continue?`
-            : `You have ${credits} credits, which is not enough (${required} required).`
-        const title = isChineseSite ? '确认操作' : 'Confirm'
+        const type = showCreditConfirm as 'review' | 'matrix'
+        const label = t(`search_papers.credit_confirm.generate_${type === 'review' ? 'review' : 'matrix'}`)
+        const msgKey = hasCredits
+          ? `search_papers.credit_confirm.has_credits_${type === 'review' ? 'review' : 'matrix'}`
+          : `search_papers.credit_confirm.insufficient_${type === 'review' ? 'review' : 'matrix'}`
+        const msg = t(msgKey, { credits })
 
         if (isChineseSite) {
           return (
             <ConfirmModal
-              title={title}
+              title={t('search_papers.credit_confirm.title')}
               message={msg}
-              confirmText={hasCredits ? label : '去购买积分'}
-              cancelText="取消"
+              confirmText={hasCredits ? label : t('search_papers.credit_confirm.go_buy_credits')}
+              cancelText={t('search_papers.credit_confirm.cancel')}
               onConfirm={() => {
                 setShowCreditConfirm(false)
                 if (hasCredits) {
@@ -1050,8 +1050,8 @@ export function SearchPapersPage() {
           return (
             <ConfirmModalInternational
               message={msg}
-              confirmText={hasCredits ? label : 'Buy Credits'}
-              cancelText="Cancel"
+              confirmText={hasCredits ? label : t('search_papers.credit_confirm.go_buy_credits')}
+              cancelText={t('search_papers.credit_confirm.cancel')}
               onConfirm={() => {
                 setShowCreditConfirm(false)
                 if (hasCredits) {
@@ -1078,6 +1078,18 @@ export function SearchPapersPage() {
           }}
           planType={showPaymentModal}
         />
+      )}
+
+      {/* Toast notification */}
+      {showToast && (
+        <div className="search-papers-toast">
+          <div className="search-papers-toast-content">
+            <span className="toast-icon">✓</span>
+            <span className="toast-message">
+              {t('search_papers.results.share_copied')}
+            </span>
+          </div>
+        </div>
       )}
     </div>
   )

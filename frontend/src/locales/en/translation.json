@@ -411,6 +411,18 @@
       "description": "Get viewpoint comparisons, divergence analysis, and comparison tables for just 1 credit",
       "button": "Generate Now",
       "view_result": "View Comparison Matrix"
+    },
+    "brand_name": "Danmo Scholar",
+    "credit_confirm": {
+      "title": "Confirm",
+      "generate_review": "Generate Summary",
+      "generate_matrix": "Generate Matrix",
+      "go_buy_credits": "Buy Credits",
+      "cancel": "Cancel",
+      "has_credits_review": "You have {{credits}} credits.\nGenerate a Literature Review will use 2 credits. Continue?",
+      "has_credits_matrix": "You have {{credits}} credits.\nGenerate a Comparison Matrix will use 1 credit. Continue?",
+      "insufficient_review": "You have {{credits}} credits, which is not enough (2 required).",
+      "insufficient_matrix": "You have {{credits}} credits, which is not enough (1 required)."
     }
   },
   "comparison_matrix_page": {
