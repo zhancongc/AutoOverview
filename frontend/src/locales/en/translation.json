@@ -179,7 +179,7 @@
       "word": "Export to Word",
       "pdf": "Export to PDF",
       "exporting": "Exporting...",
-      "export_word": "Export Word",
+      "export_word": "Export",
       "unlock_export": "🔒 Unlock Export ($9.99)",
       "alert_not_supported": "This review does not support export",
       "alert_failed": "Export failed, please try again later",
