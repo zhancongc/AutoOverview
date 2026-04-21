@@ -1855,7 +1855,7 @@ async def get_task_review(
             "review": task.result.get("review", ""),
             "papers": task.result.get("papers", []),
             "cited_papers_count": task.result.get("cited_papers_count", 0),
-            "created_at": task.result.get("created_at", ""),
+            "created_at": task.result.get("created_at", "") or (task.created_at.isoformat() if getattr(task, 'created_at', None) else ""),
             "statistics": task.result.get("statistics", {}),
             "record_id": task.result.get("id"),
             "is_public": is_public,

@@ -43,7 +43,7 @@ class OpenAlexService:
         self.client = httpx.AsyncClient(timeout=30.0, headers=headers)
         self.email = email or ""
         self.max_retries = 3
-        self.retry_delay = 2
+        self.retry_delay = 0.5  # OpenAlex 有 mailto 时限速 10次/秒，无需长等待
         self._initialized = True
 
     async def close(self):

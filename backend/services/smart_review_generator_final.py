@@ -154,25 +154,19 @@ class SmartReviewGeneratorFinal:
         papers = self._preprocess_papers(papers)
         logger.debug(f"✓ 清洗后: {len(papers)} 篇")
 
-        # === 步骤 2: 生成文献对比矩阵 ===
-        logger.debug("\n[步骤 2] 生成文献对比矩阵...")
-        comparison_matrix = await self._generate_comparison_matrix(
-            topic=topic,
-            papers=papers,
-            language=language
+        # === 步骤 2 & 3: 并行生成对比矩阵 + 综述 ===
+        logger.debug("\n[步骤 2+3] 并行生成对比矩阵和综述...")
+        comparison_matrix_result, review_result = await asyncio.gather(
+            self._generate_comparison_matrix(topic=topic, papers=papers, language=language),
+            self._generate_raw_review(
+                topic=topic, papers=papers, model=model,
+                search_params=search_params, total_papers_count=original_search_count,
+                language=language
+            )
         )
-        logger.debug(f"✓ 对比矩阵生成完成")
-
-        # === 步骤 3: 生成综述（初始版）===
-        logger.debug("\n[步骤 3] 生成初始综述...")
-        raw_content, accessed_paper_indices = await self._generate_raw_review(
-            topic=topic,
-            papers=papers,
-            model=model,
-            search_params=search_params,
-            total_papers_count=original_search_count,
-            language=language
-        )
+        comparison_matrix = comparison_matrix_result
+        raw_content, accessed_paper_indices = review_result
+        logger.debug(f"✓ 对比矩阵和综述生成完成")
 
         # === 步骤 4: 提取并排序引用 ===
         logger.debug("\n[步骤 4] 处理引用...")
@@ -416,7 +410,7 @@ Output only the comparison matrix content in Markdown format."""
         tools = self._get_tools_definition(len(papers))
         accessed_indices = set()
         content = None
-        max_iterations = 10
+        max_iterations = 6  # 从 10 降到 6，减少无效迭代
         iteration = 0
 
         while iteration < max_iterations:
@@ -432,6 +426,15 @@ Output only the comparison matrix content in Markdown format."""
             )
 
             assistant_message = response.choices[0].message
+            finish_reason = response.choices[0].finish_reason
+
+            # 早期终止：LLM 返回了内容（可能是 tool_calls + content 并存）
+            if assistant_message.content and len(assistant_message.content) > 200:
+                content = assistant_message.content
+                messages.append(assistant_message)
+                if not assistant_message.tool_calls:
+                    logger.debug(f"[完成] 第 {iteration} 轮获得完整内容 ({len(content)} 字符)")
+                    break
 
             if assistant_message.tool_calls:
                 messages.append(assistant_message)
@@ -464,6 +467,10 @@ Output only the comparison matrix content in Markdown format."""
                 content = assistant_message.content
                 logger.debug("[完成] 生成完成")
                 break
+
+        # 如果 LLM 已返回长内容但没 break（tool_calls + content 并存的情况）
+        if content is None and assistant_message.content:
+            content = assistant_message.content
 
         if content is None:
             raise Exception("生成失败：LLM 没有返回内容")
