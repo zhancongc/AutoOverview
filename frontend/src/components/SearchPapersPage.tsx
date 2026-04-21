@@ -1024,7 +1024,7 @@ export function SearchPapersPage() {
               }
             }}
             onCancel={() => setShowCreditConfirm(false)}
-            type={hasCredits ? 'info' : 'danger'}
+            type={hasCredits ? 'info' : 'warning'}
           />
         )
       })()}

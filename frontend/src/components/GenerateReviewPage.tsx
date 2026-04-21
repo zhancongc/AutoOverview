@@ -633,7 +633,7 @@ export function GenerateReviewPage() {
               else navigate('/#pricing')
             }}
             onCancel={() => setShowCreditConfirm(false)}
-            type={hasCredits ? 'info' : 'danger'}
+            type={hasCredits ? 'info' : 'warning'}
           />
         )
       })()}
