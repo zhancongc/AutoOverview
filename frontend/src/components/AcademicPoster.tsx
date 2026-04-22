@@ -97,7 +97,7 @@ const ZH_STOP_WORDS = new Set([
   'te', 'in', 'on', 'at', 'or', 'by', 'to', 'of', 'is', 'it',
 ])
 
-function extractKeywords(papers: Paper[], lang: 'zh' | 'en'): Map<string, number> {
+function extractKeywords(papers: Paper[], _lang: 'zh' | 'en'): Map<string, number> {
   const titles = papers.map(p => p.title).filter(Boolean)
   const abstracts = papers.map(p => p.abstract).filter(Boolean)
 
@@ -269,7 +269,6 @@ function drawWordCloud(canvas: HTMLCanvasElement, keywords: Map<string, number>)
       // Check overlap
       let overlapAmount = 0
       for (const r of placed) {
-        const padding = 4
         const overlapX = Math.max(0, Math.min(x + textW, r.x + r.w) - Math.max(x, r.x))
         const overlapY = Math.max(0, Math.min(y, r.y) - Math.max(y - textH, r.y - r.h))
         overlapAmount += overlapX * overlapY

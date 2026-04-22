@@ -68,9 +68,7 @@ export function ReviewPage() {
   const [tocItems, setTocItems] = useState<TocItem[]>([])
   const [citationFormat, setCitationFormat] = useState<CitationFormat>('ieee')
   const [formatLoading, setFormatLoading] = useState(false)
-  const [shareCopied, setShareCopied] = useState(false)
   const [showToast, setShowToast] = useState(false)
-  const [showPoster, setShowPoster] = useState(false)
   const [generatingPoster, setGeneratingPoster] = useState(false)
   const [showPosterModal, setShowPosterModal] = useState(false)
   const posterGenRef = useRef(false)
@@ -638,9 +636,8 @@ export function ReviewPage() {
         try { await api.shareSearchResult(shareTaskId) } catch {}
       }
       await navigator.clipboard.writeText(window.location.href)
-      setShareCopied(true)
       setShowToast(true)
-      setTimeout(() => { setShareCopied(false); setShowToast(false) }, 3000)
+      setTimeout(() => { setShowToast(false) }, 3000)
     } catch (err) {
       console.error('Share failed:', err)
     }
