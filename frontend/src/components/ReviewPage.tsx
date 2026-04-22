@@ -1,9 +1,10 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { ReviewViewer } from './ReviewViewer'
 import { CitationFormatSelector } from './CitationFormatSelector'
 import { ExportFormatModal, ExportFormat } from './ExportFormatModal'
+import { AcademicPoster } from './AcademicPoster'
 import { api } from '../api'
 import type { Paper } from '../types'
 import './ReviewPage.css'
@@ -69,6 +70,10 @@ export function ReviewPage() {
   const [formatLoading, setFormatLoading] = useState(false)
   const [shareCopied, setShareCopied] = useState(false)
   const [showToast, setShowToast] = useState(false)
+  const [showPoster, setShowPoster] = useState(false)
+  const [generatingPoster, setGeneratingPoster] = useState(false)
+  const [showPosterModal, setShowPosterModal] = useState(false)
+  const posterGenRef = useRef(false)
 
   const handleTocUpdate = useCallback((toc: TocItem[]) => {
     setTocItems(toc)
@@ -629,25 +634,88 @@ export function ReviewPage() {
   const handleShare = async () => {
     const shareTaskId = taskId || taskData?.taskId
     try {
-      // 如果有 taskId，先调用分享 API
       if (shareTaskId) {
-        try {
-          await api.shareSearchResult(shareTaskId)
-        } catch {
-          // 忽略分享 API 的错误，继续复制链接
-        }
+        try { await api.shareSearchResult(shareTaskId) } catch {}
       }
-      // 复制当前 URL 到剪贴板
-      const url = window.location.href
-      await navigator.clipboard.writeText(url)
+      await navigator.clipboard.writeText(window.location.href)
       setShareCopied(true)
       setShowToast(true)
-      setTimeout(() => {
-        setShareCopied(false)
-        setShowToast(false)
-      }, 3000)
+      setTimeout(() => { setShareCopied(false); setShowToast(false) }, 3000)
     } catch (err) {
       console.error('Share failed:', err)
+    }
+  }
+
+  // 从综述内容中提取核心发现（列表项）
+  const extractCoreFindings = (content: string): string[] => {
+    const findings: string[] = []
+    const lines = content.split('\n')
+    let inFindings = false
+    for (const line of lines) {
+      const trimmed = line.trim()
+      if (/^#{1,3}\s/.test(trimmed)) {
+        const heading = trimmed.replace(/^#+\s*/, '').toLowerCase()
+        inFindings = /核心|发现|主要|结论|conclusion|finding|key|main|result|summary/i.test(heading)
+        continue
+      }
+      if (inFindings && /^[-*]\s/.test(trimmed)) {
+        const text = trimmed.replace(/^[-*]\s*/, '').replace(/\*\*/g, '').trim()
+        if (text.length > 5 && text.length < 150) {
+          findings.push(text)
+        }
+        if (findings.length >= 5) break
+      }
+    }
+    // Fallback: take first list items from any section
+    if (findings.length === 0) {
+      for (const line of lines) {
+        const trimmed = line.trim()
+        if (/^[-*]\s/.test(trimmed)) {
+          const text = trimmed.replace(/^[-*]\s*/, '').replace(/\*\*/g, '').trim()
+          if (text.length > 5 && text.length < 150) {
+            findings.push(text)
+          }
+          if (findings.length >= 5) break
+        }
+      }
+    }
+    return findings
+  }
+
+  const handleGeneratePoster = async () => {
+    if (posterGenRef.current || generatingPoster) return
+    posterGenRef.current = true
+    setGeneratingPoster(true)
+
+    await new Promise(resolve => setTimeout(resolve, 100))
+
+    try {
+      const html2canvas = (await import('html2canvas-pro')).default
+      // Find the hidden poster for generation
+      const posterEl = document.getElementById('poster-for-generation') as HTMLElement
+      if (!posterEl) return
+
+      const canvas = await html2canvas(posterEl, {
+        scale: 1,
+        useCORS: true,
+        logging: false,
+        backgroundColor: null,
+        width: 1080,
+        height: 1920,
+      })
+
+      const { saveAs } = await import('file-saver')
+      const safeName = (reviewData?.title || 'academic-poster').replace(/[\/\\:]/g, '-').substring(0, 50)
+      canvas.toBlob((blob) => {
+        if (blob) {
+          saveAs(blob, `${safeName}-poster.png`)
+        }
+      }, 'image/png')
+    } catch (err) {
+      console.error('Generate poster failed:', err)
+    } finally {
+      setGeneratingPoster(false)
+      posterGenRef.current = false
     }
   }
 
@@ -713,8 +781,8 @@ export function ReviewPage() {
           </button>
 
           {reviewData && (
-            <button className="stats-action-btn review-action-btn" onClick={handleShare}>
-              {shareCopied ? t('review.share_copied', '已复制') : t('review.share', '分享')}
+            <button className="stats-action-btn review-action-btn" onClick={() => setShowPosterModal(true)}>
+              {t('review.share', '分享')}
             </button>
           )}
         </div>
@@ -969,6 +1037,12 @@ export function ReviewPage() {
           >
             {t('review.regenerate')}
           </button>
+          <button
+            className="sidebar-action-btn"
+            onClick={() => { setMobileMenuOpen(false); setShowPosterModal(true) }}
+          >
+            {t('review.share', '分享')}
+          </button>
         </div>
         {tocItems.length > 0 && (
           <div className="sidebar-toc">
@@ -987,6 +1061,97 @@ export function ReviewPage() {
             <span className="toast-icon">✓</span>
             <span className="toast-message">{t('review.share_toast', '已复制分享链接到剪切板，可以复制到其它平台')}</span>
           </div>
+        </div>
+      )}
+
+      {/* 分享海报弹窗 */}
+      {showPosterModal && reviewData && (
+        <div className="confirm-modal-overlay" onClick={() => setShowPosterModal(false)}>
+          <div className="confirm-modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 420 }}>
+            <button className="confirm-modal-close" onClick={() => setShowPosterModal(false)}>&times;</button>
+            <div className="confirm-modal-header">
+              <h2 className="confirm-modal-title">{t('poster.generate')}</h2>
+            </div>
+            <div className="confirm-modal-body" style={{ textAlign: 'center', padding: '20px' }}>
+              {/* 海报预览容器 */}
+              <div style={{
+                width: '324px',
+                height: '576px',
+                margin: '0 auto',
+                borderRadius: '12px',
+                overflow: 'hidden',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+                position: 'relative',
+              }}>
+                <div style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '1080px',
+                  height: '1920px',
+                  transform: 'scale(0.3)',
+                  transformOrigin: 'top left',
+                }}>
+                  <AcademicPoster
+                    title={reviewData.title}
+                    content={reviewData.content}
+                    papers={reviewData.papers}
+                    createdAt={taskData?.createdAt || (state as any)?.createdAt}
+                    durationSeconds={taskData?.durationSeconds ?? (state as any)?.durationSeconds}
+                    language="zh"
+                    shareUrl={window.location.href}
+                    coreFindings={extractCoreFindings(reviewData.content)}
+                    i18n={{
+                      coreFindings: t('poster.core_findings'),
+                      papersLabel: t('poster.papers_label'),
+                      durationLabel: t('poster.duration_label'),
+                      dateLabel: t('poster.date_label'),
+                      scanToRead: t('poster.scan_to_read'),
+                      poweredBy: t('poster.powered_by'),
+                      brandName: t('poster.brand_name'),
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="confirm-modal-footer" style={{ gap: '12px' }}>
+              <button className="confirm-modal-btn confirm-modal-btn-cancel" onClick={async () => {
+                await handleShare()
+                setShowPosterModal(false)
+              }}>
+                {t('poster.copy_link', '分享链接')}
+              </button>
+              <button className="confirm-modal-btn confirm-modal-btn-primary" onClick={handleGeneratePoster} disabled={generatingPoster}>
+                {generatingPoster && <span className="confirm-modal-spinner" />}
+                {generatingPoster ? t('poster.generating') : t('poster.save_poster', '保存海报')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Hidden poster for generation */}
+      {reviewData && (
+        <div id="poster-for-generation" style={{ position: 'fixed', left: '-9999px', top: 0, width: '1080px', height: '1920px', zIndex: -1 }}>
+          <AcademicPoster
+            title={reviewData.title}
+            content={reviewData.content}
+            papers={reviewData.papers}
+            createdAt={taskData?.createdAt || (state as any)?.createdAt}
+            durationSeconds={taskData?.durationSeconds ?? (state as any)?.durationSeconds}
+            language="zh"
+            shareUrl={window.location.href}
+            coreFindings={extractCoreFindings(reviewData.content)}
+            i18n={{
+              coreFindings: t('poster.core_findings'),
+              papersLabel: t('poster.papers_label'),
+              durationLabel: t('poster.duration_label'),
+              dateLabel: t('poster.date_label'),
+              scanToRead: t('poster.scan_to_read'),
+              poweredBy: t('poster.powered_by'),
+              brandName: t('poster.brand_name'),
+            }}
+          />
         </div>
       )}
     </div>

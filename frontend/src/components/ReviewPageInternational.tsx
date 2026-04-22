@@ -2,12 +2,13 @@
  * Review Page Component - International Version
  * Displays generated literature reviews with export and payment options
  */
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { ReviewViewerInternational } from './ReviewViewerInternational'
 import { CitationFormatSelector, type CitationFormat } from './CitationFormatSelector'
 import { ExportFormatModal, ExportFormat } from './ExportFormatModal'
+import { AcademicPoster } from './AcademicPoster'
 import { api } from '../api'
 import type { Paper } from '../types'
 import './ReviewPageInternational.css'
@@ -71,6 +72,9 @@ export function ReviewPageInternational() {
   const [formatLoading, setFormatLoading] = useState(false)
   const [shareCopied, setShareCopied] = useState(false)
   const [showToast, setShowToast] = useState(false)
+  const [showPosterModal, setShowPosterModal] = useState(false)
+  const [generatingPoster, setGeneratingPoster] = useState(false)
+  const posterGenRef = useRef(false)
 
   const handleTocUpdate = useCallback((toc: TocItem[]) => {
     setTocItems(toc)
@@ -91,6 +95,7 @@ export function ReviewPageInternational() {
               content: res.data.review,
               papers: res.data.papers || [],
               recordId: res.data.record_id,
+              taskId: res.data.task_id || taskId,
               isPublic: res.data.is_public,
               isPaid: res.data.is_paid,
               statistics: res.data.statistics,
@@ -118,6 +123,7 @@ export function ReviewPageInternational() {
               content: res.data.review,
               papers: res.data.papers || [],
               recordId: res.data.record_id,
+              taskId: res.data.task_id ?? undefined,
               isPublic: res.data.is_public,
               isPaid: res.data.is_paid,
               statistics: res.data.statistics,
@@ -280,7 +286,7 @@ export function ReviewPageInternational() {
           </div>
         </div>
         <div className="review-loading-container">
-          <div className="review-loading-spinner" />
+          <div className="review-loading-spinner"></div>
           <p className="review-loading-text">{t('common.loading')}</p>
         </div>
       </div>
@@ -393,7 +399,7 @@ export function ReviewPageInternational() {
     }
   }
 
-  const generateBibTeX = (papers: any[]): string => {
+  const generateBibTeX = (papers: any[]) => {
     return papers.map((paper, i) => {
       const key = (paper.authors?.[0]?.split(' ').pop()?.toLowerCase() || 'unknown')
         + (paper.year || '') + '_' + (i + 1)
@@ -409,7 +415,7 @@ export function ReviewPageInternational() {
     }).join('\n\n')
   }
 
-  const generateRIS = (papers: any[]): string => {
+  const generateRIS = (papers: any[]) => {
     return papers.map(paper => {
       let ris = `TY  - JOUR\n`
       ris += `TI  - ${paper.title}\n`
@@ -483,25 +489,82 @@ export function ReviewPageInternational() {
   const handleShare = async () => {
     const shareTaskId = taskId || taskData?.taskId
     try {
-      // 如果有 taskId，先调用分享 API
       if (shareTaskId) {
-        try {
-          await api.shareSearchResult(shareTaskId)
-        } catch {
-          // 忽略分享 API 的错误，继续复制链接
-        }
+        try { await api.shareSearchResult(shareTaskId) } catch {}
       }
-      // 复制当前 URL 到剪贴板
-      const url = window.location.href
-      await navigator.clipboard.writeText(url)
+      await navigator.clipboard.writeText(window.location.href)
       setShareCopied(true)
       setShowToast(true)
-      setTimeout(() => {
-        setShareCopied(false)
-        setShowToast(false)
-      }, 3000)
+      setTimeout(() => { setShareCopied(false); setShowToast(false) }, 3000)
     } catch (err) {
       console.error('Share failed:', err)
+    }
+  }
+
+  const extractCoreFindings = (content: string): string[] => {
+    const findings: string[] = []
+    const lines = content.split('\n')
+    let inFindings = false
+    for (const line of lines) {
+      const trimmed = line.trim()
+      if (/^#{1,3}\s/.test(trimmed)) {
+        const heading = trimmed.replace(/^#+\s*/, '').toLowerCase()
+        inFindings = /conclusion|finding|key|main|result|summary|核心|发现/i.test(heading)
+        continue
+      }
+      if (inFindings && /^[-*]\s/.test(trimmed)) {
+        const text = trimmed.replace(/^[-*]\s*/, '').replace(/\*\*/g, '').trim()
+        if (text.length > 5 && text.length < 150) findings.push(text)
+        if (findings.length >= 5) break
+      }
+    }
+    if (findings.length === 0) {
+      for (const line of lines) {
+        const trimmed = line.trim()
+        if (/^[-*]\s/.test(trimmed)) {
+          const text = trimmed.replace(/^[-*]\s*/, '').replace(/\*\*/g, '').trim()
+          if (text.length > 5 && text.length < 150) findings.push(text)
+          if (findings.length >= 5) break
+        }
+      }
+    }
+    return findings
+  }
+
+  const handleGeneratePoster = async () => {
+    if (posterGenRef.current || generatingPoster) return
+    posterGenRef.current = true
+    setGeneratingPoster(true)
+
+    await new Promise(resolve => setTimeout(resolve, 100))
+
+    try {
+      const html2canvas = (await import('html2canvas-pro')).default
+      // Find the hidden poster for generation
+      const posterEl = document.getElementById('poster-for-generation') as HTMLElement
+      if (!posterEl) return
+
+      const canvas = await html2canvas(posterEl, {
+        scale: 1,
+        useCORS: true,
+        logging: false,
+        backgroundColor: null,
+        width: 1080,
+        height: 1920,
+      })
+
+      const { saveAs } = await import('file-saver')
+      const safeName = (reviewData?.title || 'academic-poster').replace(/[\/\\:]/g, '-').substring(0, 50)
+      canvas.toBlob((blob) => {
+        if (blob) {
+          saveAs(blob, `${safeName}-poster.png`)
+        }
+      }, 'image/png')
+    } catch (err) {
+      console.error('Generate poster failed:', err)
+    } finally {
+      setGeneratingPoster(false)
+      posterGenRef.current = false
     }
   }
 
@@ -565,8 +628,8 @@ export function ReviewPageInternational() {
           </button>
 
           {reviewData && (
-            <button className="stats-action-btn" onClick={handleShare}>
-              {shareCopied ? t('review.share_copied', 'Copied') : t('review.share', 'Share')}
+            <button className="stats-action-btn" onClick={() => setShowPosterModal(true)}>
+              {t('review.share', 'Share')}
             </button>
           )}
         </div>
@@ -690,7 +753,7 @@ export function ReviewPageInternational() {
                 const verificationLinks = [
                   { name: 'Google Scholar', url: `https://scholar.google.com/scholar?q=${searchQuery}`, icon: '🔬', color: '#4285f4' },
                   { name: 'Semantic Scholar', url: `https://www.semanticscholar.org/search?q=${searchQuery}`, icon: '📚', color: '#3b8bb5' },
-                  ...(paper.doi ? [{ name: 'DOI', url: `https://doi.org/${paper.doi}`, icon: '🔗', color: '#7f8c8d' }] : [])
+                  ...(paper.doi ? [{ name: 'DOI', url: `https://doi.org/${paper.doi}`, icon: '🔗', color: '#7f8c8d' }] : []),
                 ]
                 return (
                   <li key={paper.id} className="reference-item">
@@ -740,11 +803,10 @@ export function ReviewPageInternational() {
         )
       )}
 
-      {/* Review export format modal */}
       {showReviewExportModal && (
         <div className="confirm-modal-overlay" onClick={() => setShowReviewExportModal(false)}>
           <div className="confirm-modal" onClick={e => e.stopPropagation()}>
-            <button className="confirm-modal-close" onClick={() => setShowReviewExportModal(false)}>&times;</button>
+            <button className="confirm-modal-close" onClick={() => setShowReviewExportModal(false)}>×</button>
             <div className="confirm-modal-header">
               <span className="confirm-modal-icon">📄</span>
               <h2 className="confirm-modal-title">{t('review.export.export_review', 'Export Review')}</h2>
@@ -769,7 +831,7 @@ export function ReviewPageInternational() {
             <div className="confirm-modal-footer">
               <button className="confirm-modal-btn confirm-modal-btn-cancel" onClick={() => setShowReviewExportModal(false)} disabled={exportingReview}>{t('common.cancel')}</button>
               <button className="confirm-modal-btn confirm-modal-btn-primary" onClick={doExportReviewFrontend} disabled={exportingReview}>
-                {exportingReview && <span className="confirm-modal-spinner" />}
+                {exportingReview && <span className="confirm-modal-spinner"></span>}
                 {exportingReview ? t('review.export.exporting') : t('review.export.confirm', 'Export')}
               </button>
             </div>
@@ -778,13 +840,13 @@ export function ReviewPageInternational() {
       )}
 
       {mobileMenuOpen && (
-        <div className="mobile-sidebar-overlay" onClick={() => setMobileMenuOpen(false)} />
+        <div className="mobile-sidebar-overlay" onClick={() => setMobileMenuOpen(false)}></div>
       )}
 
       <aside className={`mobile-sidebar ${mobileMenuOpen ? 'sidebar-open' : ''}`}>
         <div className="sidebar-header">
           <span className="sidebar-header-title">{t('review.sidebar.actions')}</span>
-          <button className="sidebar-close" onClick={() => setMobileMenuOpen(false)}>&times;</button>
+          <button className="sidebar-close" onClick={() => setMobileMenuOpen(false)}>×</button>
         </div>
         <div className="sidebar-actions">
           <div className="sidebar-format-section">
@@ -816,6 +878,12 @@ export function ReviewPageInternational() {
           >
             {t('review.regenerate')}
           </button>
+          <button
+            className="sidebar-action-btn"
+            onClick={() => { setMobileMenuOpen(false); setShowPosterModal(true) }}
+          >
+            {t('review.share', 'Share')}
+          </button>
         </div>
         {tocItems.length > 0 && (
           <div className="sidebar-toc">
@@ -827,13 +895,102 @@ export function ReviewPageInternational() {
         )}
       </aside>
 
-      {/* Toast notification */}
       {showToast && (
         <div className="review-toast">
           <div className="review-toast-content">
             <span className="toast-icon">✓</span>
-            <span className="toast-message">Share link copied to clipboard, you can paste it on other platforms</span>
+            <span className="toast-message">{t('review.share_toast', 'Share link copied to clipboard, you can paste it on other platforms')}</span>
           </div>
+        </div>
+      )}
+
+      {showPosterModal && reviewData && (
+        <div className="confirm-modal-overlay" onClick={() => setShowPosterModal(false)}>
+          <div className="confirm-modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 420 }}>
+            <button className="confirm-modal-close" onClick={() => setShowPosterModal(false)}>×</button>
+            <div className="confirm-modal-header">
+              <h2 className="confirm-modal-title">{t('poster.generate')}</h2>
+            </div>
+            <div className="confirm-modal-body" style={{ textAlign: 'center', padding: '20px' }}>
+              {/* 海报预览容器 */}
+              <div style={{
+                width: '324px',
+                height: '576px',
+                margin: '0 auto',
+                borderRadius: '12px',
+                overflow: 'hidden',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+                position: 'relative',
+              }}>
+                <div style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '1080px',
+                  height: '1920px',
+                  transform: 'scale(0.3)',
+                  transformOrigin: 'top left',
+                }}>
+                  <AcademicPoster
+                    title={reviewData.title}
+                    content={reviewData.content}
+                    papers={reviewData.papers}
+                    createdAt={taskData?.createdAt || (state as any)?.createdAt}
+                    durationSeconds={taskData?.durationSeconds ?? (state as any)?.durationSeconds}
+                    language="en"
+                    shareUrl={window.location.href}
+                    coreFindings={extractCoreFindings(reviewData.content)}
+                    i18n={{
+                      coreFindings: t('poster.core_findings'),
+                      papersLabel: t('poster.papers_label'),
+                      durationLabel: t('poster.duration_label'),
+                      dateLabel: t('poster.date_label'),
+                      scanToRead: t('poster.scan_to_read'),
+                      poweredBy: t('poster.powered_by'),
+                      brandName: t('poster.brand_name'),
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="confirm-modal-footer" style={{ gap: '12px' }}>
+              <button className="confirm-modal-btn confirm-modal-btn-cancel" onClick={async () => {
+                await handleShare()
+                setShowPosterModal(false)
+              }}>
+                {t('poster.copy_link', 'Share Link')}
+              </button>
+              <button className="confirm-modal-btn confirm-modal-btn-primary" onClick={handleGeneratePoster} disabled={generatingPoster}>
+                {generatingPoster && <span className="confirm-modal-spinner"></span>}
+                {generatingPoster ? t('poster.generating') : t('poster.save_poster', 'Save Poster')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Hidden poster for generation */}
+      {reviewData && (
+        <div id="poster-for-generation" style={{ position: 'fixed', left: '-9999px', top: 0, width: '1080px', height: '1920px', zIndex: -1 }}>
+          <AcademicPoster
+            title={reviewData.title}
+            content={reviewData.content}
+            papers={reviewData.papers}
+            createdAt={taskData?.createdAt || (state as any)?.createdAt}
+            durationSeconds={taskData?.durationSeconds ?? (state as any)?.durationSeconds}
+            language="en"
+            shareUrl={window.location.href}
+            coreFindings={extractCoreFindings(reviewData.content)}
+            i18n={{
+              coreFindings: t('poster.core_findings'),
+              papersLabel: t('poster.papers_label'),
+              durationLabel: t('poster.duration_label'),
+              dateLabel: t('poster.date_label'),
+              scanToRead: t('poster.scan_to_read'),
+              poweredBy: t('poster.powered_by'),
+              brandName: t('poster.brand_name'),
+            }}
+          />
         </div>
       )}
     </div>

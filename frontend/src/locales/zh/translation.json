@@ -184,6 +184,8 @@
   "review": {
     "back": "返回",
     "regenerate": "重新生成",
+    "share": "分享",
+    "share_toast": "已复制分享链接到剪切板，可以复制到其它平台",
     "tabs": {
       "content": "正文",
       "references": "参考文献"
@@ -287,8 +289,12 @@
     "other_methods": "其他登录方式",
     "wechat_coming": "暂时不支持微信登录",
     "alipay_coming": "暂时不支持支付宝登录",
+    "alipay_login": "支付宝登录",
     "google_coming": "暂时不支持Google登录",
-    "apple_coming": "暂时不支持Apple登录"
+    "google_login": "Google 登录",
+    "apple_coming": "暂时不支持Apple登录",
+    "oauth_error_denied": "登录授权被拒绝",
+    "oauth_error_server": "登录服务异常，请稍后重试"
   },
   "common": {
     "loading": "加载中...",
@@ -442,6 +448,19 @@
   },
   "review_page": {
     "duration": "生成时长"
+  },
+  "poster": {
+    "generate": "分享海报",
+    "generating": "生成中...",
+    "core_findings": "核心发现",
+    "scan_to_read": "扫码查看完整综述",
+    "powered_by": "Powered by 澹墨学术",
+    "brand_name": "澹墨学术",
+    "papers_label": "篇文献",
+    "duration_label": "生成时长",
+    "date_label": "生成时间",
+    "copy_link": "分享链接",
+    "save_poster": "保存海报"
   },
   "comparison_matrix_page": {
     "title": "文献对比矩阵",

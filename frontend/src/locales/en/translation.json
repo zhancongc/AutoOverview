@@ -151,6 +151,8 @@
   "review": {
     "back": "Back",
     "regenerate": "Regenerate",
+    "share": "Share",
+    "share_toast": "Share link copied to clipboard, you can paste it on other platforms",
     "tabs": {
       "content": "Content",
       "references": "References"
@@ -212,7 +214,10 @@
       "verify_notice": "Click paper title or platform icon to verify on third-party databases",
       "verify_on": "Verify on {platform}",
       "view_on": "View on {platform}"
-    }
+    },
+    "share": "Share",
+    "share_copied": "Copied",
+    "share_toast": "Share link copied to clipboard, you can paste it on other platforms"
   },
   "nav": {
     "logo": "Danmo Scholar",
@@ -254,8 +259,12 @@
     "other_methods": "Other login methods",
     "wechat_coming": "WeChat login coming soon",
     "alipay_coming": "Alipay login coming soon",
+    "alipay_login": "Sign in with Alipay",
     "google_coming": "Google login is not yet available",
-    "apple_coming": "Apple login is not yet available"
+    "google_login": "Sign in with Google",
+    "apple_coming": "Apple login is not yet available",
+    "oauth_error_denied": "Login authorization was denied",
+    "oauth_error_server": "Login service error, please try again later"
   },
   "common": {
     "loading": "Loading...",
@@ -427,6 +436,19 @@
   },
   "review_page": {
     "duration": "Generation Time"
+  },
+  "poster": {
+    "generate": "Share Poster",
+    "generating": "Generating...",
+    "core_findings": "Key Findings",
+    "scan_to_read": "Scan to read full review",
+    "powered_by": "Powered by Danmo Scholar",
+    "brand_name": "Danmo Scholar",
+    "papers_label": "Papers",
+    "duration_label": "Duration",
+    "date_label": "Generated",
+    "copy_link": "Share Link",
+    "save_poster": "Save Poster"
   },
   "comparison_matrix_page": {
     "title": "Literature Comparison Matrix",

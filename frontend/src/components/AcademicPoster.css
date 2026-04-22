@@ -1,0 +1,205 @@
+/* Academic Poster Component */
+.academic-poster {
+  width: 1080px;
+  height: 1920px;
+  font-family: 'PingFang SC', 'Microsoft YaHei', 'Helvetica Neue', Arial, sans-serif;
+  position: relative;
+}
+
+.academic-poster.academic-poster-intl {
+  font-family: 'Helvetica Neue', 'Segoe UI', Arial, sans-serif;
+}
+
+.poster-bg {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+  display: flex;
+  flex-direction: column;
+  padding: 60px;
+  box-sizing: border-box;
+  color: #ffffff;
+}
+
+/* Brand header */
+.poster-brand {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 48px;
+}
+
+.poster-brand-icon {
+  font-size: 48px;
+}
+
+.poster-brand-name {
+  font-size: 32px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  letter-spacing: 2px;
+}
+
+/* Title */
+.poster-title {
+  font-size: 52px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: #ffffff;
+  margin: 0 0 48px 0;
+  max-width: 960px;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Findings card */
+.poster-findings {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border-radius: 24px;
+  padding: 40px;
+  margin-bottom: 40px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.poster-findings-title {
+  font-size: 28px;
+  font-weight: 600;
+  color: #fbbf24;
+  margin: 0 0 24px 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.poster-findings-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.poster-finding-item {
+  font-size: 26px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.9);
+  padding: 8px 0;
+  padding-left: 32px;
+  position: relative;
+}
+
+.poster-finding-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 18px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+}
+
+/* Stats bar */
+.poster-stats {
+  display: flex;
+  gap: 40px;
+  margin-bottom: 40px;
+  padding: 24px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.poster-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+}
+
+.poster-stat-value {
+  font-size: 36px;
+  font-weight: 700;
+  color: #fbbf24;
+}
+
+.poster-stat-label {
+  font-size: 20px;
+  color: rgba(255, 255, 255, 0.7);
+  margin-top: 4px;
+}
+
+/* Word cloud canvas */
+.poster-wordcloud-section {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 40px;
+  min-height: 400px;
+}
+
+.poster-wordcloud-canvas {
+  display: block;
+}
+
+/* Bottom section */
+.poster-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: auto;
+}
+
+.poster-qr-section {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.poster-qr-canvas {
+  border-radius: 16px;
+  background: white;
+  padding: 8px;
+}
+
+.poster-qr-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.poster-qr-hint {
+  font-size: 22px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.poster-qr-url {
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.poster-brand-footer {
+  font-size: 20px;
+  color: rgba(255, 255, 255, 0.5);
+  letter-spacing: 1px;
+}
+
+/* Decorative elements */
+.poster-deco-circle {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.03);
+  pointer-events: none;
+}
+
+.poster-deco-circle-1 {
+  width: 600px;
+  height: 600px;
+  right: -200px;
+  top: 100px;
+}
+
+.poster-deco-circle-2 {
+  width: 400px;
+  height: 400px;
+  left: -100px;
+  bottom: 200px;
+}
