@@ -27,6 +27,7 @@ def create_oauth_router(
         redis_client=redis_client,
         ttl_seconds=config.state_ttl_seconds,
     )
+    router.state_mgr = state_mgr  # 允许外部更新 redis_client
 
     # 延迟初始化客户端（避免 import 时就要求依赖）
     alipay_client = None

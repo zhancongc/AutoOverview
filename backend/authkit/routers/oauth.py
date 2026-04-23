@@ -54,6 +54,7 @@ def set_get_db(get_db_func):
 def set_redis_client(redis_client):
     global _redis_client
     _redis_client = redis_client
+    router.state_mgr.redis_client = redis_client
 
 
 _redis_client = None
@@ -137,28 +138,10 @@ async def _make_token_response(user: User, frontend_base: str) -> RedirectRespon
 
 # ==================== 路由构建 ====================
 
-def create_router(redis_client=None) -> "APIRouter":
-    """供 main.py 调用，延迟创建路由（确保 redis_client 已就绪）"""
-    from fastapi import APIRouter
-
-    if redis_client is None:
-        redis_client = _redis_client
-
-    return create_oauth_router(
-        config=_oauth_config,
-        find_or_create_user=_find_or_create_user,
-        make_token_response=_make_token_response,
-        get_frontend_base=_get_frontend_base,
-        redis_client=redis_client,
-    )
-
-
-# 兼容旧集成方式：模块级 router（Redis 在 set_redis_client 后需 rebuild）
-# main.py 应改用 create_router() 代替
+# 模块级 router：先不带 Redis 创建（lifespan 中通过 set_redis_client 注入）
 router = create_oauth_router(
     config=_oauth_config,
     find_or_create_user=_find_or_create_user,
     make_token_response=_make_token_response,
     get_frontend_base=_get_frontend_base,
-    redis_client=None,
 )
