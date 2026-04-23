@@ -307,6 +307,7 @@ def _alipay_get_user_info(access_token: str) -> dict:
 
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "")
+GOOGLE_REDIRECT_URI = os.getenv("GOOGLE_REDIRECT_URI", "")
 GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
 GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
 GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v2/userinfo"
@@ -318,8 +319,11 @@ async def google_authorize(request: Request):
     if not GOOGLE_CLIENT_ID:
         raise HTTPException(status_code=500, detail="Google 登录未配置")
 
-    frontend_base = str(request.url).split("/api/")[0]
-    redirect_uri = f"{frontend_base}/api/auth/google/callback"
+    if GOOGLE_REDIRECT_URI:
+        redirect_uri = GOOGLE_REDIRECT_URI
+    else:
+        frontend_base = str(request.url).split("/api/")[0]
+        redirect_uri = f"{frontend_base}/api/auth/google/callback"
     state = _generate_state("google")
 
     params = {
@@ -355,7 +359,10 @@ async def google_callback(
 
     try:
         frontend_base = str(request.url).split("/api/")[0]
-        redirect_uri = f"{frontend_base}/api/auth/google/callback"
+        if GOOGLE_REDIRECT_URI:
+            redirect_uri = GOOGLE_REDIRECT_URI
+        else:
+            redirect_uri = f"{frontend_base}/api/auth/google/callback"
 
         # 用 code 换 token
         import httpx
