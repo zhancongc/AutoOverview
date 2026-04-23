@@ -237,7 +237,6 @@ async def lifespan(app: FastAPI):
         StatsMiddleware._shared_redis_client = redis_client
         stats_router_module.set_redis_client(redis_client)
         admin_stats_router_module.set_redis_client(redis_client)
-        authkit.routers.oauth.set_redis_client(redis_client)
 
         # 启动统计批量写入任务
         from authkit.middleware.stats_middleware import StatsBatchWriter
@@ -312,7 +311,7 @@ app.include_router(paypal_router.router)
 # 集成 OAuth 登录路由（支付宝 + Google）
 import authkit.routers.oauth
 authkit.routers.oauth.set_get_db(auth_get_db)
-from authkit.routers import oauth_router
+oauth_router = authkit.routers.oauth.create_router(redis_client=redis_client)
 app.include_router(oauth_router)
 
 # 全局异常处理：确保所有未捕获异常打印完整堆栈
