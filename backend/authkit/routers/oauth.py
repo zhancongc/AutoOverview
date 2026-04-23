@@ -264,16 +264,16 @@ async def alipay_callback(
             return RedirectResponse(url=f"{frontend_base}/login?oauth_error=token_failed")
 
         access_token = token_data.get("access_token")
-        user_id = token_data.get("user_id")
+        open_id = token_data.get("open_id")
 
-        # 获取用户信息
-        user_info = _alipay_get_user_info(access_token)
+        # 获取用户信息（即使失败也不影响登录）
+        user_info = _alipay_get_user_info(access_token, open_id)
         nickname = user_info.get("nick_name", "")
         avatar = user_info.get("avatar", "")
 
         # 查找/创建用户
         user = _find_or_create_oauth_user(
-            db=db, provider="alipay", provider_user_id=user_id,
+            db=db, provider="alipay", provider_user_id=open_id,
             email="", nickname=nickname, avatar_url=avatar,
         )
         return _make_token_response(user, frontend_base)
@@ -331,7 +331,6 @@ def _alipay_get_token(auth_code: str) -> dict:
     try:
         client = _get_alipay_client()
         from alipay.aop.api.request.AlipaySystemOauthTokenRequest import AlipaySystemOauthTokenRequest
-        from alipay.aop.api.response.AlipaySystemOauthTokenResponse import AlipaySystemOauthTokenResponse
 
         request = AlipaySystemOauthTokenRequest()
         request.code = auth_code
@@ -340,49 +339,51 @@ def _alipay_get_token(auth_code: str) -> dict:
         response_content = client.execute(request)
         logger.info(f"[Alipay] get_token raw response: {response_content}")
 
-        token_response = AlipaySystemOauthTokenResponse()
-        token_response.parse_response_content(response_content)
+        # SDK 3.7.1018 的 execute() 已提取内层 JSON，直接解析
+        data = json.loads(response_content) if isinstance(response_content, str) else response_content
+        access_token = data.get("access_token")
+        open_id = data.get("open_id") or data.get("user_id")
 
-        if token_response.is_success() and token_response.user_id:
-            return {
-                "access_token": token_response.access_token,
-                "user_id": token_response.user_id,
-            }
-        logger.error(f"[Alipay] get_token failed: code={token_response.code}, msg={token_response.msg}, sub_code={getattr(token_response, 'sub_code', '')}, sub_msg={getattr(token_response, 'sub_msg', '')}")
+        if access_token and open_id:
+            return {"access_token": access_token, "open_id": open_id}
+
+        error = data.get("error_response", {})
+        logger.error(f"[Alipay] get_token failed: {error}")
         return {}
     except Exception as e:
         logger.error(f"[Alipay] get_token exception: {e}", exc_info=True)
         return {}
 
 
-def _alipay_get_user_info(access_token: str) -> dict:
+def _alipay_get_user_info(access_token: str, open_id: str) -> dict:
     """获取支付宝用户信息"""
     try:
         client = _get_alipay_client()
         from alipay.aop.api.request.AlipayUserInfoShareRequest import AlipayUserInfoShareRequest
-        from alipay.aop.api.response.AlipayUserInfoShareResponse import AlipayUserInfoShareResponse
-        from alipay.aop.api.constant.ParamConstants import P_AUTH_TOKEN
 
         request = AlipayUserInfoShareRequest()
-        request.udf_params = {P_AUTH_TOKEN: access_token}
 
-        response_content = client.execute(request)
+        response_content = client.execute(request, access_token)
         logger.info(f"[Alipay] user_info raw response: {response_content}")
 
-        user_response = AlipayUserInfoShareResponse()
-        user_response.parse_response_content(response_content)
+        data = json.loads(response_content) if isinstance(response_content, str) else response_content
 
-        if user_response.is_success() and user_response.user_id:
-            return {
-                "user_id": user_response.user_id,
-                "nick_name": user_response.nick_name or "",
-                "avatar": user_response.avatar or "",
-            }
-        logger.error(f"[Alipay] user_info failed: code={user_response.code}, msg={user_response.msg}, sub_code={getattr(user_response, 'sub_code', '')}, sub_msg={getattr(user_response, 'sub_msg', '')}")
-        return {}
+        # 检查是否有错误
+        if "error_response" in data and isinstance(data, dict):
+            logger.error(f"[Alipay] user_info failed: {data['error_response']}")
+            return {"open_id": open_id, "nick_name": "", "avatar": ""}
+
+        nick_name = data.get("nick_name", "")
+        avatar = data.get("avatar", "")
+
+        if nick_name or avatar:
+            return {"open_id": open_id, "nick_name": nick_name, "avatar": avatar}
+
+        # 用户信息获取失败也返回 open_id，不影响登录
+        return {"open_id": open_id, "nick_name": "", "avatar": ""}
     except Exception as e:
         logger.error(f"[Alipay] user_info exception: {e}", exc_info=True)
-        return {}
+        return {"open_id": open_id, "nick_name": "", "avatar": ""}
 
 
 # ==================== Google 登录 ====================
