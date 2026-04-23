@@ -188,7 +188,16 @@ def _load_alipay_key(env_val: str, default_path: str) -> str:
     full_path = os.path.join(base_dir, default_path)
     if os.path.exists(full_path):
         with open(full_path, "r") as f:
-            return f.read().strip()
+            key = f.read().strip()
+        # alipay-sdk-python 的 rsa 库只支持 PKCS1，自动转换 PKCS8
+        if "BEGIN PRIVATE KEY" in key and "BEGIN RSA PRIVATE KEY" not in key:
+            try:
+                from cryptography.hazmat.primitives.serialization import load_pem_private_key, Encoding, PrivateFormat, NoEncryption
+                private_key = load_pem_private_key(key.encode(), password=None)
+                key = private_key.private_bytes(Encoding.PEM, PrivateFormat.TraditionalOpenSSL, NoEncryption()).decode()
+            except Exception as e:
+                logger.warning(f"[Alipay] PKCS8→PKCS1 转换失败: {e}")
+        return key
     return ""
 
 
