@@ -56,22 +56,34 @@ def set_get_db(get_db_func):
 
 
 # ==================== State 管理 ====================
-# 生产环境用内存，如需多实例部署可改为 Redis
-_state_store: dict = {}  # state -> {"provider": str, "created_at": float}
+# 多 worker 下必须用 Redis 存储 state，否则跨 worker 验证失败
+_state_store: dict = {}  # Redis 不可用时的内存兜底
+_redis_client = None
+
+
+def set_redis_client(redis_client):
+    global _redis_client
+    _redis_client = redis_client
 
 
 def _generate_state(provider: str) -> str:
     state = secrets.token_urlsafe(32)
-    _state_store[state] = {"provider": provider, "created_at": datetime.utcnow().timestamp()}
-    # 清理超过 10 分钟的 state
-    cutoff = datetime.utcnow().timestamp() - 600
-    expired = [k for k, v in _state_store.items() if v["created_at"] < cutoff]
-    for k in expired:
-        del _state_store[k]
+    data = json.dumps({"provider": provider, "created_at": datetime.utcnow().timestamp()})
+    if _redis_client:
+        _redis_client.setex(f"oauth:state:{state}", 600, data)
+    else:
+        _state_store[state] = {"provider": provider, "created_at": datetime.utcnow().timestamp()}
     return state
 
 
 def _verify_state(state: str) -> Optional[str]:
+    if _redis_client:
+        raw = _redis_client.getdel(f"oauth:state:{state}")
+        if not raw:
+            return None
+        entry = json.loads(raw)
+        return entry["provider"]
+    # 内存兜底
     entry = _state_store.pop(state, None)
     if not entry:
         return None

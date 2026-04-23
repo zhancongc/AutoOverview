@@ -237,6 +237,7 @@ async def lifespan(app: FastAPI):
         StatsMiddleware._shared_redis_client = redis_client
         stats_router_module.set_redis_client(redis_client)
         admin_stats_router_module.set_redis_client(redis_client)
+        authkit.routers.oauth.set_redis_client(redis_client)
 
         # 启动统计批量写入任务
         from authkit.middleware.stats_middleware import StatsBatchWriter
