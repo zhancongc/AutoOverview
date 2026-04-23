@@ -274,6 +274,36 @@ async def alipay_callback(
         return RedirectResponse(url=f"{frontend_base}/login?oauth_error=server_error")
 
 
+def _patch_alipay_signing():
+    """
+    用 cryptography 替换 rsa 库做签名，绕过 pyasn1 兼容性问题。
+    参考 gongkao 项目：rsa 4.9.1 + pyasn1 0.6.1 可正常工作，
+    但生产环境依赖版本可能不一致，直接用 cryptography 更可靠。
+    """
+    import base64
+    from cryptography.hazmat.primitives import hashes, serialization
+    from cryptography.hazmat.primitives.asymmetric import padding
+    import alipay.aop.api.util.SignatureUtils as su
+
+    _orig_sign = su.sign_with_rsa2
+
+    def _sign_with_cryptography(private_key_pem, sign_content, charset):
+        if isinstance(sign_content, str):
+            sign_content = sign_content.encode(charset or "utf-8")
+        if isinstance(private_key_pem, str):
+            private_key_pem = private_key_pem.encode("utf-8")
+        private_key = serialization.load_pem_private_key(private_key_pem, password=None)
+        signature = private_key.sign(sign_content, padding.PKCS1v15(), hashes.SHA256())
+        return base64.b64encode(signature)
+
+    su.sign_with_rsa2 = _sign_with_cryptography
+    logger.info("[Alipay] 已替换 sign_with_rsa2 为 cryptography 实现")
+
+
+# 模块加载时 patch 一次
+_patch_alipay_signing()
+
+
 def _get_alipay_client():
     """创建支付宝客户端（官方 SDK: alipay-sdk-python）"""
     from alipay.aop.api.AlipayClientConfig import AlipayClientConfig
