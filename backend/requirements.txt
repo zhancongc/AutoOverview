@@ -33,6 +33,7 @@ Jinja2==3.1.4
 # ==================== 支付 ====================
 alipay-sdk-python==3.7.1018
 rsa==4.7.2  # pin: rsa 4.9+ 与 Python 3.12 不兼容
+pyasn1<0.7.0  # pin: pyasn1 0.7+ 的 Sequence 对象不支持 int()，导致 rsa 解析私钥失败
 # Paddle payments use REST API via httpx (no additional SDK needed)
 
 # ==================== 配置管理 ====================
