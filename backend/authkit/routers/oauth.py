@@ -219,6 +219,7 @@ async def alipay_authorize(request: Request):
 
 @router.get("/alipay/callback")
 async def alipay_callback(
+    auth_code: Optional[str] = None,
     code: Optional[str] = None,
     state: Optional[str] = None,
     request: Request = None,
@@ -227,6 +228,8 @@ async def alipay_callback(
     """支付宝授权回调"""
     frontend_base = _get_frontend_base(request)
 
+    # 支付宝用 auth_code，兜底 code
+    code = auth_code or code
     if not code or not state:
         return RedirectResponse(url=f"{frontend_base}/login?oauth_error=denied")
 
