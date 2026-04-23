@@ -24,6 +24,16 @@ router = APIRouter(prefix="/api/auth", tags=["OAuth 登录"])
 
 _default_get_db = None
 
+# Nginx 反向代理下 request.url 是内部地址，需要用环境变量指定前端地址
+FRONTEND_URL = os.getenv("FRONTEND_URL", "")
+
+
+def _get_frontend_base(request: Request) -> str:
+    """获取前端基础 URL：优先用环境变量，否则从请求推断"""
+    if FRONTEND_URL:
+        return FRONTEND_URL.rstrip("/")
+    return str(request.url).split("/api/")[0]
+
 
 def get_db():
     global _default_get_db
@@ -173,7 +183,7 @@ async def alipay_authorize(request: Request):
     if not ALIPAY_APP_ID:
         raise HTTPException(status_code=500, detail="支付宝登录未配置")
 
-    frontend_base = str(request.url).split("/api/")[0]
+    frontend_base = _get_frontend_base(request)
     redirect_uri = f"{frontend_base}/api/auth/alipay/callback"
     state = _generate_state("alipay")
 
@@ -196,7 +206,7 @@ async def alipay_callback(
     db: Session = Depends(get_db),
 ):
     """支付宝授权回调"""
-    frontend_base = str(request.url).split("/api/")[0]
+    frontend_base = _get_frontend_base(request)
 
     if not code or not state:
         return RedirectResponse(url=f"{frontend_base}/login?oauth_error=denied")
@@ -322,7 +332,7 @@ async def google_authorize(request: Request):
     if GOOGLE_REDIRECT_URI:
         redirect_uri = GOOGLE_REDIRECT_URI
     else:
-        frontend_base = str(request.url).split("/api/")[0]
+        frontend_base = _get_frontend_base(request)
         redirect_uri = f"{frontend_base}/api/auth/google/callback"
     state = _generate_state("google")
 
@@ -348,7 +358,7 @@ async def google_callback(
     db: Session = Depends(get_db),
 ):
     """Google 授权回调"""
-    frontend_base = str(request.url).split("/api/")[0]
+    frontend_base = _get_frontend_base(request)
 
     if error or not code or not state:
         return RedirectResponse(url=f"{frontend_base}/login?oauth_error=denied")
@@ -358,7 +368,7 @@ async def google_callback(
         return RedirectResponse(url=f"{frontend_base}/login?oauth_error=invalid_state")
 
     try:
-        frontend_base = str(request.url).split("/api/")[0]
+        frontend_base = _get_frontend_base(request)
         if GOOGLE_REDIRECT_URI:
             redirect_uri = GOOGLE_REDIRECT_URI
         else:
