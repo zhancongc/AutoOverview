@@ -24,19 +24,21 @@ router = APIRouter(prefix="/api/auth", tags=["OAuth 登录"])
 
 _default_get_db = None
 
-# Nginx 反向代理下 request.url 是内部地址
-# 优先从请求的 Host 头推断（支持多域名），FRONTEND_URL 作为兜底
-FRONTEND_URL = os.getenv("FRONTEND_URL", "")
+# Nginx 反向代理下 request.url 是内部地址，用环境变量指定前端地址
+_FRONTEND_URLS = {
+    "zh": os.getenv("FRONTEND_URL", "").rstrip("/"),
+    "en": os.getenv("EN_FRONTEND_URL", "").rstrip("/"),
+}
 
 
 def _get_frontend_base(request: Request) -> str:
-    """根据请求的 Host 头动态判断前端地址"""
-    host = request.headers.get("host") or request.headers.get("x-forwarded-host")
-    if host:
-        scheme = request.headers.get("x-forwarded-proto", "https")
-        return f"{scheme}://{host}"
-    if FRONTEND_URL:
-        return FRONTEND_URL.rstrip("/")
+    """根据请求来源判断前端地址"""
+    # 从 Host 头判断中英文站
+    host = request.headers.get("host") or ""
+    if "en-" in host:
+        return _FRONTEND_URLS["en"]
+    if _FRONTEND_URLS["zh"]:
+        return _FRONTEND_URLS["zh"]
     return str(request.url).split("/api/")[0]
 
 
