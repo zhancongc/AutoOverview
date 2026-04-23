@@ -163,7 +163,7 @@ def _load_alipay_key(env_val: str, default_path: str) -> str:
     return ""
 
 
-ALIPAY_PRIVATE_KEY = _load_alipay_key(os.getenv("ALIPAY_PRIVATE_KEY", ""), "app_public_key.txt")
+ALIPAY_PRIVATE_KEY = _load_alipay_key(os.getenv("ALIPAY_PRIVATE_KEY", ""), "app_secrets.txt")
 ALIPAY_PUBLIC_KEY = _load_alipay_key(os.getenv("ALIPAY_PUBLIC_KEY", ""), "alipay_public_key.txt")
 
 
