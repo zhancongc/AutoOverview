@@ -10,6 +10,8 @@ from datetime import datetime
 from typing import Optional
 from urllib.parse import urlencode
 
+import httpx
+
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
