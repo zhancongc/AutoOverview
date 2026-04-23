@@ -182,8 +182,8 @@ ALIPAY_APP_ID = os.getenv("ALIPAY_APP_ID", "")
 ALIPAY_GATEWAY = "https://openapi.alipay.com/gateway.do"
 
 
-def _load_alipay_key(env_val: str, default_path: str) -> str:
-    """加载支付宝密钥：优先用 env 变量值，否则从文件读取"""
+def _load_alipay_key(env_val: str, default_path: str, is_private: bool = True) -> str:
+    """加载支付宝密钥：优先用 env 变量值，否则从文件读取，自动补 PEM 头"""
     if env_val:
         return env_val
     base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -191,8 +191,17 @@ def _load_alipay_key(env_val: str, default_path: str) -> str:
     if os.path.exists(full_path):
         with open(full_path, "r") as f:
             key = f.read().strip()
-        # alipay-sdk-python 的 rsa 库只支持 PKCS1，自动转换 PKCS8
-        if "BEGIN PRIVATE KEY" in key and "BEGIN RSA PRIVATE KEY" not in key:
+
+        # 裸 base64 没有 PEM 头，自动补上
+        if "BEGIN" not in key:
+            if is_private:
+                # PKCS#8 私钥
+                key = f"-----BEGIN PRIVATE KEY-----\n{key}\n-----END PRIVATE KEY-----"
+            else:
+                key = f"-----BEGIN PUBLIC KEY-----\n{key}\n-----END PUBLIC KEY-----"
+
+        # PKCS#8 私钥转 PKCS#1（cryptography 兼容）
+        if is_private and "BEGIN PRIVATE KEY" in key and "BEGIN RSA PRIVATE KEY" not in key:
             try:
                 from cryptography.hazmat.primitives.serialization import load_pem_private_key, Encoding, PrivateFormat, NoEncryption
                 private_key = load_pem_private_key(key.encode(), password=None)
@@ -203,8 +212,8 @@ def _load_alipay_key(env_val: str, default_path: str) -> str:
     return ""
 
 
-ALIPAY_PRIVATE_KEY = _load_alipay_key(os.getenv("ALIPAY_PRIVATE_KEY", ""), "app_secrets.txt")
-ALIPAY_PUBLIC_KEY = _load_alipay_key(os.getenv("ALIPAY_PUBLIC_KEY", ""), "alipay_public_key.txt")
+ALIPAY_PRIVATE_KEY = _load_alipay_key(os.getenv("ALIPAY_PRIVATE_KEY", ""), "app_secrets.txt", is_private=True)
+ALIPAY_PUBLIC_KEY = _load_alipay_key(os.getenv("ALIPAY_PUBLIC_KEY", ""), "alipay_public_key.txt", is_private=False)
 
 
 @router.get("/alipay/authorize")
