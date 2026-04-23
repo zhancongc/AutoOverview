@@ -251,6 +251,22 @@ async def lifespan(app: FastAPI):
     # 从 Redis 恢复重启前的活跃任务
     task_manager.restore_from_redis()
 
+    # 启动定时清理任务（超时任务标记失败 + 旧任务清理）
+    async def _periodic_cleanup():
+        while True:
+            await asyncio.sleep(60)
+            try:
+                stuck = task_manager.cleanup_stuck_tasks(max_runtime_minutes=15)
+                if stuck:
+                    logger.info(f"[Cleanup] 清理 {stuck} 个超时任务")
+                old = task_manager.cleanup_old_tasks(max_age_hours=24)
+                if old:
+                    logger.info(f"[Cleanup] 清理 {old} 个过期任务")
+            except Exception as e:
+                logger.error(f"[Cleanup] 定时清理失败: {e}")
+
+    asyncio.create_task(_periodic_cleanup())
+
     yield
     # 关闭时执行
     logger.debug("[Shutdown] 应用关闭")
@@ -291,6 +307,12 @@ app.include_router(payment_cb_router.router)
 # 集成 PayPal 支付路由（国际版默认）
 paypal_router.set_get_db(auth_get_db)
 app.include_router(paypal_router.router)
+
+# 集成 OAuth 登录路由（支付宝 + Google）
+import authkit.routers.oauth
+authkit.routers.oauth.set_get_db(auth_get_db)
+from authkit.routers import oauth_router
+app.include_router(oauth_router)
 
 # 全局异常处理：确保所有未捕获异常打印完整堆栈
 from fastapi.responses import JSONResponse
@@ -1703,6 +1725,20 @@ async def get_task_status(
                 raise HTTPException(status_code=403, detail="该任务不属于您，无法访问")
 
     response_data = review_task.to_dict()
+
+    # 多 worker 场景：任务可能在其他 worker 的内存中处理
+    # 从 Redis 获取最新 progress，避免前端进度条跳回 0
+    if review_task.status in ("pending", "processing") and task_manager._persistence and task_manager._persistence.available:
+        try:
+            redis_key = f"task:active:{task_id}"
+            raw = task_manager._persistence.redis_client.get(redis_key)
+            if raw:
+                import json as _json
+                redis_data = _json.loads(raw)
+                if redis_data.get("progress"):
+                    response_data["progress"] = redis_data["progress"]
+        except Exception:
+            pass
 
     # 如果任务完成，从数据库获取综述记录并添加到结果中
     if review_task.status == "completed" and review_task.review_record_id:

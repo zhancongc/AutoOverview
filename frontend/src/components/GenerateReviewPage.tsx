@@ -336,9 +336,11 @@ export function GenerateReviewPage() {
   }
 
   // 阶段对应的进度区间：[start, end]
+  // processing 作为未知 step 的兜底，映射到 [50, 60] 避免跳回 0
   const STAGE_RANGES: Record<string, [number, number]> = {
     init: [0, 5],
     waiting: [0, 5],
+    processing: [50, 60],
     generating_outline: [5, 15],
     analyzing: [15, 20],
     optimizing_keywords: [20, 25],
@@ -356,6 +358,7 @@ export function GenerateReviewPage() {
   const STAGE_DURATION: Record<string, number> = {
     init: 3,
     waiting: 3,
+    processing: 120,
     generating_outline: 20,
     analyzing: 15,
     optimizing_keywords: 10,
