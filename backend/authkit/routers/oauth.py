@@ -303,7 +303,7 @@ def _patch_alipay_signing():
             private_key_pem = private_key_pem.encode("utf-8")
         private_key = serialization.load_pem_private_key(private_key_pem, password=None)
         signature = private_key.sign(sign_content, padding.PKCS1v15(), hashes.SHA256())
-        return base64.b64encode(signature)
+        return base64.b64encode(signature).decode("ascii")
 
     su.sign_with_rsa2 = _sign_with_cryptography
     logger.info("[Alipay] 已替换 sign_with_rsa2 为 cryptography 实现")
