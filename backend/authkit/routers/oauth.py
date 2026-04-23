@@ -329,6 +329,16 @@ GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
 GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
 GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v2/userinfo"
 
+# 国内服务器访问 Google API 需要代理
+HTTP_PROXY = os.getenv("HTTP_PROXY", "") or os.getenv("http_proxy", "")
+
+
+def _get_httpx_client() -> httpx.AsyncClient:
+    kwargs = {"timeout": 15.0}
+    if HTTP_PROXY:
+        kwargs["proxy"] = HTTP_PROXY
+    return httpx.AsyncClient(**kwargs)
+
 
 @router.get("/google/authorize")
 async def google_authorize(request: Request):
@@ -383,7 +393,7 @@ async def google_callback(
 
         # 用 code 换 token
         import httpx
-        async with httpx.AsyncClient() as client:
+        async with _get_httpx_client() as client:
             token_resp = await client.post(GOOGLE_TOKEN_URL, data={
                 "code": code,
                 "client_id": GOOGLE_CLIENT_ID,
@@ -399,7 +409,7 @@ async def google_callback(
             return RedirectResponse(url=f"{frontend_base}/login?oauth_error=token_failed")
 
         # 获取用户信息
-        async with httpx.AsyncClient() as client:
+        async with _get_httpx_client() as client:
             userinfo_resp = await client.get(
                 GOOGLE_USERINFO_URL,
                 headers={"Authorization": f"Bearer {access_token}"},
