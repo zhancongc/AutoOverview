@@ -290,16 +290,24 @@ def _alipay_get_token(auth_code: str) -> dict:
     try:
         client = _get_alipay_client()
         from alipay.aop.api.request.AlipaySystemOauthTokenRequest import AlipaySystemOauthTokenRequest
+        from alipay.aop.api.response.AlipaySystemOauthTokenResponse import AlipaySystemOauthTokenResponse
+
         request = AlipaySystemOauthTokenRequest()
         request.code = auth_code
         request.grant_type = "authorization_code"
-        response = client.execute(request)
-        if response and response.user_id:
+
+        response_content = client.execute(request)
+        logger.info(f"[Alipay] get_token raw response: {response_content}")
+
+        token_response = AlipaySystemOauthTokenResponse()
+        token_response.parse_response_content(response_content)
+
+        if token_response.is_success() and token_response.user_id:
             return {
-                "access_token": response.access_token,
-                "user_id": response.user_id,
+                "access_token": token_response.access_token,
+                "user_id": token_response.user_id,
             }
-        logger.error(f"[Alipay] get_token error: no user_id in response")
+        logger.error(f"[Alipay] get_token failed: code={token_response.code}, msg={token_response.msg}, sub_code={getattr(token_response, 'sub_code', '')}, sub_msg={getattr(token_response, 'sub_msg', '')}")
         return {}
     except Exception as e:
         logger.error(f"[Alipay] get_token exception: {e}", exc_info=True)
@@ -311,15 +319,25 @@ def _alipay_get_user_info(access_token: str) -> dict:
     try:
         client = _get_alipay_client()
         from alipay.aop.api.request.AlipayUserInfoShareRequest import AlipayUserInfoShareRequest
+        from alipay.aop.api.response.AlipayUserInfoShareResponse import AlipayUserInfoShareResponse
+        from alipay.aop.api.constant.ParamConstants import P_AUTH_TOKEN
+
         request = AlipayUserInfoShareRequest()
-        response = client.execute(request, access_token)
-        if response and response.user_id:
+        request.udf_params = {P_AUTH_TOKEN: access_token}
+
+        response_content = client.execute(request)
+        logger.info(f"[Alipay] user_info raw response: {response_content}")
+
+        user_response = AlipayUserInfoShareResponse()
+        user_response.parse_response_content(response_content)
+
+        if user_response.is_success() and user_response.user_id:
             return {
-                "user_id": response.user_id,
-                "nick_name": response.nick_name or "",
-                "avatar": response.avatar or "",
+                "user_id": user_response.user_id,
+                "nick_name": user_response.nick_name or "",
+                "avatar": user_response.avatar or "",
             }
-        logger.error(f"[Alipay] user_info error: no user_id in response")
+        logger.error(f"[Alipay] user_info failed: code={user_response.code}, msg={user_response.msg}, sub_code={getattr(user_response, 'sub_code', '')}, sub_msg={getattr(user_response, 'sub_msg', '')}")
         return {}
     except Exception as e:
         logger.error(f"[Alipay] user_info exception: {e}", exc_info=True)
@@ -335,8 +353,8 @@ GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
 GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
 GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v2/userinfo"
 
-# 国内服务器访问 Google API 需要代理
-HTTP_PROXY = os.getenv("HTTP_PROXY", "") or os.getenv("http_proxy", "")
+# 生产服务器走本地 SOCKS5 代理访问 Google
+HTTP_PROXY = os.getenv("HTTP_PROXY", "socks5://127.0.0.1:1080") or os.getenv("http_proxy", "")
 
 
 def _get_httpx_client():
