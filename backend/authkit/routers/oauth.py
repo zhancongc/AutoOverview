@@ -263,75 +263,57 @@ async def alipay_callback(
         return RedirectResponse(url=f"{frontend_base}/login?oauth_error=server_error")
 
 
+def _get_alipay_client():
+    """创建支付宝客户端（官方 SDK: alipay-sdk-python）"""
+    from alipay.aop.api.AlipayClientConfig import AlipayClientConfig
+    from alipay.aop.api.DefaultAlipayClient import DefaultAlipayClient
+
+    config = AlipayClientConfig()
+    config.app_id = ALIPAY_APP_ID
+    config.app_private_key = ALIPAY_PRIVATE_KEY
+    config.alipay_public_key = ALIPAY_PUBLIC_KEY
+    config.sign_type = "RSA2"
+    return DefaultAlipayClient(config, logger)
+
+
 def _alipay_get_token(auth_code: str) -> dict:
     """用 auth_code 换 access_token"""
     try:
-        import httpx
-        from alipay import AliPay
-
-        alipay = AliPay(
-            appid=ALIPAY_APP_ID,
-            app_private_key_string=ALIPAY_PRIVATE_KEY,
-            alipay_public_key_string=ALIPAY_PUBLIC_KEY,
-            sign_type="RSA2",
-        )
-        result, error = alipay.get_oauth_token(auth_code)
-        if error:
-            logger.error(f"[Alipay] get_token error: {error}")
-            return {}
-        return result
-    except ImportError:
-        # fallback: 手动请求
-        return _alipay_get_token_manual(auth_code)
-    except Exception as e:
-        logger.error(f"[Alipay] get_token exception: {e}")
+        client = _get_alipay_client()
+        from alipay.aop.api.request.AlipaySystemOauthTokenRequest import AlipaySystemOauthTokenRequest
+        request = AlipaySystemOauthTokenRequest()
+        request.code = auth_code
+        request.grant_type = "authorization_code"
+        response = client.execute(request)
+        if response and response.user_id:
+            return {
+                "access_token": response.access_token,
+                "user_id": response.user_id,
+            }
+        logger.error(f"[Alipay] get_token error: no user_id in response")
         return {}
-
-
-def _alipay_get_token_manual(auth_code: str) -> dict:
-    """手动换取 token（无 SDK 兜底）"""
-    import httpx
-    from cryptography.hazmat.primitives import serialization, hashes
-    from cryptography.hazmat.primitives.asymmetric import padding
-    import base64
-
-    params = {
-        "app_id": ALIPAY_APP_ID,
-        "method": "alipay.system.oauth.token",
-        "charset": "utf-8",
-        "sign_type": "RSA2",
-        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "version": "1.0",
-        "grant_type": "authorization_code",
-        "code": auth_code,
-    }
-    # 注意: 实际生产环境需要正确签名, 建议安装 python-alipay-sdk
-    logger.warning("[Alipay] 使用手动模式，建议安装 python-alipay-sdk")
-    return {}
+    except Exception as e:
+        logger.error(f"[Alipay] get_token exception: {e}", exc_info=True)
+        return {}
 
 
 def _alipay_get_user_info(access_token: str) -> dict:
     """获取支付宝用户信息"""
     try:
-        from alipay import AliPay
-
-        alipay = AliPay(
-            appid=ALIPAY_APP_ID,
-            app_private_key_string=ALIPAY_PRIVATE_KEY,
-            alipay_public_key_string=ALIPAY_PUBLIC_KEY,
-            sign_type="RSA2",
-        )
-        result = alipay.api_alipay_user_info_share(auth_token=access_token)
-        if result.get("code") == "10000":
+        client = _get_alipay_client()
+        from alipay.aop.api.request.AlipayUserInfoShareRequest import AlipayUserInfoShareRequest
+        request = AlipayUserInfoShareRequest()
+        response = client.execute(request, access_token)
+        if response and response.user_id:
             return {
-                "user_id": result.get("user_id", ""),
-                "nick_name": result.get("nick_name", ""),
-                "avatar": result.get("avatar", ""),
+                "user_id": response.user_id,
+                "nick_name": response.nick_name or "",
+                "avatar": response.avatar or "",
             }
-        logger.error(f"[Alipay] user_info error: {result}")
+        logger.error(f"[Alipay] user_info error: no user_id in response")
         return {}
     except Exception as e:
-        logger.error(f"[Alipay] user_info exception: {e}")
+        logger.error(f"[Alipay] user_info exception: {e}", exc_info=True)
         return {}
 
 
