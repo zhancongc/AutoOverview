@@ -30,6 +30,35 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
   const [casesLoading, setCasesLoading] = useState(true)
   const [activeSection, setActiveSection] = useState<string>('')
 
+  // Handle OAuth callback (token and user in URL params)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const oauthCallback = params.get('oauth_callback')
+    const oauthError = params.get('oauth_error')
+
+    if (oauthCallback === '1' && !oauthError) {
+      const token = params.get('token')
+      const user = params.get('user')
+      if (token && user) {
+        try {
+          localStorage.setItem('auth_token', token)
+          localStorage.setItem('user_info', user)
+          window.history.replaceState({}, '', '/login')
+          setIsLoggedIn(true)
+          setTimeout(() => navigate('/'), 300)
+          return
+        } catch (e) {
+          console.error('OAuth callback parse error:', e)
+        }
+      }
+    }
+
+    if (oauthError) {
+      window.history.replaceState({}, '', '/login')
+      setShowLoginModal(true)
+    }
+  }, [])
+
   useEffect(() => {
     const loggedIn = checkLoggedIn()
     setIsLoggedIn(loggedIn)

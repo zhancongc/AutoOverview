@@ -22,6 +22,38 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
   const [demoCases, setDemoCases] = useState<any[]>([])
   const [casesLoading, setCasesLoading] = useState(true)
 
+  // 处理 OAuth 回调（URL 中的 token 和 user 参数）
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const oauthCallback = params.get('oauth_callback')
+    const oauthError = params.get('oauth_error')
+
+    if (oauthCallback === '1' && !oauthError) {
+      const token = params.get('token')
+      const user = params.get('user')
+      if (token && user) {
+        try {
+          localStorage.setItem('auth_token', token)
+          localStorage.setItem('user_info', user)
+          // 清理 URL 参数
+          window.history.replaceState({}, '', '/login')
+          setIsLoggedIn(true)
+          // 跳转到首页
+          setTimeout(() => navigate('/'), 300)
+          return
+        } catch (e) {
+          console.error('OAuth callback parse error:', e)
+        }
+      }
+    }
+
+    if (oauthError) {
+      // OAuth 失败，显示登录弹窗并提示错误
+      window.history.replaceState({}, '', '/login')
+      setShowLoginModal(true)
+    }
+  }, [])
+
   useEffect(() => {
     const loggedIn = checkLoggedIn()
     setIsLoggedIn(loggedIn)

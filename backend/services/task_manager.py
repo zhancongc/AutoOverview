@@ -361,6 +361,60 @@ class TaskManager:
 
         return len(to_delete)
 
+    def cleanup_stuck_tasks(self, max_runtime_minutes: int = 15):
+        """清理超时的 processing 任务，标记为失败并退还积分"""
+        now = datetime.now()
+        stuck = []
+        for task_id, task in list(self._tasks.items()):
+            if task.status == TaskStatus.PROCESSING and task.started_at:
+                elapsed = (now - task.started_at).total_seconds()
+                if elapsed > max_runtime_minutes * 60:
+                    stuck.append(task_id)
+
+        for task_id in stuck:
+            task = self._tasks[task_id]
+            task.status = TaskStatus.FAILED
+            task.completed_at = now
+            params = task.params or {}
+            language = params.get("language", "zh")
+            task.error = "生成超时，积分已退回" if language == "zh" else "Generation timed out, credits refunded"
+
+            # 释放执行槽
+            if task_id in self._running_tasks:
+                self.release_slot(task_id)
+
+            # 退还积分
+            user_id = task.user_id
+            if user_id:
+                try:
+                    from main import refund_credit
+                    from authkit.database import SessionLocal
+                    db = SessionLocal()
+                    try:
+                        credit_cost = params.get("credit_cost", 2)
+                        refund_credit(user_id, db, cost=credit_cost)
+                        print(f"[TaskManager] 超时退还: user={user_id}, cost={credit_cost}, task={task_id}")
+                    finally:
+                        db.close()
+                except Exception as e:
+                    print(f"[TaskManager] 超时退还积分失败: {e}")
+
+            # 更新数据库
+            try:
+                from services.stage_recorder import stage_recorder
+                stage_recorder.update_task_status(
+                    task_id, status="failed",
+                    error_message=task.error, completed_at=now
+                )
+            except Exception:
+                pass
+
+            # 从 Redis 移除
+            if self._persistence:
+                self._persistence.remove_task(task_id)
+
+        return len(stuck)
+
     def restore_from_redis(self):
         """
         从 Redis 恢复活跃任务状态（服务器重启时调用）
