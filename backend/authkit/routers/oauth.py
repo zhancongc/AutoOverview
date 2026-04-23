@@ -148,9 +148,23 @@ def _make_token_response(user: User, frontend_base: str) -> RedirectResponse:
 # ==================== 支付宝登录 ====================
 
 ALIPAY_APP_ID = os.getenv("ALIPAY_APP_ID", "")
-ALIPAY_PRIVATE_KEY = os.getenv("ALIPAY_PRIVATE_KEY", "")
-ALIPAY_PUBLIC_KEY = os.getenv("ALIPAY_PUBLIC_KEY", "")
 ALIPAY_GATEWAY = "https://openapi.alipay.com/gateway.do"
+
+
+def _load_alipay_key(env_val: str, default_path: str) -> str:
+    """加载支付宝密钥：优先用 env 变量值，否则从文件读取"""
+    if env_val:
+        return env_val
+    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    full_path = os.path.join(base_dir, default_path)
+    if os.path.exists(full_path):
+        with open(full_path, "r") as f:
+            return f.read().strip()
+    return ""
+
+
+ALIPAY_PRIVATE_KEY = _load_alipay_key(os.getenv("ALIPAY_PRIVATE_KEY", ""), "app_public_key.txt")
+ALIPAY_PUBLIC_KEY = _load_alipay_key(os.getenv("ALIPAY_PUBLIC_KEY", ""), "alipay_public_key.txt")
 
 
 @router.get("/alipay/authorize")
