@@ -345,7 +345,7 @@ GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v2/userinfo"
 HTTP_PROXY = os.getenv("HTTP_PROXY", "") or os.getenv("http_proxy", "")
 
 
-def _get_httpx_client() -> httpx.AsyncClient:
+def _get_httpx_client():
     kwargs = {"timeout": 15.0}
     if HTTP_PROXY:
         kwargs["proxy"] = HTTP_PROXY
