@@ -884,6 +884,11 @@ Output only the comparison matrix content in Markdown format."""
 2. **Recency (high priority)**: Among topic-relevant papers, prioritize research published in the last 5 years
 3. **Academic impact (reference)**: On the basis of meeting the above conditions, appropriately consider citation counts
 
+**【Important】Reference Limit**:
+- The final reference list MUST NOT exceed 100 entries
+- If {paper_count} papers are provided but many are low-relevance, only cite the most relevant ones
+- Focus on quality over quantity: 40-80 well-chosen references are better than 100 mediocre ones
+
 **【Important】Citation Rules**:
 - Only use [number] format for citations, such as [1], [2, 3]
 - Citation number range: [1] to [{paper_count}]
@@ -958,6 +963,11 @@ Table content must include:
 1. **主题相关性（一票否决）**：只引用与研究主题高度相关的论文，不相关的坚决不引用
 2. **时间新近度（高优先级）**：在主题相关的论文中，优先选择近 5 年发表的研究
 3. **学术影响力（参考）**：在满足上述条件的基础上，适当考虑被引次数
+
+**【重要】参考文献数量限制**：
+- 最终参考文献列表不得超过 100 条
+- 如果提供的 {paper_count} 篇论文中有很多相关性不高，只引用最相关的那些
+- 宁缺毋滥：40-80 篇精心挑选的文献远胜于 100 篇平庸文献
 
 **【重要】引用规则**：
 - 只使用 [数字] 格式引用，如 [1]、[2, 3]
@@ -1047,6 +1057,7 @@ When browsing the following paper list and writing the review, please strictly f
 1. **Topic relevance (veto power)**: Only cite papers truly relevant to "{topic}", firmly do not cite irrelevant papers
 2. **Time priority (high priority)**: Among topic-relevant papers, prioritize research published in the last 5 years
 3. **Quality reference**: On the basis of meeting the above conditions, appropriately reference citation counts
+4. **Reference cap**: The final reference list MUST NOT exceed 100 entries. If more than 100 papers seem relevant, select the most important 100 by relevance, recency, and impact.
 
 {paper_titles}
 
@@ -1090,6 +1101,7 @@ Now please start writing. First design the review structure (outline), then writ
 1. **主题相关性（一票否决）**：只引用与「{topic}」真正相关的论文，不相关的论文坚决不引用
 2. **时间优先（高优先级）**：在主题相关的论文中，优先选择近 5 年发表的研究
 3. **质量参考**：在满足上述条件的基础上，可适当参考被引次数
+4. **参考文献上限**：最终参考文献列表不得超过 100 条。如果超过 100 篇相关论文，请按相关性、时效性和影响力精选最重要的 100 篇
 
 {paper_titles}
 
