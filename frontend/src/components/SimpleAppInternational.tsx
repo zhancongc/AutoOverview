@@ -130,21 +130,33 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
   }, [showLoginModal, showPaymentModal, mobileMenuOpen])
 
   // Handle hash scroll when navigating from other pages
+  const scrollToHash = () => {
+    const hash = window.location.hash || location.hash
+    if (!hash) return
+    const id = hash.replace('#', '')
+    const el = document.getElementById(id)
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }
+
   useEffect(() => {
     const hash = window.location.hash || location.hash
     if (hash) {
-      const id = hash.replace('#', '')
-      const timer = setTimeout(() => {
-        const el = document.getElementById(id)
-        if (el) {
-          const navHeight = 60
-          const elPosition = el.getBoundingClientRect().top + window.pageYOffset
-          window.scrollTo({ top: elPosition - navHeight, behavior: 'smooth' })
-        }
-      }, 300)
+      const timer = setTimeout(scrollToHash, 300)
       return () => clearTimeout(timer)
     }
   }, [location.hash])
+
+  // Re-scroll after cases finish loading (content shift affects position)
+  useEffect(() => {
+    if (!casesLoading) {
+      const hash = window.location.hash || location.hash
+      if (hash) {
+        setTimeout(scrollToHash, 100)
+      }
+    }
+  }, [casesLoading])
 
   // Track active section for left sidebar highlight
   useEffect(() => {
@@ -196,11 +208,7 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
             e.preventDefault()
             if (location.pathname === '/') {
               const el = document.getElementById('pricing')
-              if (el) {
-                const navHeight = 60
-                const elPosition = el.getBoundingClientRect().top + window.pageYOffset
-                window.scrollTo({ top: elPosition - navHeight, behavior: 'smooth' })
-              }
+              if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
             } else {
               window.location.href = '/#pricing'
             }
@@ -316,38 +324,22 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
           <a href="#features" className={activeSection === 'features' ? 'active' : ''} onClick={(e) => {
             e.preventDefault()
             const el = document.getElementById('features')
-            if (el) {
-              const navHeight = 60
-              const elPosition = el.getBoundingClientRect().top + window.pageYOffset
-              window.scrollTo({ top: elPosition - navHeight, behavior: 'smooth' })
-            }
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
           }}>{t('home.nav.features')}</a>
           <a href="#process" className={activeSection === 'process' ? 'active' : ''} onClick={(e) => {
             e.preventDefault()
             const el = document.getElementById('process')
-            if (el) {
-              const navHeight = 60
-              const elPosition = el.getBoundingClientRect().top + window.pageYOffset
-              window.scrollTo({ top: elPosition - navHeight, behavior: 'smooth' })
-            }
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
           }}>{t('home.nav.process')}</a>
           <a href="#cases" className={activeSection === 'cases' ? 'active' : ''} onClick={(e) => {
             e.preventDefault()
             const el = document.getElementById('cases')
-            if (el) {
-              const navHeight = 60
-              const elPosition = el.getBoundingClientRect().top + window.pageYOffset
-              window.scrollTo({ top: elPosition - navHeight, behavior: 'smooth' })
-            }
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
           }}>{t('home.nav.cases')}</a>
           <a href="#pricing" className={activeSection === 'pricing' ? 'active' : ''} onClick={(e) => {
             e.preventDefault()
             const el = document.getElementById('pricing')
-            if (el) {
-              const navHeight = 60
-              const elPosition = el.getBoundingClientRect().top + window.pageYOffset
-              window.scrollTo({ top: elPosition - navHeight, behavior: 'smooth' })
-            }
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
           }}>{t('home.nav.pricing')}</a>
         </nav>
       </aside>
@@ -499,11 +491,7 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
                 className="generate-btn"
                 onClick={() => {
                   const el = document.getElementById('generate')
-                  if (el) {
-                    const navHeight = 60
-                    const elPosition = el.getBoundingClientRect().top + window.pageYOffset
-                    window.scrollTo({ top: elPosition - navHeight, behavior: 'smooth' })
-                  }
+                  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
                 }}
               >
                 {t('home.input.button')}
@@ -546,11 +534,7 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
                 className="secondary-btn"
                 onClick={() => {
                   const el = document.getElementById('pricing')
-                  if (el) {
-                    const navHeight = 60
-                    const elPosition = el.getBoundingClientRect().top + window.pageYOffset
-                    window.scrollTo({ top: elPosition - navHeight, behavior: 'smooth' })
-                  }
+                  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
                 }}
               >
                 {t('home.pricing.title')}
