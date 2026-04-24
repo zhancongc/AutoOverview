@@ -121,16 +121,18 @@ def create_database(config: DatabaseConfig = None) -> Database:
 
 _engine = None
 _SessionLocal = None
+SessionLocal = _SessionLocal  # 旧代码 import 用
 
 
 def init_database(database_url: str):
     """初始化数据库（旧 API，保持兼容）"""
-    global _engine, _SessionLocal
+    global _engine, _SessionLocal, SessionLocal
     from .models import Base
 
     connect_args = {"check_same_thread": False} if "sqlite" in database_url else {}
     _engine = create_engine(database_url, connect_args=connect_args)
     _SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=_engine)
+    SessionLocal = _SessionLocal
     Base.metadata.create_all(bind=_engine)
 
 
