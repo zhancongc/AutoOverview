@@ -806,7 +806,7 @@ class ReviewTaskExecutor:
                 TaskStatus.PROCESSING,
                 progress={
                     "step": "generating_matrix",
-                    "message": get_progress("generating_matrix", language),
+                    "message": get_progress_message("generating_matrix", language),
                     "papers": all_papers[:30]
                 }
             )
