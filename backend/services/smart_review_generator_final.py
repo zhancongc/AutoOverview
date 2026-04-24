@@ -358,6 +358,9 @@ Output only the comparison matrix content in Markdown format."""
 只输出对比矩阵内容，使用 Markdown 格式。"""
 
         try:
+            # 根据论文数量动态计算 token 上限，避免表格被截断
+            # 每篇论文约需 150 tokens（1 行表格 + 对应观点描述）
+            dynamic_max_tokens = min(max(4000 + len(selected_papers) * 150, 8000), 16384)
             response = await self.llm_client.chat.completions.create(
                 model="deepseek-chat",
                 messages=[
@@ -365,7 +368,7 @@ Output only the comparison matrix content in Markdown format."""
                     {"role": "user", "content": prompt}
                 ],
                 temperature=0.3,
-                max_tokens=3000
+                max_tokens=dynamic_max_tokens
             )
 
             matrix_content = response.choices[0].message.content.strip()

@@ -249,8 +249,8 @@ class DeepComparisonAnalyzer:
                     {"role": "system", "content": "你是一位学术分析专家，擅长进行深度文献对比和批判性分析。"},
                     {"role": "user", "content": prompt}
                 ],
-                temperature=0.3,  # 深度对比需要准确分析，保持严谨
-                max_tokens=2500
+                temperature=0.3,
+                max_tokens=min(max(4000 + len(papers) * 150, 8000), 16384)
             )
 
             return response.choices[0].message.content.strip()
