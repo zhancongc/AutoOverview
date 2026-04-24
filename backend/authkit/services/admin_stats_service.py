@@ -17,15 +17,15 @@ class AdminStatsService:
         self.db = db
         self.redis_client = redis_client
 
-    def get_overview_stats(self) -> dict:
-        """获取统计概览（总数据）"""
+    def get_overview_stats(self, site: Optional[str] = None) -> dict:
+        """获取统计概览（总数据）。site=None 表示汇总所有站点"""
         from ..models.stats import SiteStats
         from models import ReviewRecord, ReviewTask
         from authkit.models.payment import Subscription
         from authkit.models import User
 
         # 1. 总访问量（从 Redis 或数据库）
-        total_visits = self._get_total_visits()
+        total_visits = self._get_total_visits(site)
 
         # 2. 总注册量
         total_registers = self.db.query(func.count(User.id)).scalar() or 0
@@ -50,7 +50,7 @@ class AdminStatsService:
         payment_stats = self._get_payment_stats()
 
         # 5. 今日数据
-        today_stats = self._get_today_stats()
+        today_stats = self._get_today_stats(site)
 
         # 6. 北极星指标
         funnel_stats = self._get_funnel_stats()
@@ -74,8 +74,8 @@ class AdminStatsService:
             "funnel": funnel_stats
         }
 
-    def get_daily_stats(self, days: int = 30) -> list:
-        """获取每日统计数据（最近 N 天）"""
+    def get_daily_stats(self, days: int = 30, site: Optional[str] = None) -> list:
+        """获取每日统计数据（最近 N 天）。site=None 表示汇总所有站点"""
         from ..models.stats import SiteStats
         from models import ReviewRecord
         from authkit.models import User
@@ -89,7 +89,7 @@ class AdminStatsService:
             date_obj = date.fromisoformat(stat_date)
 
             # 访问量（从 Redis 或数据库）
-            visits = self._get_visits_by_date(stat_date)
+            visits = self._get_visits_by_date(stat_date, site)
 
             # 注册量
             registers = self.db.query(func.count(User.id)).filter(
@@ -145,40 +145,56 @@ class AdminStatsService:
 
         return result
 
-    def _get_total_visits(self) -> int:
-        """获取总访问量"""
+    def _get_total_visits(self, site: Optional[str] = None) -> int:
+        """获取总访问量。site=None 表示汇总所有站点"""
+        from ..models.stats import SiteStats
+
         if self.redis_client:
-            # 从 Redis 获取最近 7 天的访问量
             total = 0
             for i in range(7):
                 date_str = (date.today() - timedelta(days=i)).isoformat()
-                visit_key = f"stats:visits:{date_str}"
-                visits = self.redis_client.get(visit_key)
-                if visits:
-                    total += int(visits)
+                keys = [f"stats:visits:{date_str}:{site}"] if site else [
+                    f"stats:visits:{date_str}:zh", f"stats:visits:{date_str}:en"
+                ]
+                for key in keys:
+                    visits = self.redis_client.get(key)
+                    if visits:
+                        total += int(visits)
 
-            # 加上数据库中的历史数据
-            from ..models.stats import SiteStats
-            db_visits = self.db.query(func.sum(SiteStats.visit_count)).scalar() or 0
+            query = self.db.query(func.sum(SiteStats.visit_count))
+            if site:
+                query = query.filter_by(site=site)
+            db_visits = query.scalar() or 0
             total += db_visits
             return total
         else:
-            # 从数据库获取
             from ..models.stats import SiteStats
-            return self.db.query(func.sum(SiteStats.visit_count)).scalar() or 0
+            query = self.db.query(func.sum(SiteStats.visit_count))
+            if site:
+                query = query.filter_by(site=site)
+            return query.scalar() or 0
 
-    def _get_visits_by_date(self, stat_date: str) -> int:
-        """获取指定日期的访问量"""
-        if self.redis_client:
-            visit_key = f"stats:visits:{stat_date}"
-            visits = self.redis_client.get(visit_key)
-            if visits:
-                return int(visits)
-
-        # 降级到数据库
+    def _get_visits_by_date(self, stat_date: str, site: Optional[str] = None) -> int:
+        """获取指定日期的访问量。site=None 表示汇总所有站点"""
         from ..models.stats import SiteStats
-        stats = self.db.query(SiteStats).filter_by(stat_date=stat_date).first()
-        return stats.visit_count if stats else 0
+
+        if self.redis_client:
+            keys = [f"stats:visits:{stat_date}:{site}"] if site else [
+                f"stats:visits:{stat_date}:zh", f"stats:visits:{stat_date}:en"
+            ]
+            total = 0
+            for key in keys:
+                visits = self.redis_client.get(key)
+                if visits:
+                    total += int(visits)
+            if total > 0:
+                return total
+
+        query = self.db.query(func.sum(SiteStats.visit_count)).filter_by(stat_date=stat_date)
+        if site:
+            query = query.filter_by(site=site)
+        result = query.scalar()
+        return result or 0
 
     def _get_payment_stats(self) -> dict:
         """获取付费统计（按套餐类型和货币）"""
@@ -252,8 +268,8 @@ class AdminStatsService:
             "by_plan": plans
         }
 
-    def _get_today_stats(self) -> dict:
-        """获取今日统计"""
+    def _get_today_stats(self, site: Optional[str] = None) -> dict:
+        """获取今日统计。site=None 表示汇总所有站点"""
         from ..models.stats import SiteStats
         from models import ReviewRecord
         from authkit.models import User
@@ -262,7 +278,7 @@ class AdminStatsService:
         today = date.today()
 
         # 今日访问量
-        today_visits = self._get_visits_by_date(today.isoformat())
+        today_visits = self._get_visits_by_date(today.isoformat(), site)
 
         # 今日注册量
         today_registers = self.db.query(func.count(User.id)).filter(

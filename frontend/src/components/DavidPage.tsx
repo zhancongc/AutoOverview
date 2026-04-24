@@ -86,24 +86,27 @@ export const DavidPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [days, setDays] = useState(30);
+  const [site, setSite] = useState<string>('');
 
   useEffect(() => {
     fetchStats();
-  }, [days]);
+  }, [days, site]);
 
   const fetchStats = async () => {
     try {
       setLoading(true);
       setError(null);
 
+      const siteParam = site ? `&site=${site}` : '';
+
       // 获取概览数据
-      const overviewRes = await fetch('/api/admin/stats/overview');
+      const overviewRes = await fetch(`/api/admin/stats/overview${site ? `?site=${site}` : ''}`);
       if (!overviewRes.ok) throw new Error('获取概览数据失败');
       const overviewData = await overviewRes.json();
       setOverview(overviewData.data);
 
       // 获取每日数据
-      const dailyRes = await fetch(`/api/admin/stats/daily?days=${days}`);
+      const dailyRes = await fetch(`/api/admin/stats/daily?days=${days}${siteParam}`);
       if (!dailyRes.ok) throw new Error('获取每日数据失败');
       const dailyData = await dailyRes.json();
       setDailyStats(dailyData.data.stats);
@@ -185,8 +188,27 @@ export const DavidPage: React.FC = () => {
     <div className="david-page">
       <div className="david-container">
         <header className="david-header">
-          <h1>数据统计中心</h1>
-          <p className="david-subtitle">实时监控系统运营数据</p>
+          <div className="david-header-row">
+            <div>
+              <h1>数据统计中心</h1>
+              <p className="david-subtitle">实时监控系统运营数据</p>
+            </div>
+            <div className="site-tabs">
+              {[
+                { key: '', label: '全部' },
+                { key: 'zh', label: '国内' },
+                { key: 'en', label: '海外' },
+              ].map(tab => (
+                <button
+                  key={tab.key}
+                  className={`site-tab ${site === tab.key ? 'active' : ''}`}
+                  onClick={() => setSite(tab.key)}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+          </div>
         </header>
 
         {/* 北极星指标 */}
@@ -404,9 +426,14 @@ export const DavidPage: React.FC = () => {
         }
 
         .david-header {
-          text-align: center;
           color: white;
           margin-bottom: 40px;
+        }
+
+        .david-header-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
         }
 
         .david-header h1 {
@@ -418,6 +445,37 @@ export const DavidPage: React.FC = () => {
         .david-subtitle {
           font-size: 1.1rem;
           opacity: 0.9;
+        }
+
+        .site-tabs {
+          display: flex;
+          gap: 8px;
+          background: rgba(255,255,255,0.15);
+          border-radius: 10px;
+          padding: 4px;
+        }
+
+        .site-tab {
+          padding: 8px 20px;
+          border: none;
+          border-radius: 8px;
+          font-size: 0.9rem;
+          font-weight: 500;
+          cursor: pointer;
+          background: transparent;
+          color: rgba(255,255,255,0.7);
+          transition: all 0.2s;
+        }
+
+        .site-tab:hover {
+          color: white;
+          background: rgba(255,255,255,0.1);
+        }
+
+        .site-tab.active {
+          background: white;
+          color: #1a1a2e;
+          font-weight: 600;
         }
 
         .david-section {

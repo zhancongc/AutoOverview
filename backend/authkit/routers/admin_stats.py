@@ -43,10 +43,14 @@ def get_admin_stats_service(db: Session = Depends(get_db)) -> AdminStatsService:
 
 @router.get("/overview")
 async def get_admin_stats_overview(
+    site: Optional[str] = None,
     stats_service: AdminStatsService = Depends(get_admin_stats_service)
 ):
     """
     获取管理员统计概览
+
+    参数：
+    - site: 站点筛选 (zh/en/空=全部)
 
     返回：
     - visits: 访问量（总数、今日）
@@ -55,7 +59,7 @@ async def get_admin_stats_overview(
     - payments: 付费统计（总订单数、总收入、按套餐分组）
     - today: 今日数据汇总
     """
-    stats = stats_service.get_overview_stats()
+    stats = stats_service.get_overview_stats(site=site)
     return {
         "success": True,
         "data": stats
@@ -65,6 +69,7 @@ async def get_admin_stats_overview(
 @router.get("/daily")
 async def get_admin_daily_stats(
     days: int = 30,
+    site: Optional[str] = None,
     stats_service: AdminStatsService = Depends(get_admin_stats_service)
 ):
     """
@@ -72,19 +77,12 @@ async def get_admin_daily_stats(
 
     参数：
     - days: 天数（默认最近 30 天）
-
-    返回每日数据：
-    - date: 日期
-    - visits: 访问量
-    - registers: 注册量
-    - generations: 生成数
-    - payments: 付费数
-    - revenue: 收入
+    - site: 站点筛选 (zh/en/空=全部)
     """
     if days > 365:
         raise HTTPException(status_code=400, detail="天数不能超过 365 天")
 
-    stats = stats_service.get_daily_stats(days)
+    stats = stats_service.get_daily_stats(days, site=site)
     return {
         "success": True,
         "data": {

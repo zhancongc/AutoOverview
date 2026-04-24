@@ -74,7 +74,8 @@ class StatsMiddleware(BaseHTTPMiddleware):
         if redis_client:
             try:
                 import asyncio
-                asyncio.create_task(self._record_visit_async(client_ip, path, redis_client))
+                site = self._get_site(request)
+                asyncio.create_task(self._record_visit_async(client_ip, path, redis_client, site))
             except Exception as e:
                 logger.error(f"[StatsMiddleware] 异步记录访问失败: {e}")
 
@@ -98,6 +99,12 @@ class StatsMiddleware(BaseHTTPMiddleware):
 
         return "unknown"
 
+    @staticmethod
+    def _get_site(request: Request) -> str:
+        """根据 Host 头判断站点"""
+        host = request.headers.get("host", "")
+        return "en" if "en-" in host else "zh"
+
     def _check_rate_limit(self, ip_address: str, redis_client) -> bool:
         """检查 IP 是否超过限流阈值"""
         try:
@@ -119,21 +126,21 @@ class StatsMiddleware(BaseHTTPMiddleware):
             logger.error(f"[StatsMiddleware] 限流检查失败: {e}")
             return True  # 出错时不限流
 
-    async def _record_visit_async(self, ip_address: str, path: str, redis_client):
+    async def _record_visit_async(self, ip_address: str, path: str, redis_client, site: str = "zh"):
         """异步记录访问（使用 Redis，不直接写数据库）"""
         try:
             from datetime import date
 
             today = date.today().isoformat()
 
-            # 使用 Redis 计数器
-            visit_key = f"stats:visits:{today}"
+            # 使用 Redis 计数器（按站点区分）
+            visit_key = f"stats:visits:{today}:{site}"
             redis_client.incr(visit_key)
             redis_client.expire(visit_key, 86400 * 7)  # 保留 7 天
 
             # 如果启用详细日志，采样记录（10% 概率，避免数据爆炸）
             if self.enable_visit_log and hash(ip_address + path) % 10 == 0:
-                log_key = f"stats:logs:{today}"
+                log_key = f"stats:logs:{today}:{site}"
                 log_data = f"{ip_address}:{path}"
                 redis_client.rpush(log_key, log_data)
                 redis_client.expire(log_key, 86400 * 7)  # 保留 7 天
@@ -193,27 +200,26 @@ class StatsBatchWriter:
 
                 for i in range(7):
                     stat_date = (today - timedelta(days=i)).isoformat()
-                    visit_key = f"stats:visits:{stat_date}"
 
-                    # 从 Redis 获取访问量
-                    visits = self.redis_client.get(visit_key)
-                    if visits:
-                        visits = int(visits)
+                    for site in ("zh", "en"):
+                        visit_key = f"stats:visits:{stat_date}:{site}"
 
-                        # 检查数据库中是否已有该日期的记录
-                        from ..models.stats import SiteStats
-                        existing = db.query(SiteStats).filter_by(stat_date=stat_date).first()
+                        # 从 Redis 获取访问量
+                        visits = self.redis_client.get(visit_key)
+                        if visits:
+                            visits = int(visits)
 
-                        if existing:
-                            # 更新现有记录
-                            existing.visit_count = visits
-                        else:
-                            # 创建新记录
-                            new_stat = SiteStats(stat_date=stat_date, visit_count=visits, register_count=0)
-                            db.add(new_stat)
+                            from ..models.stats import SiteStats
+                            existing = db.query(SiteStats).filter_by(stat_date=stat_date, site=site).first()
 
-                        db.commit()
-                        logger.debug(f"[StatsBatchWriter] 同步 {stat_date}: {visits} 次访问")
+                            if existing:
+                                existing.visit_count = visits
+                            else:
+                                new_stat = SiteStats(stat_date=stat_date, site=site, visit_count=visits, register_count=0)
+                                db.add(new_stat)
+
+                            db.commit()
+                            logger.debug(f"[StatsBatchWriter] 同步 {stat_date}/{site}: {visits} 次访问")
 
             finally:
                 db.close()
