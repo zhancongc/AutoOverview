@@ -2,6 +2,7 @@
 FastAPI 主应用
 """
 import os
+import json
 import logging
 import time
 from functools import lru_cache
@@ -1688,7 +1689,38 @@ async def get_task_status(
             "data": response_data
         }
 
-    # 内存中没有，从数据库查询
+    # 内存中没有（多 worker 场景），先查 Redis（跨 worker 共享）
+    redis_task_data = None
+    if task_manager._persistence and task_manager._persistence.available:
+        try:
+            redis_key = f"task:active:{task_id}"
+            raw = task_manager._persistence.redis_client.get(redis_key)
+            if raw:
+                redis_task_data = json.loads(raw)
+        except Exception:
+            pass
+
+    if redis_task_data:
+        # 验证所有权
+        if not is_public:
+            if not user_id:
+                raise HTTPException(status_code=401, detail="请先登录")
+            redis_user_id = redis_task_data.get("user_id")
+            if redis_user_id is not None and redis_user_id != user_id:
+                raise HTTPException(status_code=403, detail="该任务不属于您，无法访问")
+            if redis_user_id is None:
+                raise HTTPException(status_code=403, detail="该任务不属于您，无法访问")
+
+        response_data = {
+            "task_id": redis_task_data["task_id"],
+            "topic": redis_task_data["topic"],
+            "status": redis_task_data.get("status", "processing"),
+            "progress": redis_task_data.get("progress", {}),
+            "created_at": redis_task_data.get("created_at"),
+        }
+        return {"success": True, "data": response_data}
+
+    # Redis 也没有，从数据库查询
     review_task = db_session.query(ReviewTask).filter_by(id=task_id).first()
 
     if not review_task:
