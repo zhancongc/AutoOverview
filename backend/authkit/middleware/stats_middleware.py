@@ -127,23 +127,27 @@ class StatsMiddleware(BaseHTTPMiddleware):
             return True  # 出错时不限流
 
     async def _record_visit_async(self, ip_address: str, path: str, redis_client, site: str = "zh"):
-        """异步记录访问（使用 Redis，不直接写数据库）"""
+        """异步记录访问（使用 Redis，同一 IP 1小时内只算一次）"""
         try:
-            from datetime import date
+            from datetime import date, datetime
 
             today = date.today().isoformat()
+            hour = datetime.utcnow().strftime('%Y%m%d%H')
 
-            # 使用 Redis 计数器（按站点区分）
-            visit_key = f"stats:visits:{today}:{site}"
-            redis_client.incr(visit_key)
-            redis_client.expire(visit_key, 86400 * 7)  # 保留 7 天
+            # 同一 IP + 站点 + 小时内去重，首次访问才计数
+            dedup_key = f"stats:dedup:{hour}:{site}:{ip_address}"
+            if redis_client.setnx(dedup_key, 1):
+                redis_client.expire(dedup_key, 3600)  # 1 小时过期
+                visit_key = f"stats:visits:{today}:{site}"
+                redis_client.incr(visit_key)
+                redis_client.expire(visit_key, 86400 * 7)  # 保留 7 天
 
             # 如果启用详细日志，采样记录（10% 概率，避免数据爆炸）
             if self.enable_visit_log and hash(ip_address + path) % 10 == 0:
                 log_key = f"stats:logs:{today}:{site}"
                 log_data = f"{ip_address}:{path}"
                 redis_client.rpush(log_key, log_data)
-                redis_client.expire(log_key, 86400 * 7)  # 保留 7 天
+                redis_client.expire(log_key, 86400 * 7)
 
         except Exception as e:
             logger.error(f"[StatsMiddleware] Redis 记录失败: {e}")
