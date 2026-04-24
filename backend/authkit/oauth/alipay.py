@@ -123,7 +123,9 @@ class AlipayOAuthClient:
             client = self._get_sdk_client()
 
             request = AlipayUserInfoShareRequest()
-            response_content = client.execute(request, access_token)
+            from alipay.aop.api.constant.ParamConstants import P_AUTH_TOKEN
+            request.udf_params = {P_AUTH_TOKEN: access_token}
+            response_content = client.execute(request)
             logger.info(f"[Alipay] user_info response: {response_content}")
 
             data = json.loads(response_content) if isinstance(response_content, str) else response_content
