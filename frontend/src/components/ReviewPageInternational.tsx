@@ -8,7 +8,7 @@ import { useTranslation } from 'react-i18next'
 import { ReviewViewerInternational } from './ReviewViewerInternational'
 import { CitationFormatSelector, type CitationFormat } from './CitationFormatSelector'
 import { ExportFormatModal, ExportFormat } from './ExportFormatModal'
-import { AcademicPoster } from './AcademicPoster'
+import { AcademicPoster, PosterTheme } from './AcademicPoster'
 import { api } from '../api'
 import type { Paper } from '../types'
 import './ReviewPageInternational.css'
@@ -73,6 +73,7 @@ export function ReviewPageInternational() {
   const [showToast, setShowToast] = useState(false)
   const [showPosterModal, setShowPosterModal] = useState(false)
   const [generatingPoster, setGeneratingPoster] = useState(false)
+  const [posterTheme, setPosterTheme] = useState<PosterTheme>('cosmic')
   const posterGenRef = useRef(false)
 
   const handleTocUpdate = useCallback((toc: TocItem[]) => {
@@ -910,7 +911,37 @@ export function ReviewPageInternational() {
               <h2 className="confirm-modal-title">{t('poster.generate')}</h2>
             </div>
             <div className="confirm-modal-body" style={{ textAlign: 'center', padding: '20px' }}>
-              {/* 海报预览容器 */}
+              {/* Style selector */}
+              <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginBottom: '16px', flexWrap: 'wrap' }}>
+                {([
+                  { key: 'cosmic', label: 'Cosmic', gradient: 'linear-gradient(135deg, #302b63, #24243e)' },
+                  { key: 'gold', label: 'Black Gold', gradient: 'linear-gradient(135deg, #0a0a0a, #d4a853)' },
+                  { key: 'minimal', label: 'Minimal', gradient: 'linear-gradient(135deg, #f8f9fa, #3b82f6)' },
+                  { key: 'forest', label: 'Forest', gradient: 'linear-gradient(135deg, #1a3a2a, #4ade80)' },
+                  { key: 'chinese', label: 'Chinese Red', gradient: 'linear-gradient(135deg, #4a1a1a, #fbbf24)' },
+                ] as const).map(item => (
+                  <button
+                    key={item.key}
+                    onClick={() => setPosterTheme(item.key)}
+                    style={{
+                      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px',
+                      background: 'none', border: 'none', cursor: 'pointer', padding: '4px',
+                    }}
+                  >
+                    <div style={{
+                      width: '40px', height: '40px', borderRadius: '50%',
+                      background: item.gradient,
+                      border: posterTheme === item.key ? '3px solid #3b82f6' : '3px solid transparent',
+                      boxShadow: posterTheme === item.key ? '0 0 0 2px rgba(59,130,246,0.3)' : 'none',
+                      transition: 'all 0.2s',
+                    }} />
+                    <span style={{ fontSize: '12px', color: posterTheme === item.key ? '#3b82f6' : '#6b7280', fontWeight: posterTheme === item.key ? 600 : 400 }}>
+                      {item.label}
+                    </span>
+                  </button>
+                ))}
+              </div>
+              {/* Poster preview */}
               <div style={{
                 width: '324px',
                 height: '576px',
@@ -938,6 +969,7 @@ export function ReviewPageInternational() {
                     language="en"
                     shareUrl={window.location.href}
                     coreFindings={extractCoreFindings(reviewData.content)}
+                    theme={posterTheme}
                     i18n={{
                       coreFindings: t('poster.core_findings'),
                       papersLabel: t('poster.papers_label'),
@@ -979,6 +1011,7 @@ export function ReviewPageInternational() {
             language="en"
             shareUrl={window.location.href}
             coreFindings={extractCoreFindings(reviewData.content)}
+            theme={posterTheme}
             i18n={{
               coreFindings: t('poster.core_findings'),
               papersLabel: t('poster.papers_label'),

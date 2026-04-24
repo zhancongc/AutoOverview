@@ -15,7 +15,7 @@ import os
 import re
 import json
 from typing import List, Dict, Optional, Tuple
-from openai import AsyncOpenAI
+from authkit.llm import get_llm_client
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -26,12 +26,7 @@ class ViewpointExtractor:
 
     def __init__(self):
         self.client = None
-        api_key = os.getenv("DEEPSEEK_API_KEY")
-        if api_key:
-            self.client = AsyncOpenAI(
-                api_key=api_key,
-                base_url="https://api.deepseek.com"
-            )
+        self.client = get_llm_client().get_raw_client()
 
     async def extract_viewpoints(self, papers: List[Dict], topic: str) -> List[Dict]:
         """
@@ -141,12 +136,7 @@ class ControversyAnalyzer:
 
     def __init__(self):
         self.client = None
-        api_key = os.getenv("DEEPSEEK_API_KEY")
-        if api_key:
-            self.client = AsyncOpenAI(
-                api_key=api_key,
-                base_url="https://api.deepseek.com"
-            )
+        self.client = get_llm_client().get_raw_client()
 
     async def analyze_controversies(
         self,
@@ -419,12 +409,7 @@ class StructuredReviewGenerator:
 
     def __init__(self, api_key: str = None, base_url: str = "https://api.deepseek.com"):
         self.client = None
-        if api_key:
-            self.client = AsyncOpenAI(api_key=api_key, base_url=base_url)
-        else:
-            api_key = os.getenv("DEEPSEEK_API_KEY")
-            if api_key:
-                self.client = AsyncOpenAI(api_key=api_key, base_url=base_url)
+        self.client = get_llm_client().get_raw_client()
 
         self.controversy_generator = ControversySectionGenerator()
 

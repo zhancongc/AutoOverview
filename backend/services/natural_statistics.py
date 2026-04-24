@@ -5,7 +5,7 @@
 import re
 import os
 from typing import List, Dict, Optional, Tuple
-from openai import AsyncOpenAI
+from authkit.llm import get_llm_client
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -16,12 +16,7 @@ class NaturalStatisticsIntegrator:
 
     def __init__(self):
         self.client = None
-        api_key = os.getenv("DEEPSEEK_API_KEY")
-        if api_key:
-            self.client = AsyncOpenAI(
-                api_key=api_key,
-                base_url="https://api.deepseek.com"
-            )
+        self.client = get_llm_client().get_raw_client()
 
     def should_use_statistics(
         self,

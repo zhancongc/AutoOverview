@@ -217,21 +217,11 @@ async def lifespan(app: FastAPI):
     StatsBase.metadata.create_all(bind=db.engine)
     logger.debug("[Startup] 统计数据库表已创建")
 
-    # 初始化 Redis 客户端（用于统计）
-    redis_client = None
-    try:
-        import redis
-        from authkit.core.config import config as auth_config
-        redis_client = redis.Redis(
-            host=auth_config.REDIS_HOST,
-            port=auth_config.REDIS_PORT,
-            db=auth_config.REDIS_DB,
-            password=auth_config.REDIS_PASSWORD,
-            decode_responses=True
-        )
-        redis_client.ping()
-        logger.info("[Startup] Redis 连接成功（统计功能启用）")
+    # 初始化 Redis 客户端（统一管理）
+    from authkit.redis import init_redis
+    redis_client = init_redis()
 
+    if redis_client:
         # 设置共享 Redis 客户端（供中间件和路由使用）
         from authkit.middleware import StatsMiddleware
         StatsMiddleware._shared_redis_client = redis_client
@@ -244,10 +234,6 @@ async def lifespan(app: FastAPI):
         batch_writer = StatsBatchWriter(redis_client, auth_get_db, interval_seconds=300)
         asyncio.create_task(batch_writer.start())
         logger.info("[Startup] 统计批量写入任务已启动")
-
-    except Exception as e:
-        logger.warning(f"[Startup] Redis 不可用，统计功能降级到数据库模式: {e}")
-        redis_client = None
 
     # 从 Redis 恢复重启前的活跃任务
     task_manager.restore_from_redis()
@@ -314,6 +300,10 @@ import authkit.routers.oauth
 authkit.routers.oauth.set_get_db(auth_get_db)
 from authkit.routers import oauth_router
 app.include_router(oauth_router)
+
+# 集成邮件退订路由
+from authkit.routers.email_unsubscribe import router as email_unsubscribe_router
+app.include_router(email_unsubscribe_router)
 
 # 全局异常处理：确保所有未捕获异常打印完整堆栈
 from fastapi.responses import JSONResponse

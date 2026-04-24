@@ -14,7 +14,7 @@ warnings.warn(
 import os
 import json
 import logging
-from openai import AsyncOpenAI
+from authkit.llm import get_llm_client
 from typing import Dict, List, Tuple
 from enum import Enum
 from dotenv import load_dotenv
@@ -172,12 +172,9 @@ class LLTopicClassifier:
 """
 
     def __init__(self):
-        api_key = os.getenv("DEEPSEEK_API_KEY")
-        base_url = os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com")
-        if not api_key:
+        self.client = get_llm_client().get_raw_client()
+        if not self.client:
             raise ValueError("DEEPSEEK_API_KEY not configured")
-
-        self.client = AsyncOpenAI(api_key=api_key, base_url=base_url)
 
     async def classify(self, title: str) -> Tuple[TopicType, str, Dict]:
         """

@@ -18,7 +18,6 @@ import re
 from typing import List, Dict, Any, Tuple, Set
 from collections import Counter
 from datetime import datetime
-from openai import AsyncOpenAI
 import logging
 
 logger = logging.getLogger(__name__)
@@ -43,10 +42,8 @@ class SmartReviewGeneratorFinal:
         semantic_scholar_api_key: str = None,
         deepseek_base_url: str = "https://api.deepseek.com"
     ):
-        self.llm_client = AsyncOpenAI(
-            api_key=deepseek_api_key,
-            base_url=deepseek_base_url
-        )
+        from authkit.llm import get_llm_client
+        self.llm_client = get_llm_client().get_raw_client()
         self.semantic_scholar_api_key = semantic_scholar_api_key
 
     async def generate_comparison_matrix_only(

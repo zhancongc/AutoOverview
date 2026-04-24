@@ -15,7 +15,7 @@ warnings.warn(
 import re
 import os
 from typing import List, Dict, Optional, Any
-from openai import AsyncOpenAI
+from authkit.llm import get_llm_client
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -73,12 +73,7 @@ class StatisticsExtractor:
 
     def __init__(self):
         self.client = None
-        api_key = os.getenv("DEEPSEEK_API_KEY")
-        if api_key:
-            self.client = AsyncOpenAI(
-                api_key=api_key,
-                base_url="https://api.deepseek.com"
-            )
+        self.client = get_llm_client().get_raw_client()
 
     def extract_statistics_from_text(self, text: str) -> Dict[str, Any]:
         """
@@ -535,8 +530,9 @@ class EnhancedReviewGenerator:
             return f"# {topic}文献综述（带统计数据）\n\n[内容占位符]"
 
         try:
-            from openai import AsyncOpenAI
-            client = AsyncOpenAI(api_key=self.api_key, base_url="https://api.deepseek.com")
+            client = get_llm_client().get_raw_client()
+            if not client:
+                return f"# {topic}文献综述（带统计数据）\n\n[LLM客户端未配置]"
 
             response = await client.chat.completions.create(
                 model=model,

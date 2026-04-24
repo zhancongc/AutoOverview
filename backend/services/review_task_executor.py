@@ -185,7 +185,6 @@ class ReviewTaskExecutor:
 
             final_generator = SmartReviewGeneratorFinal(
                 deepseek_api_key=api_key,
-                deepseek_base_url=os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com")
             )
 
             # 构建搜索参数，用于生成文献检索方法论说明
@@ -564,7 +563,6 @@ class ReviewTaskExecutor:
 
             final_generator = SmartReviewGeneratorFinal(
                 deepseek_api_key=api_key,
-                deepseek_base_url=os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com")
             )
 
             search_params = {
@@ -821,7 +819,6 @@ class ReviewTaskExecutor:
 
             final_generator = SmartReviewGeneratorFinal(
                 deepseek_api_key=api_key,
-                deepseek_base_url=os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com")
             )
 
             result = await final_generator.generate_comparison_matrix_only(

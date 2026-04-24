@@ -69,18 +69,13 @@ class TaskPersistence:
 
     def __init__(self):
         try:
-            from authkit.core.config import config as auth_config
-            import redis as _redis
-            self.redis_client = _redis.Redis(
-                host=auth_config.REDIS_HOST,
-                port=auth_config.REDIS_PORT,
-                db=auth_config.REDIS_DB,
-                password=auth_config.REDIS_PASSWORD,
-                decode_responses=True
-            )
-            # 测试连接
-            self.redis_client.ping()
-            print("[TaskPersistence] Redis 连接成功")
+            from authkit.redis import get_redis
+            self.redis_client = get_redis()
+            if self.redis_client:
+                self.redis_client.ping()
+                print("[TaskPersistence] Redis 连接成功")
+            else:
+                print("[TaskPersistence] Redis 不可用，降级为纯内存模式")
         except Exception as e:
             print(f"[TaskPersistence] Redis 不可用，降级为纯内存模式: {e}")
             self.redis_client = None

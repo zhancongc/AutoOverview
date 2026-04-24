@@ -16,7 +16,7 @@ import os
 from typing import List, Dict, Optional, Set
 from datetime import datetime
 from dotenv import load_dotenv
-from openai import AsyncOpenAI
+from authkit.llm import get_llm_client
 
 load_dotenv()
 
@@ -202,12 +202,7 @@ class PaperFieldClassifier:
 
     def __init__(self):
         self.client = None
-        api_key = os.getenv("DEEPSEEK_API_KEY")
-        if api_key:
-            self.client = AsyncOpenAI(
-                api_key=api_key,
-                base_url="https://api.deepseek.com"
-            )
+        self.client = get_llm_client().get_raw_client()
 
     def classify_paper(self, paper: Dict) -> tuple[str, float]:
         """

@@ -15,7 +15,7 @@ import re
 import os
 import logging
 from typing import List, Dict, Tuple, Optional
-from openai import AsyncOpenAI
+from authkit.llm import get_llm_client
 from dotenv import load_dotenv
 
 logger = logging.getLogger(__name__)
@@ -99,12 +99,7 @@ class AIToneEliminator:
 
     def __init__(self):
         self.client = None
-        api_key = os.getenv("DEEPSEEK_API_KEY")
-        if api_key:
-            self.client = AsyncOpenAI(
-                api_key=api_key,
-                base_url="https://api.deepseek.com"
-            )
+        self.client = get_llm_client().get_raw_client()
 
     def polish_with_rules(self, text: str) -> Tuple[str, Dict]:
         """

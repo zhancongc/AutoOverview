@@ -2,9 +2,7 @@
 缓存服务 - 用于存储验证码
 """
 import logging
-import redis
 from typing import Optional
-import json
 
 from ..core.config import config
 
@@ -14,17 +12,17 @@ logger = logging.getLogger(__name__)
 class CacheService:
     """缓存服务（基于 Redis）"""
 
-    def __init__(self):
-        self.redis_client = redis.Redis(
-            host=config.REDIS_HOST,
-            port=config.REDIS_PORT,
-            db=config.REDIS_DB,
-            password=config.REDIS_PASSWORD,
-            decode_responses=True
-        )
+    def __init__(self, redis_client=None):
+        if redis_client:
+            self.redis_client = redis_client
+        else:
+            from ..redis import get_redis
+            self.redis_client = get_redis()
 
     def set(self, key: str, value: str, expire_seconds: int) -> bool:
         """设置缓存"""
+        if not self.redis_client:
+            return False
         try:
             self.redis_client.setex(key, expire_seconds, value)
             return True
@@ -34,6 +32,8 @@ class CacheService:
 
     def get(self, key: str) -> Optional[str]:
         """获取缓存"""
+        if not self.redis_client:
+            return None
         try:
             return self.redis_client.get(key)
         except Exception as e:
@@ -42,6 +42,8 @@ class CacheService:
 
     def delete(self, key: str) -> bool:
         """删除缓存"""
+        if not self.redis_client:
+            return False
         try:
             self.redis_client.delete(key)
             return True
@@ -51,6 +53,8 @@ class CacheService:
 
     def exists(self, key: str) -> bool:
         """检查键是否存在"""
+        if not self.redis_client:
+            return False
         try:
             return self.redis_client.exists(key) > 0
         except Exception as e:
@@ -73,7 +77,6 @@ class CacheService:
         """验证验证码"""
         stored_code = self.get_verification_code(email, purpose)
         if stored_code and stored_code == code:
-            # 验证成功后删除验证码
             self.delete(f"verification_code:{purpose}:{email}")
             return True
         return False

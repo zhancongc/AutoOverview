@@ -6,11 +6,10 @@ LLM Function Calling 驱动的文献检索 Agent
 本地方法控制全局速率限制。
 """
 
-import os
 import json
 import asyncio
 from typing import List, Dict, Optional, Set
-from openai import AsyncOpenAI
+from authkit.llm import get_llm_client
 from .semantic_scholar_search import SemanticScholarService
 
 import logging
@@ -23,10 +22,7 @@ class PaperSearchAgent:
     def __init__(self, ss_service: SemanticScholarService):
         self.ss_service = ss_service
         self.search_years = 10  # 默认值，由 search() 方法覆盖
-        self.llm_client = AsyncOpenAI(
-            api_key=os.getenv("DEEPSEEK_API_KEY"),
-            base_url=os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com")
-        )
+        self.llm_client = get_llm_client().get_raw_client()
         self.model = "deepseek-chat"
         # 收集到的论文（去重）
         self.collected_papers: Dict[str, Dict] = {}  # paperId -> paper

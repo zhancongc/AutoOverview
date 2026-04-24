@@ -7,12 +7,114 @@ import { useEffect, useRef } from 'react'
 import QRCode from 'qrcode'
 import './AcademicPoster.css'
 
+export type PosterTheme = 'cosmic' | 'gold' | 'minimal' | 'forest' | 'chinese'
+
 interface Paper {
   title: string
   authors?: string[]
   year?: number
   abstract?: string
   is_english?: boolean
+}
+
+interface ThemeConfig {
+  bgGradient: string
+  textColor: string
+  textSecondary: string
+  textMuted: string
+  accentColor: string
+  accentGradient: string
+  cardBg: string
+  cardBorder: string
+  decoBg: string
+  dividerColor: string
+  wordCloudColors: string[]
+  qrDark: string
+  qrLight: string
+  brandIcon: string
+}
+
+const THEMES: Record<PosterTheme, ThemeConfig> = {
+  cosmic: {
+    bgGradient: 'linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%)',
+    textColor: '#ffffff',
+    textSecondary: 'rgba(255,255,255,0.9)',
+    textMuted: 'rgba(255,255,255,0.7)',
+    accentColor: '#fbbf24',
+    accentGradient: 'linear-gradient(135deg, #fbbf24, #f59e0b)',
+    cardBg: 'rgba(255,255,255,0.1)',
+    cardBorder: 'rgba(255,255,255,0.15)',
+    decoBg: 'rgba(255,255,255,0.03)',
+    dividerColor: 'rgba(255,255,255,0.15)',
+    wordCloudColors: ['#fbbf24','#f59e0b','#fb923c','#f97316','#a78bfa','#8b5cf6','#60a5fa','#3b82f6','#34d399','#10b981','#f472b6','#ec4899','#e2e8f0','#cbd5e1'],
+    qrDark: '#1a1a2e',
+    qrLight: '#ffffff',
+    brandIcon: '📚',
+  },
+  gold: {
+    bgGradient: 'linear-gradient(160deg, #0a0a0a 0%, #1a1a1a 40%, #111111 100%)',
+    textColor: '#ffffff',
+    textSecondary: 'rgba(255,255,255,0.9)',
+    textMuted: 'rgba(255,255,255,0.6)',
+    accentColor: '#d4a853',
+    accentGradient: 'linear-gradient(135deg, #d4a853, #c9a94e)',
+    cardBg: 'rgba(212,168,83,0.08)',
+    cardBorder: 'rgba(212,168,83,0.2)',
+    decoBg: 'rgba(212,168,83,0.03)',
+    dividerColor: 'rgba(212,168,83,0.2)',
+    wordCloudColors: ['#d4a853','#c9a94e','#e8c878','#f0d890','#f5e6b8','#b8943e','#a07830','#d4a853','#e8d5a8','#c4a35a','#f0c040','#dab855','#e0c070','#c8a848'],
+    qrDark: '#0a0a0a',
+    qrLight: '#ffffff',
+    brandIcon: '🎓',
+  },
+  minimal: {
+    bgGradient: 'linear-gradient(180deg, #f8f9fa 0%, #ffffff 50%, #f0f1f3 100%)',
+    textColor: '#1a1a2e',
+    textSecondary: '#374151',
+    textMuted: '#6b7280',
+    accentColor: '#3b82f6',
+    accentGradient: 'linear-gradient(135deg, #3b82f6, #2563eb)',
+    cardBg: 'rgba(59,130,246,0.06)',
+    cardBorder: 'rgba(59,130,246,0.15)',
+    decoBg: 'rgba(59,130,246,0.04)',
+    dividerColor: 'rgba(0,0,0,0.08)',
+    wordCloudColors: ['#3b82f6','#2563eb','#60a5fa','#1d4ed8','#6366f1','#4f46e5','#0ea5e9','#0284c7','#14b8a6','#059669','#8b5cf6','#7c3aed','#94a3b8','#475569'],
+    qrDark: '#1a1a2e',
+    qrLight: '#ffffff',
+    brandIcon: '📖',
+  },
+  forest: {
+    bgGradient: 'linear-gradient(135deg, #0a1a0f 0%, #1a3a2a 50%, #0d2818 100%)',
+    textColor: '#ffffff',
+    textSecondary: 'rgba(255,255,255,0.9)',
+    textMuted: 'rgba(255,255,255,0.65)',
+    accentColor: '#4ade80',
+    accentGradient: 'linear-gradient(135deg, #4ade80, #22c55e)',
+    cardBg: 'rgba(74,222,128,0.08)',
+    cardBorder: 'rgba(74,222,128,0.15)',
+    decoBg: 'rgba(74,222,128,0.03)',
+    dividerColor: 'rgba(74,222,128,0.15)',
+    wordCloudColors: ['#4ade80','#22c55e','#86efac','#16a34a','#a3e635','#65a30d','#fbbf24','#f59e0b','#34d399','#10b981','#6ee7b7','#a7f3d0','#d4fc79','#bef264'],
+    qrDark: '#0a1a0f',
+    qrLight: '#ffffff',
+    brandIcon: '🌿',
+  },
+  chinese: {
+    bgGradient: 'linear-gradient(135deg, #2d0a0a 0%, #4a1a1a 50%, #3d0f0f 100%)',
+    textColor: '#ffffff',
+    textSecondary: 'rgba(255,255,255,0.9)',
+    textMuted: 'rgba(255,255,255,0.65)',
+    accentColor: '#fbbf24',
+    accentGradient: 'linear-gradient(135deg, #fbbf24, #f59e0b)',
+    cardBg: 'rgba(251,191,36,0.08)',
+    cardBorder: 'rgba(251,191,36,0.15)',
+    decoBg: 'rgba(251,191,36,0.03)',
+    dividerColor: 'rgba(251,191,36,0.15)',
+    wordCloudColors: ['#fbbf24','#f59e0b','#ef4444','#dc2626','#f87171','#b91c1c','#fca5a5','#fde68a','#fcd34d','#fb923c','#f97316','#e2e8f0','#fecaca','#fda4af'],
+    qrDark: '#2d0a0a',
+    qrLight: '#ffffff',
+    brandIcon: '🏮',
+  },
 }
 
 interface PosterProps {
@@ -25,6 +127,7 @@ interface PosterProps {
   shareUrl?: string
   coreFindings: string[]
   preview?: boolean
+  theme?: PosterTheme
   i18n: {
     coreFindings: string
     papersLabel: string
@@ -35,13 +138,6 @@ interface PosterProps {
     brandName: string
   }
 }
-
-const WORD_CLOUD_COLORS = [
-  '#fbbf24', '#f59e0b', '#fb923c', '#f97316',
-  '#a78bfa', '#8b5cf6', '#60a5fa', '#3b82f6',
-  '#34d399', '#10b981', '#f472b6', '#ec4899',
-  '#e2e8f0', '#cbd5e1',
-]
 
 const EN_STOP_WORDS = new Set([
   'a', 'an', 'the', 'and', 'or', 'but', 'not', 'no', 'nor', 'so', 'yet',
@@ -218,7 +314,7 @@ function extractKeywords(papers: Paper[], _lang: 'zh' | 'en'): Map<string, numbe
   return result
 }
 
-function drawWordCloud(canvas: HTMLCanvasElement, keywords: Map<string, number>) {
+function drawWordCloud(canvas: HTMLCanvasElement, keywords: Map<string, number>, colors: string[]) {
   const ctx = canvas.getContext('2d')!
   const width = canvas.width
   const height = canvas.height
@@ -240,7 +336,7 @@ function drawWordCloud(canvas: HTMLCanvasElement, keywords: Map<string, number>)
     const [word, freq] = topEntries[i]
     const ratio = freq / maxFreq
     const fontSize = Math.round(16 + ratio * 28)
-    const color = WORD_CLOUD_COLORS[i % WORD_CLOUD_COLORS.length]
+    const color = colors[i % colors.length]
 
     ctx.font = `${fontSize}px 'PingFang SC', 'Microsoft YaHei', 'Helvetica Neue', Arial, sans-serif`
     const metrics = ctx.measureText(word)
@@ -305,7 +401,10 @@ export function AcademicPoster(props: PosterProps) {
   const {
     title, papers, createdAt, durationSeconds,
     language = 'zh', shareUrl, coreFindings, i18n,
+    theme = 'cosmic',
   } = props
+
+  const t = THEMES[theme]
 
   const qrRef = useRef<HTMLCanvasElement>(null)
   const wordCloudRef = useRef<HTMLCanvasElement>(null)
@@ -316,10 +415,10 @@ export function AcademicPoster(props: PosterProps) {
       QRCode.toCanvas(qrRef.current, shareUrl, {
         width: 160,
         margin: 2,
-        color: { dark: '#1a1a2e', light: '#ffffff' },
+        color: { dark: t.qrDark, light: t.qrLight },
       })
     }
-  }, [shareUrl])
+  }, [shareUrl, theme])
 
   // Draw word cloud
   useEffect(() => {
@@ -328,9 +427,9 @@ export function AcademicPoster(props: PosterProps) {
       canvas.width = 960
       canvas.height = 400
       const keywords = extractKeywords(papers, language)
-      drawWordCloud(canvas, keywords)
+      drawWordCloud(canvas, keywords, t.wordCloudColors)
     }
-  }, [papers, language])
+  }, [papers, language, theme])
 
   const formatDuration = (secs: number) => {
     if (secs >= 60) return `${Math.floor(secs / 60)}m${Math.round(secs % 60)}s`
@@ -346,16 +445,27 @@ export function AcademicPoster(props: PosterProps) {
 
   return (
     <div
-      className={`academic-poster ${language === 'en' ? 'academic-poster-intl' : ''}`}
+      className={`academic-poster ${language === 'en' ? 'academic-poster-intl' : ''} poster-theme-${theme}`}
     >
-      <div className="poster-bg">
+      <div className="poster-bg" style={{
+        '--poster-bg': t.bgGradient,
+        '--poster-text': t.textColor,
+        '--poster-text-secondary': t.textSecondary,
+        '--poster-text-muted': t.textMuted,
+        '--poster-accent': t.accentColor,
+        '--poster-accent-gradient': t.accentGradient,
+        '--poster-card-bg': t.cardBg,
+        '--poster-card-border': t.cardBorder,
+        '--poster-deco': t.decoBg,
+        '--poster-divider': t.dividerColor,
+      } as React.CSSProperties}>
         {/* Decorative circles */}
         <div className="poster-deco-circle poster-deco-circle-1" />
         <div className="poster-deco-circle poster-deco-circle-2" />
 
         {/* Brand */}
         <div className="poster-brand">
-          <span className="poster-brand-icon">📚</span>
+          <span className="poster-brand-icon">{t.brandIcon}</span>
           <span className="poster-brand-name">{i18n.brandName}</span>
         </div>
 

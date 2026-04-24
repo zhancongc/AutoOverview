@@ -17,7 +17,7 @@ import os
 from enum import Enum
 from typing import List, Dict, Optional, Any
 from dotenv import load_dotenv
-from openai import AsyncOpenAI
+from authkit.llm import get_llm_client
 
 load_dotenv()
 
@@ -63,12 +63,9 @@ class HybridTopicClassifier:
 
     def __init__(self):
         self.client = None
-        api_key = os.getenv("DEEPSEEK_API_KEY")
-        if api_key:
-            base_url = os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com")
-            self.client = AsyncOpenAI(api_key=api_key, base_url=base_url)
-        else:
-            print("[HybridClassifier] DEEPSEEK_API_KEY not configured, LLM validation disabled")
+        self.client = get_llm_client().get_raw_client()
+        if not self.client:
+            print("[HybridClassifier] LLM client not configured, LLM validation disabled")
 
     def classify(self, title: str):
         """
