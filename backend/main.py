@@ -1717,6 +1717,7 @@ async def get_task_status(
             "status": redis_task_data.get("status", "processing"),
             "progress": redis_task_data.get("progress", {}),
             "created_at": redis_task_data.get("created_at"),
+            "has_result": False,
         }
         return {"success": True, "data": response_data}
 

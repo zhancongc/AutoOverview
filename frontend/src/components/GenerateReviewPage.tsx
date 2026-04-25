@@ -134,7 +134,7 @@ export function GenerateReviewPage() {
 
   const pollTask = (taskId: string) => {
     const startTime = Date.now()
-    const doPoll = async () => {
+    const doPoll = async (retryCount = 0) => {
       if (!isMountedRef.current) return
       try {
         const statusResponse = await api.getTaskStatus(taskId)
@@ -179,16 +179,20 @@ export function GenerateReviewPage() {
         } else {
           nextInterval = 10000
         }
-        setTimeout(doPoll, nextInterval)
+        setTimeout(() => doPoll(0), nextInterval)
       } catch {
         if (!isMountedRef.current) return
-        sessionStorage.removeItem('active_task_id')
-        sessionStorage.removeItem('active_task_topic')
-        setIsGenerating(false)
-        isPollingRef.current = false
+        if (retryCount < 3) {
+          setTimeout(() => doPoll(retryCount + 1), 5000)
+        } else {
+          sessionStorage.removeItem('active_task_id')
+          sessionStorage.removeItem('active_task_topic')
+          setIsGenerating(false)
+          isPollingRef.current = false
+        }
       }
     }
-    setTimeout(doPoll, 3000)
+    setTimeout(() => doPoll(0), 3000)
   }
 
   const handleGenerate = async () => {
@@ -245,7 +249,7 @@ export function GenerateReviewPage() {
       sessionStorage.setItem('active_task_topic', topic)
       const startTime = Date.now()
 
-      const doPoll = async () => {
+      const doPoll = async (retryCount = 0) => {
         try {
           const statusResponse = await api.getTaskStatus(taskId)
 
@@ -300,14 +304,19 @@ export function GenerateReviewPage() {
             nextInterval = 8000
           }
 
-          setTimeout(doPoll, nextInterval)
+          setTimeout(() => doPoll(0), nextInterval)
         } catch {
-          setError(t('generate_page.error_status'))
-          setIsGenerating(false)
+          // 暂时性网络错误：重试最多 3 次再报错
+          if (retryCount < 3) {
+            setTimeout(() => doPoll(retryCount + 1), 5000)
+          } else {
+            setError(t('generate_page.error_status'))
+            setIsGenerating(false)
+          }
         }
       }
 
-      setTimeout(doPoll, 3000)
+      setTimeout(() => doPoll(0), 3000)
     } catch {
       setError(t('generate_page.error_network'))
       setIsGenerating(false)
@@ -574,7 +583,20 @@ export function GenerateReviewPage() {
           {error && !isGenerating && (
             <div className="home-error" style={{ marginTop: '12px' }}>
               <span>{error}</span>
-              <button className="retry-button" onClick={handleGenerate}>{t('input.retry')}</button>
+              <button className="retry-button" onClick={() => {
+                const activeId = sessionStorage.getItem('active_task_id')
+                if (activeId) {
+                  // 恢复轮询（任务仍在后台运行）
+                  setError('')
+                  setIsGenerating(true)
+                  setProgress({ step: 'processing', message: t('home.progress.processing') })
+                  isPollingRef.current = true
+                  pollTask(activeId)
+                } else {
+                  // 任务不存在，重新提交
+                  handleGenerate()
+                }
+              }}>{t('input.retry')}</button>
             </div>
           )}
         </div>
