@@ -279,6 +279,7 @@ export function GenerateReviewPage() {
 
           if (taskInfo.status === 'completed' && taskInfo.result) {
             setProgress({ step: 'completed', message: t('generate_page.completed') })
+            sessionStorage.setItem('share_reward_pending', taskId)
             sessionStorage.removeItem('active_task_id')
             sessionStorage.removeItem('active_task_topic')
             setTimeout(() => {

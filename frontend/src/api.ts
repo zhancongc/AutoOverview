@@ -632,4 +632,26 @@ export const api = {
     const response = await axios.get(`${API_BASE}/tasks/${taskId}/shared-papers`);
     return response.data;
   },
+
+  // ==================== 分享奖励 API ====================
+
+  async uploadShareProof(taskId: string, image: File): Promise<{ success: boolean; message?: string; credits?: number }> {
+    const formData = new FormData();
+    formData.append('task_id', taskId);
+    formData.append('image', image);
+    const token = localStorage.getItem('auth_token');
+    const response = await axios.post(`${API_BASE}/share-reward`, formData, {
+      headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}), 'Content-Type': 'multipart/form-data' }
+    });
+    return response.data;
+  },
+
+  async getShareRewardStatus(): Promise<{ success: boolean; claimed: boolean }> {
+    const token = localStorage.getItem('auth_token');
+    const response = await axios.get(`${API_BASE}/share-reward/status`, {
+      params: { task_id: 'check' },
+      headers: token ? { Authorization: `Bearer ${token}` } : {}
+    });
+    return response.data;
+  },
 };

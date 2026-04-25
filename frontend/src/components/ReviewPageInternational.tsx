@@ -9,6 +9,7 @@ import { ReviewViewerInternational } from './ReviewViewerInternational'
 import { CitationFormatSelector, type CitationFormat } from './CitationFormatSelector'
 import { ExportFormatModal, ExportFormat } from './ExportFormatModal'
 import { AcademicPoster, PosterTheme } from './AcademicPoster'
+import { ShareRewardModal } from './ShareRewardModal'
 import { api } from '../api'
 import type { Paper } from '../types'
 import './ReviewPageInternational.css'
@@ -75,6 +76,7 @@ export function ReviewPageInternational() {
   const [generatingPoster, setGeneratingPoster] = useState(false)
   const [posterTheme, setPosterTheme] = useState<PosterTheme>('cosmic')
   const posterGenRef = useRef(false)
+  const [showShareReward, setShowShareReward] = useState(false)
 
   const handleTocUpdate = useCallback((toc: TocItem[]) => {
     setTocItems(toc)
@@ -150,6 +152,16 @@ export function ReviewPageInternational() {
       navigate('/')
     }
   }, [taskId, recordIdParam, state, citationFormat, hasUpdatedUrl, navigate])
+
+  // 分享奖励弹窗：检查 sessionStorage 标记
+  useEffect(() => {
+    const pendingTaskId = sessionStorage.getItem('share_reward_pending')
+    if (pendingTaskId) {
+      sessionStorage.removeItem('share_reward_pending')
+      const timer = setTimeout(() => setShowShareReward(true), 1500)
+      return () => clearTimeout(timer)
+    }
+  }, [])
 
   const reviewData = state || taskData
 
@@ -1023,6 +1035,14 @@ export function ReviewPageInternational() {
             }}
           />
         </div>
+      )}
+
+      {/* 分享奖励弹窗 */}
+      {showShareReward && taskId && (
+        <ShareRewardModal
+          taskId={taskId}
+          onClose={() => setShowShareReward(false)}
+        />
       )}
     </div>
   )

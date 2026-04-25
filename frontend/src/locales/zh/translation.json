@@ -541,5 +541,8 @@
       "has_credits": "您有 {{credits}} 个积分。\n生成文献综述将消耗 2 个积分，是否继续？",
       "insufficient": "您有 {{credits}} 个积分，不足以生成文献综述（需 2 个积分）。"
     }
+  },
+  "share_reward": {
+    "upload_failed": "上传失败，请重试"
   }
 }

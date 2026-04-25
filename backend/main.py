@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 load_dotenv()  # 加载 .env
 load_dotenv('.env.auth', override=True)  # 加载 .env.auth
 
-from fastapi import FastAPI, HTTPException, Depends, BackgroundTasks
+from fastapi import FastAPI, HTTPException, Depends, BackgroundTasks, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from contextlib import asynccontextmanager
@@ -2681,4 +2681,90 @@ async def submit_feedback(
         user.set_meta("feedbacks", feedbacks)
         auth_db.commit()
         return {"success": True}
+
+
+# ==================== 分享奖励接口 ====================
+
+SHARE_PROOFS_DIR = os.path.join(os.path.dirname(__file__), "uploads", "share_proofs")
+
+
+@app.post("/api/share-reward")
+async def share_reward(
+    task_id: str = Form(...),
+    image: UploadFile = File(...),
+    user_id: Optional[int] = Depends(get_current_user_id),
+    auth_db: Session = Depends(auth_get_db)
+):
+    """上传分享截图领取积分（每人限领一次）"""
+    if not user_id:
+        raise HTTPException(status_code=401, detail="请先登录")
+
+    from authkit.models import User
+    from authkit.models.credit_log import CreditLog
+
+    # 检查是否已领取过（每人限领一次，不限 task_id）
+    existing = auth_db.query(CreditLog).filter(
+        CreditLog.user_id == user_id,
+        CreditLog.reason == "share_reward"
+    ).first()
+    if existing:
+        return {"success": False, "message": "您已领取过分享奖励，每人限领一次"}
+
+    # 保存截图
+    os.makedirs(SHARE_PROOFS_DIR, exist_ok=True)
+    ts = int(time.time())
+    ext = os.path.splitext(image.filename or "image.jpg")[1] or ".jpg"
+    filename = f"{task_id}_{ts}{ext}"
+    filepath = os.path.join(SHARE_PROOFS_DIR, filename)
+
+    content = await image.read()
+    with open(filepath, "wb") as f:
+        f.write(content)
+
+    # 发放 2 积分（加到免费额度）
+    user = auth_db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="用户不存在")
+
+    free_before = user.get_meta("free_credits", 0)
+    paid_before = user.get_meta("review_credits", 0)
+    total_before = free_before + paid_before
+
+    user.set_meta("free_credits", free_before + 2)
+    total_after = total_before + 2
+
+    # 写 credit_logs
+    log = CreditLog(
+        user_id=user_id,
+        change=2,
+        balance_before=total_before,
+        balance_after=total_after,
+        reason="share_reward",
+        detail=f"分享奖励 - task_id: {task_id}, file: {filename}",
+        operator="system"
+    )
+    auth_db.add(log)
+    auth_db.commit()
+
+    return {"success": True, "credits": total_after}
+
+
+@app.get("/api/share-reward/status")
+async def share_reward_status(
+    task_id: str,
+    user_id: Optional[int] = Depends(get_current_user_id),
+    auth_db: Session = Depends(auth_get_db)
+):
+    """查询当前用户是否已领取过分享奖励"""
+    if not user_id:
+        raise HTTPException(status_code=401, detail="请先登录")
+
+    from authkit.models.credit_log import CreditLog
+
+    existing = auth_db.query(CreditLog).filter(
+        CreditLog.user_id == user_id,
+        CreditLog.reason == "share_reward"
+    ).first()
+
+    return {"success": True, "claimed": existing is not None}
 

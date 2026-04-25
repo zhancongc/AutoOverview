@@ -530,5 +530,8 @@
       "has_credits": "You have {{credits}} credits.\nGenerate a Literature Review will use 2 credits. Continue?",
       "insufficient": "You have {{credits}} credits, which is not enough (2 required)."
     }
+  },
+  "share_reward": {
+    "upload_failed": "Upload failed, please try again"
   }
 }
