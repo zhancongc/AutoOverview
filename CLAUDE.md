@@ -4,108 +4,54 @@
 
 ## 项目简介
 
-Danmo Scholar 是一个 AI 驱动的文献综述生成平台，支持中英文双语。用户输入研究主题，系统自动搜索文献并生成高质量的学术综述。
-
-**产品定位**：
-- **中文版**：面向中国高校和科研机构的学生、研究人员
-- **英文版**：面向国际市场（美国、加拿大、英国、欧盟）的学术用户
+Danmo Scholar — AI 驱动的文献综述生成平台，支持中英文双语。
 
 **技术栈**: FastAPI (Python) + React (TypeScript/Vite) + PostgreSQL + i18n (react-i18next)
 
-## 核心流程
+**核心流程**: 文献检索 (OpenAlex + Semantic Scholar) → 综述生成 (8步) → 引用校验
 
-1. **阶段1**: PaperSearchAgent - LLM + Function Calling 驱动的文献检索（OpenAlex 优先 + Semantic Scholar 兜底）
-2. **阶段2**: SmartReviewGeneratorFinal - 生成综述（8步：预处理 → 对比矩阵 → 初始生成 → 引用提取 → 6条引用规范 → IEEE 格式 → 合并 → 验证）
-3. **阶段3**: CitationValidatorV2 - 额外引用校验和修复（arXiv 处理、Unicode 修复等）
+> 详细流程: [docs/review_generation_flow.md](docs/review_generation_flow.md)
 
-> 详细流程参见 [docs/review_generation_flow.md](docs/review_generation_flow.md)
+## 关键文件
+
+### 后端
+- `backend/main.py` — 所有 API 路由、中间件、额度检查
+- `backend/services/smart_review_generator_final.py` — 综述生成核心
+- `backend/services/review_task_executor.py` — 异步任务执行
+- `backend/authkit/` — 独立可复用的认证 & 支付模块
+
+### 前端
+- `SimpleApp.tsx` — 主页 | `GenerateReviewPage.tsx` — 生成页 | `ReviewPage.tsx` — 综述页
+- `ComparisonMatrixViewer.tsx` — 对比矩阵 | `SearchPapersPage.tsx` — 文献搜索
+- `DavidPage.tsx` — 数据统计 (`/david`) | `DavidApprovePage.tsx` — 截图审核 (`/david/approve`)
+- 认证: 验证码登录（无密码） | 支付: 支付宝(中文) / Paddle(英文)
+- 导出: 前端生成，不检查付费（Markdown/Word/PDF/BibTeX/RIS）
+- 国际化: `react-i18next` | 路由: hash 路由
 
 ## 关键约定
 
-### 后端
-- **主入口**: `backend/main.py` — 所有 API 路由、中间件、额度检查
-- **综述生成核心**: `backend/services/smart_review_generator_final.py`
-- **异步任务**: `backend/services/review_task_executor.py`，通过 TaskManager 管理轮询
-- **进度推送**: 文献搜索完成后通过 `progress.papers` 向前端推送文献列表预览
-- **认证模块**: `backend/authkit/` — 独立可复用的认证 & 支付模块
-- **统计模块**: `backend/authkit/services/stats_service.py` — 访问量、注册量统计
-- **统计中间件**: `backend/authkit/middleware/stats_middleware.py` — 自动统计访问量（DDoS 防护）
-- **JWT**: token 中用户 ID 存储在 `sub` 字段，不是 `user_id`
-- **额度体系**: 注册送 2 积分，按次扣费（综述=2积分，对比矩阵=1积分），字段 `review_credits`
-- **每日搜索限制**: `DAILY_SEARCH_LIMIT`（.env 配置，默认 5），通过 User meta_data 跟踪
-- **环境变量**: `backend/.env` 配置 DeepSeek API Key、数据库等
+- **JWT**: 用户 ID 在 `sub` 字段
+- **额度**: 注册送 2 积分，综述=2积分，对比矩阵=1积分
+- **每日搜索**: `DAILY_SEARCH_LIMIT`（.env），User meta_data 跟踪
+- **API**: 前端 `localhost:3006 → 8006`，前缀 `/api/...`，认证 `Bearer <token>`
+- **定价**: 中文 CNY（¥9.9/¥19.8/¥49.8）| 英文 USD（$9.99/$24.99/$49.99）
+- **白名单**: `DAVID_WHITELIST`、`JADE_WHITELIST`、`DEMO_TASK_IDS`（.env 配置）
+- **数据库迁移**: `cd backend && python3 -m base migrate --dir migrations`（非 Alembic，自建框架）
+- **OAuth**: `backend/authkit/oauth/`（Alipay + Google），Site 判断: Host 含 `en-` → 英文
 
-### 前端
-- **主页**: `SimpleApp.tsx`（输入框 + 定价卡片 + 功能介绍）
-- **综述生成页**: `GenerateReviewPage.tsx`（输入 → 提交 → 进度条 + 文献预览 → 跳转结果）
-- **文献搜索页**: `SearchPapersPage.tsx`（独立文献搜索，每日限制，导出 BibTeX/RIS/Word）
-- **综述页**: `ReviewPage.tsx`（正文/参考文献分 Tab，URL: `/review?task_id=xxx`）
-- **对比矩阵页**: `ComparisonMatrixPage.tsx` → `ComparisonMatrixViewer.tsx`
-- **渲染器**: `ReviewViewer.tsx`（Markdown + TOC 侧边栏，标题级别会自动标准化，参考文献点击弹出 CitationTooltip）
-- **数据统计**: `DavidPage.tsx`（访问量、注册量、付费数据统计，URL: `/david`）
-- **认证**: 验证码登录（无密码），`LoginModal.tsx`（中文）/ `LoginModalInternational.tsx`（英文）
-- **支付**:
-  - 中文版：`PaymentModal.tsx`（支付宝扫码，CNY 定价）
-  - 英文版：`PaddlePaymentModal.tsx`（Paddle 信用卡支付，USD 定价）
-- **导出**（全部前端生成，无需付费检查）:
-  - 综述: 弹窗选择 Markdown/Word（默认 Markdown），前端 `docx` 库生成 Word，`file-saver` 下载
-  - 对比矩阵: 弹窗选择 Markdown/Word（默认 Markdown），前端直接生成
-  - 文献列表: `ExportFormatModal.tsx`（前端生成 BibTeX/RIS/Word 三种格式，默认 BibTeX）
-  - PDF: `frontend/src/utils/pdfExport.ts`（html2canvas + jsPDF，纯前端）
-- **国际化**: `react-i18next` - 支持中英文动态切换
-- **路由**: hash 路由（`/#/login`, `/#/pricing`, `/#/profile`）
+## 子系统详细文档
 
-### 额度与导出逻辑
-- 免费额度：注册送 2 积分
-- 生成时立即扣额度（`check_and_deduct_credit`），任务失败退回积分
-- 所有导出均为前端生成，不再检查付费状态（生成时已扣积分）
-- 导出不再跳转页面，统一弹窗选择格式后直接下载
+| 模块 | 文档 |
+|------|------|
+| 额度体系 | [docs/CREDIT_SYSTEM.md](docs/CREDIT_SYSTEM.md) |
+| 推广邮件 & 分享审核 | [docs/EMAIL_AND_REWARD.md](docs/EMAIL_AND_REWARD.md) |
+| 统计功能 | [docs/STATS.md](docs/STATS.md) |
+| 部署配置 | [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) |
+| 综述生成流程 | [docs/review_generation_flow.md](docs/review_generation_flow.md) |
+| 辅助脚本 | [docs/SCRIPTS.md](docs/SCRIPTS.md) |
 
-### 每日搜索限制
-- 注册用户每日搜索文献次数限制，默认 5 次（`DAILY_SEARCH_LIMIT` 在 .env 配置）
-- 通过 User 的 `meta_data` JSON 字段存储 `search_count_date` 和 `search_count`
-- 未登录用户点搜索弹出登录弹窗，登录后自动继续搜索（`pendingSearchTopic` 机制）
+## 文档索引
 
-### 定价策略
-**中文版（CNY）**：
-- 体验包（2篇）：¥9.9（原价 ¥29.8，约 ¥4.9/积分）
-- 标准包（6篇）：¥19.8（原价 ¥69.8，约 ¥3.3/积分）
-- 进阶包（18篇）：¥49.8（原价 ¥109.8，约 ¥2.8/积分）
-
-**英文版（USD）**：
-- Starter（6 credits）：$9.99 （原价 ¥$14.99，约 $1.67/积分）
-- Semester Pro（18 credits）：$24.99 （原价 $39.99，约 $1.39/积分）
-- Annual Premium（50 credits）：$49.99 （原价 $69.99，约 $1.00/积分）
-
-### API 路径
-- 前端代理: `localhost:3006` → `localhost:8006`（vite.config.ts 配置）
-- API 前缀: `/api/...`
-- 认证头: `Authorization: Bearer <token>`
-
-### 白名单配置
-- **案例展示**: `DEMO_TASK_IDS`（.env 配置）
-- **David 页面**: `DAVID_WHITELIST=zhancongc@icloud.com`（.env 配置）
-- **Jade 页面**: `JADE_WHITELIST=`（.env 配置）
-
-### 数据库迁移
-- **迁移系统**: `backend/migrations/` 目录，自建迁移框架（非 Alembic）
-- **基类**: `backend/migrations/base.py` — `Migration` 基类，版本记录在 `schema_versions` 表
-- **命名规范**: `XXX_name.py`（XXX 为三位数字版本号，如 `010_add_site_to_stats.py`）
-- **执行迁移**: `cd backend && python3 -m base migrate --dir migrations`
-- **查看状态**: `cd backend && python3 -m base status --dir migrations`
-- **幂等性**: `up()` 内用 `IF NOT EXISTS` / `IF EXISTS` 确保重复执行不报错
-
-### OAuth 登录模块
-- **标准模块**: `backend/authkit/oauth/` — 可复用的 OAuth 登录子包（Alipay + Google）
-- **消费方式**: `create_oauth_router(config, find_or_create_user, make_token_response, get_frontend_base, redis_client)`
-- **适配层**: `backend/authkit/routers/oauth.py` — AutoOverview 业务回调注入
-- **Site 判断**: Host 头含 `en-` → `"en"`，否则 `"zh"`
-
-## 文档
-
-- **[docs/INDEX.md](docs/INDEX.md)** — 文档首页，渐进式披露文档（推荐从这里开始）
-- **[docs/MAP.md](docs/MAP.md)** — 完整文档目录，包含所有文档的列表
-- **[docs/PRE_COMMIT_CHECKLIST.md](docs/PRE_COMMIT_CHECKLIST.md)** — 提交前检查清单
-- **[docs/STATS.md](docs/STATS.md)** — 统计功能文档
-- **[docs/CREDIT_SYSTEM.md](docs/CREDIT_SYSTEM.md)** — 额度体系设计
-- **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)** — 服务器部署配置
+- [docs/INDEX.md](docs/INDEX.md) — 文档首页
+- [docs/MAP.md](docs/MAP.md) — 完整文档目录
+- [docs/PRE_COMMIT_CHECKLIST.md](docs/PRE_COMMIT_CHECKLIST.md) — 提交前检查清单

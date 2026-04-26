@@ -10,6 +10,7 @@ import { SearchPapersPage } from './components/SearchPapersPage'
 import { ProfilePage } from './components/ProfilePage'
 import { ProfilePageInternational } from './components/ProfilePageInternational'
 import { DavidPage } from './components/DavidPage'
+import { DavidApprovePage } from './components/DavidApprovePage'
 import { TermsAndConditionsPage } from './components/TermsAndConditionsPage'
 import { PrivacyPolicyPage } from './components/PrivacyPolicyPage'
 import { RefundPolicyPage } from './components/RefundPolicyPage'
@@ -93,6 +94,11 @@ function AppContent() {
         <Route path="/david" element={
           <DavidRoute>
             <DavidPage />
+          </DavidRoute>
+        } />
+        <Route path="/david/approve" element={
+          <DavidRoute>
+            <DavidApprovePage />
           </DavidRoute>
         } />
         <Route path="/jade" element={

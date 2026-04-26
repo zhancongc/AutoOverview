@@ -73,14 +73,32 @@ def get_current_user_id(credentials: HTTPAuthorizationCredentials = Depends(secu
     return None
 
 
-def check_and_deduct_credit(user_id: int, db_session: Session, cost: int = 2) -> tuple[Optional[str], bool]:
+# Token-based 限速（1秒1次）
+_token_last_request = {}  # token -> last timestamp (seconds)
+
+def check_token_rate_limit(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    """检查 token 频率限制：1秒最多1次请求"""
+    if not credentials:
+        return  # 未登录不限速
+    token = credentials.credentials
+    now = time.time()
+    last = _token_last_request.get(token, 0)
+    if now - last < 1.0:
+        raise HTTPException(status_code=429, detail="请求过于频繁，请稍后再试（每个 token 1秒最多1次请求）")
+    _token_last_request[token] = now
+
+
+def check_and_deduct_credit(user_id: int, db_session: Session, cost: int = 2, reason: str = "consume", detail: str = None) -> tuple[Optional[str], bool]:
     """
     检查并扣除用户 credit 点数。
     cost: 需要扣除的 credit 数量（对比矩阵=1，综述=2）
+    reason: consume / refund / payment 等
+    detail: 详细说明（任务类型、主题等）
     返回 (错误信息, 是否扣除付费额度)。错误信息为 None 表示通过。
     优先扣除付费额度，再扣除免费额度。
     """
     from authkit.models import User
+    from authkit.models.credit_log import CreditLog
     user = db_session.query(User).filter(User.id == user_id).first()
     if not user:
         return None, False  # 用户不存在时不拦截
@@ -91,6 +109,8 @@ def check_and_deduct_credit(user_id: int, db_session: Session, cost: int = 2) ->
 
     if total < cost:
         return f"积分不足，当前 {total} 个积分，需要 {cost} 个。请购买后继续使用", False
+
+    balance_before = total
 
     # 优先扣除付费额度，再用免费额度
     used_paid = False
@@ -108,23 +128,36 @@ def check_and_deduct_credit(user_id: int, db_session: Session, cost: int = 2) ->
     if remaining_cost > 0:
         user.set_meta("free_credits", free_credits - remaining_cost)
 
+    balance_after = balance_before - cost
+    db_session.add(CreditLog(
+        user_id=user_id,
+        change=-cost,
+        balance_before=balance_before,
+        balance_after=balance_after,
+        reason=reason,
+        detail=detail,
+    ))
     db_session.commit()
     return None, used_paid
 
 
-def refund_credit(user_id: int, db_session: Session, cost: int = 2) -> None:
+def refund_credit(user_id: int, db_session: Session, cost: int = 2, reason: str = "refund", detail: str = None) -> None:
     """
     退还用户 credit 点数（任务失败时调用）。
     cost: 需要退还的 credit 数量
+    reason: refund
+    detail: 详细说明（任务类型、主题等）
     优先退还免费额度，再退还付费额度（与扣除顺序相反）。
     """
     from authkit.models import User
+    from authkit.models.credit_log import CreditLog
     user = db_session.query(User).filter(User.id == user_id).first()
     if not user:
         return
 
     free_credits = user.get_meta("free_credits", 0)
     paid_credits = user.get_meta("review_credits", 0)
+    balance_before = free_credits + paid_credits
 
     # 优先退还免费额度（与扣除时"先用付费再用免费"相反）
     remaining_refund = cost
@@ -138,6 +171,16 @@ def refund_credit(user_id: int, db_session: Session, cost: int = 2) -> None:
 
     user.set_meta("free_credits", new_free)
     user.set_meta("review_credits", new_paid)
+
+    balance_after = new_free + new_paid
+    db_session.add(CreditLog(
+        user_id=user_id,
+        change=cost,
+        balance_before=balance_before,
+        balance_after=balance_after,
+        reason=reason,
+        detail=detail,
+    ))
     db_session.commit()
 
 
@@ -312,6 +355,7 @@ app.include_router(skill_router)
 
 # 全局异常处理：确保所有未捕获异常打印完整堆栈
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 import traceback as _traceback
 
 @app.exception_handler(Exception)
@@ -1226,6 +1270,45 @@ async def get_credits(user_id: Optional[int] = Depends(get_current_user_id)):
         auth_db.close()
 
 
+@app.get("/api/credit-logs")
+async def get_credit_logs(
+    limit: int = 50,
+    offset: int = 0,
+    user_id: Optional[int] = Depends(get_current_user_id),
+):
+    """获取当前用户积分变动流水"""
+    if not user_id:
+        return {"logs": [], "total": 0}
+
+    from authkit.database import SessionLocal as AuthSessionLocal
+    from authkit.models.credit_log import CreditLog
+    if not AuthSessionLocal:
+        return {"logs": [], "total": 0}
+
+    auth_db = AuthSessionLocal()
+    try:
+        query = auth_db.query(CreditLog).filter(CreditLog.user_id == user_id)
+        total = query.count()
+        logs = query.order_by(CreditLog.created_at.desc()).offset(offset).limit(limit).all()
+        return {
+            "total": total,
+            "logs": [
+                {
+                    "id": log.id,
+                    "change": log.change,
+                    "balance_before": log.balance_before,
+                    "balance_after": log.balance_after,
+                    "reason": log.reason,
+                    "detail": log.detail,
+                    "created_at": log.created_at.isoformat() if log.created_at else None,
+                }
+                for log in logs
+            ],
+        }
+    finally:
+        auth_db.close()
+
+
 @app.get("/api/search/daily-limit")
 async def get_search_daily_limit(user_id: Optional[int] = Depends(get_current_user_id)):
     """获取当前用户每日搜索限制状态"""
@@ -1558,7 +1641,7 @@ async def submit_review_task(
                         pass  # 查询失败时不影响主流程
 
                 # 额度检查，返回是否使用了付费额度
-                usage_error, used_paid = check_and_deduct_credit(user_id, auth_db, cost=credit_cost)
+                usage_error, used_paid = check_and_deduct_credit(user_id, auth_db, cost=credit_cost, detail=f"综述: {request.topic}")
                 if usage_error:
                     return TaskSubmitResponse(success=False, message=usage_error)
                 is_paid = used_paid
@@ -1649,7 +1732,8 @@ async def submit_review_task(
 async def get_task_status(
     task_id: str,
     user_id: Optional[int] = Depends(get_current_user_id),
-    db_session: Session = Depends(get_db)
+    db_session: Session = Depends(get_db),
+    _rate_limit: None = Depends(check_token_rate_limit),
 ):
     """
     获取任务状态和结果
@@ -1877,7 +1961,8 @@ async def get_task_review(
     task_id: str,
     format: str = "ieee",
     user_id: Optional[int] = Depends(get_current_user_id),
-    db_session: Session = Depends(get_db)
+    db_session: Session = Depends(get_db),
+    _rate_limit: None = Depends(check_token_rate_limit),
 ):
     """
     通过 task_id 获取综述结果
@@ -2159,7 +2244,7 @@ async def generate_comparison_matrix(
         if AuthSessionLocal:
             auth_db = AuthSessionLocal()
             try:
-                usage_error, used_paid = check_and_deduct_credit(user_id, auth_db, cost=1)
+                usage_error, used_paid = check_and_deduct_credit(user_id, auth_db, cost=1, detail=f"对比矩阵: {request.topic}")
                 if usage_error:
                     return TaskSubmitResponse(success=False, message=usage_error)
             finally:
@@ -2699,33 +2784,35 @@ async def share_reward(
     user_id: Optional[int] = Depends(get_current_user_id),
     auth_db: Session = Depends(auth_get_db)
 ):
-    """上传分享截图领取积分（每人限领一次）"""
+    """上传分享截图，等待管理员审核后发放积分"""
     if not user_id:
         raise HTTPException(status_code=401, detail="请先登录")
 
     from authkit.models import User
     from authkit.models.credit_log import CreditLog
 
-    # 检查是否已领取过（每人限领一次，不限 task_id）
+    # 检查是否已领取过或已提交待审核（每人限一次）
     existing = auth_db.query(CreditLog).filter(
         CreditLog.user_id == user_id,
-        CreditLog.reason == "share_reward"
+        CreditLog.reason.in_(["share_reward", "share_reward_pending"])
     ).first()
     if existing:
-        return {"success": False, "message": "您已领取过分享奖励，每人限领一次"}
+        if existing.reason == "share_reward":
+            return {"success": False, "message": "您已领取过分享奖励，每人限领一次"}
+        return {"success": False, "message": "您已提交过分享截图，请等待审核"}
 
     # 保存截图
     os.makedirs(SHARE_PROOFS_DIR, exist_ok=True)
     ts = int(time.time())
     ext = os.path.splitext(image.filename or "image.jpg")[1] or ".jpg"
-    filename = f"{task_id}_{ts}{ext}"
+    filename = f"{user_id}_{task_id}_{ts}{ext}"
     filepath = os.path.join(SHARE_PROOFS_DIR, filename)
 
     content = await image.read()
     with open(filepath, "wb") as f:
         f.write(content)
 
-    # 发放 2 积分（加到免费额度）
+    # 写 pending 记录（不实际发积分）
     user = auth_db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="用户不存在")
@@ -2734,23 +2821,19 @@ async def share_reward(
     paid_before = user.get_meta("review_credits", 0)
     total_before = free_before + paid_before
 
-    user.set_meta("free_credits", free_before + 2)
-    total_after = total_before + 2
-
-    # 写 credit_logs
     log = CreditLog(
         user_id=user_id,
-        change=2,
+        change=0,
         balance_before=total_before,
-        balance_after=total_after,
-        reason="share_reward",
-        detail=f"分享奖励 - task_id: {task_id}, file: {filename}",
+        balance_after=total_before,
+        reason="share_reward_pending",
+        detail=f"分享截图待审核 - task_id: {task_id}, file: {filename}",
         operator="system"
     )
     auth_db.add(log)
     auth_db.commit()
 
-    return {"success": True, "credits": total_after}
+    return {"success": True, "message": "截图已提交，审核通过后将发放 2 积分"}
 
 
 @app.get("/api/share-reward/status")
@@ -2771,4 +2854,170 @@ async def share_reward_status(
     ).first()
 
     return {"success": True, "claimed": existing is not None}
+
+
+def _check_david_admin(user_id):
+    """检查用户是否为 David 管理员"""
+    whitelist_str = os.getenv("DAVID_WHITELIST", "")
+    whitelist = {email.strip() for email in whitelist_str.split(",") if email.strip()}
+    if not whitelist or not user_id:
+        return False
+    from authkit.database import SessionLocal as AuthSessionLocal
+    if not AuthSessionLocal:
+        return False
+    auth_db = AuthSessionLocal()
+    try:
+        from authkit.models import User
+        user = auth_db.query(User).filter(User.id == user_id).first()
+        return user and user.email in whitelist
+    finally:
+        auth_db.close()
+
+
+@app.get("/api/david/share-proofs")
+async def list_share_proofs(user_id: Optional[int] = Depends(get_current_user_id)):
+    """列出所有待审核的分享截图（David 管理员）"""
+    if not _check_david_admin(user_id):
+        raise HTTPException(status_code=403, detail="无权访问")
+
+    from authkit.database import SessionLocal as AuthSessionLocal
+    from authkit.models import User
+    from authkit.models.credit_log import CreditLog
+
+    os.makedirs(SHARE_PROOFS_DIR, exist_ok=True)
+
+    # 清理超过 30 天的截图
+    now = time.time()
+    for f in os.listdir(SHARE_PROOFS_DIR):
+        fp = os.path.join(SHARE_PROOFS_DIR, f)
+        if os.path.isfile(fp) and (now - os.path.getmtime(fp)) > 30 * 86400:
+            os.remove(fp)
+
+    # 查询所有 pending 记录
+    auth_db = AuthSessionLocal()
+    try:
+        pending_logs = auth_db.query(CreditLog).filter(
+            CreditLog.reason == "share_reward_pending"
+        ).all()
+
+        # 获取所有相关用户
+        user_ids = list({log.user_id for log in pending_logs})
+        users = auth_db.query(User).filter(User.id.in_(user_ids)).all() if user_ids else []
+        user_map = {u.id: u for u in users}
+
+        proofs = []
+        for log in pending_logs:
+            detail = log.detail or ""
+            # 从 detail 中提取 file 名
+            file_name = ""
+            for part in detail.split(","):
+                part = part.strip()
+                if part.startswith("file:"):
+                    file_name = part.replace("file:", "").strip()
+
+            if not file_name or not os.path.exists(os.path.join(SHARE_PROOFS_DIR, file_name)):
+                continue
+
+            user = user_map.get(log.user_id)
+            proofs.append({
+                "filename": file_name,
+                "user_email": user.email if user else "unknown",
+                "user_id": log.user_id,
+                "task_id": detail.split("task_id:")[1].split(",")[0].strip() if "task_id:" in detail else "",
+                "created_at": log.created_at.isoformat() if log.created_at else "",
+            })
+
+        return {"success": True, "proofs": proofs}
+    finally:
+        auth_db.close()
+
+
+@app.post("/api/david/share-proofs/{filename}/approve")
+async def approve_share_proof(
+    filename: str,
+    user_id: Optional[int] = Depends(get_current_user_id)
+):
+    """审核通过：发放 2 积分并删除截图"""
+    if not _check_david_admin(user_id):
+        raise HTTPException(status_code=403, detail="无权访问")
+
+    from authkit.database import SessionLocal as AuthSessionLocal
+    from authkit.models import User
+    from authkit.models.credit_log import CreditLog
+
+    auth_db = AuthSessionLocal()
+    try:
+        log = auth_db.query(CreditLog).filter(
+            CreditLog.reason == "share_reward_pending",
+            CreditLog.detail.contains(filename)
+        ).first()
+
+        if not log:
+            raise HTTPException(status_code=404, detail="记录不存在")
+
+        # 发放 2 积分
+        target_user = auth_db.query(User).filter(User.id == log.user_id).first()
+        if not target_user:
+            raise HTTPException(status_code=404, detail="用户不存在")
+
+        free_before = target_user.get_meta("free_credits", 0)
+        paid_before = target_user.get_meta("review_credits", 0)
+        total_before = free_before + paid_before
+
+        target_user.set_meta("free_credits", free_before + 2)
+        total_after = total_before + 2
+
+        # 更新记录
+        log.change = 2
+        log.balance_before = total_before
+        log.balance_after = total_after
+        log.reason = "share_reward"
+        log.detail = log.detail.replace("分享截图待审核", "分享奖励")
+        auth_db.commit()
+
+        # 删除截图文件
+        filepath = os.path.join(SHARE_PROOFS_DIR, filename)
+        if os.path.exists(filepath):
+            os.remove(filepath)
+
+        return {"success": True, "credits": total_after}
+    finally:
+        auth_db.close()
+
+
+@app.post("/api/david/share-proofs/{filename}/reject")
+async def reject_share_proof(
+    filename: str,
+    user_id: Optional[int] = Depends(get_current_user_id)
+):
+    """审核拒绝：删除记录和截图"""
+    if not _check_david_admin(user_id):
+        raise HTTPException(status_code=403, detail="无权访问")
+
+    from authkit.database import SessionLocal as AuthSessionLocal
+    from authkit.models.credit_log import CreditLog
+
+    auth_db = AuthSessionLocal()
+    try:
+        log = auth_db.query(CreditLog).filter(
+            CreditLog.reason == "share_reward_pending",
+            CreditLog.detail.contains(filename)
+        ).first()
+
+        if log:
+            auth_db.delete(log)
+            auth_db.commit()
+
+        # 删除截图文件
+        filepath = os.path.join(SHARE_PROOFS_DIR, filename)
+        if os.path.exists(filepath):
+            os.remove(filepath)
+
+        return {"success": True}
+    finally:
+        auth_db.close()
+
+
+# 静态文件：分享截图供审核页面展示
+app.mount("/share-proofs", StaticFiles(directory=SHARE_PROOFS_DIR), name="share_proofs")
 

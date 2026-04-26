@@ -34,6 +34,7 @@ docs/
 ├── 📄 SCRIPTS.md                    # 辅助脚本使用说明
 ├── 📄 DEPLOYMENT.md                 # 服务器部署配置
 ├── 📄 CREDIT_SYSTEM.md              # 额度体系设计
+├── 📄 EMAIL_AND_REWARD.md           # 推广邮件 & 分享截图审核
 ├── 📄 STATS.md                      # 统计功能文档
 ├── 📄 async_api.md                  # 异步 API 设计
 ├── 📄 review_generation_flow.md     # 综述生成流程

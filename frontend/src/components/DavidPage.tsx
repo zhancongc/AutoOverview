@@ -207,6 +207,13 @@ export const DavidPage: React.FC = () => {
                   {tab.label}
                 </button>
               ))}
+              <a href="/#/david/approve" style={{
+                marginLeft: '12px', padding: '6px 14px', borderRadius: '8px',
+                background: '#f59e0b', color: '#fff', textDecoration: 'none',
+                fontSize: '13px', fontWeight: 600,
+              }}>
+                审核分享截图
+              </a>
             </div>
           </div>
         </header>
