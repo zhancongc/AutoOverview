@@ -52,6 +52,7 @@ export function ProfilePageInternational() {
   const [exportModalReview, setExportModalReview] = useState<{ id: number; topic: string } | null>(null)
   const [reviewExportFormat, setReviewExportFormat] = useState<'markdown' | 'word'>('markdown')
   const [exportingReview, setExportingReview] = useState(false)
+  const [showApiToken, setShowApiToken] = useState(false)
 
   useEffect(() => {
     if (!isLoggedIn()) {
@@ -512,6 +513,40 @@ export function ProfilePageInternational() {
             <span className="stat-value">{credits}</span>
             <span className="stat-label">Credits</span>
           </div>
+        </div>
+
+        {/* API Token */}
+        <div className="profile-api-token-section">
+          <div className="profile-api-token-header" onClick={() => setShowApiToken(!showApiToken)}>
+            <span className="profile-api-token-title">🔑 Developer API Token</span>
+            <span className="profile-api-token-toggle">{showApiToken ? '▲' : '▼'}</span>
+          </div>
+          {showApiToken && (
+            <div className="profile-api-token-body">
+              <p className="profile-api-token-desc">
+                Use this token as the <code>DANMO_API_TOKEN</code> consumer variable in Coze / Dify to call the literature review API.
+              </p>
+              <div className="profile-api-token-field">
+                <code className="profile-api-token-value">
+                  {(() => {
+                    const t = localStorage.getItem('auth_token') || ''
+                    return t.length > 30 ? t.slice(0, 20) + '...' + t.slice(-10) : t
+                  })()}
+                </code>
+                <button
+                  className="profile-api-token-copy"
+                  onClick={() => {
+                    const token = localStorage.getItem('auth_token') || ''
+                    navigator.clipboard.writeText(token).then(() => {
+                      const btns = document.querySelectorAll('.profile-api-token-copy')
+                      const btn = btns[btns.length - 1] as HTMLButtonElement
+                      if (btn) { btn.textContent = 'Copied ✓'; setTimeout(() => { btn.textContent = 'Copy' }, 2000) }
+                    })
+                  }}
+                >Copy</button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Tab Switcher */}

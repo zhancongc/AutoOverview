@@ -5,7 +5,7 @@
 ## Step 1: 后端 API 接口文档
 
 ```markdown
-# Danmo Scholar API — 文献综述生成
+# Danmo Scholar Skill API — 文献综述生成
 
 ## Base URL
 
@@ -14,41 +14,39 @@
 
 ## 认证
 
-所有请求必须在 Header 中携带用户 API Token：
+所有请求必须在 Header 中携带用户 API Token（即登录后的 JWT Token）：
 
 ```
 Authorization: Bearer {user_api_token}
 ```
 
-用户需先在 Danmo Scholar 官网注册账号，在「个人中心 → API Token」获取 Token。
+用户需先在 Danmo Scholar 官网注册账号，在「个人中心 → 开发者 API Token」获取 Token。
 注册即送 2 积分（可生成 1 篇综述）。
 
 ---
 
-## POST /api/smart-generate
+## POST /api/skill/research
 
-提交文献综述生成任务（异步模式）。
+提交文献综述生成任务（异步模式）。此接口专供 Coze / Dify 等 Agent 平台调用。
 
 ### 请求体 (JSON)
 
 | 字段 | 类型 | 必填 | 说明 |
 |------|------|------|------|
-| `topic` | string | ✅ | 研究主题，如 "脑机接口中风康复"、"transformer in time series" |
+| `query` | string | ✅ | 研究主题，如 "脑机接口中风康复"、"transformer in time series" |
 | `language` | string | ❌ | 综述语言：`zh`（中文，默认）或 `en`（英文） |
-| `target_count` | integer | ❌ | 目标文献数量，默认 50，范围 10-100 |
-| `recent_years_ratio` | float | ❌ | 近 5 年文献占比，默认 0.5，范围 0.1-1.0 |
-| `research_direction_id` | string | ❌ | 研究方向：`computer`（计算机）、`materials`（材料）、`management`（管理），留空自动推断 |
+| `max_papers` | integer | ❌ | 目标文献数量，默认 30，范围 10-100 |
 
 ### 请求示例
 
 ```bash
-curl -X POST https://scholar.danmo.tech/api/smart-generate \
+curl -X POST https://scholar.danmo.tech/api/skill/research \
   -H "Authorization: Bearer YOUR_API_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
-    "topic": "脑机接口在中风康复中的应用",
+    "query": "脑机接口在中风康复中的应用",
     "language": "zh",
-    "target_count": 30
+    "max_papers": 30
   }'
 ```
 
@@ -57,12 +55,13 @@ curl -X POST https://scholar.danmo.tech/api/smart-generate \
 ```json
 {
   "success": true,
-  "message": "任务已提交，请使用任务ID查询进度",
+  "message": "任务已提交，请轮询获取结果",
   "data": {
-    "task_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "task_id": "a1b2c3d4",
     "topic": "脑机接口在中风康复中的应用",
     "status": "pending",
-    "poll_url": "/api/tasks/a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+    "poll_url": "/api/tasks/a1b2c3d4",
+    "review_url": "/api/tasks/a1b2c3d4/review"
   }
 }
 ```
@@ -72,7 +71,7 @@ curl -X POST https://scholar.danmo.tech/api/smart-generate \
 | HTTP 状态码 | 含义 |
 |-------------|------|
 | 401 | 未登录或 Token 无效 → 请到官网注册获取 API Token |
-| 403 | 积分不足 → 请到官网充值 |
+| 200 + success:false | 积分不足 → 请到官网充值 |
 
 ---
 
@@ -83,7 +82,7 @@ curl -X POST https://scholar.danmo.tech/api/smart-generate \
 ### 请求示例
 
 ```bash
-curl https://scholar.danmo.tech/api/tasks/a1b2c3d4-e5f6-7890-abcd-ef1234567890 \
+curl https://scholar.danmo.tech/api/tasks/a1b2c3d4 \
   -H "Authorization: Bearer YOUR_API_TOKEN"
 ```
 
@@ -93,7 +92,7 @@ curl https://scholar.danmo.tech/api/tasks/a1b2c3d4-e5f6-7890-abcd-ef1234567890 \
 {
   "success": true,
   "data": {
-    "task_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "task_id": "a1b2c3d4",
     "topic": "脑机接口在中风康复中的应用",
     "status": "processing",
     "progress": {
@@ -110,7 +109,7 @@ curl https://scholar.danmo.tech/api/tasks/a1b2c3d4-e5f6-7890-abcd-ef1234567890 \
 {
   "success": true,
   "data": {
-    "task_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "task_id": "a1b2c3d4",
     "topic": "脑机接口在中风康复中的应用",
     "status": "completed",
     "progress": {
@@ -139,7 +138,7 @@ curl https://scholar.danmo.tech/api/tasks/a1b2c3d4-e5f6-7890-abcd-ef1234567890 \
 ### 请求示例
 
 ```bash
-curl "https://scholar.danmo.tech/api/tasks/a1b2c3d4-e5f6-7890-abcd-ef1234567890/review?format=ieee" \
+curl "https://scholar.danmo.tech/api/tasks/a1b2c3d4/review?format=ieee" \
   -H "Authorization: Bearer YOUR_API_TOKEN"
 ```
 
@@ -149,7 +148,7 @@ curl "https://scholar.danmo.tech/api/tasks/a1b2c3d4-e5f6-7890-abcd-ef1234567890/
 {
   "success": true,
   "data": {
-    "task_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "task_id": "a1b2c3d4",
     "topic": "脑机接口在中风康复中的应用",
     "review": "# 脑机接口在中风康复中的应用：文献综述\n\n## 1. 引言\n\n...(完整 Markdown 综述内容)...\n\n## References\n\n[1] Author et al., \"Paper Title\", Journal, 2024.\n...",
     "papers": [
@@ -179,7 +178,7 @@ curl "https://scholar.danmo.tech/api/tasks/a1b2c3d4-e5f6-7890-abcd-ef1234567890/
 ## 完整调用流程
 
 ```
-1. POST /api/smart-generate  →  获取 task_id
+1. POST /api/skill/research  →  获取 task_id
 2. GET  /api/tasks/{task_id}  →  轮询，直到 status == "completed"
 3. GET  /api/tasks/{task_id}/review  →  获取完整综述 Markdown
 ```
@@ -202,7 +201,7 @@ curl "https://scholar.danmo.tech/api/tasks/a1b2c3d4-e5f6-7890-abcd-ef1234567890/
 
 ## Endpoint
 ```
-URL: https://scholar.danmo.tech/api/smart-generate
+URL: https://scholar.danmo.tech/api/skill/research
 Method: POST
 Headers:
   Content-Type: application/json
@@ -212,9 +211,9 @@ Headers:
 ## Request Body Template
 ```json
 {
-  "topic": "{{用户输入的研究主题}}",
+  "query": "{{用户输入的研究主题}}",
   "language": "{{用户语言：中文主题用zh，英文主题用en}}",
-  "target_count": 30
+  "max_papers": 30
 }
 ```
 
@@ -294,7 +293,7 @@ Headers:
 ## 错误处理
 
 - **Token 无效 (401)**: "请检查您的 API Token 是否正确。如未注册，请访问 [Danmo Scholar 官网](https://scholar.danmo.tech) 免费注册。"
-- **积分不足 (403)**: "您的积分不足。请访问 [Danmo Scholar 官网](https://scholar.danmo.tech/dashboard?ref=coze_skill) 充值，支持支付宝和信用卡。"
+- **积分不足 (success:false)**: "您的积分不足。请访问 [Danmo Scholar 官网](https://scholar.danmo.tech/dashboard?ref=coze_skill) 充值，支持支付宝和信用卡。"
 - **任务失败**: "综述生成失败，请稍后重试或访问 [Danmo Scholar 官网](https://scholar.danmo.tech) 直接生成。"
 - **超时**: "综述生成需要 3-5 分钟，请耐心等待。如长时间无响应，请访问 [Danmo Scholar 官网](https://scholar.danmo.tech) 直接生成。"
 ```
@@ -340,7 +339,7 @@ Authorization: Bearer {{DANMO_API_TOKEN}}
 
 1. 用户在 Coze 中使用你的 Bot
 2. 首次使用时，Coze 提示用户填写 `DANMO_API_TOKEN`
-3. 用户去 [Danmo Scholar 官网](https://scholar.danmo.tech) 注册 → 个人中心 → 复制 API Token
+3. 用户去 [Danmo Scholar 官网](https://scholar.danmo.tech) 注册 → 个人中心 → API Token 区域 → 复制 Token
 4. 填入消费者变量 → 即可使用
 
 ### 4. 引流机制
@@ -353,7 +352,7 @@ Authorization: Bearer {{DANMO_API_TOKEN}}
 ## API Token 获取路径
 
 ```
-官网首页 → 验证码登录 → 个人中心(/profile) → API Token 区域 → 复制 Token
+官网首页 → 验证码登录 → 个人中心(/profile) → 🔑 开发者 API Token → 复制 Token
 ```
 
 中文站：https://scholar.danmo.tech

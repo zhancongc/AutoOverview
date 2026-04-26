@@ -306,6 +306,10 @@ app.include_router(oauth_router)
 from authkit.routers.email_unsubscribe import router as email_unsubscribe_router
 app.include_router(email_unsubscribe_router)
 
+# 集成 Coze Skill 路由
+from routers.skill import router as skill_router
+app.include_router(skill_router)
+
 # 全局异常处理：确保所有未捕获异常打印完整堆栈
 from fastapi.responses import JSONResponse
 import traceback as _traceback

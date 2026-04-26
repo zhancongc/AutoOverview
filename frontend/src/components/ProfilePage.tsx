@@ -35,6 +35,7 @@ export function ProfilePage() {
   const [unlockMode, setUnlockMode] = useState(false)  // true=单次解锁, false=购买套餐
   const [showCreditConfirmModal, setShowCreditConfirmModal] = useState(false)
   const [confirmRecordId, setConfirmRecordId] = useState<number | null>(null)
+  const [showApiToken, setShowApiToken] = useState(false)
   const [exportModalSearch, setExportModalSearch] = useState<any | null>(null)
   const [exportFormat, setExportFormat] = useState<ExportFormat>('bibtex')
   const [exportingSearch, setExportingSearch] = useState(false)
@@ -443,6 +444,39 @@ export function ProfilePage() {
             <span className="stat-value">{credits}</span>
             <span className="stat-label">积分</span>
           </div>
+        </div>
+
+        {/* API Token */}
+        <div className="profile-api-token-section">
+          <div className="profile-api-token-header" onClick={() => setShowApiToken(!showApiToken)}>
+            <span className="profile-api-token-title">🔑 开发者 API Token</span>
+            <span className="profile-api-token-toggle">{showApiToken ? '▲' : '▼'}</span>
+          </div>
+          {showApiToken && (
+            <div className="profile-api-token-body">
+              <p className="profile-api-token-desc">
+                将此 Token 填入 Coze / Dify 消费者变量 <code>DANMO_API_TOKEN</code> 即可在 Agent 平台调用文献综述能力。
+              </p>
+              <div className="profile-api-token-field">
+                <code className="profile-api-token-value">
+                  {(() => {
+                    const t = localStorage.getItem('auth_token') || ''
+                    return showApiToken ? (t.length > 30 ? t.slice(0, 20) + '...' + t.slice(-10) : t) : ''
+                  })()}
+                </code>
+                <button
+                  className="profile-api-token-copy"
+                  onClick={() => {
+                    const token = localStorage.getItem('auth_token') || ''
+                    navigator.clipboard.writeText(token).then(() => {
+                      const btn = document.querySelector('.profile-api-token-copy') as HTMLButtonElement
+                      if (btn) { btn.textContent = '已复制 ✓'; setTimeout(() => { btn.textContent = '复制' }, 2000) }
+                    })
+                  }}
+                >复制</button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Tab 切换 */}
