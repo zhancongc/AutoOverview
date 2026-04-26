@@ -183,7 +183,7 @@ export function ReviewPageInternational() {
               <span className="btn-icon">🏠</span>
               <span className="btn-text">{t('review.error.go_home')}</span>
             </button>
-            <button className="error-option-btn primary" onClick={() => navigate('/profile?tab=reviews')}>
+            <button className="error-option-btn primary" onClick={() => navigate('/records?tab=reviews')}>
               <span className="btn-icon">👤</span>
               <span className="btn-text">{t('review.error.my_profile', 'My Reviews')}</span>
             </button>
@@ -343,7 +343,7 @@ export function ReviewPageInternational() {
   }
 
   const handleBack = () => {
-    navigate('/profile?tab=reviews')
+    navigate('/records?tab=reviews')
   }
 
   const handleRegenerate = () => {

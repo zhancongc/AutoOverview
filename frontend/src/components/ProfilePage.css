@@ -23,6 +23,10 @@
 }
 
 /* Add top padding for fixed nav */
+.profile-page .profile-layout {
+  padding-top: 70px;
+}
+
 .profile-page .profile-container {
   padding-top: 70px;
 }
@@ -848,4 +852,321 @@
 .profile-api-token-copy:hover {
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(214, 48, 49, 0.25);
+}
+
+/* ==================== 侧边栏布局 ==================== */
+
+.profile-layout {
+  display: flex;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 90px 24px 40px;
+  min-height: 100vh;
+  gap: 24px;
+}
+
+.profile-sidebar {
+  width: 200px;
+  flex-shrink: 0;
+}
+
+.sidebar-menu {
+  position: sticky;
+  top: 90px;
+  background: white;
+  border-radius: 12px;
+  border: 1px solid var(--border-gray);
+  overflow: hidden;
+}
+
+.sidebar-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 14px 20px;
+  border: none;
+  background: none;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-gray);
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: left;
+  border-left: 3px solid transparent;
+}
+
+.sidebar-menu-item:hover {
+  background: var(--cream-white);
+  color: var(--ink-black);
+}
+
+.sidebar-menu-item.active {
+  background: rgba(214, 48, 49, 0.06);
+  color: var(--academic-red);
+  border-left-color: var(--academic-red);
+  font-weight: 600;
+}
+
+.sidebar-menu-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.profile-main {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ===== Section 通用 ===== */
+
+.profile-section {
+  background: white;
+  border-radius: 12px;
+  border: 1px solid var(--border-gray);
+  padding: 32px;
+}
+
+.section-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--ink-black);
+  margin: 0 0 24px;
+}
+
+/* ===== Profile Section ===== */
+
+.profile-section .profile-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.profile-actions {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.profile-action-btn {
+  padding: 10px 20px;
+  border: 1.5px solid var(--border-gray);
+  border-radius: 8px;
+  background: white;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--charcoal);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.profile-action-btn:hover {
+  border-color: var(--text-gray);
+  background: var(--cream-white);
+}
+
+.profile-action-btn.btn-logout {
+  color: var(--academic-red);
+  border-color: rgba(214, 48, 49, 0.3);
+}
+
+.profile-action-btn.btn-logout:hover {
+  background: rgba(214, 48, 49, 0.06);
+}
+
+/* ===== Usage Section ===== */
+
+.usage-credits-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: linear-gradient(135deg, var(--academic-red) 0%, var(--academic-red-dark) 100%);
+  border-radius: 12px;
+  padding: 24px 28px;
+  margin-bottom: 24px;
+  color: white;
+}
+
+.usage-credits-label {
+  font-size: 14px;
+  opacity: 0.85;
+}
+
+.usage-credits-value {
+  font-size: 36px;
+  font-weight: 700;
+  flex: 1;
+}
+
+.usage-buy-btn {
+  padding: 8px 20px;
+  border: 2px solid rgba(255,255,255,0.5);
+  border-radius: 8px;
+  background: rgba(255,255,255,0.15);
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.usage-buy-btn:hover {
+  background: rgba(255,255,255,0.25);
+  border-color: white;
+}
+
+.usage-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.usage-stat-card {
+  background: var(--cream-white);
+  border-radius: 10px;
+  padding: 20px;
+  text-align: center;
+}
+
+.usage-stat-value {
+  display: block;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--ink-black);
+}
+
+.usage-stat-label {
+  font-size: 13px;
+  color: var(--text-gray);
+  margin-top: 4px;
+}
+
+/* ===== Docs Section ===== */
+
+.docs-section h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink-black);
+  margin: 24px 0 12px;
+}
+
+.docs-section h3:first-of-type {
+  margin-top: 0;
+}
+
+.docs-section p {
+  font-size: 14px;
+  color: var(--text-gray);
+  line-height: 1.6;
+  margin: 8px 0;
+}
+
+.docs-section ol {
+  padding-left: 20px;
+  margin: 8px 0;
+}
+
+.docs-section li {
+  font-size: 14px;
+  color: var(--text-gray);
+  line-height: 1.8;
+}
+
+.docs-section code {
+  background: #F1F3F5;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 13px;
+  color: var(--academic-red);
+}
+
+.docs-section pre {
+  background: #1A1A2E;
+  border-radius: 8px;
+  padding: 16px;
+  margin: 12px 0;
+  overflow-x: auto;
+}
+
+.docs-section pre code {
+  background: none;
+  color: #E2E8F0;
+  font-size: 13px;
+  padding: 0;
+  line-height: 1.6;
+}
+
+.docs-section a {
+  color: var(--academic-red);
+  text-decoration: none;
+}
+
+.docs-section a:hover {
+  text-decoration: underline;
+}
+
+.docs-block {
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border-gray);
+  margin-bottom: 16px;
+}
+
+.docs-block:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+/* ===== 移动端响应式 ===== */
+
+@media (max-width: 768px) {
+  .profile-layout {
+    flex-direction: column;
+    padding: 80px 12px 24px;
+    gap: 12px;
+  }
+
+  .profile-sidebar {
+    width: 100%;
+  }
+
+  .sidebar-menu {
+    position: static;
+    display: flex;
+    overflow-x: auto;
+    border-radius: 10px;
+  }
+
+  .sidebar-menu-item {
+    flex: 1;
+    justify-content: center;
+    padding: 12px 8px;
+    font-size: 13px;
+    border-left: none;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+  }
+
+  .sidebar-menu-item.active {
+    border-left-color: transparent;
+    border-bottom-color: var(--academic-red);
+  }
+
+  .profile-section {
+    padding: 20px;
+  }
+
+  .usage-stats-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+
+  .usage-stat-card {
+    padding: 14px 8px;
+  }
+
+  .usage-stat-value {
+    font-size: 22px;
+  }
 }

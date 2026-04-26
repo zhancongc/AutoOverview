@@ -156,7 +156,7 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
         <div className="nav-actions">
           {isLoggedIn ? (
             <div className="user-menu">
-              <button className="user-info" onClick={() => navigate('/profile')}>
+              <button className="user-info" onClick={() => navigate('/records')}>
                 <span className="user-avatar">👤</span>
                 <span className="user-name">{t('home.nav.profile')}</span>
               </button>
@@ -217,7 +217,7 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
         <div className="sidebar-bottom">
           {isLoggedIn ? (
             <>
-              <button className="sidebar-user-btn" onClick={() => { setMobileMenuOpen(false); navigate('/profile') }}>
+              <button className="sidebar-user-btn" onClick={() => { setMobileMenuOpen(false); navigate('/records') }}>
                 <span className="user-avatar">👤</span>
                 <span className="user-name">{t('home.nav.profile')}</span>
               </button>

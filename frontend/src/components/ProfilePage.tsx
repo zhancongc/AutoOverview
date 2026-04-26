@@ -12,6 +12,19 @@ import './ProfilePage.css'
 
 type ProfileTab = 'reviews' | 'searches' | 'matrices'
 
+const sectionRoutes: Record<string, string> = {
+  '/records': 'records',
+  '/settings': 'profile',
+  '/usage': 'usage',
+  '/docs': 'docs',
+}
+const routeSections: Record<string, string> = {
+  records: '/records',
+  profile: '/settings',
+  usage: '/usage',
+  docs: '/docs',
+}
+
 export function ProfilePage() {
   const { i18n } = useTranslation()
   const navigate = useNavigate()
@@ -20,7 +33,11 @@ export function ProfilePage() {
   const tabParam = searchParams.get('tab') as ProfileTab | null
   const activeTab: ProfileTab = tabParam && ['searches', 'matrices', 'reviews'].includes(tabParam) ? tabParam : 'searches'
   const setActiveTab = (tab: ProfileTab) => {
-    navigate(`/profile?tab=${tab}`, { replace: true })
+    navigate(`/records?tab=${tab}`, { replace: true })
+  }
+  const activeSection = sectionRoutes[location.pathname] || 'records'
+  const setActiveSection = (s: string) => {
+    navigate(routeSections[s] || '/records', { replace: true })
   }
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
@@ -410,96 +427,46 @@ export function ProfilePage() {
         </nav>
       </aside>
 
-      <div className="profile-container">
-        {/* 用户信息区域 */}
-        <div className="profile-header">
-          <div className="user-avatar-large">👤</div>
-          <div className="user-info-section">
-            <h1 className="user-name">{userInfo?.nickname || '用户'}</h1>
-            <p className="user-email">{userInfo?.email || ''}</p>
+      <div className="profile-layout">
+        {/* 左侧菜单栏 */}
+        <aside className="profile-sidebar">
+          <div className="sidebar-menu">
+            <button className={`sidebar-menu-item ${activeSection === 'records' ? 'active' : ''}`} onClick={() => setActiveSection('records')}>
+              <span className="sidebar-menu-icon">📋</span><span>我的记录</span>
+            </button>
+            <button className={`sidebar-menu-item ${activeSection === 'profile' ? 'active' : ''}`} onClick={() => setActiveSection('profile')}>
+              <span className="sidebar-menu-icon">👤</span><span>个人中心</span>
+            </button>
+            <button className={`sidebar-menu-item ${activeSection === 'usage' ? 'active' : ''}`} onClick={() => setActiveSection('usage')}>
+              <span className="sidebar-menu-icon">📊</span><span>用量统计</span>
+            </button>
+            <button className={`sidebar-menu-item ${activeSection === 'docs' ? 'active' : ''}`} onClick={() => setActiveSection('docs')}>
+              <span className="sidebar-menu-icon">📖</span><span>接口文档</span>
+            </button>
           </div>
-          <button className="nav-btn nav-btn-logout" onClick={handleLogout}>
-            退出登录
-          </button>
-        </div>
+        </aside>
 
-        {/* 统计信息 */}
-        <div className="profile-stats-inline">
-          <div className="stat-item">
-            <span className="stat-value">{searches.length}</span>
-            <span className="stat-label">查询次数</span>
-          </div>
-          <div className="stat-divider" />
-          <div className="stat-item">
-            <span className="stat-value">{matrices.length}</span>
-            <span className="stat-label">矩阵数量</span>
-          </div>
-          <div className="stat-divider" />
-          <div className="stat-item">
-            <span className="stat-value">{records.length}</span>
-            <span className="stat-label">综述数量</span>
-          </div>
-          <div className="stat-divider" />
-          <div className="stat-item stat-item-credits">
-            <span className="stat-value">{credits}</span>
-            <span className="stat-label">积分</span>
-          </div>
-        </div>
+        {/* 右侧内容区 */}
+        <main className="profile-main">
 
-        {/* API Token */}
-        <div className="profile-api-token-section">
-          <div className="profile-api-token-header" onClick={() => setShowApiToken(!showApiToken)}>
-            <span className="profile-api-token-title">🔑 开发者 API Token</span>
-            <span className="profile-api-token-toggle">{showApiToken ? '▲' : '▼'}</span>
+        {/* ===== 我的记录（默认） ===== */}
+        {activeSection === 'records' && (
+        <>
+          <div className="profile-stats-inline">
+            <div className="stat-item"><span className="stat-value">{searches.length}</span><span className="stat-label">查询次数</span></div>
+            <div className="stat-divider" />
+            <div className="stat-item"><span className="stat-value">{matrices.length}</span><span className="stat-label">矩阵数量</span></div>
+            <div className="stat-divider" />
+            <div className="stat-item"><span className="stat-value">{records.length}</span><span className="stat-label">综述数量</span></div>
+            <div className="stat-divider" />
+            <div className="stat-item stat-item-credits"><span className="stat-value">{credits}</span><span className="stat-label">积分</span></div>
           </div>
-          {showApiToken && (
-            <div className="profile-api-token-body">
-              <p className="profile-api-token-desc">
-                将此 Token 填入 Coze / Dify 消费者变量 <code>DANMO_API_TOKEN</code> 即可在 Agent 平台调用文献综述能力。
-              </p>
-              <div className="profile-api-token-field">
-                <code className="profile-api-token-value">
-                  {(() => {
-                    const t = localStorage.getItem('auth_token') || ''
-                    return showApiToken ? (t.length > 30 ? t.slice(0, 20) + '...' + t.slice(-10) : t) : ''
-                  })()}
-                </code>
-                <button
-                  className="profile-api-token-copy"
-                  onClick={() => {
-                    const token = localStorage.getItem('auth_token') || ''
-                    navigator.clipboard.writeText(token).then(() => {
-                      const btn = document.querySelector('.profile-api-token-copy') as HTMLButtonElement
-                      if (btn) { btn.textContent = '已复制 ✓'; setTimeout(() => { btn.textContent = '复制' }, 2000) }
-                    })
-                  }}
-                >复制</button>
-              </div>
-            </div>
-          )}
-        </div>
 
-        {/* Tab 切换 */}
-        <div className="profile-tabs">
-          <button
-            className={`profile-tab ${activeTab === 'searches' ? 'active' : ''}`}
-            onClick={() => setActiveTab('searches')}
-          >
-            🔍 文献查询
-          </button>
-          <button
-            className={`profile-tab ${activeTab === 'matrices' ? 'active' : ''}`}
-            onClick={() => setActiveTab('matrices')}
-          >
-            📊 对比矩阵
-          </button>
-          <button
-            className={`profile-tab ${activeTab === 'reviews' ? 'active' : ''}`}
-            onClick={() => setActiveTab('reviews')}
-          >
-            📖 我的综述
-          </button>
-        </div>
+          <div className="profile-tabs">
+            <button className={`profile-tab ${activeTab === 'searches' ? 'active' : ''}`} onClick={() => setActiveTab('searches')}>🔍 文献查询</button>
+            <button className={`profile-tab ${activeTab === 'matrices' ? 'active' : ''}`} onClick={() => setActiveTab('matrices')}>📊 对比矩阵</button>
+            <button className={`profile-tab ${activeTab === 'reviews' ? 'active' : ''}`} onClick={() => setActiveTab('reviews')}>📖 我的综述</button>
+          </div>
 
         {/* 历史记录列表 */}
         <div className="profile-history">
@@ -662,6 +629,102 @@ export function ProfilePage() {
             </>
           )}
         </div>
+        </>
+        )}
+
+        {/* ===== 个人中心 ===== */}
+        {activeSection === 'profile' && (
+        <div className="profile-section">
+          <div className="profile-header">
+            <div className="user-avatar-large">👤</div>
+            <div className="user-info-section">
+              <h1 className="user-name">{userInfo?.nickname || '用户'}</h1>
+              <p className="user-email">{userInfo?.email || ''}</p>
+            </div>
+          </div>
+          <div className="profile-actions">
+            <button className="profile-action-btn" onClick={() => navigate('/?buy_credits=1')}>购买积分</button>
+            <button className="profile-action-btn btn-logout" onClick={handleLogout}>退出登录</button>
+          </div>
+          <div className="profile-api-token-section">
+            <div className="profile-api-token-header" onClick={() => setShowApiToken(!showApiToken)}>
+              <span className="profile-api-token-title">🔑 开发者 API Token</span>
+              <span className="profile-api-token-toggle">{showApiToken ? '▲' : '▼'}</span>
+            </div>
+            {showApiToken && (
+              <div className="profile-api-token-body">
+                <p className="profile-api-token-desc">
+                  将此 Token 填入 Coze / Dify 消费者变量 <code>DANMO_API_TOKEN</code> 即可在 Agent 平台调用文献综述能力。
+                </p>
+                <div className="profile-api-token-field">
+                  <code className="profile-api-token-value">
+                    {(() => { const t = localStorage.getItem('auth_token') || ''; return t.length > 30 ? t.slice(0, 20) + '...' + t.slice(-10) : t })()}
+                  </code>
+                  <button className="profile-api-token-copy" onClick={() => {
+                    const token = localStorage.getItem('auth_token') || ''
+                    navigator.clipboard.writeText(token).then(() => {
+                      const btn = document.querySelector('.profile-api-token-copy') as HTMLButtonElement
+                      if (btn) { btn.textContent = '已复制 ✓'; setTimeout(() => { btn.textContent = '复制' }, 2000) }
+                    })
+                  }}>复制</button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+        )}
+
+        {/* ===== 用量统计 ===== */}
+        {activeSection === 'usage' && (
+        <div className="profile-section">
+          <h2 className="section-title">用量统计</h2>
+          <div className="usage-credits-card">
+            <span className="usage-credits-label">当前积分</span>
+            <span className="usage-credits-value">{credits}</span>
+            <button className="usage-buy-btn" onClick={() => navigate('/?buy_credits=1')}>购买积分</button>
+          </div>
+          <div className="usage-stats-grid">
+            <div className="usage-stat-card"><span className="usage-stat-value">{searches.length}</span><span className="usage-stat-label">文献搜索</span></div>
+            <div className="usage-stat-card"><span className="usage-stat-value">{matrices.length}</span><span className="usage-stat-label">对比矩阵</span></div>
+            <div className="usage-stat-card"><span className="usage-stat-value">{records.length}</span><span className="usage-stat-label">文献综述</span></div>
+          </div>
+        </div>
+        )}
+
+        {/* ===== 接口文档 ===== */}
+        {activeSection === 'docs' && (
+        <div className="profile-section docs-section">
+          <h2 className="section-title">Skill 接入指南</h2>
+          <div className="docs-block">
+            <h3>快速开始</h3>
+            <ol>
+              <li>注册 <a href="https://scholar.danmo.tech" target="_blank" rel="noreferrer">Danmo Scholar</a> 账号（注册即送 2 积分）</li>
+              <li>在「个人中心」页面复制 API Token</li>
+              <li>将 Token 填入 Coze 消费者变量 <code>DANMO_API_TOKEN</code></li>
+            </ol>
+          </div>
+          <div className="docs-block">
+            <h3>API 接口</h3>
+            <p>提交综述生成任务：</p>
+            <pre><code>{`POST https://scholar.danmo.tech/api/skill/research
+Authorization: Bearer YOUR_TOKEN
+Content-Type: application/json
+
+{"query": "研究主题", "language": "zh", "max_papers": 30}`}</code></pre>
+            <p>轮询任务状态：</p>
+            <pre><code>GET https://scholar.danmo.tech/api/tasks/TASK_ID{'\n'}Authorization: Bearer YOUR_TOKEN</code></pre>
+            <p>获取综述内容：</p>
+            <pre><code>GET https://scholar.danmo.tech/api/tasks/TASK_ID/review{'\n'}Authorization: Bearer YOUR_TOKEN</code></pre>
+          </div>
+          <div className="docs-block">
+            <h3>计费</h3>
+            <p>每次生成综述消耗 <strong>2 积分</strong>。注册赠送 2 积分（可免费生成 1 篇综述）。</p>
+            <p>积分用完后请到 <a href="https://scholar.danmo.tech/#pricing" target="_blank" rel="noreferrer">官网</a> 充值，最低 ¥9.9 起。</p>
+          </div>
+        </div>
+        )}
+
+        </main>
       </div>
 
       {/* 页脚 */}

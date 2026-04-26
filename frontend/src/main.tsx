@@ -64,7 +64,23 @@ function AppContent() {
         <Route path="/login" element={isEnglishVersion ? <SimpleAppInternational autoShowLogin /> : <SimpleApp autoShowLogin />} />
         <Route path="/" element={isEnglishVersion ? <SimpleAppInternational /> : <SimpleApp />} />
         <Route path="/search-papers" element={<SearchPapersPage />} />
-        <Route path="/profile" element={
+        <Route path="/records" element={
+          <ProtectedRoute>
+            {isEnglishVersion ? <ProfilePageInternational /> : <ProfilePage />}
+          </ProtectedRoute>
+        } />
+        <Route path="/profile" element={<Navigate to="/records" replace />} />
+        <Route path="/settings" element={
+          <ProtectedRoute>
+            {isEnglishVersion ? <ProfilePageInternational /> : <ProfilePage />}
+          </ProtectedRoute>
+        } />
+        <Route path="/usage" element={
+          <ProtectedRoute>
+            {isEnglishVersion ? <ProfilePageInternational /> : <ProfilePage />}
+          </ProtectedRoute>
+        } />
+        <Route path="/docs" element={
           <ProtectedRoute>
             {isEnglishVersion ? <ProfilePageInternational /> : <ProfilePage />}
           </ProtectedRoute>

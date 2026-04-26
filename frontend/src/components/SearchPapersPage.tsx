@@ -617,7 +617,7 @@ export function SearchPapersPage() {
         <div className="nav-actions">
           {loggedIn ? (
             <div className="user-menu">
-              <button className="user-info" onClick={() => navigate('/profile')}>
+              <button className="user-info" onClick={() => navigate('/records')}>
                 <span className="user-avatar">👤</span>
                 <span className="user-name">{t('home.nav.profile')}</span>
               </button>
@@ -656,7 +656,7 @@ export function SearchPapersPage() {
         </nav>
         <div className="sidebar-bottom">
           {loggedIn ? (
-            <button className="sidebar-user-btn" onClick={() => { setMobileMenuOpen(false); navigate('/profile') }}>
+            <button className="sidebar-user-btn" onClick={() => { setMobileMenuOpen(false); navigate('/records') }}>
               <span className="user-avatar">👤</span>
               <span className="user-name">{t('home.nav.profile')}</span>
             </button>
@@ -717,7 +717,7 @@ export function SearchPapersPage() {
             <div className="sp-search-history-link">
               <button
                 className="sp-history-btn"
-                onClick={() => navigate('/profile?tab=searches')}
+                onClick={() => navigate('/records?tab=searches')}
               >
                 {t('search_papers.history')}
               </button>

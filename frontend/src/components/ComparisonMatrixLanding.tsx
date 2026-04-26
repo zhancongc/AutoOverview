@@ -365,7 +365,7 @@ export function ComparisonMatrixLanding() {
       <div className="nav-actions">
         {loggedIn ? (
           <div className="user-menu">
-            <button className="user-info" onClick={() => navigate('/profile')}>
+            <button className="user-info" onClick={() => navigate('/records')}>
               <span className="user-avatar">👤</span>
               <span className="user-name">{t('home.nav.profile')}</span>
             </button>
@@ -404,7 +404,7 @@ export function ComparisonMatrixLanding() {
         </nav>
         <div className="sidebar-bottom">
           {loggedIn ? (
-            <button className="sidebar-user-btn" onClick={() => { setMobileMenuOpen(false); navigate('/profile') }}>
+            <button className="sidebar-user-btn" onClick={() => { setMobileMenuOpen(false); navigate('/records') }}>
               <span className="user-avatar">👤</span>
               <span className="user-name">{t('home.nav.profile')}</span>
             </button>
@@ -472,7 +472,7 @@ export function ComparisonMatrixLanding() {
             <div className="sp-search-history-link">
               <button
                 className="sp-history-btn"
-                onClick={() => navigate('/profile?tab=matrices')}
+                onClick={() => navigate('/records?tab=matrices')}
               >
                 {t('comparison_matrix_page.history')}
               </button>

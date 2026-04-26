@@ -455,7 +455,7 @@ export function GenerateReviewPage() {
       <div className="nav-actions">
         {isLoggedIn ? (
           <div className="user-menu">
-            <button className="user-info" onClick={() => navigate('/profile')}>
+            <button className="user-info" onClick={() => navigate('/records')}>
               <span className="user-avatar">👤</span>
               <span className="user-name">{t('home.nav.profile')}</span>
             </button>
@@ -494,7 +494,7 @@ export function GenerateReviewPage() {
         </nav>
         <div className="sidebar-bottom">
           {isLoggedIn ? (
-            <button className="sidebar-user-btn" onClick={() => { setMobileMenuOpen(false); navigate('/profile') }}>
+            <button className="sidebar-user-btn" onClick={() => { setMobileMenuOpen(false); navigate('/records') }}>
               <span className="user-avatar">👤</span>
               <span className="user-name">{t('home.nav.profile')}</span>
             </button>
@@ -574,7 +574,7 @@ export function GenerateReviewPage() {
             <div className="sp-search-history-link">
               <button
                 className="sp-history-btn"
-                onClick={() => navigate('/profile?tab=reviews')}
+                onClick={() => navigate('/records?tab=reviews')}
               >
                 {t('generate_page.history')}
               </button>

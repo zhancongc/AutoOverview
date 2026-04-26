@@ -17,6 +17,19 @@ import './ProfilePageInternational.css'
 
 type ProfileTab = 'reviews' | 'searches' | 'matrices'
 
+const sectionRoutes: Record<string, string> = {
+  '/records': 'records',
+  '/settings': 'profile',
+  '/usage': 'usage',
+  '/docs': 'docs',
+}
+const routeSections: Record<string, string> = {
+  records: '/records',
+  profile: '/settings',
+  usage: '/usage',
+  docs: '/docs',
+}
+
 export function ProfilePageInternational() {
   const { i18n } = useTranslation()
   const navigate = useNavigate()
@@ -25,7 +38,11 @@ export function ProfilePageInternational() {
   const tabParam = searchParams.get('tab') as ProfileTab | null
   const activeTab: ProfileTab = tabParam && ['searches', 'matrices', 'reviews'].includes(tabParam) ? tabParam : 'searches'
   const setActiveTab = (tab: ProfileTab) => {
-    navigate(`/profile?tab=${tab}`, { replace: true })
+    navigate(`/records?tab=${tab}`, { replace: true })
+  }
+  const activeSection = sectionRoutes[location.pathname] || 'records'
+  const setActiveSection = (s: string) => {
+    navigate(routeSections[s] || '/records', { replace: true })
   }
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [records, setRecords] = useState<ReviewRecord[]>([])
@@ -474,86 +491,43 @@ export function ProfilePageInternational() {
         </nav>
       </aside>
 
-      <div className="profile-container">
-        {/* User Info Section */}
-        <div className="profile-header">
-          <div className="user-avatar-large">👤</div>
-          <div className="user-info-section">
-            <h1 className="user-name">{userInfo?.nickname || 'User'}</h1>
-            <p className="user-email">{userInfo?.email || ''}</p>
-            <div className="user-actions">
-              <button className="edit-profile-button" onClick={handleEditProfile}>
-                ✏️ Edit Profile
-              </button>
-              <button className="nav-btn nav-btn-logout" onClick={handleLogout}>
-                Logout
-              </button>
-            </div>
+      <div className="profile-layout">
+        {/* Left Sidebar */}
+        <aside className="profile-sidebar">
+          <div className="sidebar-menu">
+            <button className={`sidebar-menu-item ${activeSection === 'records' ? 'active' : ''}`} onClick={() => setActiveSection('records')}>
+              <span className="sidebar-menu-icon">📋</span><span>My Records</span>
+            </button>
+            <button className={`sidebar-menu-item ${activeSection === 'profile' ? 'active' : ''}`} onClick={() => setActiveSection('profile')}>
+              <span className="sidebar-menu-icon">👤</span><span>Profile</span>
+            </button>
+            <button className={`sidebar-menu-item ${activeSection === 'usage' ? 'active' : ''}`} onClick={() => setActiveSection('usage')}>
+              <span className="sidebar-menu-icon">📊</span><span>Usage</span>
+            </button>
+            <button className={`sidebar-menu-item ${activeSection === 'docs' ? 'active' : ''}`} onClick={() => setActiveSection('docs')}>
+              <span className="sidebar-menu-icon">📖</span><span>API Docs</span>
+            </button>
           </div>
-        </div>
+        </aside>
 
-        {/* Stats */}
-        <div className="profile-stats-inline">
-          <div className="stat-item">
-            <span className="stat-value">{records.length}</span>
-            <span className="stat-label">Reviews</span>
-          </div>
-          <div className="stat-divider" />
-          <div className="stat-item">
-            <span className="stat-value">{searches.length}</span>
-            <span className="stat-label">Searches</span>
-          </div>
-          <div className="stat-divider" />
-          <div className="stat-item">
-            <span className="stat-value">{matrices.length}</span>
-            <span className="stat-label">Matrices</span>
-          </div>
-          <div className="stat-divider" />
-          <div className="stat-item stat-item-credits">
-            <span className="stat-value">{credits}</span>
-            <span className="stat-label">Credits</span>
-          </div>
-        </div>
+        {/* Main Content */}
+        <main className="profile-main">
 
-        {/* API Token */}
-        <div className="profile-api-token-section">
-          <div className="profile-api-token-header" onClick={() => setShowApiToken(!showApiToken)}>
-            <span className="profile-api-token-title">🔑 Developer API Token</span>
-            <span className="profile-api-token-toggle">{showApiToken ? '▲' : '▼'}</span>
+        {/* ===== Records (default) ===== */}
+        {activeSection === 'records' && (
+        <>
+          <div className="profile-stats-inline">
+            <div className="stat-item"><span className="stat-value">{records.length}</span><span className="stat-label">Reviews</span></div>
+            <div className="stat-divider" />
+            <div className="stat-item"><span className="stat-value">{searches.length}</span><span className="stat-label">Searches</span></div>
+            <div className="stat-divider" />
+            <div className="stat-item"><span className="stat-value">{matrices.length}</span><span className="stat-label">Matrices</span></div>
+            <div className="stat-divider" />
+            <div className="stat-item stat-item-credits"><span className="stat-value">{credits}</span><span className="stat-label">Credits</span></div>
           </div>
-          {showApiToken && (
-            <div className="profile-api-token-body">
-              <p className="profile-api-token-desc">
-                Use this token as the <code>DANMO_API_TOKEN</code> consumer variable in Coze / Dify to call the literature review API.
-              </p>
-              <div className="profile-api-token-field">
-                <code className="profile-api-token-value">
-                  {(() => {
-                    const t = localStorage.getItem('auth_token') || ''
-                    return t.length > 30 ? t.slice(0, 20) + '...' + t.slice(-10) : t
-                  })()}
-                </code>
-                <button
-                  className="profile-api-token-copy"
-                  onClick={() => {
-                    const token = localStorage.getItem('auth_token') || ''
-                    navigator.clipboard.writeText(token).then(() => {
-                      const btns = document.querySelectorAll('.profile-api-token-copy')
-                      const btn = btns[btns.length - 1] as HTMLButtonElement
-                      if (btn) { btn.textContent = 'Copied ✓'; setTimeout(() => { btn.textContent = 'Copy' }, 2000) }
-                    })
-                  }}
-                >Copy</button>
-              </div>
-            </div>
-          )}
-        </div>
 
-        {/* Tab Switcher */}
-        <div className="profile-tabs">
-          <button
-            className={`profile-tab ${activeTab === 'searches' ? 'active' : ''}`}
-            onClick={() => setActiveTab('searches')}
+          <div className="profile-tabs">
+          <button className={`profile-tab ${activeTab === 'searches' ? 'active' : ''}`} onClick={() => setActiveTab('searches')}
           >
             🔍 My Searches
           </button>
@@ -733,13 +707,110 @@ export function ProfilePageInternational() {
             </>
           )}
         </div>
-      </div>
+        </>
+        )}
 
-      {/* Close Account - bottom of page */}
-      <div className="close-account-wrapper">
-        <button className="close-account-button" onClick={() => { setShowCloseAccountModal(true); setCloseAccountEmail(''); }}>
-          Close Account
-        </button>
+        {/* ===== Profile ===== */}
+        {activeSection === 'profile' && (
+        <div className="profile-section">
+          <div className="profile-header">
+            <div className="user-avatar-large">👤</div>
+            <div className="user-info-section">
+              <h1 className="user-name">{userInfo?.nickname || 'User'}</h1>
+              <p className="user-email">{userInfo?.email || ''}</p>
+            </div>
+          </div>
+          <div className="profile-actions">
+            <button className="profile-action-btn" onClick={() => navigate('/?buy_credits=1')}>Buy Credits</button>
+            <button className="profile-action-btn" onClick={handleEditProfile}>Edit Profile</button>
+            <button className="profile-action-btn btn-logout" onClick={handleLogout}>Logout</button>
+          </div>
+          <div className="close-account-wrapper">
+            <button className="close-account-button" onClick={() => { setShowCloseAccountModal(true); setCloseAccountEmail(''); }}>
+              Close Account
+            </button>
+          </div>
+          <div className="profile-api-token-section">
+            <div className="profile-api-token-header" onClick={() => setShowApiToken(!showApiToken)}>
+              <span className="profile-api-token-title">🔑 Developer API Token</span>
+              <span className="profile-api-token-toggle">{showApiToken ? '▲' : '▼'}</span>
+            </div>
+            {showApiToken && (
+              <div className="profile-api-token-body">
+                <p className="profile-api-token-desc">
+                  Copy this token and paste it into the Coze / Dify consumer variable <code>DANMO_API_TOKEN</code> to enable literature review capabilities in your Agent platform.
+                </p>
+                <div className="profile-api-token-field">
+                  <code className="profile-api-token-value">
+                    {(() => { const t = localStorage.getItem('auth_token') || ''; return t.length > 30 ? t.slice(0, 20) + '...' + t.slice(-10) : t })()}
+                  </code>
+                  <button className="profile-api-token-copy" onClick={() => {
+                    const token = localStorage.getItem('auth_token') || ''
+                    navigator.clipboard.writeText(token).then(() => {
+                      const btn = document.querySelector('.profile-api-token-copy') as HTMLButtonElement
+                      if (btn) { btn.textContent = 'Copied ✓'; setTimeout(() => { btn.textContent = 'Copy' }, 2000) }
+                    })
+                  }}>Copy</button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+        )}
+
+        {/* ===== Usage ===== */}
+        {activeSection === 'usage' && (
+        <div className="profile-section">
+          <h2 className="section-title">Usage Statistics</h2>
+          <div className="usage-credits-card">
+            <span className="usage-credits-label">Current Credits</span>
+            <span className="usage-credits-value">{credits}</span>
+            <button className="usage-buy-btn" onClick={() => navigate('/?buy_credits=1')}>Buy Credits</button>
+          </div>
+          <div className="usage-stats-grid">
+            <div className="usage-stat-card"><span className="usage-stat-value">{searches.length}</span><span className="usage-stat-label">Paper Searches</span></div>
+            <div className="usage-stat-card"><span className="usage-stat-value">{matrices.length}</span><span className="usage-stat-label">Comparison Matrices</span></div>
+            <div className="usage-stat-card"><span className="usage-stat-value">{records.length}</span><span className="usage-stat-label">Literature Reviews</span></div>
+          </div>
+        </div>
+        )}
+
+        {/* ===== Docs ===== */}
+        {activeSection === 'docs' && (
+        <div className="profile-section docs-section">
+          <h2 className="section-title">API Integration Guide</h2>
+          <div className="docs-block">
+            <h3>Quick Start</h3>
+            <ol>
+              <li>Sign up at <a href="https://en-scholar.danmo.tech" target="_blank" rel="noreferrer">Danmo Scholar</a> (2 free credits on registration)</li>
+              <li>Copy your API Token from the Profile page</li>
+              <li>Paste the Token into the Coze consumer variable <code>DANMO_API_TOKEN</code></li>
+            </ol>
+          </div>
+          <div className="docs-block">
+            <h3>API Endpoints</h3>
+            <p>Submit a review generation task:</p>
+            <pre><code>{`POST https://en-scholar.danmo.tech/api/skill/research
+Authorization: Bearer YOUR_TOKEN
+Content-Type: application/json
+
+{"query": "your research topic", "language": "en", "max_papers": 30}`}</code></pre>
+            <p>Poll task status:</p>
+            <pre><code>{`GET https://en-scholar.danmo.tech/api/tasks/TASK_ID
+Authorization: Bearer YOUR_TOKEN`}</code></pre>
+            <p>Get review content:</p>
+            <pre><code>{`GET https://en-scholar.danmo.tech/api/tasks/TASK_ID/review
+Authorization: Bearer YOUR_TOKEN`}</code></pre>
+          </div>
+          <div className="docs-block">
+            <h3>Pricing</h3>
+            <p>Each review generation costs <strong>2 credits</strong>. New users get 2 free credits (1 free review).</p>
+            <p>Need more credits? Visit <a href="https://en-scholar.danmo.tech/#pricing" target="_blank" rel="noreferrer">pricing page</a> — plans start at $9.99.</p>
+          </div>
+        </div>
+        )}
+
+        </main>
       </div>
 
       {/* Footer */}

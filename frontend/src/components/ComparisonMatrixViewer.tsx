@@ -385,7 +385,7 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
   const renderCompactHeader = () => (
     <div className="review-page-header" style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100, background: '#fff', borderBottom: '1px solid #e5e7eb' }}>
       <div className="header-left-buttons">
-        <button className="back-button" onClick={() => navigate('/profile?tab=matrices')}>
+        <button className="back-button" onClick={() => navigate('/records?tab=matrices')}>
           ←
         </button>
       </div>
@@ -639,7 +639,7 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
               className="sidebar-user-btn"
               onClick={() => {
                 setMobileMenuOpen(false)
-                navigate('/profile')
+                navigate('/records')
               }}
             >
               <span>👤</span>
@@ -727,7 +727,7 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
               className="sidebar-user-btn"
               onClick={() => {
                 setMobileMenuOpen(false)
-                navigate('/profile')
+                navigate('/records')
               }}
             >
               <span>👤</span>
@@ -909,7 +909,7 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
               className="sidebar-user-btn"
               onClick={() => {
                 setMobileMenuOpen(false)
-                navigate('/profile')
+                navigate('/records')
               }}
             >
               <span>👤</span>
