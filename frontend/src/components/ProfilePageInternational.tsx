@@ -719,9 +719,11 @@ export function ProfilePageInternational() {
                           <div className="record-meta">
                             <span className="record-time">{formatDate(matrix.created_at)}</span>
                           </div>
+                          {matrix.status !== 'failed' && (
                           <button className="export-button" onClick={(e) => { e.stopPropagation(); setExportModalMatrix(matrix) }}>
                             Export Matrix
                           </button>
+                          )}
                         </div>
                       </div>
                     </div>
