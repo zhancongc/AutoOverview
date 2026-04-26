@@ -70,50 +70,70 @@ export function ShareRewardModal({ taskId, onClose }: ShareRewardModalProps) {
         </div>
 
         <div className="share-reward-body">
-          {/* 路径一：加微信 */}
+          {/* 路径一：加微信 / Follow X */}
           <div className="share-reward-path">
             <h3 className="share-reward-path-title">
               {isChineseSite
                 ? '路径一：加微信领积分 + 进硕博群'
-                : 'Path 1: Contact Developer'}
+                : 'Share on X (Twitter)'}
             </h3>
-            <div className="share-reward-qr-wrapper">
-              <img
-                src="/wechat-qr.jpg"
-                alt="WeChat QR"
-                className="share-reward-qr"
-              />
-            </div>
-            <p className="share-reward-desc">
-              {isChineseSite
-                ? '添加开发者微信，发送分享截图，即可领取 2 积分并加入专属硕博交流群'
-                : 'Add the developer on WeChat and share your screenshot for 2 credits + join our research community'}
-            </p>
+            {isChineseSite ? (
+              <>
+                <div className="share-reward-qr-wrapper">
+                  <img
+                    src="/wechat-qr.jpg"
+                    alt="WeChat QR"
+                    className="share-reward-qr"
+                  />
+                </div>
+                <p className="share-reward-desc">
+                  添加开发者微信，发送分享截图，即可领取 2 积分并加入专属硕博交流群
+                </p>
+              </>
+            ) : (
+              <div style={{ textAlign: 'center' }}>
+                <a
+                  href="https://x.com/JadeZhan0822"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: '8px',
+                    padding: '12px 24px', borderRadius: '12px',
+                    background: '#000', color: '#fff', textDecoration: 'none',
+                    fontWeight: 600, fontSize: '15px', transition: 'all 0.2s',
+                  }}
+                >
+                  𝕏 @JadeZhan0822
+                </a>
+                <p className="share-reward-desc" style={{ marginTop: '12px' }}>
+                  Post about Danmo Scholar on X and tag <strong>@JadeZhan0822</strong>, then upload the screenshot below to earn 2 free credits!
+                </p>
+              </div>
+            )}
           </div>
 
           {/* 分隔线 */}
-          <div className="share-reward-divider">
-            <span>{isChineseSite ? '或' : 'OR'}</span>
-          </div>
+          {isChineseSite && (
+            <div className="share-reward-divider">
+              <span>或</span>
+            </div>
+          )}
 
           {/* 路径二：上传截图 */}
+          {isChineseSite && (
           <div className="share-reward-path">
             <h3 className="share-reward-path-title">
-              {isChineseSite ? '路径二：上传分享截图' : 'Path 2: Upload Screenshot'}
+              路径二：上传分享截图
             </h3>
             <p className="share-reward-desc">
-              {isChineseSite
-                ? '在小红书/朋友圈分享后，上传截图，系统自动发放 2 积分'
-                : 'Share on Twitter/X, Reddit, etc. Upload screenshot for 2 credits'}
+              在小红书/朋友圈分享后，上传截图，系统自动发放 2 积分
             </p>
 
             {uploaded ? (
               <div className="share-reward-success">
                 <span className="share-reward-success-icon">✓</span>
                 <span>
-                  {isChineseSite
-                    ? `已领取 2 积分${credits !== null ? `，当前余额 ${credits} 积分` : ''}`
-                    : `2 credits claimed${credits !== null ? `, balance: ${credits}` : ''}`}
+                  {credits !== null ? `已领取 2 积分，当前余额 ${credits} 积分` : '已领取 2 积分'}
                 </span>
               </div>
             ) : (
@@ -126,7 +146,7 @@ export function ShareRewardModal({ taskId, onClose }: ShareRewardModalProps) {
                 >
                   <span className="share-reward-upload-icon">📸</span>
                   <span className="share-reward-upload-text">
-                    {isChineseSite ? '点击上传或拖拽图片' : 'Click to upload or drag & drop'}
+                    点击上传或拖拽图片
                   </span>
                 </div>
                 <input
@@ -139,7 +159,7 @@ export function ShareRewardModal({ taskId, onClose }: ShareRewardModalProps) {
                 {uploading && (
                   <div className="share-reward-uploading">
                     <span className="share-reward-spinner" />
-                    {isChineseSite ? '上传中...' : 'Uploading...'}
+                    上传中...
                   </div>
                 )}
                 {error && (
@@ -148,6 +168,51 @@ export function ShareRewardModal({ taskId, onClose }: ShareRewardModalProps) {
               </>
             )}
           </div>
+          )}
+
+          {/* 英文站：上传截图 */}
+          {!isChineseSite && (
+          <div className="share-reward-path">
+            {uploaded ? (
+              <div className="share-reward-success">
+                <span className="share-reward-success-icon">✓</span>
+                <span>
+                  {credits !== null ? `2 credits claimed, balance: ${credits}` : '2 credits claimed'}
+                </span>
+              </div>
+            ) : (
+              <>
+                <div
+                  className="share-reward-upload-area"
+                  onClick={() => fileInputRef.current?.click()}
+                  onDragOver={e => e.preventDefault()}
+                  onDrop={handleDrop}
+                >
+                  <span className="share-reward-upload-icon">📸</span>
+                  <span className="share-reward-upload-text">
+                    Click to upload or drag & drop
+                  </span>
+                </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  style={{ display: 'none' }}
+                />
+                {uploading && (
+                  <div className="share-reward-uploading">
+                    <span className="share-reward-spinner" />
+                    Uploading...
+                  </div>
+                )}
+                {error && (
+                  <p className="share-reward-error">{error}</p>
+                )}
+              </>
+            )}
+          </div>
+          )}
         </div>
       </div>
     </div>

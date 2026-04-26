@@ -1077,7 +1077,7 @@ export function ReviewPage() {
       {/* 分享海报弹窗 */}
       {showPosterModal && reviewData && (
         <div className="confirm-modal-overlay" onClick={() => setShowPosterModal(false)}>
-          <div className="confirm-modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 420 }}>
+          <div className="confirm-modal" onClick={e => e.stopPropagation()} style={{ width: 460, maxWidth: '90vw', maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
             <button className="confirm-modal-close" onClick={() => setShowPosterModal(false)}>&times;</button>
             <div className="confirm-modal-header">
               <h2 className="confirm-modal-title">{t('poster.generate')}</h2>
@@ -1115,8 +1115,8 @@ export function ReviewPage() {
               </div>
               {/* 海报预览容器 */}
               <div style={{
-                width: '324px',
-                height: '576px',
+                width: '270px',
+                height: '480px',
                 margin: '0 auto',
                 borderRadius: '12px',
                 overflow: 'hidden',
@@ -1129,7 +1129,7 @@ export function ReviewPage() {
                   left: 0,
                   width: '1080px',
                   height: '1920px',
-                  transform: 'scale(0.3)',
+                  transform: 'scale(0.25)',
                   transformOrigin: 'top left',
                 }}>
                   <AcademicPoster
@@ -1155,16 +1155,17 @@ export function ReviewPage() {
                 </div>
               </div>
             </div>
-            <div className="confirm-modal-footer" style={{ gap: '12px' }}>
-              <button className="confirm-modal-btn confirm-modal-btn-cancel" onClick={async () => {
-                await handleShare()
-                setShowPosterModal(false)
-              }}>
-                {t('poster.copy_link', '分享链接')}
-              </button>
+            <div className="confirm-modal-footer" style={{ gap: '12px', flexWrap: 'wrap', flexShrink: 0 }}>
               <button className="confirm-modal-btn confirm-modal-btn-primary" onClick={handleGeneratePoster} disabled={generatingPoster}>
                 {generatingPoster && <span className="confirm-modal-spinner" />}
                 {generatingPoster ? t('poster.generating') : t('poster.save_poster', '保存海报')}
+              </button>
+              <button className="confirm-modal-btn" style={{ background: '#f59e0b', color: '#fff', border: 'none' }} onClick={async () => {
+                await handleShare()
+                setShowPosterModal(false)
+                setTimeout(() => setShowShareReward(true), 100)
+              }}>
+                🎉 分享领积分
               </button>
             </div>
           </div>
@@ -1198,9 +1199,9 @@ export function ReviewPage() {
       )}
 
       {/* 分享奖励弹窗 */}
-      {showShareReward && taskId && (
+      {showShareReward && (taskId || taskData?.taskId || taskData?.recordId) && (
         <ShareRewardModal
-          taskId={taskId}
+          taskId={taskId || taskData?.taskId || String(taskData?.recordId || '')}
           onClose={() => setShowShareReward(false)}
         />
       )}

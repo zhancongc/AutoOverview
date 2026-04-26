@@ -3,7 +3,7 @@
  * URL: /comparison-matrix?task_id=xxx
  * 紧凑导航栏 + 矩阵展示，参考 ReviewPage 风格
  */
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import ReactMarkdown from 'react-markdown'
@@ -18,6 +18,8 @@ import { ConfirmModalInternational } from './ConfirmModalInternational'
 import { ConfirmModal } from './ConfirmModal'
 import { useMatrixAuth, ComparisonMatrixData, TabType } from './ComparisonMatrixShared'
 import { ExportFormatModal, ExportFormat } from './ExportFormatModal'
+import { AcademicPoster, PosterTheme } from './AcademicPoster'
+import { ShareRewardModal } from './ShareRewardModal'
 import './ComparisonMatrixPage.css'
 
 export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
@@ -43,8 +45,12 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
   const [showMatrixExportModal, setShowMatrixExportModal] = useState(false)
   const [matrixExportFormat, setMatrixExportFormat] = useState<'markdown' | 'word'>('markdown')
   const [exportingMatrix, setExportingMatrix] = useState(false)
-  const [shareCopied, setShareCopied] = useState(false)
   const [showToast, setShowToast] = useState(false)
+  const [showPosterModal, setShowPosterModal] = useState(false)
+  const [posterTheme, setPosterTheme] = useState<PosterTheme>('cosmic')
+  const [generatingPoster, setGeneratingPoster] = useState(false)
+  const posterGenRef = useRef(false)
+  const [showShareReward, setShowShareReward] = useState(false)
 
   useEffect(() => {
     loadMatrixData(taskId)
@@ -149,14 +155,82 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
       await api.shareSearchResult(taskId)
       const url = `${window.location.origin}/comparison-matrix?task_id=${taskId}`
       await navigator.clipboard.writeText(url)
-      setShareCopied(true)
       setShowToast(true)
       setTimeout(() => {
-        setShareCopied(false)
         setShowToast(false)
       }, 3000)
     } catch (err) {
       console.error('Share failed:', err)
+    }
+  }
+
+  const extractCoreFindings = (content: string): string[] => {
+    const findings: string[] = []
+    const lines = content.split('\n')
+    let inFindings = false
+    for (const line of lines) {
+      const trimmed = line.trim()
+      if (/^#{1,3}\s/.test(trimmed)) {
+        const heading = trimmed.replace(/^#+\s*/, '').toLowerCase()
+        inFindings = /核心|发现|主要|结论|conclusion|finding|key|main|result|summary/i.test(heading)
+        continue
+      }
+      if (inFindings && /^[-*]\s/.test(trimmed)) {
+        const text = trimmed.replace(/^[-*]\s*/, '').replace(/\*\*/g, '').trim()
+        if (text.length > 5 && text.length < 150) {
+          findings.push(text)
+        }
+        if (findings.length >= 5) break
+      }
+    }
+    if (findings.length === 0) {
+      for (const line of lines) {
+        const trimmed = line.trim()
+        if (/^[-*]\s/.test(trimmed)) {
+          const text = trimmed.replace(/^[-*]\s*/, '').replace(/\*\*/g, '').trim()
+          if (text.length > 5 && text.length < 150) {
+            findings.push(text)
+          }
+          if (findings.length >= 5) break
+        }
+      }
+    }
+    return findings
+  }
+
+  const handleGeneratePoster = async () => {
+    if (posterGenRef.current || generatingPoster) return
+    posterGenRef.current = true
+    setGeneratingPoster(true)
+
+    await new Promise(resolve => setTimeout(resolve, 100))
+
+    try {
+      const html2canvas = (await import('html2canvas-pro')).default
+      const posterEl = document.getElementById('poster-for-generation') as HTMLElement
+      if (!posterEl) return
+
+      const canvas = await html2canvas(posterEl, {
+        scale: 1,
+        useCORS: true,
+        logging: false,
+        backgroundColor: null,
+        width: 1080,
+        height: 1920,
+      })
+
+      const { saveAs } = await import('file-saver')
+      const safeName = (matrixData?.topic || 'comparison-matrix').replace(/[\/\\:]/g, '-').substring(0, 50)
+      canvas.toBlob((blob) => {
+        if (blob) {
+          saveAs(blob, `${safeName}-poster.png`)
+        }
+      }, 'image/png')
+    } catch (err) {
+      console.error('Generate poster failed:', err)
+    } finally {
+      setGeneratingPoster(false)
+      posterGenRef.current = false
     }
   }
 
@@ -415,8 +489,8 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
         <button className="stats-action-btn" onClick={() => setShowMatrixExportModal(true)}>
           {isChineseSite ? '导出矩阵' : 'Export'}
         </button>
-        <button className="stats-action-btn" onClick={handleShare}>
-          {shareCopied ? (isChineseSite ? '已复制' : 'Copied') : (isChineseSite ? '分享' : 'Share')}
+        <button className="stats-action-btn" onClick={() => { if (matrixData) setShowPosterModal(true) }}>
+          {isChineseSite ? '分享' : 'Share'}
         </button>
       </div>
       <button
@@ -533,6 +607,106 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
             </div>
           </div>
         </div>
+      )}
+      {showPosterModal && matrixData && (
+        <div className="confirm-modal-overlay" onClick={() => setShowPosterModal(false)}>
+          <div className="confirm-modal" onClick={e => e.stopPropagation()} style={{ width: 460, maxWidth: '90vw', maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
+            <button className="confirm-modal-close" onClick={() => setShowPosterModal(false)}>&times;</button>
+            <div className="confirm-modal-header">
+              <h2 className="confirm-modal-title">{t('poster.generate')}</h2>
+            </div>
+            <div className="confirm-modal-body" style={{ textAlign: 'center', padding: '20px' }}>
+              <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginBottom: '16px', flexWrap: 'wrap' }}>
+                {([
+                  { key: 'cosmic', label: '深空紫', gradient: 'linear-gradient(135deg, #302b63, #24243e)' },
+                  { key: 'gold', label: '学术黑金', gradient: 'linear-gradient(135deg, #0a0a0a, #d4a853)' },
+                  { key: 'minimal', label: '极简白', gradient: 'linear-gradient(135deg, #f8f9fa, #3b82f6)' },
+                  { key: 'forest', label: '森林绿', gradient: 'linear-gradient(135deg, #1a3a2a, #4ade80)' },
+                  { key: 'chinese', label: '中国红', gradient: 'linear-gradient(135deg, #4a1a1a, #fbbf24)' },
+                ] as const).map(item => (
+                  <button
+                    key={item.key}
+                    onClick={() => setPosterTheme(item.key)}
+                    style={{
+                      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px',
+                      background: 'none', border: 'none', cursor: 'pointer', padding: '4px',
+                    }}
+                  >
+                    <div style={{
+                      width: '40px', height: '40px', borderRadius: '50%',
+                      background: item.gradient,
+                      border: posterTheme === item.key ? '3px solid #3b82f6' : '3px solid transparent',
+                      boxShadow: posterTheme === item.key ? '0 0 0 2px rgba(59,130,246,0.3)' : 'none',
+                      transition: 'all 0.2s',
+                    }} />
+                    <span style={{ fontSize: '12px', color: posterTheme === item.key ? '#3b82f6' : '#6b7280', fontWeight: posterTheme === item.key ? 600 : 400 }}>
+                      {item.label}
+                    </span>
+                  </button>
+                ))}
+              </div>
+              <div style={{
+                width: '270px',
+                height: '480px',
+                margin: '0 auto',
+                borderRadius: '12px',
+                overflow: 'hidden',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+                position: 'relative',
+              }}>
+                <div style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '1080px',
+                  height: '1920px',
+                  transform: 'scale(0.25)',
+                  transformOrigin: 'top left',
+                }}>
+                  <AcademicPoster
+                    title={matrixData.topic}
+                    content={matrixData.comparison_matrix}
+                    papers={matrixData.papers as any}
+                    createdAt={matrixData.statistics.generated_at}
+                    durationSeconds={matrixData.statistics.total_time_seconds}
+                    language={isChineseSite ? 'zh' : 'en'}
+                    shareUrl={window.location.href}
+                    coreFindings={extractCoreFindings(matrixData.comparison_matrix)}
+                    theme={posterTheme}
+                    i18n={{
+                      coreFindings: t('poster.core_findings'),
+                      papersLabel: t('poster.papers_label'),
+                      durationLabel: t('poster.duration_label'),
+                      dateLabel: t('poster.date_label'),
+                      scanToRead: t('poster.scan_to_read'),
+                      poweredBy: t('poster.powered_by'),
+                      brandName: t('poster.brand_name'),
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="confirm-modal-footer" style={{ gap: '12px', flexWrap: 'wrap', flexShrink: 0 }}>
+              <button className="confirm-modal-btn confirm-modal-btn-primary" onClick={handleGeneratePoster} disabled={generatingPoster}>
+                {generatingPoster && <span className="confirm-modal-spinner" />}
+                {generatingPoster ? t('poster.generating') : t('poster.save_poster', '保存海报')}
+              </button>
+              <button className="confirm-modal-btn" style={{ background: '#f59e0b', color: '#fff', border: 'none' }} onClick={async () => {
+                await handleShare()
+                setShowPosterModal(false)
+                setTimeout(() => setShowShareReward(true), 100)
+              }}>
+                🎉 {isChineseSite ? '分享领积分' : 'Share & Earn Credits'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {showShareReward && taskId && (
+        <ShareRewardModal
+          taskId={taskId}
+          onClose={() => setShowShareReward(false)}
+        />
       )}
     </>
   )
@@ -917,6 +1091,32 @@ export function ComparisonMatrixViewer({ taskId }: { taskId: string }) {
             </button>
           </div>
         </aside>
+
+        {/* Hidden poster for generation */}
+        {matrixData && (
+          <div id="poster-for-generation" style={{ position: 'fixed', left: '-9999px', top: 0, width: '1080px', height: '1920px', zIndex: -1 }}>
+            <AcademicPoster
+              title={matrixData.topic}
+              content={matrixData.comparison_matrix}
+              papers={matrixData.papers as any}
+              createdAt={matrixData.statistics.generated_at}
+              durationSeconds={matrixData.statistics.total_time_seconds}
+              language={isChineseSite ? 'zh' : 'en'}
+              shareUrl={window.location.href}
+              coreFindings={extractCoreFindings(matrixData.comparison_matrix)}
+              theme={posterTheme}
+              i18n={{
+                coreFindings: t('poster.core_findings'),
+                papersLabel: t('poster.papers_label'),
+                durationLabel: t('poster.duration_label'),
+                dateLabel: t('poster.date_label'),
+                scanToRead: t('poster.scan_to_read'),
+                poweredBy: t('poster.powered_by'),
+                brandName: t('poster.brand_name'),
+              }}
+            />
+          </div>
+        )}
 
         {/* Toast notification */}
         {showToast && (
