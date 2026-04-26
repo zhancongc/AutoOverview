@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { api } from '../api'
+import { api, type CreditLogEntry } from '../api'
 import { getLocalUserInfo, isLoggedIn } from '../authApi'
 import { PaymentModal } from './PaymentModal'
 import { ConfirmModal } from './ConfirmModal'
@@ -52,7 +52,7 @@ export function ProfilePage() {
   const [unlockMode, setUnlockMode] = useState(false)  // true=单次解锁, false=购买套餐
   const [showCreditConfirmModal, setShowCreditConfirmModal] = useState(false)
   const [confirmRecordId, setConfirmRecordId] = useState<number | null>(null)
-  const [showApiToken, setShowApiToken] = useState(false)
+  const [showApiToken, setShowApiToken] = useState(true)
   const [exportModalSearch, setExportModalSearch] = useState<any | null>(null)
   const [exportFormat, setExportFormat] = useState<ExportFormat>('bibtex')
   const [exportingSearch, setExportingSearch] = useState(false)
@@ -62,6 +62,8 @@ export function ProfilePage() {
   const [exportModalReview, setExportModalReview] = useState<{ id: number; topic: string } | null>(null)
   const [reviewExportFormat, setReviewExportFormat] = useState<'markdown' | 'word'>('markdown')
   const [exportingReview, setExportingReview] = useState(false)
+  const [creditLogs, setCreditLogs] = useState<CreditLogEntry[]>([])
+  const [creditLogsTotal, setCreditLogsTotal] = useState(0)
 
   useEffect(() => {
     if (!isLoggedIn()) {
@@ -73,6 +75,10 @@ export function ProfilePage() {
     api.getCredits().then(data => {
       setCredits(data.credits)
     }).catch(err => console.error('获取积分失败:', err))
+    api.getCreditLogs().then(data => {
+      setCreditLogs(data.logs)
+      setCreditLogsTotal(data.total)
+    }).catch(err => console.error('获取积分流水失败:', err))
   }, [])
 
   const loadAllRecords = async () => {
@@ -431,11 +437,11 @@ export function ProfilePage() {
         {/* 左侧菜单栏 */}
         <aside className="profile-sidebar">
           <div className="sidebar-menu">
-            <button className={`sidebar-menu-item ${activeSection === 'records' ? 'active' : ''}`} onClick={() => setActiveSection('records')}>
-              <span className="sidebar-menu-icon">📋</span><span>我的记录</span>
-            </button>
             <button className={`sidebar-menu-item ${activeSection === 'profile' ? 'active' : ''}`} onClick={() => setActiveSection('profile')}>
               <span className="sidebar-menu-icon">👤</span><span>个人中心</span>
+            </button>
+            <button className={`sidebar-menu-item ${activeSection === 'records' ? 'active' : ''}`} onClick={() => setActiveSection('records')}>
+              <span className="sidebar-menu-icon">📋</span><span>我的记录</span>
             </button>
             <button className={`sidebar-menu-item ${activeSection === 'usage' ? 'active' : ''}`} onClick={() => setActiveSection('usage')}>
               <span className="sidebar-menu-icon">📊</span><span>用量统计</span>
@@ -641,9 +647,6 @@ export function ProfilePage() {
               <h1 className="user-name">{userInfo?.nickname || '用户'}</h1>
               <p className="user-email">{userInfo?.email || ''}</p>
             </div>
-          </div>
-          <div className="profile-actions">
-            <button className="profile-action-btn" onClick={() => navigate('/?buy_credits=1')}>购买积分</button>
             <button className="profile-action-btn btn-logout" onClick={handleLogout}>退出登录</button>
           </div>
           <div className="profile-api-token-section">
@@ -681,13 +684,39 @@ export function ProfilePage() {
           <div className="usage-credits-card">
             <span className="usage-credits-label">当前积分</span>
             <span className="usage-credits-value">{credits}</span>
-            <button className="usage-buy-btn" onClick={() => navigate('/?buy_credits=1')}>购买积分</button>
+            <button className="usage-buy-btn" onClick={() => navigate('/#pricing')}>购买积分</button>
           </div>
           <div className="usage-stats-grid">
             <div className="usage-stat-card"><span className="usage-stat-value">{searches.length}</span><span className="usage-stat-label">文献搜索</span></div>
             <div className="usage-stat-card"><span className="usage-stat-value">{matrices.length}</span><span className="usage-stat-label">对比矩阵</span></div>
             <div className="usage-stat-card"><span className="usage-stat-value">{records.length}</span><span className="usage-stat-label">文献综述</span></div>
           </div>
+
+          {/* 积分流水 */}
+          <h3 className="credit-log-title">积分明细</h3>
+          {creditLogs.length === 0 ? (
+            <p className="credit-log-empty">暂无积分变动记录</p>
+          ) : (
+            <div className="credit-log-list">
+              {creditLogs.map(log => (
+                <div key={log.id} className="credit-log-item">
+                  <div className="credit-log-left">
+                    <span className={`credit-log-badge credit-log-badge-${log.change > 0 ? 'plus' : 'minus'}${log.reason === 'refund' ? ' refund' : ''}`}>
+                      {log.reason === 'payment' ? '充值' : log.reason === 'share_reward' ? '分享奖励' : log.reason === 'refund' ? '退回' : log.reason === 'consume' ? '消耗' : log.reason === 'register' ? '注册赠送' : log.reason}
+                    </span>
+                    <span className="credit-log-detail">{log.detail || ''}</span>
+                  </div>
+                  <div className="credit-log-right">
+                    <span className={`credit-log-change ${log.change > 0 ? 'plus' : 'minus'}`}>
+                      {log.change > 0 ? '+' : ''}{log.change}
+                    </span>
+                    <span className="credit-log-balance">余额 {log.balance_after}</span>
+                    <span className="credit-log-time">{log.created_at ? new Date(log.created_at).toLocaleString('zh-CN') : ''}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
         )}
 

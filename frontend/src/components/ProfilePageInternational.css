@@ -230,6 +230,8 @@ html.intl {
     padding: 1.5rem;
     margin-bottom: 2rem;
     border: 1px solid var(--border-gray);
+    width: 100%;
+    box-sizing: border-box;
   }
 
   .profile-page-international .stat-item {
@@ -277,6 +279,8 @@ html.intl {
     padding: 0.5rem;
     border-radius: 16px;
     border: 1px solid var(--border-gray);
+    width: 100%;
+    box-sizing: border-box;
   }
 
   .profile-page-international .profile-tab {
@@ -314,6 +318,8 @@ html.intl {
     padding: 2.5rem;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.06);
     border: 1px solid var(--border-gray);
+    width: 100%;
+    box-sizing: border-box;
   }
 
   /* ==================== Loading State ==================== */
@@ -1052,8 +1058,8 @@ html.intl {
 
   .profile-page-international .close-account-button {
     background: none;
-    border: 1.5px solid #fc8181;
-    color: #e53e3e;
+    border: 1.5px solid var(--text-gray);
+    color: var(--text-gray);
     padding: 0.5rem 1.5rem;
     border-radius: 8px;
     font-size: 0.8rem;
@@ -1064,9 +1070,9 @@ html.intl {
   }
 
   .profile-page-international .close-account-button:hover {
-    border-color: #e53e3e;
+    border-color: var(--charcoal);
     color: #fff;
-    background: #e53e3e;
+    background: var(--text-gray);
   }
 
   /* Close Account Modal */
@@ -1305,11 +1311,13 @@ html.intl .profile-api-token-copy:hover {
 
 html.intl .profile-layout {
   display: flex;
+  width: 100%;
   max-width: 1100px;
   margin: 0 auto;
   padding: 90px 24px 40px;
   min-height: 100vh;
   gap: 24px;
+  box-sizing: border-box;
 }
 
 html.intl .profile-sidebar {
@@ -1363,15 +1371,21 @@ html.intl .sidebar-menu-icon {
 html.intl .profile-main {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
 }
 
 /* ===== Section Common ===== */
 
 html.intl .profile-section {
   background: white;
-  border-radius: 12px;
+  border-radius: 24px;
+  padding: 2.5rem;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.06);
   border: 1px solid var(--border-gray);
-  padding: 32px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 html.intl .section-title {
@@ -1388,6 +1402,12 @@ html.intl .profile-section .profile-header {
   align-items: center;
   gap: 16px;
   margin-bottom: 24px;
+}
+
+html.intl .profile-header-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 12px;
 }
 
 html.intl .profile-actions {
@@ -1415,12 +1435,12 @@ html.intl .profile-action-btn:hover {
 }
 
 html.intl .profile-action-btn.btn-logout {
-  color: #e53e3e;
-  border-color: rgba(229, 62, 62, 0.3);
+  color: var(--academic-blue);
+  border-color: rgba(9, 136, 227, 0.3);
 }
 
 html.intl .profile-action-btn.btn-logout:hover {
-  background: rgba(229, 62, 62, 0.06);
+  background: rgba(9, 136, 227, 0.06);
 }
 
 /* ===== Usage Section ===== */
@@ -1488,6 +1508,115 @@ html.intl .usage-stat-label {
   font-size: 13px;
   color: var(--text-gray);
   margin-top: 4px;
+}
+
+/* ===== Credit Log ===== */
+
+html.intl .credit-log-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink-black);
+  margin: 28px 0 16px;
+}
+
+html.intl .credit-log-empty {
+  color: var(--text-gray);
+  font-size: 14px;
+  text-align: center;
+  padding: 24px 0;
+}
+
+html.intl .credit-log-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+html.intl .credit-log-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: var(--cream-white);
+  border: 1px solid var(--border-gray);
+}
+
+html.intl .credit-log-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  flex: 1;
+}
+
+html.intl .credit-log-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+html.intl .credit-log-badge-plus {
+  background: rgba(0, 184, 148, 0.12);
+  color: #00b894;
+}
+
+html.intl .credit-log-badge-minus {
+  background: rgba(9, 136, 227, 0.1);
+  color: var(--academic-blue);
+}
+
+html.intl .credit-log-badge-plus.refund {
+  background: rgba(9, 132, 227, 0.1);
+  color: #0984e3;
+}
+
+html.intl .credit-log-detail {
+  font-size: 13px;
+  color: var(--charcoal);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+html.intl .credit-log-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-shrink: 0;
+}
+
+html.intl .credit-log-change {
+  font-size: 15px;
+  font-weight: 700;
+  min-width: 40px;
+  text-align: right;
+}
+
+html.intl .credit-log-change.plus {
+  color: #00b894;
+}
+
+html.intl .credit-log-change.minus {
+  color: var(--academic-blue);
+}
+
+html.intl .credit-log-balance {
+  font-size: 12px;
+  color: var(--text-gray);
+  min-width: 60px;
+}
+
+html.intl .credit-log-time {
+  font-size: 12px;
+  color: var(--text-gray);
+  min-width: 140px;
+  text-align: right;
 }
 
 /* ===== Docs Section ===== */
@@ -1616,6 +1745,22 @@ html.intl .docs-block:last-child {
 
   html.intl .usage-stat-value {
     font-size: 22px;
+  }
+
+  html.intl .credit-log-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  html.intl .credit-log-right {
+    width: 100%;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  html.intl .credit-log-time {
+    min-width: auto;
   }
 
   html.intl .profile-actions {

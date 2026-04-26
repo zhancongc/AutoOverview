@@ -5,7 +5,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { api } from '../api'
+import { api, type CreditLogEntry } from '../api'
 import { getLocalUserInfo, isLoggedIn } from '../authApi'
 
 import { PayPalPaymentModal } from './PayPalPaymentModal'
@@ -69,7 +69,9 @@ export function ProfilePageInternational() {
   const [exportModalReview, setExportModalReview] = useState<{ id: number; topic: string } | null>(null)
   const [reviewExportFormat, setReviewExportFormat] = useState<'markdown' | 'word'>('markdown')
   const [exportingReview, setExportingReview] = useState(false)
-  const [showApiToken, setShowApiToken] = useState(false)
+  const [showApiToken, setShowApiToken] = useState(true)
+  const [creditLogs, setCreditLogs] = useState<CreditLogEntry[]>([])
+  const [creditLogsTotal, setCreditLogsTotal] = useState(0)
 
   useEffect(() => {
     if (!isLoggedIn()) {
@@ -81,6 +83,10 @@ export function ProfilePageInternational() {
     api.getCredits().then(data => {
       setCredits(data.credits)
     }).catch(err => console.error('Failed to fetch credits:', err))
+    api.getCreditLogs().then(data => {
+      setCreditLogs(data.logs)
+      setCreditLogsTotal(data.total)
+    }).catch(err => console.error('Failed to fetch credit logs:', err))
   }, [navigate])
 
   const loadAllRecords = async () => {
@@ -495,11 +501,11 @@ export function ProfilePageInternational() {
         {/* Left Sidebar */}
         <aside className="profile-sidebar">
           <div className="sidebar-menu">
-            <button className={`sidebar-menu-item ${activeSection === 'records' ? 'active' : ''}`} onClick={() => setActiveSection('records')}>
-              <span className="sidebar-menu-icon">📋</span><span>My Records</span>
-            </button>
             <button className={`sidebar-menu-item ${activeSection === 'profile' ? 'active' : ''}`} onClick={() => setActiveSection('profile')}>
               <span className="sidebar-menu-icon">👤</span><span>Profile</span>
+            </button>
+            <button className={`sidebar-menu-item ${activeSection === 'records' ? 'active' : ''}`} onClick={() => setActiveSection('records')}>
+              <span className="sidebar-menu-icon">📋</span><span>My Records</span>
             </button>
             <button className={`sidebar-menu-item ${activeSection === 'usage' ? 'active' : ''}`} onClick={() => setActiveSection('usage')}>
               <span className="sidebar-menu-icon">📊</span><span>Usage</span>
@@ -719,16 +725,10 @@ export function ProfilePageInternational() {
               <h1 className="user-name">{userInfo?.nickname || 'User'}</h1>
               <p className="user-email">{userInfo?.email || ''}</p>
             </div>
-          </div>
-          <div className="profile-actions">
-            <button className="profile-action-btn" onClick={() => navigate('/?buy_credits=1')}>Buy Credits</button>
-            <button className="profile-action-btn" onClick={handleEditProfile}>Edit Profile</button>
-            <button className="profile-action-btn btn-logout" onClick={handleLogout}>Logout</button>
-          </div>
-          <div className="close-account-wrapper">
-            <button className="close-account-button" onClick={() => { setShowCloseAccountModal(true); setCloseAccountEmail(''); }}>
-              Close Account
-            </button>
+            <div className="profile-header-actions">
+              <button className="profile-action-btn" onClick={handleEditProfile}>Edit Profile</button>
+              <button className="profile-action-btn btn-logout" onClick={handleLogout}>Logout</button>
+            </div>
           </div>
           <div className="profile-api-token-section">
             <div className="profile-api-token-header" onClick={() => setShowApiToken(!showApiToken)}>
@@ -755,6 +755,11 @@ export function ProfilePageInternational() {
               </div>
             )}
           </div>
+          <div className="close-account-wrapper">
+            <button className="close-account-button" onClick={() => { setShowCloseAccountModal(true); setCloseAccountEmail(''); }}>
+              Close Account
+            </button>
+          </div>
         </div>
         )}
 
@@ -765,13 +770,44 @@ export function ProfilePageInternational() {
           <div className="usage-credits-card">
             <span className="usage-credits-label">Current Credits</span>
             <span className="usage-credits-value">{credits}</span>
-            <button className="usage-buy-btn" onClick={() => navigate('/?buy_credits=1')}>Buy Credits</button>
+            <button className="usage-buy-btn" onClick={() => navigate('/#pricing')}>Buy Credits</button>
           </div>
           <div className="usage-stats-grid">
             <div className="usage-stat-card"><span className="usage-stat-value">{searches.length}</span><span className="usage-stat-label">Paper Searches</span></div>
             <div className="usage-stat-card"><span className="usage-stat-value">{matrices.length}</span><span className="usage-stat-label">Comparison Matrices</span></div>
             <div className="usage-stat-card"><span className="usage-stat-value">{records.length}</span><span className="usage-stat-label">Literature Reviews</span></div>
           </div>
+
+          {/* Credit Log */}
+          <h3 className="credit-log-title">Credit History</h3>
+          {creditLogs.length === 0 ? (
+            <p className="credit-log-empty">No credit activity yet</p>
+          ) : (
+            <div className="credit-log-list">
+              {creditLogs.map(log => (
+                <div key={log.id} className="credit-log-item">
+                  <div className="credit-log-left">
+                    <span className={`credit-log-badge credit-log-badge-${log.change > 0 ? 'plus' : 'minus'}${log.reason === 'refund' ? ' refund' : ''}`}>
+                      {log.reason === 'payment' ? 'Purchase'
+                       : log.reason === 'share_reward' ? 'Share Bonus'
+                       : log.reason === 'refund' ? 'Refund'
+                       : log.reason === 'consume' ? 'Used'
+                       : log.reason === 'register' ? 'Welcome Bonus'
+                       : log.reason}
+                    </span>
+                    <span className="credit-log-detail">{log.detail || ''}</span>
+                  </div>
+                  <div className="credit-log-right">
+                    <span className={`credit-log-change ${log.change > 0 ? 'plus' : 'minus'}`}>
+                      {log.change > 0 ? '+' : ''}{log.change}
+                    </span>
+                    <span className="credit-log-balance">Balance {log.balance_after}</span>
+                    <span className="credit-log-time">{log.created_at ? formatDate(log.created_at) : ''}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
         )}
 

@@ -119,6 +119,19 @@ async def _find_or_create_user(
     db.commit()
     db.refresh(user)
 
+    # 记录积分变动日志
+    from ..models.credit_log import CreditLog
+    db.add(CreditLog(
+        user_id=user.id,
+        change=2,
+        balance_before=0,
+        balance_after=2,
+        reason="register",
+        detail=f"Welcome bonus via {provider}",
+        operator="system"
+    ))
+    db.commit()
+
     try:
         from ..services.stats_service import StatsService
         StatsService(db).increment_register()

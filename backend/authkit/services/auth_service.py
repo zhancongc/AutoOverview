@@ -81,6 +81,19 @@ class AuthService:
             new_user.set_meta("has_purchased", False)
             self.db.commit()
 
+            # 记录积分变动日志
+            from ..models.credit_log import CreditLog
+            self.db.add(CreditLog(
+                user_id=new_user.id,
+                change=2,
+                balance_before=0,
+                balance_after=2,
+                reason="register",
+                detail="新用户注册赠送",
+                operator="system"
+            ))
+            self.db.commit()
+
             # 增加注册量统计
             from ..services.stats_service import StatsService
             stats_service = StatsService(self.db)
@@ -227,6 +240,19 @@ class AuthService:
             user.set_meta("free_credits", 0)
             user.set_meta("review_credits", 2)
             user.set_meta("has_purchased", False)
+            self.db.commit()
+
+            # 记录积分变动日志
+            from ..models.credit_log import CreditLog
+            self.db.add(CreditLog(
+                user_id=user.id,
+                change=2,
+                balance_before=0,
+                balance_after=2,
+                reason="register",
+                detail="新用户注册赠送",
+                operator="system"
+            ))
             self.db.commit()
 
             # 增加注册量统计

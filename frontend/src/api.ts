@@ -18,6 +18,41 @@ const getApiBase = () => {
 
 const API_BASE = getApiBase();
 
+// 创建 axios 实例并添加拦截器
+const apiAxios = axios.create({
+  baseURL: API_BASE,
+  headers: {
+    'Content-Type': 'application/json'
+  }
+});
+
+// 请求拦截器：添加 token
+apiAxios.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('auth_token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+// 响应拦截器：处理 401
+apiAxios.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      // 清除本地存储
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('user_info');
+      // 跳转到登录页
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+
 // 异步任务类型
 export interface TaskSubmitResponse {
   success: boolean;
@@ -28,6 +63,16 @@ export interface TaskSubmitResponse {
     status: string;
     poll_url: string;
   };
+}
+
+export interface CreditLogEntry {
+  id: number;
+  change: number;
+  balance_before: number;
+  balance_after: number;
+  reason: string;
+  detail: string | null;
+  created_at: string | null;
 }
 
 export interface TaskInfo {
@@ -60,13 +105,13 @@ export interface TaskInfo {
 export const api = {
   // 智能分析（推荐）
   async smartAnalyze(topic: string): Promise<SmartAnalyzeResponse> {
-    const response = await axios.post(`${API_BASE}/smart-analyze`, { topic });
+    const response = await apiAxios.post('/smart-analyze', { topic });
     return response.data;
   },
 
   // 题目分类
   async classifyTopic(topic: string): Promise<ClassifyTopicResponse> {
-    const response = await axios.post(`${API_BASE}/classify-topic`, { topic });
+    const response = await apiAxios.post('/classify-topic', { topic });
     return response.data;
   },
 
@@ -79,7 +124,7 @@ export const api = {
       englishRatio?: number;
     } = {}
   ): Promise<GenerateResponse> {
-    const response = await axios.post(`${API_BASE}/generate`, {
+    const response = await apiAxios.post('/generate', {
       topic,
       target_count: options.targetCount ?? 50,
       recent_years_ratio: options.recentYearsRatio ?? 0.5,
@@ -102,10 +147,7 @@ export const api = {
       reuseTaskId?: string;
     } = {}
   ): Promise<TaskSubmitResponse> {
-    const token = localStorage.getItem('auth_token');
-    const headers: Record<string, string> = {};
-    if (token) headers.Authorization = `Bearer ${token}`;
-    const response = await axios.post(`${API_BASE}/smart-generate`, {
+    const response = await apiAxios.post('/smart-generate', {
       topic,
       research_direction_id: options.researchDirectionId ?? '',
       language: options.language ?? 'zh',
@@ -115,7 +157,7 @@ export const api = {
       search_years: options.searchYears ?? 10,
       max_search_queries: options.maxSearchQueries ?? 8,
       reuse_task_id: options.reuseTaskId ?? ''
-    }, { headers });
+    });
     return response.data;
   },
 
@@ -127,15 +169,11 @@ export const api = {
       searchYears?: number;
     } = {}
   ): Promise<{ success: boolean; message: string; data: any }> {
-    const token = localStorage.getItem('auth_token');
-    const headers: Record<string, string> = {};
-    if (token) headers.Authorization = `Bearer ${token}`;
-    const response = await axios.post(`${API_BASE}/search-papers-only`, {
+    const response = await apiAxios.post('/search-papers-only', {
       topic,
       target_count: options.targetCount ?? 50,
       search_years: options.searchYears ?? 10
     }, {
-      headers,
       timeout: 120000  // 2 minutes — LLM-driven search takes 30-60s
     });
     return response.data;
@@ -143,10 +181,7 @@ export const api = {
 
   // 获取任务状态
   async getTaskStatus(taskId: string): Promise<{ success: boolean; data: TaskInfo }> {
-    const token = localStorage.getItem('auth_token');
-    const headers: Record<string, string> = {};
-    if (token) headers.Authorization = `Bearer ${token}`;
-    const response = await axios.get(`${API_BASE}/tasks/${taskId}`, { headers });
+    const response = await apiAxios.get(`/tasks/${taskId}`);
     return response.data;
   },
 
@@ -164,11 +199,7 @@ export const api = {
     is_paid: boolean;
     duration_seconds?: number;
   } }> {
-    const token = localStorage.getItem('auth_token');
-    const headers: Record<string, string> = {};
-    if (token) headers.Authorization = `Bearer ${token}`;
-    const response = await axios.get(`${API_BASE}/tasks/${taskId}/review`, {
-      headers,
+    const response = await apiAxios.get(`/tasks/${taskId}/review`, {
       params: { format }
     });
     return response.data;
@@ -188,11 +219,7 @@ export const api = {
     is_paid: boolean;
     duration_seconds?: number;
   } }> {
-    const token = localStorage.getItem('auth_token');
-    const headers: Record<string, string> = {};
-    if (token) headers.Authorization = `Bearer ${token}`;
-    const response = await axios.get(`${API_BASE}/records/${recordId}/review`, {
-      headers,
+    const response = await apiAxios.get(`/records/${recordId}/review`, {
       params: { format }
     });
     return response.data;
@@ -200,7 +227,7 @@ export const api = {
 
   // 三圈分析
   async analyzeThreeCircles(topic: string): Promise<ThreeCirclesResponse> {
-    const response = await axios.post(`${API_BASE}/analyze-three-circles`, { topic });
+    const response = await apiAxios.post('/analyze-three-circles', { topic });
     return response.data;
   },
 
@@ -213,7 +240,7 @@ export const api = {
       englishRatio?: number;
     } = {}
   ): Promise<GenerateResponse> {
-    const response = await axios.post(`${API_BASE}/generate-three-circles`, {
+    const response = await apiAxios.post('/generate-three-circles', {
       topic,
       target_count: options.targetCount ?? 50,
       recent_years_ratio: options.recentYearsRatio ?? 0.5,
@@ -224,78 +251,57 @@ export const api = {
 
   // 历史记录
   async getRecords(skip: number = 0, limit: number = 20): Promise<RecordsResponse> {
-    const token = localStorage.getItem('auth_token');
-    const headers: Record<string, string> = {};
-    if (token) headers.Authorization = `Bearer ${token}`;
-    const response = await axios.get(`${API_BASE}/records`, {
-      params: { skip, limit },
-      headers
+    const response = await apiAxios.get('/records', {
+      params: { skip, limit }
     });
     return response.data;
   },
 
   async getRecord(id: number): Promise<{ success: boolean; record: ReviewRecord }> {
-    const response = await axios.get(`${API_BASE}/records/${id}`);
+    const response = await apiAxios.get(`/records/${id}`);
     return response.data;
   },
 
   async deleteRecord(id: number): Promise<{ success: boolean; message: string }> {
-    const response = await axios.delete(`${API_BASE}/records/${id}`);
+    const response = await apiAxios.delete(`/records/${id}`);
     return response.data;
   },
 
   // 导出综述为 Word
   async exportReview(recordId: number): Promise<Blob> {
-    const token = localStorage.getItem('auth_token');
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    if (token) headers.Authorization = `Bearer ${token}`;
-
-    const response = await axios.post(`${API_BASE}/records/export`, {
+    const response = await apiAxios.post('/records/export', {
       record_id: recordId
     }, {
-      responseType: 'blob',
-      headers
+      responseType: 'blob'
     });
     return response.data;
   },
 
   // 单次解锁综述（29.8元）
   async unlockRecord(recordId: number): Promise<{ success: boolean; message: string; order_no?: string; pay_url?: string; already_unlocked?: boolean }> {
-    const token = localStorage.getItem('auth_token');
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    if (token) headers.Authorization = `Bearer ${token}`;
-
-    const response = await axios.post(`${API_BASE}/records/unlock`, {
+    const response = await apiAxios.post('/records/unlock', {
       record_id: recordId
-    }, {
-      headers
     });
     return response.data;
   },
 
   // 使用积分解锁综述（扣除1个付费积分）
   async unlockRecordWithCredit(recordId: number): Promise<{ success: boolean; message: string }> {
-    const token = localStorage.getItem('auth_token');
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    if (token) headers.Authorization = `Bearer ${token}`;
-
-    const response = await axios.post(`${API_BASE}/records/unlock-with-credit`, {
+    const response = await apiAxios.post('/records/unlock-with-credit', {
       record_id: recordId
-    }, {
-      headers
     });
     return response.data;
   },
 
   // 健康检查
   async checkHealth(): Promise<{ status: string; deepseek_configured: boolean }> {
-    const response = await axios.get(`${API_BASE}/health`);
+    const response = await apiAxios.get('/health');
     return response.data;
   },
 
   // 获取研究方向列表
   async getResearchDirections(): Promise<ResearchDirectionsResponse> {
-    const response = await axios.get(`${API_BASE}/research-directions`);
+    const response = await apiAxios.get('/research-directions');
     return response.data;
   },
 
@@ -317,7 +323,7 @@ export const api = {
     badge?: string;
     badge_en?: string;
   }> }> {
-    const response = await axios.get(`${API_BASE}/subscription/plans`);
+    const response = await apiAxios.get('/subscription/plans');
     return response.data;
   },
 
@@ -326,11 +332,8 @@ export const api = {
     pay_url: string;
     amount: number;
   }> {
-    const token = localStorage.getItem('auth_token');
-    const response = await axios.post(`${API_BASE}/subscription/create`, {
+    const response = await apiAxios.post('/subscription/create', {
       plan_type: planType
-    }, {
-      headers: { Authorization: `Bearer ${token}` }
     });
     return response.data;
   },
@@ -340,10 +343,7 @@ export const api = {
     payment_time?: string;
     expires_at?: string;
   }> {
-    const token = localStorage.getItem('auth_token');
-    const response = await axios.get(`${API_BASE}/subscription/query/${orderNo}`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+    const response = await apiAxios.get(`/subscription/query/${orderNo}`);
     return response.data;
   },
 
@@ -352,50 +352,37 @@ export const api = {
     expires_at?: string;
     days_remaining?: number;
   }> {
-    const token = localStorage.getItem('auth_token');
-    const response = await axios.get(`${API_BASE}/subscription/membership`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+    const response = await apiAxios.get('/subscription/membership');
     return response.data;
   },
 
   async getCredits(): Promise<{ credits: number; free_credits: number; has_purchased: boolean }> {
-    const token = localStorage.getItem('auth_token');
-    const headers: Record<string, string> = {};
-    if (token) headers.Authorization = `Bearer ${token}`;
-    const response = await axios.get(`${API_BASE}/usage/credits`, { headers });
+    const response = await apiAxios.get('/usage/credits');
+    return response.data;
+  },
+
+  async getCreditLogs(limit = 50, offset = 0): Promise<{ total: number; logs: CreditLogEntry[] }> {
+    const response = await apiAxios.get('/credit-logs', { params: { limit, offset } });
     return response.data;
   },
 
   async getSearchDailyLimit(): Promise<{ limit: number; used: number; remaining: number; bonus: number; next_reset_at: number | null }> {
-    const token = localStorage.getItem('auth_token');
-    const headers: Record<string, string> = {};
-    if (token) headers.Authorization = `Bearer ${token}`;
-    const response = await axios.get(`${API_BASE}/search/daily-limit`, { headers });
+    const response = await apiAxios.get('/search/daily-limit');
     return response.data;
   },
 
   async submitFeedback(data: { email: string; content: string }): Promise<{ success: boolean }> {
-    const token = localStorage.getItem('auth_token');
-    const headers: Record<string, string> = {};
-    if (token) headers.Authorization = `Bearer ${token}`;
-    const response = await axios.post(`${API_BASE}/feedback`, data, { headers });
+    const response = await apiAxios.post('/feedback', data);
     return response.data;
   },
 
   async checkJadeAccess(): Promise<{ allowed: boolean }> {
-    const token = localStorage.getItem('auth_token');
-    const headers: Record<string, string> = {};
-    if (token) headers.Authorization = `Bearer ${token}`;
-    const response = await axios.get(`${API_BASE}/jade/access`, { headers });
+    const response = await apiAxios.get('/jade/access');
     return response.data;
   },
 
   async getActiveTask(): Promise<{ active: boolean; task_id?: string; topic?: string; status?: string }> {
-    const token = localStorage.getItem('auth_token');
-    const headers: Record<string, string> = {};
-    if (token) headers.Authorization = `Bearer ${token}`;
-    const response = await axios.get(`${API_BASE}/tasks/active`, { headers });
+    const response = await apiAxios.get('/tasks/active');
     return response.data;
   },
 
@@ -416,11 +403,7 @@ export const api = {
       papers_sample?: any[];
     }>;
   }> {
-    const token = localStorage.getItem('auth_token');
-    const headers: Record<string, string> = {};
-    if (token) headers.Authorization = `Bearer ${token}`;
-    const response = await axios.get(`${API_BASE}/search-history`, {
-      headers,
+    const response = await apiAxios.get('/search-history', {
       params: { skip, limit }
     });
     return response.data;
@@ -431,10 +414,7 @@ export const api = {
     success: boolean;
     search: any;
   }> {
-    const token = localStorage.getItem('auth_token');
-    const headers: Record<string, string> = {};
-    if (token) headers.Authorization = `Bearer ${token}`;
-    const response = await axios.get(`${API_BASE}/search-history/${taskId}`, { headers });
+    const response = await apiAxios.get(`/search-history/${taskId}`);
     return response.data;
   },
 
@@ -446,7 +426,7 @@ export const api = {
     credits: number;
     currency: string;
   }> }> {
-    const response = await axios.get(`${API_BASE}/paddle/plans`);
+    const response = await apiAxios.get('/paddle/plans');
     return response.data;
   },
 
@@ -456,11 +436,8 @@ export const api = {
     amount: number;
     currency: string;
   }> {
-    const token = localStorage.getItem('auth_token');
-    const response = await axios.post(`${API_BASE}/paddle/create`, {
+    const response = await apiAxios.post('/paddle/create', {
       plan_type: planType
-    }, {
-      headers: { Authorization: `Bearer ${token}` }
     });
     return response.data;
   },
@@ -471,10 +448,7 @@ export const api = {
     amount: number;
     currency: string;
   }> {
-    const token = localStorage.getItem('auth_token');
-    const response = await axios.get(`${API_BASE}/paddle/query/${orderNo}`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+    const response = await apiAxios.get(`/paddle/query/${orderNo}`);
     return response.data;
   },
 
@@ -484,11 +458,8 @@ export const api = {
     amount: number;
     currency: string;
   }> {
-    const token = localStorage.getItem('auth_token');
-    const response = await axios.post(`${API_BASE}/paddle/unlock`, {
+    const response = await apiAxios.post('/paddle/unlock', {
       record_id: recordId
-    }, {
-      headers: { Authorization: `Bearer ${token}` }
     });
     return response.data;
   },
@@ -496,7 +467,7 @@ export const api = {
   // ==================== PayPal Payment API (International Default) ====================
 
   async getPayPalConfig(): Promise<{ client_id: string; sandbox: boolean }> {
-    const response = await axios.get(`${API_BASE}/paypal/config`);
+    const response = await apiAxios.get('/paypal/config');
     return response.data;
   },
 
@@ -507,11 +478,8 @@ export const api = {
     amount: number;
     currency: string;
   }> {
-    const token = localStorage.getItem('auth_token');
-    const response = await axios.post(`${API_BASE}/paypal/create`, {
+    const response = await apiAxios.post('/paypal/create', {
       plan_type: planType
-    }, {
-      headers: { Authorization: `Bearer ${token}` }
     });
     return response.data;
   },
@@ -521,11 +489,8 @@ export const api = {
     order_no: string;
     payment_time?: string;
   }> {
-    const token = localStorage.getItem('auth_token');
-    const response = await axios.post(`${API_BASE}/paypal/capture`, {
+    const response = await apiAxios.post('/paypal/capture', {
       order_id: paypalOrderId
-    }, {
-      headers: { Authorization: `Bearer ${token}` }
     });
     return response.data;
   },
@@ -536,10 +501,7 @@ export const api = {
     amount: number;
     currency: string;
   }> {
-    const token = localStorage.getItem('auth_token');
-    const response = await axios.get(`${API_BASE}/paypal/query/${orderNo}`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+    const response = await apiAxios.get(`/paypal/query/${orderNo}`);
     return response.data;
   },
 
@@ -550,11 +512,8 @@ export const api = {
     amount: number;
     currency: string;
   }> {
-    const token = localStorage.getItem('auth_token');
-    const response = await axios.post(`${API_BASE}/paypal/unlock`, {
+    const response = await apiAxios.post('/paypal/unlock', {
       record_id: recordId
-    }, {
-      headers: { Authorization: `Bearer ${token}` }
     });
     return response.data;
   },
@@ -569,14 +528,11 @@ export const api = {
       language?: string;
     } = {}
   ): Promise<TaskSubmitResponse> {
-    const token = localStorage.getItem('auth_token');
-    const headers: Record<string, string> = {};
-    if (token) headers.Authorization = `Bearer ${token}`;
-    const response = await axios.post(`${API_BASE}/generate-comparison-matrix`, {
+    const response = await apiAxios.post('/generate-comparison-matrix', {
       topic,
       reuse_task_id: options.reuseTaskId ?? '',
       language: options.language ?? 'zh'
-    }, { headers });
+    });
     return response.data;
   },
 
@@ -595,10 +551,7 @@ export const api = {
       papers: any[];
     };
   }> {
-    const token = localStorage.getItem('auth_token');
-    const headers: Record<string, string> = {};
-    if (token) headers.Authorization = `Bearer ${token}`;
-    const response = await axios.get(`${API_BASE}/comparison-matrix/${taskId}`, { headers });
+    const response = await apiAxios.get(`/comparison-matrix/${taskId}`);
     return response.data;
   },
 
@@ -613,23 +566,17 @@ export const api = {
       created_at: string;
     }>;
   }> {
-    const token = localStorage.getItem('auth_token');
-    const headers: Record<string, string> = {};
-    if (token) headers.Authorization = `Bearer ${token}`;
-    const response = await axios.get(`${API_BASE}/search-history/${taskId}/related-tasks`, { headers });
+    const response = await apiAxios.get(`/search-history/${taskId}/related-tasks`);
     return response.data;
   },
 
   async shareSearchResult(taskId: string): Promise<{ success: boolean; data: { task_id: string; is_public: boolean } }> {
-    const token = localStorage.getItem('auth_token');
-    const response = await axios.post(`${API_BASE}/tasks/${taskId}/share`, {}, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+    const response = await apiAxios.post(`/tasks/${taskId}/share`, {});
     return response.data;
   },
 
   async getSharedPapers(taskId: string): Promise<{ success: boolean; data: { task_id: string; topic: string; papers: any[]; statistics: any } }> {
-    const response = await axios.get(`${API_BASE}/tasks/${taskId}/shared-papers`);
+    const response = await apiAxios.get(`/tasks/${taskId}/shared-papers`);
     return response.data;
   },
 
@@ -639,18 +586,15 @@ export const api = {
     const formData = new FormData();
     formData.append('task_id', taskId);
     formData.append('image', image);
-    const token = localStorage.getItem('auth_token');
-    const response = await axios.post(`${API_BASE}/share-reward`, formData, {
-      headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}), 'Content-Type': 'multipart/form-data' }
+    const response = await apiAxios.post('/share-reward', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
     });
     return response.data;
   },
 
   async getShareRewardStatus(): Promise<{ success: boolean; claimed: boolean }> {
-    const token = localStorage.getItem('auth_token');
-    const response = await axios.get(`${API_BASE}/share-reward/status`, {
-      params: { task_id: 'check' },
-      headers: token ? { Authorization: `Bearer ${token}` } : {}
+    const response = await apiAxios.get('/share-reward/status', {
+      params: { task_id: 'check' }
     });
     return response.data;
   },
