@@ -3019,5 +3019,6 @@ async def reject_share_proof(
 
 
 # 静态文件：分享截图供审核页面展示
+os.makedirs(SHARE_PROOFS_DIR, exist_ok=True)
 app.mount("/share-proofs", StaticFiles(directory=SHARE_PROOFS_DIR), name="share_proofs")
 
