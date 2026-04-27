@@ -739,6 +739,8 @@ export function ProfilePageInternational() {
               <div className="profile-api-token-body">
                 <p className="profile-api-token-desc">
                   Copy this token and paste it into the Coze / Dify consumer variable <code>DANMO_API_TOKEN</code> to enable literature review capabilities in your Agent platform.
+                  <br />
+                  <strong>⚠️ Rate Limit:</strong> Each token is limited to 1 request per second. Exceeding this limit will return a 429 error.
                 </p>
                 <div className="profile-api-token-field">
                   <code className="profile-api-token-value">
@@ -795,7 +797,19 @@ export function ProfilePageInternational() {
                        : log.reason === 'register' ? 'Welcome Bonus'
                        : log.reason}
                     </span>
-                    <span className="credit-log-detail">{log.detail || ''}</span>
+                    <span className="credit-log-detail">{(() => {
+                      const d = log.detail || ''
+                      const map: Record<string, string> = {
+                        review: 'Review', matrix: 'Matrix', review_refund: 'Review Refund',
+                        matrix_refund: 'Matrix Refund', register_bonus: 'Welcome Bonus',
+                        '分享截图待审核': 'Pending Review', '分享奖励': 'Share Reward',
+                      }
+                      for (const [prefix, label] of Object.entries(map)) {
+                        if (d.startsWith(prefix + ': ')) return label + ': ' + d.slice(prefix.length + 2)
+                        if (d === prefix) return label
+                      }
+                      return d
+                    })()}</span>
                   </div>
                   <div className="credit-log-right">
                     <span className={`credit-log-change ${log.change > 0 ? 'plus' : 'minus'}`}>
@@ -842,6 +856,10 @@ Authorization: Bearer YOUR_TOKEN`}</code></pre>
             <h3>Pricing</h3>
             <p>Each review generation costs <strong>2 credits</strong>. New users get 2 free credits (1 free review).</p>
             <p>Need more credits? Visit <a href="https://en-scholar.danmo.tech/#pricing" target="_blank" rel="noreferrer">pricing page</a> — plans start at $9.99.</p>
+          </div>
+          <div className="docs-block">
+            <h3>Rate Limits</h3>
+            <p>Each API Token is limited to <strong>1 request per second</strong>. Exceeding this limit will return a 429 error. Please control your request rate appropriately.</p>
           </div>
         </div>
         )}

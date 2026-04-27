@@ -1641,7 +1641,7 @@ async def submit_review_task(
                         pass  # 查询失败时不影响主流程
 
                 # 额度检查，返回是否使用了付费额度
-                usage_error, used_paid = check_and_deduct_credit(user_id, auth_db, cost=credit_cost, detail=f"综述: {request.topic}")
+                usage_error, used_paid = check_and_deduct_credit(user_id, auth_db, cost=credit_cost, detail=f"review: {request.topic}")
                 if usage_error:
                     return TaskSubmitResponse(success=False, message=usage_error)
                 is_paid = used_paid
@@ -2244,7 +2244,7 @@ async def generate_comparison_matrix(
         if AuthSessionLocal:
             auth_db = AuthSessionLocal()
             try:
-                usage_error, used_paid = check_and_deduct_credit(user_id, auth_db, cost=1, detail=f"对比矩阵: {request.topic}")
+                usage_error, used_paid = check_and_deduct_credit(user_id, auth_db, cost=1, detail=f"matrix: {request.topic}")
                 if usage_error:
                     return TaskSubmitResponse(success=False, message=usage_error)
             finally:

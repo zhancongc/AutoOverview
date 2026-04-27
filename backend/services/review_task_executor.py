@@ -394,7 +394,8 @@ class ReviewTaskExecutor:
                         auth_db = AuthSessionLocal()
                         try:
                             credit_cost = params.get('credit_cost', 2)
-                            refund_credit(task_user_id, auth_db, cost=credit_cost)
+                            task_topic = getattr(task, 'topic', '')
+                            refund_credit(task_user_id, auth_db, cost=credit_cost, detail=f"review_refund: {task_topic}")
                             logger.info("已退还用户 %s 的 %s 个 credit", task_user_id, credit_cost)
                         finally:
                             auth_db.close()
@@ -492,6 +493,147 @@ class ReviewTaskExecutor:
             'all_papers': all_papers,
             'statistics': stats,
         }
+
+    async def search_only(self, task_id: str, db_session: Session):
+        """
+        仅执行文献搜索（用于 Skill API）
+
+        Args:
+            task_id: 任务ID
+            db_session: 数据库会话
+        """
+        import time
+        from models import PaperSearchStage
+
+        task = task_manager.get_task(task_id)
+        if not task:
+            logger.debug(f"[TaskExecutor] 任务不存在: {task_id}")
+            return
+
+        topic = task.topic
+        params = task.params
+        language = params.get('language', 'zh')
+
+        task_manager.update_task_status(
+            task_id,
+            TaskStatus.PROCESSING,
+            progress=get_progress("searching", language)
+        )
+
+        try:
+            start_time = time.time()
+
+            # 搜索论文
+            logger.debug(f"[search_only] 开始搜索论文: {topic}")
+
+            from services.openalex_search import get_openalex_service
+            search_service = get_openalex_service()
+            search_agent = PaperSearchAgent(ss_service=search_service)
+            all_papers = await search_agent.search(
+                topic=topic,
+                search_years=params.get('search_years', 10),
+                target_count=params.get('target_count', 50)
+            )
+
+            # Fallback: OA 结果不足时切到 Semantic Scholar
+            if len(all_papers) < 20:
+                logger.warning(f"[search_only] OA 仅 {len(all_papers)} 篇，fallback 到 SS")
+                from services.semantic_scholar_search import get_semantic_scholar_service as _get_ss
+                ss_svc = _get_ss()
+                ss_ag = PaperSearchAgent(ss_service=ss_svc)
+                ss_pp = await ss_ag.search(
+                    topic=topic,
+                    search_years=params.get('search_years', 10),
+                    target_count=params.get('target_count', 50)
+                )
+                seen_ids = {p.get("id") or p.get("paperId") for p in all_papers}
+                for p in ss_pp:
+                    pid = p.get("id") or p.get("paperId")
+                    if pid and pid not in seen_ids:
+                        seen_ids.add(pid)
+                        all_papers.append(p)
+                logger.info(f"[search_only] SS fallback 补充后共 {len(all_papers)} 篇")
+
+            logger.debug(f"[search_only] 搜索完成: {len(all_papers)} 篇文献")
+
+            stats = self.filter_service.get_statistics(all_papers)
+            total_time = time.time() - start_time
+
+            # 记录搜索阶段
+            stage_recorder.record_paper_search(
+                task_id=task_id,
+                outline={'topic': topic},
+                search_queries_count=1,
+                papers_count=len(all_papers),
+                papers_summary=stats,
+                papers_sample=all_papers,
+                save_all_papers=True
+            )
+
+            # 更新任务状态（完成）
+            task_manager.update_task_status(
+                task_id,
+                TaskStatus.COMPLETED,
+                result={
+                    "topic": topic,
+                    "papers_count": len(all_papers),
+                    "papers_sample": all_papers[:30],
+                    "statistics": stats,
+                    "total_time_seconds": round(total_time, 2)
+                }
+            )
+
+            # 同时更新数据库中的任务
+            from models import ReviewTask
+            from sqlalchemy.orm.attributes import flag_modified
+            review_task = db_session.query(ReviewTask).filter_by(id=task_id).first()
+            if review_task:
+                review_task.status = "completed"
+                review_task.completed_at = datetime.now()
+                params = dict(review_task.params or {})
+                params["papers_count"] = len(all_papers)
+                params["papers_sample"] = all_papers[:30]
+                params["statistics"] = stats
+                review_task.params = params
+                flag_modified(review_task, "params")
+                db_session.commit()
+
+            stage_recorder.update_task_status(
+                task_id,
+                status="completed",
+                current_stage="完成",
+                completed_at=datetime.now()
+            )
+
+            logger.debug(f"[search_only] 文献搜索完成")
+
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            logger.error("文献搜索任务失败: task_id=%s, error=%s", task_id, e, exc_info=True)
+
+            if task_id in task_manager._running_tasks:
+                task_manager.release_slot(task_id)
+
+            # 映射常见错误到友好提示
+            error_msg = "搜索失败，请稍后重试"
+            error_str = str(e)
+            if "未找到关于" in error_str:
+                error_msg = error_str
+
+            task_manager.update_task_status(
+                task_id,
+                TaskStatus.FAILED,
+                error=error_msg
+            )
+
+            stage_recorder.update_task_status(
+                task_id,
+                status="failed",
+                current_stage="失败",
+                error_message=error_msg,
+                completed_at=datetime.now()
+            )
 
     async def execute_task_with_papers(self, task_id: str, db_session: Session, papers: list):
         """
@@ -706,7 +848,8 @@ class ReviewTaskExecutor:
                         auth_db = AuthSessionLocal()
                         try:
                             credit_cost = params.get('credit_cost', 2)
-                            refund_credit(task_user_id, auth_db, cost=credit_cost)
+                            task_topic = getattr(task, 'topic', '')
+                            refund_credit(task_user_id, auth_db, cost=credit_cost, detail=f"review_refund: {task_topic}")
                             logger.info("已退还用户 %s 的 %s 个 credit", task_user_id, credit_cost)
                         finally:
                             auth_db.close()
@@ -917,7 +1060,8 @@ class ReviewTaskExecutor:
                     if AuthSessionLocal:
                         auth_db = AuthSessionLocal()
                         try:
-                            refund_credit(task_user_id, auth_db, cost=1)
+                            task_topic = getattr(task, 'topic', '')
+                            refund_credit(task_user_id, auth_db, cost=1, detail=f"matrix_refund: {task_topic}")
                             logger.info("已退还用户 %s 的 1 个 credit（对比矩阵失败）", task_user_id)
                         finally:
                             auth_db.close()

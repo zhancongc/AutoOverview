@@ -89,7 +89,7 @@ class AuthService:
                 balance_before=0,
                 balance_after=2,
                 reason="register",
-                detail="新用户注册赠送",
+                detail="register_bonus",
                 operator="system"
             ))
             self.db.commit()
@@ -250,7 +250,7 @@ class AuthService:
                 balance_before=0,
                 balance_after=2,
                 reason="register",
-                detail="新用户注册赠送",
+                detail="register_bonus",
                 operator="system"
             ))
             self.db.commit()

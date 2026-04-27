@@ -658,6 +658,8 @@ export function ProfilePage() {
               <div className="profile-api-token-body">
                 <p className="profile-api-token-desc">
                   将此 Token 填入 Coze / Dify 消费者变量 <code>DANMO_API_TOKEN</code> 即可在 Agent 平台调用文献综述能力。
+                  <br />
+                  <strong>⚠️ 频率限制：</strong>每个 Token 1秒最多请求1次，超过限制会返回 429 错误。
                 </p>
                 <div className="profile-api-token-field">
                   <code className="profile-api-token-value">
@@ -704,7 +706,19 @@ export function ProfilePage() {
                     <span className={`credit-log-badge credit-log-badge-${log.change > 0 ? 'plus' : 'minus'}${log.reason === 'refund' ? ' refund' : ''}`}>
                       {log.reason === 'payment' ? '充值' : log.reason === 'share_reward' ? '分享奖励' : log.reason === 'refund' ? '退回' : log.reason === 'consume' ? '消耗' : log.reason === 'register' ? '注册赠送' : log.reason}
                     </span>
-                    <span className="credit-log-detail">{log.detail || ''}</span>
+                    <span className="credit-log-detail">{(() => {
+                      const d = log.detail || ''
+                      const map: Record<string, string> = {
+                        review: '综述', matrix: '对比矩阵', review_refund: '综述退回',
+                        matrix_refund: '矩阵退回', register_bonus: '注册赠送',
+                        '分享截图待审核': '分享截图待审核', '分享奖励': '分享奖励',
+                      }
+                      for (const [prefix, label] of Object.entries(map)) {
+                        if (d.startsWith(prefix + ': ')) return label + ': ' + d.slice(prefix.length + 2)
+                        if (d === prefix) return label
+                      }
+                      return d
+                    })()}</span>
                   </div>
                   <div className="credit-log-right">
                     <span className={`credit-log-change ${log.change > 0 ? 'plus' : 'minus'}`}>
@@ -749,6 +763,10 @@ Content-Type: application/json
             <h3>计费</h3>
             <p>每次生成综述消耗 <strong>2 积分</strong>。注册赠送 2 积分（可免费生成 1 篇综述）。</p>
             <p>积分用完后请到 <a href="https://scholar.danmo.tech/#pricing" target="_blank" rel="noreferrer">官网</a> 充值，最低 ¥9.9 起。</p>
+          </div>
+          <div className="docs-block">
+            <h3>频率限制</h3>
+            <p>每个 API Token <strong>1秒最多请求1次</strong>，超过限制会返回 429 错误，请合理控制请求频率。</p>
           </div>
         </div>
         )}
