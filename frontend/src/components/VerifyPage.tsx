@@ -33,7 +33,7 @@ interface VerifyResult {
 }
 
 export function VerifyPage() {
-  const { t, i18n } = useTranslation()
+  const { i18n } = useTranslation()
   const navigate = useNavigate()
   const isEn = i18n.language === 'en'
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -351,7 +351,7 @@ export function VerifyPage() {
       {showLogin && (
         <LoginModal
           onClose={() => setShowLogin(false)}
-          onSuccess={() => { setShowLogin(false); handleVerify(); }}
+          onLoginSuccess={() => { setShowLogin(false); handleVerify(); }}
         />
       )}
     </div>

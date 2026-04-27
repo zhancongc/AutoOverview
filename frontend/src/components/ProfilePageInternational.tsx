@@ -71,7 +71,7 @@ export function ProfilePageInternational() {
   const [exportingReview, setExportingReview] = useState(false)
   const [showApiToken, setShowApiToken] = useState(true)
   const [creditLogs, setCreditLogs] = useState<CreditLogEntry[]>([])
-  const [creditLogsTotal, setCreditLogsTotal] = useState(0)
+  const [, setCreditLogsTotal] = useState(0)
 
   useEffect(() => {
     if (!isLoggedIn()) {

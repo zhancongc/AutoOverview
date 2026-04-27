@@ -63,7 +63,7 @@ export function ProfilePage() {
   const [reviewExportFormat, setReviewExportFormat] = useState<'markdown' | 'word'>('markdown')
   const [exportingReview, setExportingReview] = useState(false)
   const [creditLogs, setCreditLogs] = useState<CreditLogEntry[]>([])
-  const [creditLogsTotal, setCreditLogsTotal] = useState(0)
+  const [, setCreditLogsTotal] = useState(0)
 
   useEffect(() => {
     if (!isLoggedIn()) {
