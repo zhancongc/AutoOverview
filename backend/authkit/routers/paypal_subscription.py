@@ -303,6 +303,17 @@ def _activate_subscription(subscription, paypal_order_id: str, db: Session):
             current_credits = user.get_meta("review_credits", 0)
             user.set_meta("review_credits", current_credits + credits_to_add)
             user.set_meta("has_purchased", True)
+            # 写 credit_logs
+            from ..models.credit_log import CreditLog
+            free_credits = user.get_meta("free_credits", 0)
+            db.add(CreditLog(
+                user_id=user.id,
+                change=credits_to_add,
+                balance_before=current_credits + free_credits,
+                balance_after=current_credits + credits_to_add + free_credits,
+                reason="payment",
+                detail=f"PayPal充值: {subscription.plan_type} 套餐, 订单 {subscription.order_no}",
+            ))
             # 增加搜索次数（英文站）
             SEARCH_BONUS_EN = {"single": 150, "semester": 500, "yearly": 1500}
             bonus = SEARCH_BONUS_EN.get(subscription.plan_type, 0)

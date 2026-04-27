@@ -2210,6 +2210,69 @@ async def check_citation_order(request: CheckCitationOrderRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# ==================== 文献验证接口 ====================
+
+_verify_rate_limit = {}  # user_id -> last timestamp
+
+
+@app.post("/api/verify-references")
+async def verify_references(
+    text: str = Form(None),
+    file: UploadFile = File(None),
+    user_id: Optional[int] = Depends(get_current_user_id),
+):
+    """
+    验证参考文献真实性。
+
+    支持两种输入：
+    - text: 粘贴文本
+    - file: 上传 Word (.docx) 或 Markdown (.md) 文件
+    """
+    if not user_id:
+        raise HTTPException(status_code=401, detail="请先登录")
+
+    # 频率限制：每用户每分钟 3 次
+    import time as _time
+    now = _time.time()
+    last = _verify_rate_limit.get(user_id, 0)
+    if now - last < 20:  # 20秒冷却
+        raise HTTPException(status_code=429, detail="请求过于频繁，请稍后再试")
+    _verify_rate_limit[user_id] = now
+
+    # 获取文本内容
+    content = ""
+    if file:
+        filename = file.filename or ""
+        ext = filename.rsplit('.', 1)[-1].lower() if '.' in filename else ""
+
+        if ext == "docx":
+            from docx import Document
+            import io
+            doc_bytes = await file.read()
+            doc = Document(io.BytesIO(doc_bytes))
+            content = "\n".join(p.text for p in doc.paragraphs)
+        elif ext in ("md", "markdown", "txt"):
+            raw = await file.read()
+            content = raw.decode("utf-8", errors="ignore")
+        else:
+            raise HTTPException(status_code=400, detail="不支持的文件格式，请上传 .docx 或 .md 文件")
+    elif text:
+        content = text
+    else:
+        raise HTTPException(status_code=400, detail="请提供文本或上传文件")
+
+    if len(content.strip()) < 50:
+        raise HTTPException(status_code=400, detail="文本太短，请确保包含参考文献")
+
+    try:
+        from services.doi_validator import validate_all
+        result = await validate_all(content)
+        return {"success": True, "data": result}
+    except Exception as e:
+        logger.error(f"文献验证失败: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # ==================== 文献对比矩阵接口 ====================
 
 @app.post("/api/generate-comparison-matrix", response_model=TaskSubmitResponse)

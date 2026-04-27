@@ -138,6 +138,7 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
           <a href="/search-papers" className={location.pathname === '/search-papers' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigate('/search-papers') }}>{t('home.nav.search_papers')}</a>
           <a href="/comparison-matrix" className={location.pathname === '/comparison-matrix' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigate('/comparison-matrix') }}>{t('home.nav.comparison_matrix')}</a>
           <a href="/generate" className={location.pathname === '/generate' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigate('/generate') }}>{t('home.nav.generate')}</a>
+          <a href="/verify" className={location.pathname === '/verify' ? 'active' : ''} onClick={(e) => { e.preventDefault(); navigate('/verify') }}>文献验证</a>
           <a href="/#pricing" onClick={(e) => {
             e.preventDefault()
             if (location.pathname === '/') {
@@ -198,6 +199,7 @@ export function SimpleApp({ autoShowLogin }: { autoShowLogin?: boolean } = {}) {
           <a href="/search-papers" className={location.pathname === '/search-papers' ? 'active' : ''} onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/search-papers') }}>{t('home.nav.search_papers')}</a>
           <a href="/comparison-matrix" className={location.pathname === '/comparison-matrix' ? 'active' : ''} onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/comparison-matrix') }}>{t('home.nav.comparison_matrix')}</a>
           <a href="/generate" className={location.pathname === '/generate' ? 'active' : ''} onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/generate') }}>{t('home.nav.generate')}</a>
+          <a href="/verify" className={location.pathname === '/verify' ? 'active' : ''} onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/verify') }}>文献验证</a>
           <a href="/#pricing" onClick={(e) => {
             e.preventDefault()
             setMobileMenuOpen(false)

@@ -15,6 +15,7 @@ class EmailContact(Base):
     position = Column(String(200))
     source_url = Column(Text)
     status = Column(String(20), default="pending")  # pending / sent / failed
+    template_variant = Column(String(2))  # a / b / c / d — A/B 测试
     unsubscribed = Column(Boolean, default=False)
     sent_at = Column(DateTime)
     error = Column(Text)
