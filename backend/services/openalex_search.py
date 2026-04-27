@@ -142,6 +142,14 @@ class OpenAlexService:
             filters.append(f"to_publication_date:{year_end}-12-31")
         return ",".join(filters)
 
+    def _build_quality_filters(self) -> List[str]:
+        """构建 OpenAlex 质量过滤条件：排除无 DOI、撤稿、非正规来源"""
+        return [
+            "has_doi:true",
+            "is_retracted:false",
+            "primary_location.source.type:journal|conference|repository",
+        ]
+
     def _build_sort(self, sort: str = None) -> str:
         """将 Semantic Scholar 排序格式转换为 OpenAlex 格式"""
         if not sort:
@@ -169,7 +177,8 @@ class OpenAlexService:
         year_start: int = None,
         year_end: int = None,
         sort: str = None,
-        open_access_pdf: bool = False
+        open_access_pdf: bool = False,
+        quality_filter: bool = True
     ) -> List[Dict]:
         """
         搜索论文（接口与 SemanticScholarService 一致）
@@ -185,6 +194,10 @@ class OpenAlexService:
         date_filter = self._build_date_filter(years_ago=years_ago, year_start=year_start, year_end=year_end)
         if date_filter:
             filter_parts.append(date_filter)
+
+        # 质量过滤（排除预印本、无 DOI、撤稿、非正规来源）
+        if quality_filter:
+            filter_parts.extend(self._build_quality_filters())
 
         # 最小被引量
         if min_citations > 0:
@@ -250,7 +263,8 @@ class OpenAlexService:
                     logger.debug(f"[OpenAlex] precise 模式仅 {len(papers)} 篇，补充 broad search")
                     broad_papers = await self._broad_search(
                         query, years_ago, limit, min_citations, venue,
-                        year_start, year_end, sort, open_access_pdf
+                        year_start, year_end, sort, open_access_pdf,
+                        quality_filter=quality_filter
                     )
                     seen_ids = {p.get("id") for p in papers}
                     for p in broad_papers:
@@ -291,13 +305,16 @@ class OpenAlexService:
 
     async def _broad_search(
         self, query, years_ago, limit, min_citations, venue,
-        year_start, year_end, sort, open_access_pdf
+        year_start, year_end, sort, open_access_pdf,
+        quality_filter: bool = True
     ) -> List[Dict]:
         """兜底的宽泛搜索（使用 search 参数）"""
         filter_parts = []
         date_filter = self._build_date_filter(years_ago=years_ago, year_start=year_start, year_end=year_end)
         if date_filter:
             filter_parts.append(date_filter)
+        if quality_filter:
+            filter_parts.extend(self._build_quality_filters())
         if min_citations > 0:
             filter_parts.append(f"cited_by_count:>{min_citations}")
         if venue:
