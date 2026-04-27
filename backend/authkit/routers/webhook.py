@@ -126,6 +126,17 @@ def process_payment(params: dict, db: Session) -> str:
                 current_credits = user.get_meta("review_credits", 0)
                 user.set_meta("review_credits", current_credits + credits_to_add)
                 user.set_meta("has_purchased", True)
+                # 写 credit_logs
+                from ..models.credit_log import CreditLog
+                free_credits = user.get_meta("free_credits", 0)
+                db.add(CreditLog(
+                    user_id=user.id,
+                    change=credits_to_add,
+                    balance_before=current_credits + free_credits,
+                    balance_after=current_credits + credits_to_add + free_credits,
+                    reason="payment",
+                    detail=f"充值: {sub.plan_type} 套餐, 订单 {sub.order_id}",
+                ))
                 logger.info(f"用户 {user.id} 获得 {credits_to_add} 篇付费额度，当前付费 {current_credits + credits_to_add}")
 
         db.commit()

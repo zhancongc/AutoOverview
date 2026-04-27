@@ -5,7 +5,7 @@
 import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { apiAxios } from '../api'
+import axios from 'axios'
 import { isLoggedIn as checkLoggedIn } from '../authApi'
 import { LoginModal } from './LoginModal'
 import './SimpleApp.css'
@@ -84,8 +84,12 @@ export function VerifyPage() {
         formData.append('text', text)
       }
 
-      const resp = await apiAxios.post('/verify-references', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
+      const token = localStorage.getItem('auth_token')
+      const resp = await axios.post('/api/verify-references', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
       })
 
       if (resp.data?.success) {

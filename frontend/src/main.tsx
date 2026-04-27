@@ -21,7 +21,7 @@ import { AcademicIntegrityPage } from './components/AcademicIntegrityPage'
 import { AcademicIntegrityPageChinese } from './components/AcademicIntegrityPageChinese'
 import { ComparisonMatrixPage } from './components/ComparisonMatrixPage'
 import { GenerateReviewPage } from './components/GenerateReviewPage'
-import { VerifyPage } from './components/VerifyPage'
+
 import ErrorBoundary from './ErrorBoundary'
 import { FeedbackFloatingButton } from './components/FeedbackFloatingButton'
 import { api } from './api'
@@ -113,7 +113,7 @@ function AppContent() {
         <Route path="/academic-integrity" element={isEnglishVersion ? <AcademicIntegrityPage /> : <AcademicIntegrityPageChinese />} />
         <Route path="/comparison-matrix" element={<ComparisonMatrixPage />} />
         <Route path="/generate" element={<GenerateReviewPage />} />
-        <Route path="/verify" element={<VerifyPage />} />
+
         <Route path="/payment/success" element={<PaymentRedirect />} />
         <Route path="/payment/cancel" element={<PaymentRedirect />} />
       </Routes>

@@ -2264,6 +2264,8 @@ async def verify_references(
     if len(content.strip()) < 50:
         raise HTTPException(status_code=400, detail="文本太短，请确保包含参考文献")
 
+    # 不限制全文长度，只截断参考文献区域（在 doi_validator 内部处理）
+
     try:
         from services.doi_validator import validate_all
         result = await validate_all(content)

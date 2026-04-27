@@ -1,10 +1,11 @@
 """
 文献验证服务 — 从文本中提取参考文献，逐条验证是否真实存在
 
-中文文献 → Baidu Scholar
-英文文献 → OpenAlex
+解析：用 LLM 提取结构化参考文献
+验证：英文 → OpenAlex，中文 → Crossref + Baidu Scholar
 """
 import asyncio
+import json
 import logging
 import re
 from typing import Dict, List, Optional
@@ -14,140 +15,140 @@ from services.openalex_search import get_openalex_service
 
 logger = logging.getLogger(__name__)
 
-# 参考文献区域分隔符
-REF_SECTION_PATTERNS = [
-    re.compile(r'^\s*(?:References|REFERENCES|Bibliography|BIBLIOGRAPHY)\s*$', re.MULTILINE),
-    re.compile(r'^\s*参考文献\s*$', re.MULTILINE),
-    re.compile(r'^\s*参\s*考\s*文\s*献\s*$', re.MULTILINE),
-    re.compile(r'^\s*\[?参考文献\]?\s*$', re.MULTILINE),
-]
-
 # 检测中文字符
 _CHINESE_RE = re.compile(r'[一-鿿]')
-
-# 从单条引用中提取标题
-# 1. 引号内的内容（中英文引号）
-_QUOTED_TITLE_RE = re.compile(r'["“”]([^"“”]{5,})["“”]')
-# 2. 英文: 从句首到第一个句号（排除开头的序号/作者）
-_EN_TITLE_RE = re.compile(
-    r'(?:^|\.\s)([A-Z][^.]*?\.(?:\s[A-Z][^.]*?\.)*)'
-)
-# 3. 中文: 到第一个句号
-_CN_TITLE_RE = re.compile(r'[。．\.\s]([^\[【\(（\d].*?[。．])')
-
-# 提取作者（参考文献开头部分）
-_AUTHOR_PATTERNS = [
-    re.compile(r'^\[?\d+\]?\s*([^,.，]+?)[,.，]\s*'),  # [1] Author,
-    re.compile(r'^([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*(?:\s*,|\s+and))'),  # English Author,
+# 参考文献区域分隔符
+_REF_SECTION_PATTERNS = [
+    re.compile(r'^\s*(?:References|REFERENCES|Bibliography|BIBLIOGRAPHY)\s*$', re.MULTILINE),
+    re.compile(r'^\s*参考文献\s*$', re.MULTILINE),
 ]
+
+MAX_REF_LENGTH = 30000  # 参考文献区域最大字符数（约 100-120 条引用）
 
 
 def _is_chinese(text: str) -> bool:
     return bool(_CHINESE_RE.search(text))
 
 
-def _extract_title(ref: str) -> str:
-    """从单条参考文献中提取标题"""
-    # 尝试引号匹配
-    m = _QUOTED_TITLE_RE.search(ref)
-    if m:
-        return m.group(1).strip()
-
-    # 去掉开头序号 [1] 或 1.
-    cleaned = re.sub(r'^\s*\[?\d+\]?\s*\.?\s*', '', ref).strip()
-
-    if _is_chinese(cleaned):
-        # 中文: 找第一个句号前最长的有意义的段
-        parts = re.split(r'[。．;\；]', cleaned)
-        if parts:
-            # 取最可能是标题的部分（通常含书名号或较长）
-            best = max(parts, key=lambda p: len(p.strip()))
-            return best.strip()[:100]
-    else:
-        # 英文: 找句号之间的段，取最长的一段（排除短的作者名段）
-        parts = re.split(r'\.\s+', cleaned)
-        if len(parts) >= 2:
-            # 跳过第一段（通常是作者），取最长段
-            candidates = parts[1:]
-            best = max(candidates, key=lambda p: len(p.strip()))
-            return best.strip().rstrip('.')[:200]
-        elif parts:
-            return parts[0].strip()[:200]
-
-    return cleaned[:200]
-
-
-def _extract_author(ref: str) -> str:
-    """尝试提取第一作者"""
-    for pattern in _AUTHOR_PATTERNS:
-        m = pattern.search(ref)
-        if m:
-            author = m.group(1).strip()
-            if len(author) < 50 and not author.isdigit():
-                return author
-    return ""
-
-
-def parse_references(text: str) -> List[Dict]:
-    """
-    从文本中提取参考文献列表。
-
-    Returns:
-        [{"raw": "完整引用", "title": "提取的标题", "author": "第一作者", "language": "zh/en"}]
-    """
-    # 找参考文献区域
-    ref_text = text
-    for pattern in REF_SECTION_PATTERNS:
+def _extract_ref_section(text: str) -> str:
+    """提取参考文献区域文本"""
+    for pattern in _REF_SECTION_PATTERNS:
         m = pattern.search(text)
         if m:
-            ref_text = text[m.end():]
-            break
+            return text[m.end():]
+    return text
 
-    # 按行分割，过滤空行和太短的行
-    lines = ref_text.split('\n')
-    refs = []
-    for line in lines:
-        line = line.strip()
-        if len(line) < 15:
-            continue
-        # 跳过明显的非引用行
-        if re.match(r'^\s*(?:Chapter|CHAPTER|第[一二三四五六七八九十\d]+[章节])', line):
-            continue
-        if line.startswith('://') or line.startswith('http'):
-            continue
-        refs.append(line)
 
-    if not refs:
+async def _crossref_search_title(title: str) -> Optional[Dict]:
+    """用 Crossref API 搜索标题（支持中文），返回最匹配的结果或 None"""
+    import httpx
+    try:
+        async with httpx.AsyncClient(timeout=15) as client:
+            resp = await client.get("https://api.crossref.org/works", params={
+                "query.title": title,
+                "rows": 5,
+                "select": "title,DOI,author",
+            })
+            resp.raise_for_status()
+            items = resp.json().get("message", {}).get("items", [])
+            if not items:
+                return None
+
+            # 中文标题：关键词重叠匹配
+            title_keywords = set(re.findall(r'[一-鿿]{2,}', title))
+            for item in items:
+                item_title = (item.get("title") or [""])[0]
+                if not item_title:
+                    continue
+                item_keywords = set(re.findall(r'[一-鿿]{2,}', item_title))
+                if not title_keywords or not item_keywords:
+                    continue
+                overlap = len(title_keywords & item_keywords) / len(title_keywords)
+                if overlap >= 0.5:
+                    return {
+                        "title": item_title,
+                        "doi": item.get("DOI", ""),
+                        "source": "crossref",
+                    }
+            return None
+    except Exception as e:
+        logger.debug(f"[Crossref] search error: {e}")
+        return None
+
+
+async def _llm_parse_references(text: str) -> List[Dict]:
+    """用 LLM 从文本中解析出结构化参考文献列表"""
+    ref_text = _extract_ref_section(text)
+
+    # 截断过长文本，节省 LLM 调用花费
+    if len(ref_text) > MAX_REF_LENGTH:
+        ref_text = ref_text[:MAX_REF_LENGTH]
+
+    # 文本太短直接返回
+    if len(ref_text.strip()) < 20:
         return []
 
-    # 合并被换行符打断的引用（下一行不以序号开头的接到上一行）
-    merged = []
-    for line in refs:
-        if merged and not re.match(r'^\s*\[?\d+\]', line) and not re.match(r'^\s*[A-Z][a-z]', line):
-            merged[-1] += ' ' + line
+    from authkit.llm.client import LLMClient
+    client = LLMClient()
+
+    prompt = f"""You are a reference parser. Extract ALL references from the text below.
+
+For each reference, output a JSON array where each item has:
+- "raw": the original reference text (preserve exactly)
+- "title": the paper/chapter title only (no authors, no journal, no year)
+- "first_author": the first author's last name (or full name for Chinese)
+- "language": "zh" if the title contains Chinese characters, otherwise "en"
+
+Rules:
+- Extract the TITLE only, not the journal name, year, or volume info
+- If the reference has a DOI, include it in a "doi" field
+- Return ONLY the JSON array, no other text
+
+Text:
+```
+{ref_text}
+```"""
+
+    response = await client.chat(
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.1,
+        max_tokens=4096,
+    )
+
+    # 解析 JSON
+    content = response.strip()
+    # 去掉可能的 markdown 代码块标记
+    content = re.sub(r'^```(?:json)?\s*', '', content)
+    content = re.sub(r'\s*```$', '', content)
+
+    try:
+        refs = json.loads(content)
+    except json.JSONDecodeError:
+        # 尝试找到 JSON 数组
+        m = re.search(r'\[.*\]', content, re.DOTALL)
+        if m:
+            refs = json.loads(m.group())
         else:
-            merged.append(line)
+            logger.error(f"[DOIValidator] LLM 返回无效 JSON: {content[:200]}")
+            return []
 
-    # 解析每条引用
-    results = []
-    for raw in merged:
-        title = _extract_title(raw)
-        author = _extract_author(raw)
-        lang = "zh" if _is_chinese(raw) else "en"
-        results.append({
-            "raw": raw,
-            "title": title,
-            "author": author,
-            "language": lang,
-        })
+    if not isinstance(refs, list):
+        return []
 
-    return results
+    # 标准化字段
+    for r in refs:
+        r.setdefault("title", "")
+        r.setdefault("first_author", "")
+        r.setdefault("language", "zh" if _is_chinese(r.get("title", "")) else "en")
+        r.setdefault("raw", "")
+
+    return refs
 
 
 async def validate_reference(ref: Dict) -> Dict:
     """验证单条参考文献"""
     title = ref.get("title", "")
-    author = ref.get("author", "")
+    author = ref.get("first_author", "")
     lang = ref.get("language", "en")
 
     if not title or len(title) < 3:
@@ -159,24 +160,8 @@ async def validate_reference(ref: Dict) -> Dict:
         }
 
     try:
-        if lang == "zh":
-            result = await baidu_scholar_client.search_by_title(title, author)
-            if result and result.get("found"):
-                return {
-                    **ref,
-                    "verified": True,
-                    "status": "verified",
-                    "match_title": result["title"],
-                    "source": "baidu_scholar",
-                    "url": result.get("url", ""),
-                }
-            return {
-                **ref,
-                "verified": False,
-                "status": "not_found",
-                "message": "Baidu Scholar 未找到匹配文献",
-            }
-        else:
+        # 英文文献：OpenAlex
+        if lang == "en":
             result = await get_openalex_service().search_by_exact_title(title)
             if result:
                 return {
@@ -187,12 +172,37 @@ async def validate_reference(ref: Dict) -> Dict:
                     "doi": result.get("doi", ""),
                     "source": "openalex",
                 }
-            return {
-                **ref,
-                "verified": False,
-                "status": "not_found",
-                "message": "OpenAlex 未找到匹配文献",
-            }
+
+        # 中文文献：Crossref → Baidu Scholar
+        if lang == "zh":
+            result = await _crossref_search_title(title)
+            if result:
+                return {
+                    **ref,
+                    "verified": True,
+                    "status": "verified",
+                    "match_title": result["title"],
+                    "doi": result.get("doi", ""),
+                    "source": "crossref",
+                }
+
+            result_bs = await baidu_scholar_client.search_by_title(title, author)
+            if result_bs and result_bs.get("found"):
+                return {
+                    **ref,
+                    "verified": True,
+                    "status": "verified",
+                    "match_title": result_bs["title"],
+                    "source": "baidu_scholar",
+                    "url": result_bs.get("url", ""),
+                }
+
+        return {
+            **ref,
+            "verified": False,
+            "status": "not_found",
+            "message": "未找到匹配文献",
+        }
     except Exception as e:
         logger.error(f"[DOIValidator] Error validating '{title}': {e}")
         return {
@@ -216,7 +226,7 @@ async def validate_all(text: str) -> Dict:
             "references": [{raw, title, verified, status, ...}]
         }
     """
-    refs = parse_references(text)
+    refs = await _llm_parse_references(text)
     if not refs:
         return {
             "total": 0,

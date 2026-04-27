@@ -204,10 +204,6 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
             e.preventDefault()
             navigate('/generate')
           }}>{t('home.nav.generate')}</a>
-          <a href="/verify" className={location.pathname === '/verify' ? 'active' : ''} onClick={(e) => {
-            e.preventDefault()
-            navigate('/verify')
-          }}>Verify</a>
           <a href="/#pricing" onClick={(e) => {
             e.preventDefault()
             if (location.pathname === '/') {
@@ -291,15 +287,6 @@ export function SimpleAppInternational({ autoShowLogin }: { autoShowLogin?: bool
               navigate('/generate')
             }}
           >{t('home.nav.generate')}</a>
-          <a
-            href="/verify"
-            className={location.pathname === '/verify' ? 'active' : ''}
-            onClick={(e) => {
-              e.preventDefault()
-              setMobileMenuOpen(false)
-              navigate('/verify')
-            }}
-          >Verify</a>
           <a
             href="/#pricing"
             onClick={(e) => {
