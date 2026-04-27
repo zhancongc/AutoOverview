@@ -44,6 +44,16 @@ class PaperQualityFilter:
         r'内部资料',
     ]
 
+    # 低信誉期刊/出版商黑名单（精确匹配，不区分大小写）
+    # 仅作为兜底，主要靠 ISSN + API filter 自动过滤
+    LOW_REPUTATION_VENUES = set()
+
+    # 预印本平台（需要额外检查：有 DOI 才放行）
+    PREPRINT_PLATFORMS = {
+        'ssrn electronic journal',
+        'ssrn',
+    }
+
     # 无意义作者
     LOW_QUALITY_AUTHORS = [
         '佚名',
@@ -97,25 +107,34 @@ class PaperQualityFilter:
             if pattern.search(venue):
                 return True, f"来源为低质量: {pattern.pattern}"
 
-        # 3. 检查作者
+        # 3. 检查低信誉期刊黑名单
+        venue_lower = venue.lower().strip()
+        if venue_lower in self.LOW_REPUTATION_VENUES:
+            return True, f"低信誉期刊: {venue}"
+
+        # 4. 预印本平台检查（SSRN 等）：有 DOI 放行，无 DOI 过滤
+        if venue_lower in self.PREPRINT_PLATFORMS:
+            doi = paper.get('doi', '')
+            if not doi:
+                return True, f"预印本平台无 DOI: {venue}"
+
+        # 5. 检查作者
         if authors:
             first_author = authors[0]
             if first_author in self.LOW_QUALITY_AUTHORS:
                 return True, f"作者为低质量: {first_author}"
 
-        # 4. 检查是否为机构仓储内容（通常是内部资料）
-        # 注意：被引为0不代表低质量，可能只是新论文
+        # 6. 检查是否为机构仓储内容（通常是内部资料）
         if 'Institutional Repository' in venue or '机构知识库' in venue:
-            # 机构仓储内容通常是低质量的，无论是否有被引
             return True, "机构仓储内容"
 
-        # 5. 检查标题是否过短或无意义
+        # 7. 检查标题是否过短或无意义
         # 去除空格和标点后，如果少于5个字符，可能是无意义标题
         clean_title = re.sub(r'[^\w\u4e00-\u9fff]', '', title)
         if len(clean_title) < 5:
             return True, "标题过短"
 
-        # 6. 检查是否为年份过新且来源不明的文献（可能是低质量）
+        # 8. 检查是否为年份过新且来源不明的文献（可能是低质量）
         current_year = 2026
         if year is not None and year >= current_year - 2:
             # 近2年发表的新文献，需要更严格检查来源
@@ -183,7 +202,10 @@ class PaperQualityFilter:
 
         # 来源质量（有来源加分，最高10分）
         if venue:
-            if len(venue) > 15:
+            # 低信誉期刊直接扣分
+            if venue.lower().strip() in self.LOW_REPUTATION_VENUES:
+                score = 0
+            elif len(venue) > 15:
                 score += 10
             elif len(venue) > 5:
                 score += 5

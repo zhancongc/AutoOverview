@@ -148,6 +148,7 @@ class OpenAlexService:
             "has_doi:true",
             "is_retracted:false",
             "primary_location.source.type:journal|conference|repository",
+            "primary_location.source.has_issn:true",
         ]
 
     def _build_sort(self, sort: str = None) -> str:

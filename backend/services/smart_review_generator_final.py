@@ -490,9 +490,9 @@ Output only the comparison matrix content in Markdown format."""
         返回: (修复后的内容, 最终参考文献列表)
         """
         # === 移除 LLM 生成的原始参考文献部分（避免重复）===
-        # 匹配 "## References" 或 "## 参考文献" 及其后面的所有内容
+        # 匹配 "## References"、"**参考文献**"、"**References**" 及其后面的所有内容
         import re
-        content = re.split(r'\n##\s*(References|参考文献)\n', content, maxsplit=1)[0]
+        content = re.split(r'\n(?:##\s*(?:References|参考文献)|\*\*(?:References|参考文献)\*\*)\s*\n', content, maxsplit=1)[0]
 
         # === 规则 0: 标准化引用格式 ===
         # 将 [8], [9] 或 [8],[9] 转换为 [8, 9]
@@ -948,6 +948,7 @@ Table content must include:
 - Ensure complete output of all content
 - Insert 1-2 comparison tables
 - Each main chapter should have a dedicated "Comparative Analysis" subsection
+- **DO NOT output a "References" section at the end** — only write the body text with [number] citations. The reference list will be generated separately.
 """
         else:
             return f"""你是学术写作专家，正在撰写一篇高质量的文献综述。
@@ -1028,6 +1029,7 @@ Table content must include:
 - 确保完整输出所有内容
 - 插入 1-2 个对比表格
 - 每个主体章节都要有专门的"对比分析"小节
+- **禁止在末尾输出"参考文献"部分** — 只写正文并用 [数字] 标注引用即可，参考文献列表会由系统自动生成
 """
 
     def _build_user_message(
