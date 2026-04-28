@@ -1919,15 +1919,16 @@ async def get_record_review(
     # 获取综述内容
     review_content = review_record.review
 
-    # 如果指定了非 IEEE 格式，重新格式化参考文献
-    if format != "ieee" and "## References" in review_content:
+    # 根据引用格式重新格式化参考文献
+    if "## References" in review_content or "## 参考文献" in review_content:
         from services.citation_formatter import format_references
 
         if papers:
-            parts = review_content.split("## References", 1)
+            ref_title = "## 参考文献" if "## 参考文献" in review_content else "## References"
+            parts = review_content.split(ref_title, 1)
             content_part = parts[0]
             new_references = format_references(papers, format)
-            review_content = content_part + "## References\n\n" + new_references
+            review_content = content_part + ref_title + "\n\n" + new_references
 
     # 计算生成时长
     duration_seconds = None
@@ -2007,16 +2008,17 @@ async def get_task_review(
             "duration_seconds": _duration
         }
 
-        # 如果指定了非 IEEE 格式，重新格式化参考文献
-        if format != "ieee" and "## References" in result_data["review"]:
+        # 根据引用格式重新格式化参考文献
+        if "## References" in result_data["review"] or "## 参考文献" in result_data["review"]:
             from services.citation_formatter import format_references
 
             papers = result_data["papers"]
             if papers:
-                parts = result_data["review"].split("## References", 1)
+                ref_title = "## 参考文献" if "## 参考文献" in result_data["review"] else "## References"
+                parts = result_data["review"].split(ref_title, 1)
                 content_part = parts[0]
                 new_references = format_references(papers, format)
-                result_data["review"] = content_part + "## References\n\n" + new_references
+                result_data["review"] = content_part + ref_title + "\n\n" + new_references
 
         return {
             "success": True,
@@ -2062,16 +2064,17 @@ async def get_task_review(
         "duration_seconds": _duration
     }
 
-    # 如果指定了非 IEEE 格式，重新格式化参考文献
-    if format != "ieee" and "## References" in result_data["review"]:
+    # 根据引用格式重新格式化参考文献
+    if "## References" in result_data["review"] or "## 参考文献" in result_data["review"]:
         from services.citation_formatter import format_references
 
         papers = result_data["papers"]
         if papers:
-            parts = result_data["review"].split("## References", 1)
+            ref_title = "## 参考文献" if "## 参考文献" in result_data["review"] else "## References"
+            parts = result_data["review"].split(ref_title, 1)
             content_part = parts[0]
             new_references = format_references(papers, format)
-            result_data["review"] = content_part + "## References\n\n" + new_references
+            result_data["review"] = content_part + ref_title + "\n\n" + new_references
 
     return {
         "success": True,
