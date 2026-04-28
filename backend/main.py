@@ -635,22 +635,20 @@ async def get_search_history(
         .all()
     )
 
-    # 获取关联的 PaperSearchStage 数据（只取需要的列）
+    # 获取关联的 PaperSearchStage 数据（列表页只取 papers_count，不取大 JSON 字段）
     task_ids = [t.id for t in tasks]
-    search_stages = {}
+    papers_counts = {}
     if task_ids:
         stages = (
             db_session.query(
                 PaperSearchStage.task_id,
-                PaperSearchStage.papers_summary,
                 PaperSearchStage.papers_count,
-                PaperSearchStage.papers_sample,
             )
             .filter(PaperSearchStage.task_id.in_(task_ids))
             .all()
         )
         for stage in stages:
-            search_stages[stage.task_id] = stage
+            papers_counts[stage.task_id] = stage.papers_count
 
     # 构建返回结果（不包含 params 大字段）
     results = []
@@ -668,11 +666,9 @@ async def get_search_history(
             "completed_at": task.completed_at.isoformat() if task.completed_at else None,
             "is_public": task.is_public or False,
         }
-        stage = search_stages.get(task.id)
-        if stage:
-            task_dict['papers_summary'] = stage.papers_summary
-            task_dict['papers_count'] = stage.papers_count
-            task_dict['papers_sample'] = stage.papers_sample
+        count = papers_counts.get(task.id)
+        if count is not None:
+            task_dict['papers_count'] = count
         results.append(task_dict)
 
     return {

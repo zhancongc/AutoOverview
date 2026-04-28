@@ -71,7 +71,6 @@ export function ProfilePageInternational() {
   const [exportingReview, setExportingReview] = useState(false)
   const [showApiToken, setShowApiToken] = useState(true)
   const [creditLogs, setCreditLogs] = useState<CreditLogEntry[]>([])
-  const [, setCreditLogsTotal] = useState(0)
 
   useEffect(() => {
     if (!isLoggedIn()) {
@@ -80,13 +79,6 @@ export function ProfilePageInternational() {
     }
     setUserInfo(getLocalUserInfo())
     loadAllRecords()
-    api.getCredits().then(data => {
-      setCredits(data.credits)
-    }).catch(err => console.error('Failed to fetch credits:', err))
-    api.getCreditLogs().then(data => {
-      setCreditLogs(data.logs)
-      setCreditLogsTotal(data.total)
-    }).catch(err => console.error('Failed to fetch credit logs:', err))
   }, [navigate])
 
   const loadAllRecords = async () => {
@@ -104,6 +96,8 @@ export function ProfilePageInternational() {
       if (searchesRes.success) {
         setSearches(searchesRes.searches)
       }
+      api.getCredits().then(data => setCredits(data.credits)).catch(() => {})
+      api.getCreditLogs().then(data => setCreditLogs(data.logs)).catch(() => {})
     } catch (err) {
       console.error('Failed to load records:', err)
     } finally {
@@ -111,17 +105,22 @@ export function ProfilePageInternational() {
     }
   }
 
-  const handleViewSearch = (search: any) => {
+  const handleViewSearch = async (search: any) => {
     localStorage.setItem('search_papers_topic', search.topic)
-    if (search.papers_sample) {
-      localStorage.setItem('search_papers_papers', JSON.stringify(search.papers_sample))
-    }
-    if (search.papers_summary) {
-      localStorage.setItem('search_papers_statistics', JSON.stringify(search.papers_summary))
-    }
     localStorage.setItem('search_papers_task_id', search.id)
     localStorage.setItem('search_papers_has_searched', 'true')
     localStorage.setItem('search_papers_scroll_to_results', 'true')
+    try {
+      const detailRes = await api.getSearchHistoryDetail(search.id)
+      if (detailRes.success && detailRes.search) {
+        if (detailRes.search.papers_sample) {
+          localStorage.setItem('search_papers_papers', JSON.stringify(detailRes.search.papers_sample))
+        }
+        if (detailRes.search.papers_summary) {
+          localStorage.setItem('search_papers_statistics', JSON.stringify(detailRes.search.papers_summary))
+        }
+      }
+    } catch {}
     navigate('/search-papers')
   }
 

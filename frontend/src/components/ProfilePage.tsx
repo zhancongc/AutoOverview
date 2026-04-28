@@ -63,7 +63,6 @@ export function ProfilePage() {
   const [reviewExportFormat, setReviewExportFormat] = useState<'markdown' | 'word'>('markdown')
   const [exportingReview, setExportingReview] = useState(false)
   const [creditLogs, setCreditLogs] = useState<CreditLogEntry[]>([])
-  const [, setCreditLogsTotal] = useState(0)
 
   useEffect(() => {
     if (!isLoggedIn()) {
@@ -72,13 +71,6 @@ export function ProfilePage() {
     }
     setUserInfo(getLocalUserInfo())
     loadAllRecords()
-    api.getCredits().then(data => {
-      setCredits(data.credits)
-    }).catch(err => console.error('获取积分失败:', err))
-    api.getCreditLogs().then(data => {
-      setCreditLogs(data.logs)
-      setCreditLogsTotal(data.total)
-    }).catch(err => console.error('获取积分流水失败:', err))
   }, [])
 
   const loadAllRecords = async () => {
@@ -96,6 +88,9 @@ export function ProfilePage() {
       if (searchesRes.success) {
         setSearches(searchesRes.searches)
       }
+      // 并行加载积分数据
+      api.getCredits().then(data => setCredits(data.credits)).catch(() => {})
+      api.getCreditLogs().then(data => setCreditLogs(data.logs)).catch(() => {})
     } catch (err) {
       console.error('加载历史记录失败:', err)
     } finally {
@@ -103,18 +98,24 @@ export function ProfilePage() {
     }
   }
 
-  const handleViewSearch = (search: any) => {
+  const handleViewSearch = async (search: any) => {
     // 将搜索结果保存到 localStorage，然后跳转到搜索页面
     localStorage.setItem('search_papers_topic', search.topic)
-    if (search.papers_sample) {
-      localStorage.setItem('search_papers_papers', JSON.stringify(search.papers_sample))
-    }
-    if (search.papers_summary) {
-      localStorage.setItem('search_papers_statistics', JSON.stringify(search.papers_summary))
-    }
     localStorage.setItem('search_papers_task_id', search.id)
     localStorage.setItem('search_papers_has_searched', 'true')
     localStorage.setItem('search_papers_scroll_to_results', 'true')
+    // 列表不含 papers_sample，需要请求详情接口
+    try {
+      const detailRes = await api.getSearchHistoryDetail(search.id)
+      if (detailRes.success && detailRes.search) {
+        if (detailRes.search.papers_sample) {
+          localStorage.setItem('search_papers_papers', JSON.stringify(detailRes.search.papers_sample))
+        }
+        if (detailRes.search.papers_summary) {
+          localStorage.setItem('search_papers_statistics', JSON.stringify(detailRes.search.papers_summary))
+        }
+      }
+    } catch {}
     navigate('/search-papers')
   }
 
