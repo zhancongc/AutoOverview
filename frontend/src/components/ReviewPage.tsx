@@ -167,8 +167,8 @@ export function ReviewPage() {
     }
   }, [])
 
-  // 确定使用哪个数据源
-  const reviewData = state || taskData
+  // 确定使用哪个数据源：优先使用从后端加载的 taskData（包含最新引用格式）
+  const reviewData = taskData || state
 
   if (error) {
     return (

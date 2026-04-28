@@ -163,7 +163,7 @@ export function ReviewPageInternational() {
     }
   }, [])
 
-  const reviewData = state || taskData
+  const reviewData = taskData || state
 
   if (error) {
     return (
