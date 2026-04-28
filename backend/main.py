@@ -1962,7 +1962,6 @@ async def get_task_review(
     format: str = "ieee",
     user_id: Optional[int] = Depends(get_current_user_id),
     db_session: Session = Depends(get_db),
-    _rate_limit: None = Depends(check_token_rate_limit),
 ):
     """
     通过 task_id 获取综述结果
