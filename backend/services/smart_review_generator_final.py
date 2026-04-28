@@ -945,6 +945,9 @@ Table content must include:
 
 **Output Requirements**:
 - Use Markdown format, main title use ##, first-level section titles use ###, second-level section titles (like 1.1, 2.1) use ####, ensure all numbered headings have corresponding Markdown heading symbols, do not use bold alone instead of headings
+- The very first section (before the Introduction) must be an **Abstract**: a concise paragraph (150-300 words) summarizing the review's scope, key findings, and conclusions
+- Immediately after the Abstract, include a **Keywords** line listing 5-8 keywords separated by commas (e.g., "Keywords: deep learning, image classification, ...")
+- The final chapter must be split into two distinct subsections: **Summary** (synthesize key findings and contributions) and **Future Research Directions** (identify research gaps, unsolved problems, and promising directions for future work)
 - Ensure complete output of all content
 - Insert 1-2 comparison tables
 - Each main chapter should have a dedicated "Comparative Analysis" subsection
@@ -1026,6 +1029,9 @@ Table content must include:
 
 **输出要求**：
 - 使用 Markdown 格式，主标题使用 ##，一级节标题使用 ###，二级节标题（如 1.1、2.1）使用 ####，确保所有层级的编号标题都带有对应的 Markdown 标题符号，不要仅用粗体代替标题
+- 综述正文之前，必须先输出**摘要**（150-300字）：简要概括综述的研究范围、主要发现和结论
+- 摘要之后紧接着输出**关键词**一行，列出5-8个关键词，用顿号分隔（如"关键词：深度学习、图像分类、……"）
+- 最后一个章节必须拆分为两个独立小节：**总结**（归纳主要发现和贡献）和**研究展望**（指出研究空白、未解决问题和未来方向）
 - 确保完整输出所有内容
 - 插入 1-2 个对比表格
 - 每个主体章节都要有专门的"对比分析"小节
