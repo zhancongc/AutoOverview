@@ -1,9 +1,12 @@
 """
-邮件退订 API
+邮件退订 API — 单参数 opaque token，URL 不暴露邮箱
 """
+import base64
 import hashlib
-import os
+import hmac
+import json
 import logging
+import os
 
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
@@ -17,8 +20,7 @@ UNSUBSCRIBE_SECRET = os.getenv("UNSUBSCRIBE_SECRET", "danmo-scholar-unsubscribe"
 
 
 def generate_unsubscribe_token(email: str) -> str:
-    """生成退订 token（邮箱 + 密钥的 HMAC）"""
-    import hmac
+    """生成 HMAC 验证 token。"""
     return hmac.new(
         UNSUBSCRIBE_SECRET.encode(),
         email.lower().encode(),
@@ -27,20 +29,40 @@ def generate_unsubscribe_token(email: str) -> str:
 
 
 def generate_unsubscribe_url(email: str) -> str:
-    """生成退订链接"""
+    """生成退订链接 — 单参数 opaque token，URL 不暴露邮箱。"""
     backend_url = os.getenv("BACKEND_URL", "https://scholar.danmo.tech")
     token = generate_unsubscribe_token(email)
-    return f"{backend_url}/api/email/unsubscribe?email={email}&token={token}"
+    payload = json.dumps({"e": email.lower(), "t": token}, separators=(",", ":"))
+    encoded = base64.urlsafe_b64encode(payload.encode()).decode().rstrip("=")
+    return f"{backend_url}/api/email/unsubscribe?t={encoded}"
 
 
-def verify_unsubscribe_token(email: str, token: str) -> bool:
-    return generate_unsubscribe_token(email) == token
+def _decode_opaque_token(encoded: str) -> tuple[str, str] | None:
+    """解码 opaque token，返回 (email, hmac_token) 或 None。"""
+    try:
+        padded = encoded + "=" * (4 - len(encoded) % 4)
+        payload = json.loads(base64.urlsafe_b64decode(padded))
+        return payload.get("e", ""), payload.get("t", "")
+    except Exception:
+        return None
 
 
 @router.get("/unsubscribe", response_class=HTMLResponse)
-async def unsubscribe(email: str, token: str, request: Request):
-    """退订接口 — 用户点击链接后调用"""
-    if not verify_unsubscribe_token(email, token):
+async def unsubscribe(request: Request):
+    """退订接口 — 支持新格式 (?t=xxx) 和旧格式 (?email=&token=)"""
+    email = ""
+    token = ""
+
+    opaque = request.query_params.get("t")
+    if not opaque:
+        return HTMLResponse("<h3>Invalid unsubscribe link.</h3>", status_code=400)
+
+    result = _decode_opaque_token(opaque)
+    if not result:
+        return HTMLResponse("<h3>Invalid unsubscribe link.</h3>", status_code=400)
+    email, token = result
+
+    if not email or not token or not verify_unsubscribe_token(email, token):
         return HTMLResponse("<h3>Invalid unsubscribe link.</h3>", status_code=400)
 
     _get_db = request.app.state.auth_get_db if hasattr(request.app.state, "auth_get_db") else None
@@ -48,15 +70,15 @@ async def unsubscribe(email: str, token: str, request: Request):
         from authkit.database import get_db as _get_db_func
         _get_db = _get_db_func
 
-    db = next(_get_db())
+    db_session = next(_get_db())
     try:
-        result = db.execute(text("""
+        result = db_session.execute(text("""
             UPDATE email_contacts SET unsubscribed = true
             WHERE email = :email AND (unsubscribed IS NULL OR unsubscribed = false)
             RETURNING name
-        """), {"email": email.lower()})
+        """), {"email": email})
         row = result.fetchone()
-        db.commit()
+        db_session.commit()
 
         if row:
             name = row[0] or "Researcher"
@@ -74,4 +96,8 @@ async def unsubscribe(email: str, token: str, request: Request):
         logger.error(f"[Unsubscribe] Error: {e}")
         return HTMLResponse("<p>An error occurred. Please try again.</p>", status_code=500)
     finally:
-        db.close()
+        db_session.close()
+
+
+def verify_unsubscribe_token(email: str, token: str) -> bool:
+    return generate_unsubscribe_token(email) == token
