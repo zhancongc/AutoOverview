@@ -489,9 +489,17 @@ Output only the comparison matrix content in Markdown format."""
 
         返回: (修复后的内容, 最终参考文献列表)
         """
+        # === 移除 LLM 输出的前言/元文本（第一个 ## 标题之前的所有内容）===
+        import re
+        first_heading = re.search(r'^## ', content, re.MULTILINE)
+        if first_heading and first_heading.start() > 0:
+            preamble = content[:first_heading.start()].strip()
+            if preamble:
+                logger.debug(f"[清理] 移除前言文本 ({len(preamble)} 字符): {preamble[:80]}...")
+                content = content[first_heading.start():]
+
         # === 移除 LLM 生成的原始参考文献部分（避免重复）===
         # 匹配 "## References"、"**参考文献**"、"**References**" 及其后面的所有内容
-        import re
         content = re.split(r'\n(?:##\s*(?:References|参考文献)|\*\*(?:References|参考文献)\*\*)\s*\n', content, maxsplit=1)[0]
 
         # === 规则 0: 标准化引用格式 ===
@@ -944,6 +952,7 @@ Table content must include:
 - Use academic expressions
 
 **Output Requirements**:
+- **Start directly with the Abstract section (## Abstract). Do NOT output any introductory remarks, planning notes, meta-commentary, or phrases like "Now I will write..." / "Based on my analysis..." — the first line of your output must be "## Abstract"**
 - Use Markdown format, main title use ##, first-level section titles use ###, second-level section titles (like 1.1, 2.1) use ####, ensure all numbered headings have corresponding Markdown heading symbols, do not use bold alone instead of headings
 - The very first section (before the Introduction) must be an **Abstract**: a concise paragraph (150-300 words) summarizing the review's scope, key findings, and conclusions
 - Immediately after the Abstract, include a **Keywords** line listing 5-8 keywords separated by commas (e.g., "Keywords: deep learning, image classification, ...")
@@ -1028,6 +1037,7 @@ Table content must include:
 - 使用学术化表达
 
 **输出要求**：
+- **直接从摘要章节（## 摘要）开始输出。禁止输出任何前言、计划说明、意图描述或"现在我将开始撰写……"之类的元文本，输出的第一行必须是"## 摘要"**
 - 使用 Markdown 格式，主标题使用 ##，一级节标题使用 ###，二级节标题（如 1.1、2.1）使用 ####，确保所有层级的编号标题都带有对应的 Markdown 标题符号，不要仅用粗体代替标题
 - 综述正文之前，必须先输出**摘要**（150-300字）：简要概括综述的研究范围、主要发现和结论
 - 摘要之后紧接着输出**关键词**一行，列出5-8个关键词，用顿号分隔（如"关键词：深度学习、图像分类、……"）
