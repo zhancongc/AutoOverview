@@ -120,7 +120,7 @@ export function PaymentModal({ onClose, onPaymentSuccess, planType, recordId }: 
     } finally {
       setLoading(false)
     }
-  }, [planType, recordId, onPaymentSuccess])
+  }, [planType, recordId, onPaymentSuccess, plans])
 
   // 自动创建订单
   useEffect(() => {
