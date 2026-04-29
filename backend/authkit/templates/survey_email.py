@@ -9,12 +9,12 @@
 """
 from jinja2 import Template
 
-SUBJECT = "关于你之前用过的 Danmo Scholar，想请教一个简单的问题"
+SUBJECT = "关于你之前用过的澹墨学术，想请教一个简单的问题"
 
 TEXT_TEMPLATE = Template("""\
-你好 {{ nickname }}，
+同学你好，
 
-我是澹墨学术（Danmo Scholar）的开发者 詹聪聪。
+我是澹墨学术（Danmo Scholar）的开发者 詹聪聪（微信号：{{ wechat_id }}）。
 
 {% if topic %}
 前段时间你用我们的工具生成了关于《{{ topic }}》的综述，但后来就没再继续用了。我特别想知道原因——这对我们改进产品非常重要。
@@ -69,10 +69,10 @@ HTML_TEMPLATE = Template("""\
 <!-- Body -->
 <tr><td style="padding:32px 40px;">
 
-  <p style="margin:0 0 16px;font-size:15px;color:#1a1a2e;">你好 {{ nickname }}，</p>
+  <p style="margin:0 0 16px;font-size:15px;color:#1a1a2e;">同学你好，</p>
 
   <p style="margin:0 0 16px;font-size:15px;color:#555;line-height:1.6;">
-    我是澹墨学术（Danmo Scholar）的开发者&nbsp;詹聪聪。
+    我是<a href="https://scholar.danmo.tech" style="color:#2563eb;text-decoration:none;">澹墨学术（Danmo Scholar）</a>的开发者&nbsp;詹聪聪（微信号：{{ wechat_id }}）。
   </p>
 
   {% if topic %}
