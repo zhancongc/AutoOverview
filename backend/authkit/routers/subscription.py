@@ -65,7 +65,7 @@ def _get_user_model(user_id: int, db: Session):
     return db.query(User).filter(User.id == user_id).first()
 
 
-def _add_credits(user_id: int, plan_type: str, db: Session):
+def _add_credits(user_id: int, plan_type: str, db: Session, order_no: str = ""):
     """支付成功后为用户增加综述额度"""
     user = _get_user_model(user_id, db)
     if not user:
@@ -77,8 +77,22 @@ def _add_credits(user_id: int, plan_type: str, db: Session):
     else:
         credits_to_add = PLAN_CREDITS.get(plan_type, 1)
     current_credits = user.get_meta("review_credits", 0)
+    free_credits = user.get_meta("free_credits", 0)
     user.set_meta("review_credits", current_credits + credits_to_add)
     user.set_meta("has_purchased", True)
+    # 写 credit_logs
+    from ..models.credit_log import CreditLog
+    detail = f"plan: {plan_type}"
+    if order_no:
+        detail += f", order: {order_no}"
+    db.add(CreditLog(
+        user_id=user.id,
+        change=credits_to_add,
+        balance_before=current_credits + free_credits,
+        balance_after=current_credits + credits_to_add + free_credits,
+        reason="payment",
+        detail=detail,
+    ))
     db.commit()
     logger.info(f"用户 {user_id} 获得 {credits_to_add} 个 Credit，当前付费 {current_credits + credits_to_add}")
 
@@ -226,7 +240,7 @@ def query_subscription(
             subscription.trade_no = result.get("trade_no", "")
 
             # 增加综述额度
-            _add_credits(current_user.id, subscription.plan_type, db)
+            _add_credits(current_user.id, subscription.plan_type, db, order_no=subscription.order_no)
 
             db.commit()
 

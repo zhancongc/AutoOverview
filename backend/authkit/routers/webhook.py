@@ -135,7 +135,7 @@ def process_payment(params: dict, db: Session) -> str:
                     balance_before=current_credits + free_credits,
                     balance_after=current_credits + credits_to_add + free_credits,
                     reason="payment",
-                    detail=f"充值: {sub.plan_type} 套餐, 订单 {sub.order_id}",
+                    detail=f"plan: {sub.plan_type}, order: {sub.order_no}",
                 ))
                 logger.info(f"用户 {user.id} 获得 {credits_to_add} 篇付费额度，当前付费 {current_credits + credits_to_add}")
 

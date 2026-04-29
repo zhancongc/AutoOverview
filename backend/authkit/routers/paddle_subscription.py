@@ -265,7 +265,7 @@ async def paddle_webhook(request: Request, db: Session = Depends(get_db)):
                             balance_before=current_credits + free_credits,
                             balance_after=current_credits + credits_to_add + free_credits,
                             reason="payment",
-                            detail=f"Paddle充值: {subscription.plan_type} 套餐, 订单 {subscription.order_id}",
+                            detail=f"plan: {subscription.plan_type}, order: {subscription.order_no}",
                         ))
                         logger.info(f"[Paddle] Added {credits_to_add} credits to user {user.id}")
 

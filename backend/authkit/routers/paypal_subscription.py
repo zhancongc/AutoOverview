@@ -312,7 +312,7 @@ def _activate_subscription(subscription, paypal_order_id: str, db: Session):
                 balance_before=current_credits + free_credits,
                 balance_after=current_credits + credits_to_add + free_credits,
                 reason="payment",
-                detail=f"PayPal充值: {subscription.plan_type} 套餐, 订单 {subscription.order_no}",
+                detail=f"plan: {subscription.plan_type}, order: {subscription.order_no}",
             ))
             # 增加搜索次数（英文站）
             SEARCH_BONUS_EN = {"single": 150, "semester": 500, "yearly": 1500}
