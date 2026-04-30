@@ -109,7 +109,7 @@ def ensure_table(session):
 # ── 查询目标用户 ──────────────────────────────────────
 
 def find_target_users(session, args) -> list[dict]:
-    """查询流失用户及其最新综述主题。"""
+    """查询流失用户：生成过综述的 + 注册后从未使用的。"""
     params = {}
 
     # 基础排除条件
@@ -123,17 +123,6 @@ def find_target_users(session, args) -> list[dict]:
     for i, e in enumerate(exclude_list):
         params[f"ex{i}"] = e
 
-    # 时间过滤
-    min_days = args.min_days
-    max_days = args.max_days
-    time_filter = ""
-    if min_days:
-        params["min_date"] = datetime.now(timezone.utc) - timedelta(days=min_days)
-        time_filter += " AND latest_task.created_at < :min_date"
-    if max_days:
-        params["max_date"] = datetime.now(timezone.utc) - timedelta(days=max_days)
-        time_filter += " AND latest_task.created_at > :max_date"
-
     # 指定邮箱
     email_filter = ""
     if args.email:
@@ -145,28 +134,59 @@ def find_target_users(session, args) -> list[dict]:
     if not args.resend:
         sent_filter = " AND NOT EXISTS (SELECT 1 FROM survey_emails se WHERE se.email = u.email)"
 
+    # 时间过滤
+    min_days = args.min_days
+    max_days = args.max_days
+    task_time = ""
+    reg_time = ""
+    if min_days:
+        params["min_date"] = datetime.now(timezone.utc) - timedelta(days=min_days)
+        task_time += " AND lt.created_at < :min_date"
+        reg_time += " AND u.created_at < :min_date"
+    if max_days:
+        params["max_date"] = datetime.now(timezone.utc) - timedelta(days=max_days)
+        task_time += " AND lt.created_at > :max_date"
+        reg_time += " AND u.created_at > :max_date"
+
     query = text(f"""
-        WITH latest_task AS (
+        -- 1) 生成过综述的用户（带主题）
+        SELECT u.id, u.email, u.nickname,
+               lt.topic,
+               lt.created_at AS last_task_at,
+               false AS never_used
+        FROM users u
+        JOIN (
             SELECT user_id, topic, created_at,
                    ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY created_at DESC) AS rn
             FROM review_tasks
             WHERE user_id IS NOT NULL
-        )
-        SELECT u.id, u.email, u.nickname,
-               latest_task.topic,
-               latest_task.created_at AS last_task_at
-        FROM users u
-        JOIN latest_task ON latest_task.user_id = u.id AND latest_task.rn = 1
+        ) lt ON lt.user_id = u.id AND lt.rn = 1
         WHERE u.email NOT IN ({placeholders})
           {email_filter}
-          {time_filter}
+          {task_time}
           {sent_filter}
-        ORDER BY latest_task.created_at DESC
+
+        UNION ALL
+
+        -- 2) 注册后从未生成综述的用户
+        SELECT u.id, u.email, u.nickname,
+               NULL AS topic,
+               u.created_at AS last_task_at,
+               true AS never_used
+        FROM users u
+        WHERE NOT EXISTS (SELECT 1 FROM review_tasks rt WHERE rt.user_id = u.id)
+          AND u.email NOT IN ({placeholders})
+          {email_filter}
+          {reg_time}
+          {sent_filter}
+
+        ORDER BY last_task_at DESC
     """)
 
     rows = session.execute(query, params).fetchall()
     return [
-        dict(user_id=r[0], email=r[1], nickname=r[2], topic=r[3], last_task_at=r[4])
+        dict(user_id=r[0], email=r[1], nickname=r[2], topic=r[3],
+             last_task_at=r[4], never_used=r[5])
         for r in rows
     ]
 
@@ -215,31 +235,39 @@ def main():
 
         # 预览模式
         if not args.send:
-            print(f"找到 {len(users)} 个待调研用户（预览模式，加 --send 实际发送）\n")
+            used = [u for u in users if not u["never_used"]]
+            unused = [u for u in users if u["never_used"]]
+            print(f"找到 {len(users)} 个待调研用户（预览模式，加 --send 实际发送）")
+            print(f"  生成过综述: {len(used)} 人")
+            print(f"  注册未使用: {len(unused)} 人\n")
             for i, u in enumerate(users, 1):
+                tag = "[未使用]" if u["never_used"] else ""
                 days_ago = ""
                 if u["last_task_at"]:
                     delta = datetime.now(timezone.utc) - u["last_task_at"].replace(tzinfo=timezone.utc) if u["last_task_at"].tzinfo is None else datetime.now(timezone.utc) - u["last_task_at"]
                     days_ago = f"  ({delta.days} 天前)"
-                print(f"  {i}. {u['nickname'] or '未设置昵称'} <{u['email']}>{days_ago}")
+                print(f"  {i}. {tag}{u['nickname'] or '未设置昵称'} <{u['email']}>{days_ago}")
                 if u["topic"]:
                     print(f"     主题: 《{u['topic'][:60]}{'…' if len(u['topic']) > 60 else ''}》")
-                else:
-                    print(f"     主题: (无)")
                 print()
 
-            # 渲染第一封作为样本预览
-            sample = users[0]
-            unsubscribe_url = generate_unsubscribe_url(sample["email"])
-            subject, html, txt = render_survey_email(
-                topic=sample["topic"] or "",
-                wechat_id=WECHAT_ID,
-                qrcode_url=QRCODE_URL,
-                unsubscribe_url=unsubscribe_url,
-            )
-            print(f"── 邮件样本（{sample['email']}）──")
-            print(f"Subject: {subject}\n")
-            print(txt)
+            # 渲染两种样本
+            for label, sample_list in [("生成过综述", used), ("注册未使用", unused)]:
+                if not sample_list:
+                    continue
+                sample = sample_list[0]
+                unsubscribe_url = generate_unsubscribe_url(sample["email"])
+                subject, html, txt = render_survey_email(
+                    topic=sample["topic"] or "",
+                    never_used=sample["never_used"],
+                    wechat_id=WECHAT_ID,
+                    qrcode_url=QRCODE_URL,
+                    unsubscribe_url=unsubscribe_url,
+                )
+                print(f"── {label} 邮件样本（{sample['email']}）──")
+                print(f"Subject: {subject}\n")
+                print(txt)
+                print()
             return
 
         # 实际发送
@@ -256,6 +284,7 @@ def main():
             unsubscribe_url = generate_unsubscribe_url(email)
             subject, html, txt = render_survey_email(
                 topic=topic,
+                never_used=u["never_used"],
                 wechat_id=WECHAT_ID,
                 qrcode_url=QRCODE_URL,
                 unsubscribe_url=unsubscribe_url,

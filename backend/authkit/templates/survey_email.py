@@ -18,17 +18,27 @@ TEXT_TEMPLATE = Template("""\
 
 {% if topic %}
 前段时间你用我们的工具生成了关于《{{ topic }}》的综述，但后来就没再继续用了。我特别想知道原因——这对我们改进产品非常重要。
+{% elif never_used %}
+前段时间你注册了澹墨学术，但还没有使用过。我特别想了解是什么原因——这对我们改进产品非常重要。
 {% else %}
 前段时间你花时间用我们的工具生成了综述，但后来就没再继续用了。我特别想知道原因——这对我们改进产品非常重要。
 {% endif %}
 
 无论是：
 
+{% if never_used %}
+- 不确定工具是否适合自己
+- 注册后不知道怎么用
+- 找到了其他替代工具
+- 当时太忙，后来就忘了
+- 或者单纯觉得"用不上"……
+{% else %}
 - 生成的综述质量不行（比如逻辑乱、内容不相关）
 - 文献不够新，或者DOI验证不方便
 - 功能不能满足你的需求
 - 价格不合适
 - 或者就是单纯觉得"没必要用"……
+{% endif %}
 
 任何原因，都请你直接告诉我。
 
@@ -79,6 +89,10 @@ HTML_TEMPLATE = Template("""\
   <p style="margin:0 0 16px;font-size:15px;color:#555;line-height:1.6;">
     前段时间你用我们的工具生成了关于<strong>《{{ topic }}》</strong>的综述，但后来就没再继续用了。我特别想知道原因——这对我们改进产品非常重要。
   </p>
+  {% elif never_used %}
+  <p style="margin:0 0 16px;font-size:15px;color:#555;line-height:1.6;">
+    前段时间你注册了澹墨学术，但还没有使用过。我特别想了解是什么原因——这对我们改进产品非常重要。
+  </p>
   {% else %}
   <p style="margin:0 0 16px;font-size:15px;color:#555;line-height:1.6;">
     前段时间你花时间用我们的工具生成了综述，但后来就没再继续用了。我特别想知道原因——这对我们改进产品非常重要。
@@ -89,11 +103,19 @@ HTML_TEMPLATE = Template("""\
 
   <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 16px;">
     <tr><td style="font-size:14px;color:#555;line-height:2;">
+      {% if never_used %}
+      <span style="color:#999;">▸</span> 不确定工具是否适合自己<br>
+      <span style="color:#999;">▸</span> 注册后不知道怎么用<br>
+      <span style="color:#999;">▸</span> 找到了其他替代工具<br>
+      <span style="color:#999;">▸</span> 当时太忙，后来就忘了<br>
+      <span style="color:#999;">▸</span> 或者单纯觉得"用不上"……
+      {% else %}
       <span style="color:#999;">▸</span> 生成的综述质量不行（比如逻辑乱、内容不相关）<br>
       <span style="color:#999;">▸</span> 文献不够新，或者 DOI 验证不方便<br>
       <span style="color:#999;">▸</span> 功能不能满足你的需求<br>
       <span style="color:#999;">▸</span> 价格不合适<br>
       <span style="color:#999;">▸</span> 或者就是单纯觉得"没必要用"……
+      {% endif %}
     </td></tr>
   </table>
 
@@ -155,6 +177,7 @@ HTML_TEMPLATE = Template("""\
 
 def render_survey_email(
     topic: str = "",
+    never_used: bool = False,
     wechat_id: str = "zhancongc",
     qrcode_url: str = "",
     unsubscribe_url: str = "",
@@ -163,6 +186,7 @@ def render_survey_email(
     ctx = dict(
         nickname="同学",
         topic=topic,
+        never_used=never_used,
         wechat_id=wechat_id,
         qrcode_url=qrcode_url,
         unsubscribe_url=unsubscribe_url,
