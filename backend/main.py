@@ -282,6 +282,36 @@ async def lifespan(app: FastAPI):
     # 从 Redis 恢复重启前的活跃任务
     task_manager.restore_from_redis()
 
+    # 清理数据库中残留的 processing 状态任务（上次重启中断的）
+    try:
+        with next(db.get_session()) as session:
+            stuck_tasks = session.execute(text("""
+                SELECT id, user_id, topic, params
+                FROM review_tasks
+                WHERE status = 'processing'
+            """)).fetchall()
+            if stuck_tasks:
+                for task_id, user_id, topic, params in stuck_tasks:
+                    # 标记失败
+                    session.execute(text("""
+                        UPDATE review_tasks SET status = 'failed'
+                        WHERE id = :id
+                    """), {"id": task_id})
+                    # 退还积分
+                    if user_id:
+                        credit_cost = (params or {}).get("credit_cost", 2)
+                        try:
+                            with next(authkit_get_db()) as auth_session:
+                                refund_credit(user_id, auth_session, cost=credit_cost,
+                                              reason="refund", detail=f"server_restart: {topic}")
+                        except Exception as e:
+                            logger.error(f"[Startup] 退还积分失败: task={task_id}, user={user_id}, error={e}")
+                    logger.info(f"[Startup] 清理残留任务: {task_id} ({topic}), 退还 {credit_cost} 积分给用户 {user_id}")
+                session.commit()
+                logger.info(f"[Startup] 共清理 {len(stuck_tasks)} 个残留 processing 任务")
+    except Exception as e:
+        logger.error(f"[Startup] 清理残留任务失败: {e}")
+
     # 启动定时清理任务（超时任务标记失败 + 旧任务清理）
     async def _periodic_cleanup():
         while True:
