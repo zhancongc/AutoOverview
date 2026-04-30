@@ -184,11 +184,16 @@ def find_target_users(session, args) -> list[dict]:
     """)
 
     rows = session.execute(query, params).fetchall()
-    return [
-        dict(user_id=r[0], email=r[1], nickname=r[2], topic=r[3],
-             last_task_at=r[4], never_used=r[5])
-        for r in rows
-    ]
+    users = []
+    for r in rows:
+        topic = r[3] or ""
+        # 只取第一行作为标题，去掉摘要/关键词等后续内容
+        topic = topic.split("\n")[0].strip()[:80]
+        users.append(dict(
+            user_id=r[0], email=r[1], nickname=r[2], topic=topic,
+            last_task_at=r[4], never_used=r[5],
+        ))
+    return users
 
 
 # ── 主流程 ────────────────────────────────────────────

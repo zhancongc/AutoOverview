@@ -34,7 +34,7 @@ interface Paper {
 }
 
 export function GenerateReviewPage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const location = useLocation()
   const [searchParams] = useSearchParams()
@@ -552,6 +552,7 @@ export function GenerateReviewPage() {
             onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleKeyDown(e) } }}
             disabled={isGenerating}
             rows={2}
+            maxLength={i18n.language.startsWith('zh') ? 50 : 200}
           />
 
           <div className="sp-search-actions">

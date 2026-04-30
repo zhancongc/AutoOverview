@@ -19,7 +19,7 @@ import './ComparisonMatrixPage.css'
 import './SearchPapersPage.css'
 
 export function ComparisonMatrixLanding() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const location = useLocation()
   const { isChineseSite, loggedIn, showLoginModal, setShowLoginModal, handleLoginSuccess, setCredits, credits } = useMatrixAuth()
@@ -452,6 +452,7 @@ export function ComparisonMatrixLanding() {
             onKeyDown={handleKeyDown}
             disabled={combinedPhase !== 'idle'}
             rows={2}
+            maxLength={i18n.language.startsWith('zh') ? 50 : 200}
           />
           <div className="sp-search-actions">
             <button

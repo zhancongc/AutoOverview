@@ -366,11 +366,11 @@ async def global_exception_handler(request, exc):
 
 # 请求模型
 class TopicRequest(BaseModel):
-    topic: str = Field(..., description="论文题目", min_length=1)
+    topic: str = Field(..., description="论文题目", min_length=1, max_length=200)
 
 class GenerateRequest(BaseModel):
     # 必填参数
-    topic: str = Field(..., description="论文主题", min_length=1)
+    topic: str = Field(..., description="论文主题", min_length=1, max_length=200)
 
     # 可选参数：研究方向ID（提高搜索相关性）
     research_direction_id: str = Field(
@@ -412,7 +412,7 @@ class UnlockRequest(BaseModel):
 
 class GenerateComparisonMatrixRequest(BaseModel):
     """生成对比矩阵请求"""
-    topic: str = Field(..., description="论文主题", min_length=1)
+    topic: str = Field(..., description="论文主题", min_length=1, max_length=200)
     reuse_task_id: str = Field("", description="复用已有搜索任务的ID，跳过搜索阶段")
     language: str = Field("zh", description="生成语言：zh（中文）或 en（英文）")
 
@@ -2086,7 +2086,7 @@ async def get_task_review(
 
 class SearchPapersOnlyRequest(BaseModel):
     """查找文献请求"""
-    topic: str = Field(..., description="论文主题", min_length=1)
+    topic: str = Field(..., description="论文主题", min_length=1, max_length=200)
     target_count: int = Field(50, description="目标文献数量", ge=10, le=100)
     search_years: int = Field(10, description="搜索年份范围", ge=5, le=30)
 

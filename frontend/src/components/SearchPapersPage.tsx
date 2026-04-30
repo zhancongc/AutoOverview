@@ -40,7 +40,7 @@ interface Statistics {
 type SortMode = 'citations' | 'year'
 
 export function SearchPapersPage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const location = useLocation()
   const [searchParams] = useSearchParams()
@@ -686,6 +686,7 @@ export function SearchPapersPage() {
             onKeyDown={handleKeyDown}
             disabled={isLoading}
             rows={2}
+            maxLength={i18n.language.startsWith('zh') ? 50 : 200}
           />
           <div className="sp-search-actions">
             <button

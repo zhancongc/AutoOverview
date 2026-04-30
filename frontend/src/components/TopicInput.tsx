@@ -51,6 +51,7 @@ export function TopicInput({
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="请输入论文题目（例如：基于QFD和FMEA的软件外包项目质量管理）"
+          maxLength={50}
           className="topic-input"
           disabled={loading || analyzing || searchingPapers}
         />
