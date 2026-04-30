@@ -17,7 +17,7 @@ TEXT_TEMPLATE = Template("""\
 我是澹墨学术（Danmo Scholar）的开发者 詹聪聪（微信号：{{ wechat_id }}）。
 
 {% if topic %}
-前段时间你用我们的工具生成了关于《{{ topic }}》的综述，但后来就没再继续用了。我特别想知道原因——这对我们改进产品非常重要。
+前段时间你用我们的工具生成了关于《{{ topic }}》的综述，但后来就没再继续用了。所以我特别想知道原因——这对我们改进产品非常重要。
 {% elif never_used %}
 前段时间你注册了澹墨学术，但还没有使用过。我特别想了解是什么原因——这对我们改进产品非常重要。
 {% else %}
@@ -49,11 +49,11 @@ TEXT_TEMPLATE = Template("""\
 
 我的微信号：{{ wechat_id }}
 
-我只是一个开发者，真心想做出对研究生真正有用的工具。
+我每天都在想怎么让这个工具更好用，你的反馈对我特别重要。
 
-谢谢。
+谢谢你时间。
 
-祝研究顺利，
+祝研究顺利！
 
 詹聪聪
 微信：{{ wechat_id }}
@@ -87,7 +87,7 @@ HTML_TEMPLATE = Template("""\
 
   {% if topic %}
   <p style="margin:0 0 16px;font-size:15px;color:#555;line-height:1.6;">
-    前段时间你用我们的工具生成了关于<strong>《{{ topic }}》</strong>的综述，但后来就没再继续用了。我特别想知道原因——这对我们改进产品非常重要。
+    前段时间你用我们的工具生成了关于<strong>《{{ topic }}》</strong>的综述，但后来就没再继续用了。所以我特别想知道原因——这对我们改进产品非常重要。
   </p>
   {% elif never_used %}
   <p style="margin:0 0 16px;font-size:15px;color:#555;line-height:1.6;">
@@ -120,7 +120,7 @@ HTML_TEMPLATE = Template("""\
   </table>
 
   <p style="margin:0 0 20px;font-size:15px;color:#1a1a2e;line-height:1.6;font-weight:600;">
-    任何原因，都请你直接告诉我。
+    无论任何原因，都请你直接告诉我。
   </p>
 
   <!-- 感谢积分卡片 -->
@@ -152,14 +152,14 @@ HTML_TEMPLATE = Template("""\
   </table>
 
   <p style="margin:0;font-size:14px;color:#999;line-height:1.6;">
-    我只是一个开发者，真心想做出对研究生真正有用的工具。
+    我每天都在想怎么让这个工具更好用，你的反馈对我特别重要。
   </p>
 
 </td></tr>
 
 <!-- Footer -->
 <tr><td style="padding:24px 40px;background-color:#f8f9fa;border-top:1px solid #e5e7eb;">
-  <p style="margin:0 0 4px;font-size:14px;color:#1a1a2e;font-weight:600;">谢谢。祝研究顺利，</p>
+  <p style="margin:0 0 4px;font-size:14px;color:#1a1a2e;font-weight:600;">谢谢你的时间，祝研究顺利！</p>
   <p style="margin:0 0 4px;font-size:14px;color:#555;">詹聪聪</p>
   <p style="margin:0 0 12px;font-size:13px;color:#888;">微信：{{ wechat_id }}</p>
   <p style="margin:0;font-size:11px;color:#aaa;">
